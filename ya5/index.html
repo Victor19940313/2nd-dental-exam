@@ -134,13 +134,14 @@ body{
   display:flex;align-items:center;gap:.7rem;
   flex-shrink:0;
   box-shadow:0 1px 4px rgba(0,0,0,.06);
+  flex-wrap: wrap !important;
 }
 .top-bar.prostho-bar .bar-title{color:var(--prostho);}
 .top-bar.occ-bar     .bar-title{color:var(--occ);}
 .back-btn{
   background:var(--bg);border:1.5px solid var(--border);
-  color:var(--text-sub);padding:.25rem .7rem;
-  border-radius:7px;cursor:pointer;font-size:.8rem;font-weight:500;
+  color:var(--text-sub);padding:.25rem .6rem;
+  border-radius:7px;cursor:pointer;font-size:.78rem;font-weight:500;
   flex-shrink:0;
 }
 .back-btn:hover{background:var(--border);color:var(--text);}
@@ -154,9 +155,14 @@ body{
 }
 .search-box:focus{border-color:var(--border-dk);}
 .menu-btn{
-  display:none;background:var(--bg);border:1.5px solid var(--border);
-  color:var(--text-sub);font-size:1.1rem;padding:.25rem .5rem;
-  border-radius:7px;cursor:pointer;flex-shrink:0;
+  display:none;
+  background: #3b3530 !important;
+  color: #fef9c3 !important;
+  border: none !important;
+  font-size: 1.3rem !important;
+  padding: .35rem .7rem !important;
+  border-radius: 8px !important;
+  cursor:pointer;flex-shrink:0;
 }
 
 /* MAIN LAYOUT */
@@ -436,6 +442,18 @@ ul.n li.li-g::before{color:var(--g-bd);}
 .qr-btn:hover{background:#4338ca;}
 .qr-btn.sec{background:rgba(255,255,255,.15);}
 .qr-btn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* ── Mobile table stacking ── */
+@media(max-width:700px){
+  .content-body table { display:block !important; }
+  .content-body thead { display:none !important; }
+  .content-body tbody, .content-body tr { display:block !important; width:100% !important; }
+  .content-body tr { margin-bottom:.6rem !important; border:1px solid #e4e0d4 !important; border-radius:8px !important; overflow:hidden !important; }
+  .content-body td { display:block !important; width:100% !important; text-align:left !important; padding:.4rem .7rem !important; border-bottom:1px solid #f0ede4 !important; }
+  .content-body td:last-child { border-bottom:none !important; }
+  .content-body td.td-k { background:#f8f5ed !important; font-size:.85rem !important; color:#78350f !important; white-space:normal !important; }
+  .content-body .num-grid { grid-template-columns:repeat(2,1fr) !important; }
+}
 
 /* ══════════════════════════════════════════════
    RESPONSIVE

@@ -2731,10 +2731,16 @@
       ];
 
       function getTopicCat(topic) {
+        if (!topic || !topic.trim()) return "其他";
+        // First try exact match with topic value (new Gemini-classified topics)
+        const t = topic.trim();
+        // Check if topic itself is already a clean category name
+        if (t.length <= 12 && !t.includes(",") && !t.includes("、")) return t;
+        // Fallback: keyword match for old-style topics
         for (const { cat, kw } of TOPIC_CATS_DEFS) {
           if (kw.some((k) => topic.includes(k))) return cat;
         }
-        return "其他";
+        return t.length <= 20 ? t : "其他";
       }
 
       // Expand state (subject groups)

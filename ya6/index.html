@@ -385,7 +385,10 @@ tr:hover td { background: #e8f0fe !important; }
 
 <!-- HOME -->
 <div class="home" id="home" style="position:relative">
-  <button onclick="history.back()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);color:white;padding:.35rem .85rem;border-radius:8px;font-size:.82rem;cursor:pointer">← 主選單</button>
+  <div style="position:absolute;top:1rem;right:1rem;display:flex;gap:.5rem">
+    <button onclick="location.href='../index.html'" style="background:rgba(255,255,255,.92);border:1.5px solid rgba(0,0,0,.15);color:#2d2a22;padding:.4rem .9rem;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">回到筆記頁</button>
+    <button onclick="location.href='../exam/index.html'" style="background:#3730a3;border:none;color:white;padding:.4rem .9rem;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">考試首頁</button>
+  </div>
   <h1>🦷 牙醫學（六）矯正＋兒童＋公衛 國考互動筆記</h1>
   <p>考古題精析｜矯正學・兒童牙科・口腔預防公衛</p>
   <div class="home-cards">

@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>義齒學故事書 — 從零開始的假牙之旅</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#faf6f0;--card:#fff;--text:#2d2a26;--text2:#5a5550;
+  --warm:#c0956c;--warm2:#a67c52;--warm-bg:#f5ede3;
+  --red:#c0392b;--green:#27ae60;--blue:#2980b9;--orange:#e67e22;--teal:#16a085;--purple:#8e44ad;
+  --ch1:#e74c3c;--ch2:#2980b9;--ch3:#27ae60;--ch4:#8e44ad;
+  --ch5:#e67e22;--ch6:#16a085;--ch7:#c0392b;--ch8:#34495e;--ch9:#d35400;
+}
+body{font-family:'Noto Sans TC','Segoe UI','PingFang TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.75;-webkit-font-smoothing:antialiased}
+
+/* === NAV === */
+.top-bar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#8B6914,#c0956c);padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.top-bar .logo{font-size:20px;font-weight:700;color:#fff;white-space:nowrap}
+.top-bar .sub{font-size:12px;color:rgba(255,255,255,.8);margin-left:auto;white-space:nowrap}
+.menu-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px}
+
+/* === TOC overlay === */
+.toc-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);display:none;opacity:0;transition:opacity .3s}
+.toc-overlay.show{display:flex;opacity:1}
+.toc-panel{background:var(--card);width:min(320px,85vw);height:100%;overflow-y:auto;padding:24px 20px;box-shadow:4px 0 20px rgba(0,0,0,.2)}
+.toc-panel h2{font-size:18px;color:var(--warm2);margin-bottom:16px;border-bottom:2px solid var(--warm);padding-bottom:8px}
+.toc-item{display:block;padding:10px 12px;margin:4px 0;border-radius:8px;text-decoration:none;color:var(--text);font-size:14px;transition:background .2s}
+.toc-item:hover,.toc-item:active{background:var(--warm-bg)}
+.toc-item .ch-num{display:inline-block;width:24px;height:24px;border-radius:50%;color:#fff;text-align:center;line-height:24px;font-size:12px;font-weight:700;margin-right:8px}
+
+/* === CHAPTER === */
+.chapter{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+.ch-header{text-align:center;padding:40px 16px 24px;position:relative}
+.ch-header .ch-badge{display:inline-block;padding:6px 18px;border-radius:20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:12px}
+.ch-header h1{font-size:26px;line-height:1.3;color:var(--text);margin-bottom:8px}
+.ch-header .ch-subtitle{font-size:15px;color:var(--text2)}
+
+/* === STORY CARD === */
+.story{background:var(--card);border-radius:16px;padding:24px 20px;margin:20px 0;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid var(--warm)}
+.story.clinical{border-left-color:var(--blue);background:linear-gradient(135deg,#f8fbff,#fff)}
+.story.exam{border-left-color:var(--red);background:linear-gradient(135deg,#fff8f8,#fff)}
+.story p{margin:12px 0;font-size:15px}
+.story h2{font-size:20px;color:var(--warm2);margin:24px 0 12px;padding-top:16px;border-top:1px dashed #e0d5c8}
+.story h2:first-child{border-top:none;padding-top:0;margin-top:0}
+.story h3{font-size:17px;color:var(--text);margin:20px 0 8px}
+
+/* === DIALOGUE === */
+.dialogue{margin:16px 0;padding:0}
+.line{display:flex;gap:10px;margin:10px 0;align-items:flex-start}
+.line .avatar{flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700}
+.line .avatar.doc{background:linear-gradient(135deg,#2980b9,#3498db)}
+.line .avatar.student{background:linear-gradient(135deg,#e67e22,#f39c12)}
+.line .avatar.patient{background:linear-gradient(135deg,#27ae60,#2ecc71)}
+.line .bubble{background:#f5f5f5;border-radius:12px;padding:10px 14px;font-size:14px;max-width:calc(100% - 50px);line-height:1.6}
+.line .bubble.doc-b{background:#e8f4fd}
+.line .bubble.stu-b{background:#fef5e7}
+.line .bubble.pat-b{background:#eafaf1}
+
+/* === EXAM BOX === */
+.exam-box{background:linear-gradient(135deg,#ffeaea,#fff5f5);border:2px solid #e74c3c;border-radius:12px;padding:16px;margin:20px 0}
+.exam-box .exam-title{font-size:14px;font-weight:700;color:#c0392b;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.exam-box ul{padding-left:20px;font-size:14px}
+.exam-box li{margin:4px 0}
+
+/* === KEY POINT === */
+.key{background:#fffde7;border-left:4px solid #f39c12;border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0;font-size:14px}
+.key strong{color:var(--red)}
+
+/* === TABLE === */
+.story table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.story th{background:var(--warm);color:#fff;padding:8px 10px;text-align:left;font-weight:600}
+.story td{padding:8px 10px;border-bottom:1px solid #ede6dc}
+.story tr:nth-child(even) td{background:#faf6f0}
+.story .td-r{color:var(--red);font-weight:600}
+.story .td-g{color:var(--green);font-weight:600}
+.story .td-b{color:var(--blue);font-weight:600}
+
+/* === VISUAL CARD === */
+.visual{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0}
+.v-card{background:var(--warm-bg);border-radius:12px;padding:16px;text-align:center}
+.v-card .big{font-size:28px;font-weight:800;color:var(--warm2)}
+.v-card .label{font-size:12px;color:var(--text2);margin-top:4px}
+.v-card .desc{font-size:13px;margin-top:6px;color:var(--text)}
+
+/* === MNEMONIC === */
+.mnemonic{background:linear-gradient(135deg,#f3e5f5,#fce4ec);border-radius:12px;padding:16px;margin:16px 0;text-align:center}
+.mnemonic .title{font-size:13px;color:var(--purple);font-weight:700;margin-bottom:8px}
+.mnemonic .content{font-size:18px;font-weight:700;color:var(--text);letter-spacing:2px}
+
+/* === PROGRESS === */
+.progress-bar{position:fixed;bottom:0;left:0;right:0;height:4px;background:#e0d5c8;z-index:100}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--warm),var(--warm2));width:0;transition:width .3s}
+
+/* === CHAPTER NAV === */
+.ch-nav{display:flex;justify-content:space-between;padding:24px 16px;max-width:720px;margin:0 auto}
+.ch-nav a{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--card);border-radius:10px;text-decoration:none;color:var(--warm2);font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform .2s}
+.ch-nav a:active{transform:scale(.96)}
+
+/* === STEPS === */
+.steps{counter-reset:step}
+.step{counter-increment:step;position:relative;padding:12px 12px 12px 48px;margin:8px 0;background:#f8f6f2;border-radius:8px;font-size:14px}
+.step::before{content:counter(step);position:absolute;left:12px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--warm);color:#fff;text-align:center;line-height:28px;font-size:13px;font-weight:700}
+
+/* === TRAP === */
+.trap{background:linear-gradient(135deg,#fff3e0,#fff8e1);border:2px dashed var(--orange);border-radius:12px;padding:16px;margin:16px 0}
+.trap .trap-title{font-size:14px;font-weight:700;color:var(--orange);margin-bottom:6px}
+
+/* === ANALOGY === */
+.analogy{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid var(--green)}
+.analogy .analogy-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px}
+
+/* === FOOTER === */
+.footer{text-align:center;padding:40px 16px;color:var(--text2);font-size:13px}
+
+/* === SVG DIAGRAMS === */
+.diagram{margin:20px auto;text-align:center;overflow-x:auto}
+.diagram svg{max-width:100%;height:auto}
+.diagram .caption{font-size:12px;color:var(--text2);margin-top:8px;font-style:italic}
+
+/* === RESPONSIVE === */
+@media(max-width:480px){
+  .ch-header h1{font-size:22px}
+  .story{padding:18px 14px}
+  .story table{font-size:12px}
+  .story th,.story td{padding:6px 8px}
+  .visual{grid-template-columns:repeat(2,1fr)}
+}
+
+/* === SCROLL === */
+html{scroll-behavior:smooth}
+.chapter{scroll-margin-top:60px}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <button class="menu-btn" onclick="toggleTOC()">&#9776;</button>
+  <span class="logo">義齒學故事書</span>
+  <span class="sub">從零開始的假牙之旅</span>
+</div>
+
+<!-- TOC -->
+<div class="toc-overlay" id="toc" onclick="if(event.target===this)toggleTOC()">
+  <div class="toc-panel">
+    <h2>章節導覽</h2>
+    <a class="toc-item" href="#ch0" onclick="toggleTOC()"><span class="ch-num" style="background:#8B6914">序</span>在開始之前</a>
+    <a class="toc-item" href="#ch1" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch1)">1</span>缺牙的開始 — 為什麼要做假牙？</a>
+    <a class="toc-item" href="#ch2" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch2)">2</span>嘴巴的地圖 — Kennedy 分類法</a>
+    <a class="toc-item" href="#ch3" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch3)">3</span>活動假牙的骨架 — RPD 設計</a>
+    <a class="toc-item" href="#ch4" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch4)">4</span>沒有牙的世界 — 全口義齒</a>
+    <a class="toc-item" href="#ch5" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch5)">5</span>固定的藝術 — 牙冠與牙橋</a>
+    <a class="toc-item" href="#ch6" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch6)">6</span>材料的秘密 — 印模材與陶瓷</a>
+    <a class="toc-item" href="#ch7" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch7)">7</span>咬合的平衡 — MPO 與咬合器</a>
+    <a class="toc-item" href="#ch8" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch8)">8</span>關節的煩惱 — TMD 速覽</a>
+    <a class="toc-item" href="#ch9" onclick="toggleTOC()"><span class="ch-num" style="background:var(--ch9)">9</span>最後的追求 — 美學與 Biological Width</a>
+  </div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ============================================ -->
+<!-- 序章 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch0">
+<div class="ch-header">
+  <div class="ch-badge" style="background:#8B6914">序章</div>
+  <h1>在開始之前</h1>
+  <div class="ch-subtitle">認識我們的主角們</div>
+</div>
+
+<div class="story">
+<p>這本故事書的主角有三位：</p>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b"><b>陳醫師</b> — 經驗豐富的補綴專科醫師，負責把複雜的東西講得好懂。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b"><b>你</b> — 準備國考的牙科新手，什麼都想問，什麼都好奇。</div></div>
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b"><b>阿明</b> — 55 歲的上班族，嘴裡缺了好幾顆牙，來找陳醫師報到。</div></div>
+</div>
+
+<p>透過幫阿明治療的過程，我們會從最基本的「為什麼要做假牙」一路學到考試要考的每一個考點。每個章節結束時，會有一個紅色的「考試重點框」幫你整理必記內容。</p>
+
+<div class="key"><strong>閱讀建議：</strong>先快速讀完全部故事，建立整體觀。第二遍再仔細看考試重點框和表格。配合你的 ya5 互動筆記一起使用效果最好。</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第一章：缺牙的開始 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch1">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch1)">CHAPTER 1</div>
+  <h1>缺牙的開始</h1>
+  <div class="ch-subtitle">為什麼要做假牙？三條路怎麼選？</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，我左下後面少了兩顆牙，右邊也少了一顆，吃東西都只能用前面咬。到底要怎麼辦？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明你先別緊張。缺牙不處理的話，旁邊的牙齒會慢慢倒下來、對面的牙齒會往下長（過度萌發），咬合會整個亂掉。我們有三條路可以走。</div></div>
+</div>
+
+<h2>三大假牙選項</h2>
+
+<p>想像你家客廳少了幾片地磚：</p>
+
+<div class="analogy">
+<div class="analogy-title">生活化比喻</div>
+<b>活動假牙（RPD）</b>= 鋪一塊地毯蓋住缺口，每天可以拿起來清洗<br>
+<b>固定假牙（FPD）</b>= 重新黏上新地磚，跟旁邊的磚緊緊相連<br>
+<b>全口義齒（CD）</b>= 整個地板重鋪，因為一片磚都不剩了
+</div>
+
+<table>
+<tr><th>選項</th><th>英文</th><th>特點</th><th>適合誰</th></tr>
+<tr><td class="td-b"><b>活動局部義齒</b></td><td>RPD<br>(Removable Partial Denture)</td><td>可自行摘戴，有金屬骨架</td><td>缺多顆但還有自然牙的人</td></tr>
+<tr><td class="td-g"><b>固定義齒</b></td><td>FPD<br>(Fixed Partial Denture)</td><td>黏在支柱牙上，不能自行取下</td><td>缺 1-2 顆，旁邊牙齒狀況好</td></tr>
+<tr><td class="td-r"><b>全口義齒</b></td><td>CD<br>(Complete Denture)</td><td>整副假牙，靠吸附力固位</td><td>全口無牙的人</td></tr>
+</table>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">那植牙呢？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">植牙（Implant）是第四條路，把鈦金屬螺絲打進骨頭裡當人工牙根，上面接假牙。國考會考一些基本概念，但重點還是在 RPD、FPD、CD 這三大類。我們一個一個來。</div></div>
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>RPD = 可摘式，有金屬骨架；FPD = 固定式，黏在支柱牙上；CD = 全口無牙用</li>
+<li>缺牙不處理的後果：鄰牙傾斜、對咬牙過度萌發、咬合紊亂</li>
+<li>全口義齒的咬合目標是「平衡咬合」，天然牙的目標是「MPO」（後面章節會詳述）</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第二章：Kennedy 分類 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch2">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch2)">CHAPTER 2</div>
+  <h1>嘴巴的地圖</h1>
+  <div class="ch-subtitle">Kennedy 分類法 — 幫每張嘴巴取名字</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明，在幫你設計活動假牙之前，我得先幫你的嘴巴「分類」。就像醫院急診有五級檢傷，缺牙也有分類系統，叫做 <b>Kennedy Classification</b>。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">為什麼要分類？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">因為不同的缺牙分布，假牙的設計邏輯完全不同。分類就像是地址，告訴技師：這個人的嘴巴長什麼樣。</div></div>
+</div>
+
+<h2>Kennedy 四大類</h2>
+
+<p>記住一個口訣：<b>「雙游、單游、中間夾、前牙缺」</b></p>
+
+<!-- Kennedy 分類圖解 -->
+<div class="diagram">
+<svg viewBox="0 0 620 520" width="620" height="520" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .tooth{fill:#e8dcc8;stroke:#8B6914;stroke-width:1.5;rx:4}
+    .missing{fill:#ffcccc;stroke:#c0392b;stroke-width:2;stroke-dasharray:4,3;rx:4}
+    .label{font-family:'Noto Sans TC',sans-serif;font-size:14px;fill:#2d2a26;font-weight:700}
+    .sublabel{font-family:'Noto Sans TC',sans-serif;font-size:11px;fill:#5a5550}
+    .arch{fill:none;stroke:#c0956c;stroke-width:2}
+    .midline{stroke:#aaa;stroke-width:1;stroke-dasharray:3,3}
+    .classlbl{font-family:'Noto Sans TC',sans-serif;font-size:16px;fill:#2980b9;font-weight:800}
+  </style>
+  <!-- Class I -->
+  <text x="10" y="30" class="classlbl">Class I：雙側游離端</text>
+  <text x="10" y="50" class="sublabel">口訣：I = 一「對」游離</text>
+  <line x1="310" y1="60" x2="310" y2="120" class="midline"/>
+  <text x="303" y="75" class="sublabel" style="fill:#aaa">中</text>
+  <!-- left side missing -->
+  <rect x="80" y="80" width="28" height="28" class="missing"/><text x="87" y="100" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="115" y="80" width="28" height="28" class="missing"/><text x="122" y="100" class="sublabel" style="fill:#c0392b">X</text>
+  <!-- left present -->
+  <rect x="150" y="80" width="28" height="28" class="tooth"/>
+  <rect x="185" y="80" width="28" height="28" class="tooth"/>
+  <rect x="220" y="80" width="28" height="28" class="tooth"/>
+  <rect x="255" y="80" width="28" height="28" class="tooth"/>
+  <rect x="290" y="80" width="28" height="28" class="tooth"/>
+  <!-- right present -->
+  <rect x="325" y="80" width="28" height="28" class="tooth"/>
+  <rect x="360" y="80" width="28" height="28" class="tooth"/>
+  <rect x="395" y="80" width="28" height="28" class="tooth"/>
+  <rect x="430" y="80" width="28" height="28" class="tooth"/>
+  <!-- right missing -->
+  <rect x="465" y="80" width="28" height="28" class="missing"/><text x="472" y="100" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="500" y="80" width="28" height="28" class="missing"/><text x="507" y="100" class="sublabel" style="fill:#c0392b">X</text>
+
+  <!-- Class II -->
+  <text x="10" y="160" class="classlbl">Class II：單側游離端</text>
+  <text x="10" y="180" class="sublabel">口訣：II = 一「邊」游離</text>
+  <line x1="310" y1="190" x2="310" y2="250" class="midline"/>
+  <rect x="80" y="210" width="28" height="28" class="tooth"/>
+  <rect x="115" y="210" width="28" height="28" class="tooth"/>
+  <rect x="150" y="210" width="28" height="28" class="tooth"/>
+  <rect x="185" y="210" width="28" height="28" class="tooth"/>
+  <rect x="220" y="210" width="28" height="28" class="tooth"/>
+  <rect x="255" y="210" width="28" height="28" class="tooth"/>
+  <rect x="290" y="210" width="28" height="28" class="tooth"/>
+  <rect x="325" y="210" width="28" height="28" class="tooth"/>
+  <rect x="360" y="210" width="28" height="28" class="tooth"/>
+  <rect x="395" y="210" width="28" height="28" class="tooth"/>
+  <rect x="430" y="210" width="28" height="28" class="tooth"/>
+  <rect x="465" y="210" width="28" height="28" class="missing"/><text x="472" y="230" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="500" y="210" width="28" height="28" class="missing"/><text x="507" y="230" class="sublabel" style="fill:#c0392b">X</text>
+
+  <!-- Class III -->
+  <text x="10" y="290" class="classlbl">Class III：中間夾（支持端）</text>
+  <text x="10" y="310" class="sublabel">口訣：III = 前後都有牙</text>
+  <line x1="310" y1="320" x2="310" y2="380" class="midline"/>
+  <rect x="80" y="340" width="28" height="28" class="tooth"/>
+  <rect x="115" y="340" width="28" height="28" class="tooth"/>
+  <rect x="150" y="340" width="28" height="28" class="tooth"/>
+  <rect x="185" y="340" width="28" height="28" class="tooth"/>
+  <rect x="220" y="340" width="28" height="28" class="tooth"/>
+  <rect x="255" y="340" width="28" height="28" class="tooth"/>
+  <rect x="290" y="340" width="28" height="28" class="tooth"/>
+  <rect x="325" y="340" width="28" height="28" class="tooth"/>
+  <rect x="360" y="340" width="28" height="28" class="tooth"/>
+  <rect x="395" y="340" width="28" height="28" class="missing"/><text x="402" y="360" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="430" y="340" width="28" height="28" class="missing"/><text x="437" y="360" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="465" y="340" width="28" height="28" class="tooth"/>
+  <rect x="500" y="340" width="28" height="28" class="tooth"/>
+
+  <!-- Class IV -->
+  <text x="10" y="420" class="classlbl">Class IV：前牙跨中線</text>
+  <text x="10" y="440" class="sublabel">口訣：IV = 前牙缺（無 Modification！）</text>
+  <line x1="310" y1="450" x2="310" y2="510" class="midline"/>
+  <rect x="80" y="470" width="28" height="28" class="tooth"/>
+  <rect x="115" y="470" width="28" height="28" class="tooth"/>
+  <rect x="150" y="470" width="28" height="28" class="tooth"/>
+  <rect x="185" y="470" width="28" height="28" class="tooth"/>
+  <rect x="220" y="470" width="28" height="28" class="tooth"/>
+  <!-- missing front teeth crossing midline -->
+  <rect x="255" y="470" width="28" height="28" class="missing"/><text x="262" y="490" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="290" y="470" width="28" height="28" class="missing"/><text x="297" y="490" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="325" y="470" width="28" height="28" class="missing"/><text x="332" y="490" class="sublabel" style="fill:#c0392b">X</text>
+  <rect x="360" y="470" width="28" height="28" class="tooth"/>
+  <rect x="395" y="470" width="28" height="28" class="tooth"/>
+  <rect x="430" y="470" width="28" height="28" class="tooth"/>
+  <rect x="465" y="470" width="28" height="28" class="tooth"/>
+  <rect x="500" y="470" width="28" height="28" class="tooth"/>
+</svg>
+<div class="caption">Kennedy 四大分類示意圖 — 粉紅虛線框 = 缺牙區，米色實框 = 現存牙</div>
+</div>
+
+<table>
+<tr><th>分類</th><th>缺牙型態</th><th>口訣</th></tr>
+<tr><td class="td-b"><b>Class I</b></td><td>雙側後方都缺牙（雙側游離端）</td><td>I = 一<b>對</b>游離端</td></tr>
+<tr><td class="td-b"><b>Class II</b></td><td>單側後方缺牙（單側游離端）</td><td>II = <b>一邊</b>游離</td></tr>
+<tr><td class="td-b"><b>Class III</b></td><td>缺牙前後都有牙齒（支持端）</td><td>III = <b>中間</b>夾</td></tr>
+<tr><td class="td-b"><b>Class IV</b></td><td>前牙橫跨中線缺牙</td><td>IV = <b>前牙</b>缺</td></tr>
+</table>
+
+<div class="analogy">
+<div class="analogy-title">比喻時間</div>
+想像一排書架上的書：<br>
+<b>Class I</b> = 書架兩端的書都掉了，只剩中間 → 兩邊都「懸空」<br>
+<b>Class II</b> = 只有右邊的書掉了 → 一邊懸空<br>
+<b>Class III</b> = 中間抽掉幾本，但兩端還有書夾住 → 「有支撐」<br>
+<b>Class IV</b> = 書架正中央那排書全不見了 → 跨越中線
+</div>
+
+<h2>Modification（修飾區）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">如果一個人又缺後面、又缺前面怎麼辦？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">好問題！主分類看的是<b>最遠端</b>（最後方）的缺牙區。其他額外的缺牙區叫做「Modification」，只數<b>區數</b>，不數缺幾顆。</div></div>
+</div>
+
+<div class="key">例如：右後方缺兩顆（游離端）+ 左邊中間缺一區 + 另一處又缺一區<br>
+→ 最遠端 = 右後方游離端 → 主分類 = <strong>Class II</strong><br>
+→ 額外兩個缺牙區 → <strong>Modification 2</strong><br>
+→ 結果：<strong>Kennedy Class II, Mod. 2</strong></div>
+
+<h2>Applegate 八大法則（精華版）</h2>
+
+<table>
+<tr><th>法則</th><th>白話翻譯</th></tr>
+<tr><td class="td-b">法則 4</td><td><b>最後方的缺牙區決定主分類</b>（最常考！）</td></tr>
+<tr><td class="td-b">法則 6</td><td>Class IV 絕對沒有 Modification</td></tr>
+<tr><td class="td-b">法則 7</td><td>Modification 只數「區數」，不數「顆數」</td></tr>
+<tr><td class="td-b">法則 8</td><td>不存在 Class V（看到就是錯的選項）</td></tr>
+<tr><td>法則 1</td><td>分類要在拔牙之後才決定</td></tr>
+<tr><td>法則 2</td><td>第三大臼齒缺了且不補，可以不算</td></tr>
+<tr><td>法則 3</td><td>第三大臼齒如果當支柱牙，就要算進去</td></tr>
+<tr><td>法則 5</td><td>主分類以外的缺牙區 = Modification</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 超級陷阱</div>
+前牙全缺 + 後牙單側缺 → 你可能直覺選 Class IV，但錯！<br>
+要看<b>最遠端</b>的缺牙在哪裡 → 如果最遠端是後牙 → 答案是 Class I 或 Class II，不是 Class IV！
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>Kennedy 分類看<b>最遠端缺牙區</b>決定主分類（Applegate 法則 4）</li>
+<li>Class IV <b>沒有 Modification</b>（法則 6，鐵則）</li>
+<li>Modification 數「區」不數「顆」（法則 7）</li>
+<li>不存在 Class V（法則 8）</li>
+<li>高頻考古題：108-2 #28 / 110-2 #28 / 111-2 #34 / 113-2 #29</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第三章：RPD 設計 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch3">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch3)">CHAPTER 3</div>
+  <h1>活動假牙的骨架</h1>
+  <div class="ch-subtitle">RPD 的三大要素、卡環、RPI 系統</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明，你的嘴巴分類結果是 Kennedy Class II, Mod. 1。右下後牙缺兩顆（游離端），左上中間也缺一顆。我們來設計活動假牙的「骨架」。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">骨架？活動假牙不就是一塊粉紅色的東西嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">那只是表面！裡面其實有精密的金屬骨架。設計骨架的核心就是三個字：<b>支撐、固位、穩定</b>。</div></div>
+</div>
+
+<h2>RPD 三要素</h2>
+
+<div class="analogy">
+<div class="analogy-title">比喻：想像一把椅子</div>
+<b>支撐（Support）</b>= 椅腳 → 防止你<b>往下</b>坐穿（義齒防沉陷）<br>
+<b>固位（Retention）</b>= 椅子的扶手 → 防止你被<b>往上</b>抬走（義齒防脫落）<br>
+<b>穩定（Stability）</b>= 椅背 → 防止你<b>往旁邊</b>倒（義齒防位移）
+</div>
+
+<!-- RPD 三要素力量方向圖 -->
+<div class="diagram">
+<svg viewBox="0 0 480 260" width="480" height="260" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .rpd-tooth{fill:#e8dcc8;stroke:#8B6914;stroke-width:2}
+    .rpd-denture{fill:#f0b8b8;stroke:#c0392b;stroke-width:1.5;opacity:0.7}
+    .rpd-gum{fill:#f5c6c6;stroke:#d4a0a0;stroke-width:1}
+    .rpd-arrow{stroke-width:3;fill:none;marker-end:url(#arrowR)}
+    .rpd-lbl{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:13px}
+  </style>
+  <defs>
+    <marker id="arrowR" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="currentColor"/></marker>
+  </defs>
+  <!-- 牙齒 -->
+  <rect x="60" y="60" width="50" height="70" rx="6" class="rpd-tooth"/>
+  <text x="72" y="100" class="rpd-lbl" style="fill:#8B6914;font-size:11px">支柱牙</text>
+  <!-- 黏膜 -->
+  <rect x="110" y="130" width="180" height="30" rx="4" class="rpd-gum"/>
+  <text x="155" y="150" style="font-size:11px;fill:#a06060">黏膜（牙嵴）</text>
+  <!-- 義齒 -->
+  <rect x="115" y="80" width="170" height="50" rx="8" class="rpd-denture"/>
+  <text x="160" y="110" style="font-size:12px;fill:#c0392b;font-weight:600">義齒本體</text>
+  <!-- Rest -->
+  <rect x="85" y="52" width="30" height="10" rx="3" fill="#2980b9" stroke="#1a5276" stroke-width="1"/>
+  <text x="75" y="48" style="font-size:10px;fill:#2980b9;font-weight:700">Rest</text>
+  <!-- Clasp -->
+  <path d="M60,75 Q40,90 50,110 Q55,125 65,120" fill="none" stroke="#27ae60" stroke-width="2.5"/>
+  <text x="15" y="105" style="font-size:10px;fill:#27ae60;font-weight:700">卡環</text>
+
+  <!-- Support arrow (down) -->
+  <line x1="360" y1="60" x2="360" y2="120" class="rpd-arrow" style="stroke:#2980b9;color:#2980b9"/>
+  <text x="370" y="75" class="rpd-lbl" style="fill:#2980b9">Support ↓</text>
+  <text x="370" y="92" style="font-size:11px;fill:#2980b9">防沉陷</text>
+  <text x="370" y="107" style="font-size:10px;fill:#5a5550">→ 由 Rest 提供</text>
+
+  <!-- Retention arrow (up) -->
+  <line x1="360" y1="170" x2="360" y2="210" class="rpd-arrow" style="stroke:#c0392b;color:#c0392b;marker-end:none;marker-start:url(#arrowR)" transform="rotate(180,360,190)"/>
+  <text x="370" y="180" class="rpd-lbl" style="fill:#c0392b">Retention ↑</text>
+  <text x="370" y="197" style="font-size:11px;fill:#c0392b">防脫落</text>
+  <text x="370" y="212" style="font-size:10px;fill:#5a5550">→ 卡環末端 1/3</text>
+
+  <!-- Stability arrows (left-right) -->
+  <line x1="115" y1="220" x2="85" y2="220" class="rpd-arrow" style="stroke:#27ae60;color:#27ae60"/>
+  <line x1="285" y1="220" x2="315" y2="220" class="rpd-arrow" style="stroke:#27ae60;color:#27ae60"/>
+  <text x="140" y="245" class="rpd-lbl" style="fill:#27ae60">Stability ↔ 防側移</text>
+  <text x="140" y="258" style="font-size:10px;fill:#5a5550">→ 主連接體 + 剛性臂</text>
+</svg>
+<div class="caption">RPD 三要素力量方向示意 — 支撐防下沉、固位防脫落、穩定防側移</div>
+</div>
+
+<table>
+<tr><th>要素</th><th>抵抗方向</th><th>靠誰提供</th></tr>
+<tr><td class="td-b"><b>支撐 Support</b></td><td>抵抗下沉力（↓）</td><td>Rest（支撐座）— 小匙子狀的金屬釘放在牙齒咬合面的凹窩上</td></tr>
+<tr><td class="td-r"><b>固位 Retention</b></td><td>抵抗脫落力（↑）</td><td>卡環（Clasp）的<b>末端 1/3</b> 伸入牙齒倒凹區</td></tr>
+<tr><td class="td-g"><b>穩定 Stability</b></td><td>抵抗側向力（↔）</td><td>主連接體 + 卡環的<b>剛性臂</b>（近心臂，在倒凹上方）</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 國考超級陷阱</div>
+卡環的<b>近心臂</b>在倒凹上方 → 提供<b>穩定</b>，不提供固位！<br>
+只有<b>遠心臂的末端 1/3</b> 進入倒凹 → 才提供<b>固位</b>。<br>
+題目問「卡環哪個部分提供固位？」答案永遠是末端 1/3，不是整條卡環！
+</div>
+
+<h2>Survey Line（接近線）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">什麼是倒凹？卡環怎麼知道要伸到哪裡？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">我們用一個叫 Surveyor 的工具，把模型固定好之後，用一根針去描牙齒最寬的一圈線，這條線叫 <b>Survey Line（接近線）</b>。線的上面叫「倒凹上方」，線的下面就是「倒凹」。</div></div>
+</div>
+
+<!-- Survey Line 圖解 -->
+<div class="diagram">
+<svg viewBox="0 0 400 250" width="400" height="250" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .sv-tooth{fill:#f5ecd8;stroke:#8B6914;stroke-width:2}
+    .sv-lbl{font-family:'Noto Sans TC',sans-serif;font-weight:700}
+  </style>
+
+  <!-- Tooth cross-section (buccal view) -->
+  <path d="M100,30 Q140,20 200,30 Q250,50 260,100 Q265,140 250,180 Q220,220 180,230 Q140,235 120,220 Q90,200 80,160 Q70,120 80,80 Q85,50 100,30 Z" class="sv-tooth"/>
+
+  <!-- Survey line (height of contour) -->
+  <path d="M78,120 Q120,95 180,92 Q230,95 262,115" fill="none" stroke="#e67e22" stroke-width="3"/>
+  <text x="270" y="118" class="sv-lbl" style="fill:#e67e22;font-size:12px">← Survey Line</text>
+  <text x="270" y="133" style="font-size:10px;fill:#e67e22">（接近線 = 最大周徑）</text>
+
+  <!-- Suprabulge zone -->
+  <text x="135" y="75" class="sv-lbl" style="fill:#27ae60;font-size:12px;text-anchor:middle">倒凹上方</text>
+  <text x="135" y="88" style="font-size:10px;fill:#27ae60;text-anchor:middle">放剛性臂 → 穩定</text>
+
+  <!-- Infrabulge zone -->
+  <text x="155" y="155" class="sv-lbl" style="fill:#c0392b;font-size:12px;text-anchor:middle">倒凹區</text>
+  <text x="155" y="170" style="font-size:10px;fill:#c0392b;text-anchor:middle">放卡環末端 → 固位</text>
+
+  <!-- Clasp illustration -->
+  <!-- Rigid arm (suprabulge) -->
+  <path d="M60,90 Q70,85 78,90 Q100,80 130,78" fill="none" stroke="#27ae60" stroke-width="3"/>
+  <text x="30" y="88" style="font-size:9px;fill:#27ae60;font-weight:700">剛性臂</text>
+
+  <!-- Retentive tip (infrabulge) -->
+  <path d="M130,78 Q160,82 180,100 Q195,115 200,135" fill="none" stroke="#c0392b" stroke-width="3"/>
+  <circle cx="200" cy="135" r="5" fill="#c0392b"/>
+  <text x="210" y="145" style="font-size:9px;fill:#c0392b;font-weight:700">固位末端</text>
+  <text x="210" y="158" style="font-size:8px;fill:#c0392b">(末端 1/3)</text>
+
+  <!-- Arrow annotations -->
+  <rect x="10" y="195" width="380" height="45" rx="8" fill="#fff3e0" stroke="#e67e22" stroke-width="1.5"/>
+  <text x="200" y="215" style="font-size:11px;fill:#e67e22;font-weight:700;text-anchor:middle">Survey Line 以上 = 穩定（剛性臂）</text>
+  <text x="200" y="232" style="font-size:11px;fill:#c0392b;font-weight:700;text-anchor:middle">Survey Line 以下 = 固位（卡環末端伸入倒凹）</text>
+</svg>
+<div class="caption">Survey Line 將牙齒分成兩區 — 剛性臂在上方（穩定），固位末端在下方（固位）</div>
+</div>
+
+<div class="key">
+<b>接近線以上</b>：放卡環的<b>剛性臂</b>（提供穩定）<br>
+<b>接近線以下</b>：放卡環的<b>固位臂末端</b>（提供固位）
+</div>
+
+<h2>RPI 系統 — 游離端的最佳設計</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明右邊是游離端缺牙（Class II），後面沒有牙齒可以靠。這時候假牙咬東西會往黏膜方向沉下去，如果設計不好，支柱牙會被往後扯壞。所以我要用一套特別的系統：<b>RPI</b>。</div></div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">R</div><div class="label">Rest</div><div class="desc">放在支柱牙的<b>近心</b>窩</div></div>
+<div class="v-card"><div class="big">P</div><div class="label">Proximal Plate</div><div class="desc">鄰接板要<b>短</b>！可以滑動</div></div>
+<div class="v-card"><div class="big">I</div><div class="label">I-bar Clasp</div><div class="desc">從下方進入頰側倒凹</div></div>
+</div>
+
+<h3>為什麼 Rest 要放近心？</h3>
+<p>假牙受力會以支點線為軸旋轉下沉。如果 Rest 放在<b>遠心</b>，旋轉的支點就直接壓在支柱牙上面，產生遠心扭力 → 支柱牙被「扳」壞！</p>
+<p>放在<b>近心</b>，力量的傳導路徑改善，應力分散到更多結構，支柱牙安全很多。</p>
+
+<h3>I-bar 的禁忌症</h3>
+<table>
+<tr><th>禁忌</th><th>原因</th></tr>
+<tr><td class="td-r">深軟組織倒凹</td><td>I-bar 從下方進入，軟組織倒凹會卡住</td></tr>
+<tr><td class="td-r">前牙高美觀需求</td><td>I-bar 在頰側可見</td></tr>
+<tr><td class="td-r">開口度受限</td><td>摘戴角度不足</td></tr>
+</table>
+
+<h2>間接固位體（Indirect Retainer）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">假牙後面沉下去，前面不就翹起來了嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">正是！所以我們需要一個東西壓住前面，防止翹起。這就是<b>間接固位體</b>。想像翹翹板，一端下沉，你需要在另一端坐一個人壓住。而且那個人要坐得<b>越遠越好</b>，力臂越長，壓的力量越大。</div></div>
+</div>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 國考超高頻陷阱</div>
+「間接固位體距支點線越<b>近</b>越好」→ <b>完全錯誤！</b><br>
+槓桿原理：力臂越<b>長</b> → 抵抗翹起的力越大 → 間接固位體應盡量<b>遠離</b>支點線！
+</div>
+
+<h2>主連接體（Major Connector）</h2>
+
+<p>主連接體就像假牙的「背脊」，把所有零件連在一起。</p>
+
+<table>
+<tr><th>下顎</th><th>特點</th></tr>
+<tr><td class="td-b"><b>Lingual Bar（舌側桿）</b></td><td>首選！覆蓋黏膜最少。離齦緣至少 6mm</td></tr>
+<tr><td>Lingual Plate（舌板）</td><td>口底太淺用不了舌側桿時的替代</td></tr>
+</table>
+
+<table>
+<tr><th>上顎</th><th>特點</th></tr>
+<tr><td>Single Palatal Strap</td><td>缺牙不多時，覆蓋少、舒適</td></tr>
+<tr><td>Complete Palatal Coverage</td><td>牙槽骨嚴重吸收時，最大支撐</td></tr>
+<tr><td class="td-r"><b>Horseshoe（馬蹄形）</b></td><td><b>剛性最差！</b>考題最愛問</td></tr>
+</table>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>三要素</b>：Support（↓防沉）= Rest；Retention（↑防脫）= 卡環末端 1/3；Stability（↔防位移）= 剛性臂</li>
+<li><b>RPI</b>：游離端首選。R = Mesial Rest、P = 短板、I = I-bar。Rest 在近心防支柱牙扭力</li>
+<li><b>I-bar 禁忌</b>：深軟組織倒凹、高美觀需求、開口受限</li>
+<li><b>間接固位體</b>越遠離支點線越好（槓桿原理）</li>
+<li><b>Horseshoe</b> 是上顎主連接體中剛性最差的</li>
+<li>下顎主連接體離齦緣至少 <b>6mm</b></li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第四章：全口義齒 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch4">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch4)">CHAPTER 4</div>
+  <h1>沒有牙的世界</h1>
+  <div class="ch-subtitle">全口義齒 — 從印模到排牙</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">今天來了另一位患者，王奶奶，80 歲，全口無牙。RPD 需要有牙齒可以勾，但王奶奶一顆都沒有了。我們要做的是<b>全口義齒（Complete Denture）</b>。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">沒有牙齒可以卡，全口義齒靠什麼固定？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">靠三股力量：<b>吸附力</b>（唾液薄膜的表面張力）、<b>邊緣封閉</b>（義齒邊緣的密封效果）、和<b>周圍肌肉的平衡</b>。所以每一步都要非常精確。</div></div>
+</div>
+
+<h2>製作流程</h2>
+
+<div class="steps">
+<div class="step"><b>初步印模</b> → 用 Alginate 快速取概形 → 做出個別托盤（Custom tray）</div>
+<div class="step"><b>邊界鑲嵌</b>（Border Molding） → 用 Compound 一段一段調整托盤邊緣，讓患者做各種動作</div>
+<div class="step"><b>最終印模</b> → 用 ZOE paste 或矽膠精確取模 → 翻出工作模型</div>
+<div class="step"><b>決定咬合關係</b> → VD（垂直高度）+ CR（正中關係）</div>
+<div class="step"><b>排牙</b> → 在咬合器上排人工牙 → 試戴蠟型</div>
+<div class="step"><b>裝入</b> → 加工完成 → 裝戴、調整</div>
+</div>
+
+<h2>咬合垂直高度（VD）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">什麼是 VD？為什麼這麼重要？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">VD 就是上下顎之間的「高度」。想像你的臉是一台手風琴，VD 就是手風琴打開的程度。太高，嘴巴關不攏、肌肉痠痛；太低，嘴巴塌陷、說話含糊。</div></div>
+</div>
+
+<!-- VD 圖解 -->
+<div class="diagram">
+<svg viewBox="0 0 500 280" width="500" height="280" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .face{fill:#fde8d0;stroke:#c0956c;stroke-width:2}
+    .jaw{fill:#e8dcc8;stroke:#8B6914;stroke-width:2}
+    .dim-line{stroke:#2980b9;stroke-width:1.5;stroke-dasharray:4,2}
+    .dim-arrow{stroke:#2980b9;stroke-width:2;fill:none;marker-end:url(#arrowVD);marker-start:url(#arrowVDr)}
+    .vd-lbl{font-family:'Noto Sans TC',sans-serif;font-weight:700}
+  </style>
+  <defs>
+    <marker id="arrowVD" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5" fill="#2980b9"/></marker>
+    <marker id="arrowVDr" markerWidth="6" markerHeight="5" refX="1" refY="2.5" orient="auto"><path d="M6,0 L0,2.5 L6,5" fill="#2980b9"/></marker>
+  </defs>
+
+  <!-- RVD face (relaxed) -->
+  <text x="60" y="20" class="vd-lbl" style="fill:var(--text);font-size:14px">放鬆時（RVD）</text>
+  <ellipse cx="100" cy="120" rx="55" ry="75" class="face"/>
+  <!-- nose -->
+  <ellipse cx="100" cy="80" rx="8" ry="5" fill="#e8c8a8" stroke="#c0956c"/>
+  <!-- upper teeth line -->
+  <line x1="75" y1="120" x2="125" y2="120" stroke="#8B6914" stroke-width="2"/>
+  <!-- lower jaw (separated) -->
+  <line x1="75" y1="140" x2="125" y2="140" stroke="#8B6914" stroke-width="2"/>
+  <!-- FWS gap -->
+  <rect x="76" y="121" width="48" height="18" fill="#ffe0e0" opacity="0.5" rx="2"/>
+  <text x="82" y="134" style="font-size:9px;fill:#c0392b;font-weight:700">FWS</text>
+  <!-- RVD dimension -->
+  <line x1="165" y1="80" x2="165" y2="165" class="dim-arrow"/>
+  <text x="172" y="125" class="vd-lbl" style="fill:#2980b9;font-size:13px">RVD</text>
+
+  <!-- OVD face (biting) -->
+  <text x="300" y="20" class="vd-lbl" style="fill:var(--text);font-size:14px">咬合時（OVD）</text>
+  <ellipse cx="340" cy="115" rx="55" ry="70" class="face"/>
+  <ellipse cx="340" cy="80" rx="8" ry="5" fill="#e8c8a8" stroke="#c0956c"/>
+  <!-- teeth touching -->
+  <line x1="315" y1="120" x2="365" y2="120" stroke="#8B6914" stroke-width="3"/>
+  <text x="320" y="117" style="font-size:8px;fill:#27ae60;font-weight:700">接觸!</text>
+  <!-- OVD dimension -->
+  <line x1="405" y1="80" x2="405" y2="155" class="dim-arrow"/>
+  <text x="412" y="120" class="vd-lbl" style="fill:#2980b9;font-size:13px">OVD</text>
+
+  <!-- Formula -->
+  <rect x="140" y="220" width="250" height="45" rx="10" fill="#fff3e0" stroke="#e67e22" stroke-width="2"/>
+  <text x="170" y="248" style="font-family:'Noto Sans TC',sans-serif;font-size:16px;font-weight:800;fill:#e67e22">FWS = RVD - OVD = 2~4 mm</text>
+</svg>
+<div class="caption">RVD（放鬆）vs OVD（咬合）— 兩者的差就是 Freeway Space</div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">RVD</div><div class="label">Rest Vertical Dimension</div><div class="desc">肌肉完全放鬆時的高度</div></div>
+<div class="v-card"><div class="big">OVD</div><div class="label">Occlusal VD</div><div class="desc">牙齒咬合時的高度</div></div>
+<div class="v-card"><div class="big">FWS</div><div class="label">Freeway Space</div><div class="desc">= RVD - OVD<br><b>正常 2-4 mm</b></div></div>
+</div>
+
+<div class="key"><strong>Freeway Space（自由間隙）= 2-4 mm</strong>，這是考試必背數值。<br>
+OVD 過高（FWS < 2mm）→ 牙齒撞擊、肌肉痠痛、TMD<br>
+OVD 過低（FWS > 4mm）→ 嘴唇塌陷、說話不清</div>
+
+<h2>正中關係（CR）</h2>
+
+<p><b>CR 的現代定義</b>：下顎髁突在關節窩<b>最上前方</b>的位置（superior-anterior），是可以重複找到的起始位。</p>
+
+<div class="key">
+天然牙：CR 比 CO 略後 1-2mm（不完全重合）<br>
+全口義齒的目標：<strong>CR = CO</strong>（讓正中關係和正中咬合完全一致）
+</div>
+
+<h2>排牙原則與平衡咬合</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">天然牙不是追求 MPO（犬齒保護咬合）嗎？全口義齒為什麼不同？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">因為全口義齒底下沒有牙根抓著骨頭，它就放在黏膜上面。如果側方運動時只有一邊碰到（像 MPO 那樣），另一邊就翹起來了！所以全口義齒要<b>平衡咬合</b> — 在所有咬合動作中，兩邊同時有接觸，義齒才穩。</div></div>
+</div>
+
+<h2>義齒性口腔炎（Denture Stomatitis）</h2>
+
+<p>長期戴全口義齒不好好清潔，上顎黏膜會出事。罪魁禍首：<b>念珠菌（Candida albicans）</b>。</p>
+
+<table>
+<tr><th>Newton 分類</th><th>表現</th></tr>
+<tr><td class="td-b">Type I</td><td>針孔狀局部紅點（pinpoint）</td></tr>
+<tr><td class="td-b">Type II</td><td>整片均勻發紅（diffuse）</td></tr>
+<tr><td class="td-r">Type III</td><td>乳頭狀增生（papillary hyperplasia）→ 需手術切除</td></tr>
+</table>
+
+<div class="key">最重要的危險因子：<strong>夜間不摘除義齒</strong>（不是基托過度延伸！）<br>治療：清潔衛教 + 夜間摘除 + Nystatin 抗真菌 + 必要時重做義齒</div>
+
+<h2>Post Dam 與 Retromolar Pad</h2>
+
+<table>
+<tr><th>結構</th><th>位置</th><th>功能</th></tr>
+<tr><td class="td-b"><b>Post Dam</b></td><td>硬顎與軟顎交界後方 1-2 mm</td><td>上顎義齒後緣的邊緣封閉（吸住的關鍵）</td></tr>
+<tr><td class="td-b"><b>Retromolar Pad</b></td><td>下顎最後磨牙後方的脂肪墊</td><td>下顎義齒後緣的參考標誌（覆蓋前 1/2）</td></tr>
+</table>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>Freeway Space = 2-4 mm</b>（RVD - OVD）</li>
+<li>OVD 過高 → 肌肉痠痛、TMD；過低 → 嘴唇塌陷</li>
+<li>全口義齒目標：<b>CR = CO</b> + <b>平衡咬合</b>（不是 MPO）</li>
+<li>邊界鑲嵌用 <b>Compound</b>，最終印模用 <b>ZOE paste</b></li>
+<li>Denture Stomatitis：念珠菌感染，Newton 三型，最大危險因子 = <b>夜間不摘除</b></li>
+<li>Post Dam 位於硬軟顎交界後 <b>1-2 mm</b></li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第五章：固定補綴 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch5">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch5)">CHAPTER 5</div>
+  <h1>固定的藝術</h1>
+  <div class="ch-subtitle">牙冠預備、Pontic、黏合劑</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明左邊缺的那顆牙，前後都有健康的牙齒。這種情況最適合做<b>固定牙橋（FPD）</b>— 磨兩邊的牙齒做牙冠，中間接一顆假牙橋體。不用摘戴，跟真牙一樣。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">磨牙齒要磨多少？有什麼原則？</div></div>
+</div>
+
+<h2>牙冠預備的關鍵數值</h2>
+
+<div class="visual">
+<div class="v-card"><div class="big">6&deg;</div><div class="label">Taper（錐度）</div><div class="desc">理想單側傾斜角<br>最大 12&deg;</div></div>
+<div class="v-card"><div class="big">3.5-4mm</div><div class="label">軸壁高度</div><div class="desc">後牙固位最小要求</div></div>
+<div class="v-card"><div class="big">20-40&mu;m</div><div class="label">Die Spacer</div><div class="desc">Cement space 的來源</div></div>
+</div>
+
+<!-- Taper 圖解 -->
+<div class="diagram">
+<svg viewBox="0 0 500 200" width="500" height="200" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .tp-lbl{font-family:'Noto Sans TC',sans-serif;font-weight:700;text-anchor:middle}
+  </style>
+
+  <!-- Too much taper (bad) -->
+  <text x="85" y="20" class="tp-lbl" style="fill:#c0392b;font-size:13px">Taper 太大</text>
+  <text x="85" y="35" style="font-size:10px;fill:#c0392b;text-anchor:middle">固位差，帽子會滑掉</text>
+  <polygon points="55,180 115,180 100,50 70,50" fill="#f5ecd8" stroke="#8B6914" stroke-width="2"/>
+  <!-- angle lines -->
+  <line x1="55" y1="180" x2="70" y2="50" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="115" y1="180" x2="100" y2="50" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="85" y="195" style="font-size:10px;fill:#c0392b;text-anchor:middle">> 12&deg; 每側</text>
+
+  <!-- Ideal taper (good) -->
+  <text x="250" y="20" class="tp-lbl" style="fill:#27ae60;font-size:13px">理想 Taper</text>
+  <text x="250" y="35" style="font-size:10px;fill:#27ae60;text-anchor:middle">固位最佳!</text>
+  <polygon points="225,180 275,180 268,50 232,50" fill="#d4edda" stroke="#27ae60" stroke-width="2"/>
+  <line x1="225" y1="180" x2="232" y2="50" stroke="#27ae60" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="275" y1="180" x2="268" y2="50" stroke="#27ae60" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="250" y="195" style="font-size:10px;fill:#27ae60;text-anchor:middle;font-weight:700">6&deg; 每側 (共 12&deg;)</text>
+  <!-- Crown cap -->
+  <path d="M228,55 L272,55 L278,48 Q250,38 222,48 Z" fill="#d4e6f1" stroke="#2980b9" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="250" y="46" style="font-size:8px;fill:#2980b9;text-anchor:middle">牙冠帽子</text>
+
+  <!-- Too little taper (bad) -->
+  <text x="415" y="20" class="tp-lbl" style="fill:#c0392b;font-size:13px">Taper 太小</text>
+  <text x="415" y="35" style="font-size:10px;fill:#c0392b;text-anchor:middle">帽子套不上去</text>
+  <polygon points="398,180 432,180 430,50 400,50" fill="#f5ecd8" stroke="#8B6914" stroke-width="2"/>
+  <line x1="398" y1="180" x2="400" y2="50" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,2"/>
+  <line x1="432" y1="180" x2="430" y2="50" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="415" y="195" style="font-size:10px;fill:#c0392b;text-anchor:middle">&lt; 3&deg; 太直</text>
+</svg>
+<div class="caption">Taper 錐度比較 — 理想每側 6&deg;（兩側共 12&deg;），太大易滑脫，太小套不上</div>
+</div>
+
+<div class="analogy">
+<div class="analogy-title">比喻：磨牙就像削鉛筆</div>
+把牙齒想成一支鉛筆。你要把它削成稍微有錐度的圓柱，好讓「牙冠帽子」套上去。<br>
+<b>削太尖</b>（taper 太大）→ 帽子容易滑掉（固位差）<br>
+<b>削太直</b>（taper 太小）→ 帽子套不上去<br>
+理想的削法是每邊 <b>6 度</b>，兩邊加起來共 12 度的收斂角。
+</div>
+
+<h2>邊界設計（Margin Design）</h2>
+
+<!-- Margin Design 截面圖 -->
+<div class="diagram">
+<svg viewBox="0 0 520 160" width="520" height="160" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .mg-tooth{fill:#f5ecd8;stroke:#8B6914;stroke-width:2}
+    .mg-crown{fill:#d4e6f1;stroke:#2980b9;stroke-width:1.5}
+    .mg-lbl{font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:700;text-anchor:middle}
+  </style>
+
+  <!-- Feather edge -->
+  <text x="60" y="18" class="mg-lbl" style="fill:#c0392b">Feather Edge</text>
+  <text x="60" y="32" style="font-size:9px;fill:#c0392b;text-anchor:middle;font-weight:600">避免!</text>
+  <polygon points="25,140 95,140 95,50 80,40" class="mg-tooth"/>
+  <polygon points="80,40 95,50 95,45 82,38" class="mg-crown"/>
+  <!-- sharp edge indication -->
+  <circle cx="82" cy="39" r="8" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="2,2"/>
+
+  <!-- Chamfer -->
+  <text x="190" y="18" class="mg-lbl" style="fill:#27ae60">Chamfer</text>
+  <text x="190" y="32" style="font-size:9px;fill:#27ae60;text-anchor:middle;font-weight:600">最常用!</text>
+  <path d="M155,140 L155,60 Q158,48 170,45 L225,45 L225,140 Z" class="mg-tooth"/>
+  <path d="M170,45 Q158,48 155,60 Q162,52 172,48 Z" class="mg-crown"/>
+  <!-- rounded chamfer -->
+  <circle cx="162" cy="52" r="8" fill="none" stroke="#27ae60" stroke-width="1.5" stroke-dasharray="2,2"/>
+
+  <!-- Shoulder -->
+  <text x="320" y="18" class="mg-lbl" style="fill:#2980b9">Shoulder</text>
+  <text x="320" y="32" style="font-size:9px;fill:#2980b9;text-anchor:middle;font-weight:600">全瓷冠</text>
+  <path d="M285,140 L285,55 L300,55 L300,45 L355,45 L355,140 Z" class="mg-tooth"/>
+  <path d="M300,55 L285,55 L285,50 L300,45 Z" class="mg-crown"/>
+  <!-- right angle -->
+  <rect x="285" y="48" width="7" height="7" fill="none" stroke="#2980b9" stroke-width="1.5"/>
+
+  <!-- Shoulder + Bevel -->
+  <text x="450" y="18" class="mg-lbl" style="fill:#8e44ad">Shoulder+Bevel</text>
+  <text x="450" y="32" style="font-size:9px;fill:#8e44ad;text-anchor:middle;font-weight:600">PFM金屬側</text>
+  <path d="M415,140 L415,55 L430,55 L440,42 L485,42 L485,140 Z" class="mg-tooth"/>
+  <path d="M430,55 L415,55 L415,50 L430,55 Z" class="mg-crown"/>
+  <line x1="430" y1="55" x2="440" y2="42" stroke="#8e44ad" stroke-width="2"/>
+  <!-- bevel angle -->
+  <text x="442" y="62" style="font-size:8px;fill:#8e44ad">45&deg;</text>
+</svg>
+<div class="caption">四種邊界設計截面 — 注意 Feather edge 太薄易 overcontouring，Chamfer 最泛用</div>
+</div>
+
+<table>
+<tr><th>類型</th><th>形狀</th><th>用在哪裡</th></tr>
+<tr><td class="td-r"><b>Feather edge</b></td><td>最薄的刀鋒</td><td>應避免！最易 <b>overcontouring</b></td></tr>
+<tr><td class="td-g"><b>Chamfer</b></td><td>圓弧凹入</td><td>金屬冠、PFM 舌側 → <b>最常用</b></td></tr>
+<tr><td class="td-b"><b>Shoulder</b></td><td>垂直平台</td><td>全瓷冠頰側（需要厚度支撐陶瓷）</td></tr>
+<tr><td>Shoulder + Bevel</td><td>肩台加斜面</td><td>PFM 金屬頰側，提供 burnish 空間</td></tr>
+</table>
+
+<h2>影響固位力的因素</h2>
+
+<p>牙冠做好了，靠什麼黏住不掉？影響固位的因素很多：</p>
+<table>
+<tr><th>因素</th><th>原則</th></tr>
+<tr><td>Taper 角度</td><td>越<b>小</b>越好固位</td></tr>
+<tr><td>軸壁高度</td><td>越<b>高</b>越好固位（最重要因素之一）</td></tr>
+<tr><td>表面積</td><td>越<b>大</b>越好固位</td></tr>
+<tr><td>Cement 厚度</td><td>越<b>薄</b>越好固位（< 50 &mu;m）</td></tr>
+<tr><td>Retention groove</td><td>通常加在<b>近心</b>側</td></tr>
+</table>
+
+<h2>橋體（Pontic）設計</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">中間那顆假牙（橋體）底部跟牙肉的關係是什麼？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">這是設計的關鍵！底部接觸方式不同，清潔和美觀差很多。</div></div>
+</div>
+
+<!-- Pontic 設計橫截面圖 -->
+<div class="diagram">
+<svg viewBox="0 0 560 200" width="560" height="200" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .pontic{fill:#f5ecd8;stroke:#8B6914;stroke-width:2}
+    .ridge{fill:#f0a0a0;stroke:#d06060;stroke-width:1.5}
+    .p-lbl{font-family:'Noto Sans TC',sans-serif;font-size:11px;fill:#2d2a26;font-weight:700;text-anchor:middle}
+    .p-sub{font-family:'Noto Sans TC',sans-serif;font-size:9px;fill:#5a5550;text-anchor:middle}
+    .p-gap{fill:#e8f4fd;stroke:none}
+  </style>
+
+  <!-- Sanitary -->
+  <text x="70" y="20" class="p-lbl" style="font-size:12px">Sanitary</text>
+  <text x="70" y="34" class="p-sub" style="fill:#27ae60">後牙首選</text>
+  <path d="M30,120 Q70,100 110,120" class="ridge"/>
+  <rect x="42" y="50" width="56" height="40" rx="6" class="pontic"/>
+  <!-- gap between pontic and ridge -->
+  <rect x="42" y="90" width="56" height="15" class="p-gap"/>
+  <text x="70" y="100" style="font-size:8px;fill:#2980b9;text-anchor:middle">間隙</text>
+
+  <!-- Modified Ridge Lap -->
+  <text x="210" y="20" class="p-lbl" style="font-size:12px">Modified Ridge Lap</text>
+  <text x="210" y="34" class="p-sub" style="fill:#27ae60">前牙最常用</text>
+  <path d="M170,120 Q210,100 250,120" class="ridge"/>
+  <path d="M182,50 L238,50 Q244,50 244,56 L244,90 Q244,105 230,112 Q210,100 195,112 L182,90 Q178,84 178,80 L178,56 Q178,50 182,50 Z" class="pontic"/>
+  <text x="175" y="112" style="font-size:7px;fill:#2980b9">頰側接觸</text>
+  <text x="237" y="112" style="font-size:7px;fill:#27ae60">舌側開放</text>
+
+  <!-- Ridge Lap -->
+  <text x="350" y="20" class="p-lbl" style="font-size:12px;fill:#c0392b">Ridge Lap</text>
+  <text x="350" y="34" class="p-sub" style="fill:#c0392b">不建議使用!</text>
+  <path d="M310,120 Q350,100 390,120" class="ridge"/>
+  <path d="M322,50 L378,50 Q384,50 384,56 L384,110 Q384,118 370,118 Q350,100 330,118 Q316,118 316,110 L316,56 Q316,50 322,50 Z" fill="#ffcccc" stroke="#c0392b" stroke-width="2"/>
+  <text x="350" y="145" style="font-size:8px;fill:#c0392b;text-anchor:middle;font-weight:700">兩側包覆=清潔死角</text>
+
+  <!-- Ovate -->
+  <text x="490" y="20" class="p-lbl" style="font-size:12px">Ovate</text>
+  <text x="490" y="34" class="p-sub">需手術預備</text>
+  <path d="M450,120 Q470,115 490,108 Q510,115 530,120" class="ridge"/>
+  <!-- depression -->
+  <ellipse cx="490" cy="112" rx="18" ry="10" fill="#fce4ec" stroke="#d06060" stroke-width="1" stroke-dasharray="2,2"/>
+  <path d="M462,50 L518,50 Q524,50 524,56 L524,95 Q524,112 505,112 Q490,122 475,112 Q456,112 456,95 L456,56 Q456,50 462,50 Z" class="pontic"/>
+  <text x="490" y="140" style="font-size:8px;fill:#8e44ad;text-anchor:middle">伸入凹陷=最自然</text>
+
+  <!-- buccal/lingual labels -->
+  <text x="10" y="170" style="font-size:10px;fill:#888">← 頰側</text>
+  <text x="510" y="170" style="font-size:10px;fill:#888">舌側 →</text>
+</svg>
+<div class="caption">四種 Pontic 橫截面比較 — 注意底部與牙嵴的接觸方式差異</div>
+</div>
+
+<table>
+<tr><th>類型</th><th>接觸方式</th><th>特色</th></tr>
+<tr><td class="td-b">Sanitary</td><td>完全不接觸黏膜</td><td>最好清潔，但不美觀 → <b>下顎後牙</b>首選</td></tr>
+<tr><td class="td-g">Modified Ridge Lap</td><td>只接觸頰側，舌側開放</td><td>美觀+清潔折衷 → <b>前牙區最常用</b></td></tr>
+<tr><td class="td-r">Ridge Lap</td><td>頰舌兩側都包覆</td><td>清潔死角 → <b>幾乎不再使用</b></td></tr>
+<tr><td>Ovate</td><td>伸入拔牙位凹陷</td><td>最自然的齦緣，但需手術預備</td></tr>
+</table>
+
+<h2>Pier Abutment 問題</h2>
+
+<p>如果做一座五顆牙的長橋（例如 #2-#4-#6），中間 #4 就是 <b>Pier Abutment</b>。問題是：兩端咬合力不平衡，以 #4 為支點，一端翹起→黏合劑脫落。</p>
+
+<div class="key">
+解決方案：<b>Non-rigid connector（非剛性連接體）</b><br>
+在 Pier 的<strong>遠心側</strong>（distal）設一個可以微動的 key-keyway 接頭。<br>
+放遠心 = 正確 / 放近心 = 錯誤。
+</div>
+
+<h2>黏合劑（Cement）</h2>
+
+<table>
+<tr><th>種類</th><th>特點</th><th>注意</th></tr>
+<tr><td class="td-b">Zinc Phosphate</td><td>傳統首選，固位佳</td><td>酸性強，刺激牙髓</td></tr>
+<tr><td>GIC</td><td>釋放氟，化學鍵結</td><td>強度較低</td></tr>
+<tr><td class="td-g"><b>Resin Cement</b></td><td>固位力最強</td><td>全瓷冠必用</td></tr>
+<tr><td class="td-r">ZOE</td><td>臨時黏著</td><td>丁香油<b>抑制 Resin 聚合</b>！</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 重要陷阱</div>
+臨時冠如果用了 ZOE cement → 換永久 Resin cement 之前，<b>必須徹底清除 ZOE 殘留</b>，否則 Resin 聚合不完全！<br>
+Frozen Slab Technique：在冰冷玻璃板上調 Zinc Phosphate cement → <b>延長 Working time，但 Setting time 不變</b>。
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>Taper 理想 <b>6&deg;</b>，軸壁高度 <b>&ge; 3.5-4mm</b></li>
+<li>Feather edge 最易 <b>overcontouring</b>，Chamfer <b>最常用</b></li>
+<li>Die spacer <b>20-40 &mu;m</b>，離 margin <b>1mm</b> 上方才塗</li>
+<li>前牙 Pontic 首選 <b>Modified Ridge Lap</b>，後牙首選 <b>Sanitary</b></li>
+<li>Pier Abutment 的 Non-rigid connector 放在 <b>Pier 遠心側</b></li>
+<li>ZOE 的丁香油<b>抑制 Resin 聚合</b></li>
+<li>Resin Cement 固位力最強 → 全瓷冠必用</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第六章：材料 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch6">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch6)">CHAPTER 6</div>
+  <h1>材料的秘密</h1>
+  <div class="ch-subtitle">印模材、陶瓷、包埋鑄造</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">前面一直提到各種印模材料，到底差在哪裡？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">印模材就像相機 — 有手機相機（Alginate，方便但畫質普通），也有專業相機（Addition Silicone，精確但貴）。重點是：每種材料都有自己的「個性」和「地雷」。</div></div>
+</div>
+
+<h2>四大彈性印模材</h2>
+
+<table>
+<tr><th>材料</th><th>精確度</th><th>穩定性</th><th>副產物</th><th>地雷</th></tr>
+<tr><td class="td-b"><b>Alginate</b></td><td>低</td><td class="td-r">差</td><td>水</td><td>取完要<b>立即灌模</b></td></tr>
+<tr><td class="td-b"><b>Polyether</b></td><td class="td-g">最高</td><td class="td-g">好</td><td>無</td><td>親水性 → <b>吸水膨脹</b>，別泡水！硬 → 倒凹多時難取出</td></tr>
+<tr><td class="td-b"><b>Addition Silicone</b></td><td class="td-g">最高</td><td class="td-g">最佳</td><td class="td-r">氫氣</td><td>乳膠手套的<b>硫</b>抑制聚合！灌模前等 <b>>30 分鐘</b>排氫氣</td></tr>
+<tr><td class="td-b"><b>Condensation Silicone</b></td><td>中</td><td class="td-r">差</td><td class="td-r">酒精</td><td>酒精揮發→收縮，1hr 內灌模</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; Addition Silicone 的兩大地雷</div>
+1. <b>乳膠手套含硫</b> → 接觸到矽膠表面會軟化不硬化 → 必須改用 vinyl 或 nitrile 手套<br>
+2. <b>副產物氫氣</b> → 剛取完印模內有氣泡 → 灌模前等 30 分鐘以上
+</div>
+
+<div class="mnemonic">
+<div class="title">精確度排名記憶法</div>
+<div class="content">Addition Silicone = Polyether > Condensation > Alginate<br>（加聚 = 聚醚 > 縮聚 > 藻）</div>
+</div>
+
+<h2>陶瓷材料</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">PFM、全瓷冠、Zirconia，到底怎麼分？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">想像建築：PFM 是鋼骨結構外面貼瓷磚，全瓷是整棟都用玻璃蓋，Zirconia 是用超級硬的人造鑽石做結構。</div></div>
+</div>
+
+<table>
+<tr><th>材料</th><th>強度</th><th>美觀</th><th>適用</th></tr>
+<tr><td>Feldspathic（長石質）</td><td>低</td><td class="td-g">最佳</td><td>前牙貼面</td></tr>
+<tr><td>Leucite（IPS Empress）</td><td>中</td><td>佳</td><td>前牙單冠</td></tr>
+<tr><td class="td-g"><b>Lithium Disilicate（e.max）</b></td><td>中高</td><td>佳</td><td>前後牙單冠、短橋</td></tr>
+<tr><td class="td-b"><b>Zirconia</b></td><td class="td-g">最高</td><td>傳統較差</td><td>後牙冠橋、全口重建</td></tr>
+</table>
+
+<div class="key">
+<b>Zirconia 為什麼這麼強？</b> — Stress-Induced Phase Transformation（應力誘發相轉換）<br>
+裂縫尖端有應力 → 四方晶轉為單斜晶 → 體積<b>膨脹</b> → <b>壓縮裂縫</b> → 裂縫停止擴展 → 自我強化！
+</div>
+
+<h3>PFM 關鍵數值</h3>
+<table>
+<tr><td class="td-b">燒附前焊溫度</td><td>1110-1127&deg;C</td></tr>
+<tr><td class="td-b">燒附後焊溫度</td><td>710-743&deg;C</td></tr>
+<tr><td class="td-b">燒結體積收縮</td><td>> 20%</td></tr>
+<tr><td class="td-b">Metal coping 表面</td><td>要<b>光滑</b>（增加 wetting，利於瓷結合）</td></tr>
+</table>
+
+<h2>包埋材料</h2>
+<table>
+<tr><th>種類</th><th>適用</th></tr>
+<tr><td class="td-b"><b>Gypsum-bonded</b>（石膏結合型）</td><td>金合金（低熔點，< 700&deg;C）</td></tr>
+<tr><td class="td-b"><b>Phosphate-bonded</b>（磷酸鹽結合型）</td><td>Ni-Cr、Co-Cr、PFM framework（高熔點，> 700&deg;C）</td></tr>
+</table>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>Addition Silicone：<b>乳膠手套含硫 = 禁忌</b>，灌模前等 <b>30 分鐘</b>排氫氣</li>
+<li>Polyether：親水性最佳但<b>不能泡水</b>（吸水膨脹）</li>
+<li>Zirconia 強度高的原因：<b>應力誘發相轉換</b>（tetragonal → monoclinic → 體積膨脹壓裂縫）</li>
+<li>PFM 燒結收縮 <b>> 20%</b>，coping 要<b>光滑</b></li>
+<li>Gypsum-bonded → 金合金；Phosphate-bonded → PFM / 高熔點合金</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第七章：咬合 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch7">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch7)">CHAPTER 7</div>
+  <h1>咬合的平衡</h1>
+  <div class="ch-subtitle">MPO、咬合器、Hanau's Quint</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">前面提到天然牙要 MPO、全口義齒要平衡咬合，到底差在哪裡？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">這是整個咬合學的核心，讓我好好解釋。</div></div>
+</div>
+
+<h2>MPO（Mutually Protected Occlusion）</h2>
+
+<p>MPO 又叫<b>犬齒保護咬合</b>，是天然牙的黃金標準。核心邏輯是「互相保護」：</p>
+
+<div class="analogy">
+<div class="analogy-title">比喻：日夜班保全</div>
+<b>正中咬合（CO）時</b>：後牙接觸、前牙不碰 → 後牙當「日班保全」，保護前牙不被垂直力磨耗<br>
+<b>側方/前突運動時</b>：前牙（犬齒）引導、後牙全分離 → 犬齒當「夜班保全」，保護後牙不受側向力破壞
+</div>
+
+<!-- MPO 圖解 -->
+<div class="diagram">
+<svg viewBox="0 0 520 200" width="520" height="200" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .mpo-tooth{rx:3;stroke-width:1.5}
+    .mpo-lbl{font-family:'Noto Sans TC',sans-serif;font-weight:700;text-anchor:middle}
+  </style>
+  <!-- CO 時 -->
+  <text x="130" y="20" class="mpo-lbl" style="font-size:14px;fill:#2980b9">正中咬合（CO）時</text>
+  <!-- upper jaw -->
+  <text x="15" y="55" style="font-size:10px;fill:#888">上顎</text>
+  <!-- anterior not touching -->
+  <rect x="60" y="40" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="85" y="40" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="110" y="40" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <!-- posterior touching -->
+  <rect x="140" y="40" width="24" height="20" class="mpo-tooth" fill="#d4edda" stroke="#27ae60"/>
+  <rect x="168" y="40" width="24" height="20" class="mpo-tooth" fill="#d4edda" stroke="#27ae60"/>
+  <rect x="196" y="40" width="24" height="20" class="mpo-tooth" fill="#d4edda" stroke="#27ae60"/>
+  <!-- lower jaw -->
+  <text x="15" y="85" style="font-size:10px;fill:#888">下顎</text>
+  <rect x="60" y="70" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="85" y="70" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="110" y="70" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="140" y="70" width="24" height="20" class="mpo-tooth" fill="#d4edda" stroke="#27ae60"/>
+  <rect x="168" y="70" width="24" height="20" class="mpo-tooth" fill="#d4edda" stroke="#27ae60"/>
+  <rect x="196" y="70" width="24" height="20" class="mpo-tooth" fill="#d4edda" stroke="#27ae60"/>
+  <!-- gap for anterior -->
+  <line x1="60" y1="63" x2="132" y2="63" stroke="#c0392b" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="96" y="105" style="font-size:9px;fill:#c0392b;font-weight:700;text-anchor:middle">前牙不碰!</text>
+  <!-- contact for posterior -->
+  <text x="180" y="105" style="font-size:9px;fill:#27ae60;font-weight:700;text-anchor:middle">後牙接觸</text>
+
+  <!-- Lateral 時 -->
+  <text x="390" y="20" class="mpo-lbl" style="font-size:14px;fill:#e67e22">側方運動時</text>
+  <!-- upper jaw -->
+  <rect x="300" y="40" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <!-- canine touching -->
+  <rect x="325" y="40" width="22" height="24" class="mpo-tooth" fill="#fff3cd" stroke="#e67e22" stroke-width="2"/>
+  <rect x="350" y="40" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="380" y="40" width="24" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="408" y="40" width="24" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="436" y="40" width="24" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <!-- lower -->
+  <rect x="300" y="76" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="325" y="68" width="22" height="24" class="mpo-tooth" fill="#fff3cd" stroke="#e67e22" stroke-width="2"/>
+  <rect x="350" y="76" width="22" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="380" y="76" width="24" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="408" y="76" width="24" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <rect x="436" y="76" width="24" height="20" class="mpo-tooth" fill="#ffe0e0" stroke="#c0392b"/>
+  <!-- canine label -->
+  <line x1="336" y1="64" x2="336" y2="68" stroke="#e67e22" stroke-width="2"/>
+  <text x="336" y="120" style="font-size:9px;fill:#e67e22;font-weight:700;text-anchor:middle">犬齒引導!</text>
+  <text x="420" y="120" style="font-size:9px;fill:#c0392b;font-weight:700;text-anchor:middle">後牙全分離</text>
+
+  <!-- Legend -->
+  <rect x="60" y="145" width="14" height="14" rx="2" fill="#d4edda" stroke="#27ae60"/>
+  <text x="80" y="157" style="font-size:10px;fill:#333">= 接觸</text>
+  <rect x="140" y="145" width="14" height="14" rx="2" fill="#ffe0e0" stroke="#c0392b"/>
+  <text x="160" y="157" style="font-size:10px;fill:#333">= 不碰</text>
+  <rect x="220" y="145" width="14" height="14" rx="2" fill="#fff3cd" stroke="#e67e22"/>
+  <text x="240" y="157" style="font-size:10px;fill:#333">= 犬齒引導</text>
+
+  <!-- Summary -->
+  <rect x="60" y="170" width="400" height="24" rx="6" fill="#e8f4fd"/>
+  <text x="260" y="186" style="font-size:11px;fill:#2980b9;font-weight:700;text-anchor:middle">後牙保護前牙（CO時） ←互相保護→ 犬齒保護後牙（側方時）</text>
+</svg>
+<div class="caption">MPO = 互相保護咬合：CO 時後牙咬、側方時只有犬齒引導</div>
+</div>
+
+<h3>MPO 四大條件</h3>
+<table>
+<tr><th>#</th><th>條件</th></tr>
+<tr><td class="td-b">1</td><td><b>CR = CO</b>（正中關係 = 正中咬合）</td></tr>
+<tr><td class="td-b">2</td><td>CO 時：<b>後牙接觸</b>、前牙<b>不接觸</b></td></tr>
+<tr><td class="td-b">3</td><td>側方及前突運動時：<b>只有犬齒接觸</b>，後牙全部分離</td></tr>
+<tr><td class="td-b">4</td><td>牙周健康、Angle Class I</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 常見陷阱</div>
+「側方運動時，工作側後牙有接觸」→ 這是 <b>Group Function</b>（群功能咬合），<b>不是 MPO</b>！<br>
+MPO = 只有犬齒引導 → 工作側和非工作側後牙都不接觸。
+</div>
+
+<h3>MPO 不適用的三種情況</h3>
+<table>
+<tr><td class="td-r">Angle Class II / III</td><td>前牙關係異常，犬齒無法引導</td></tr>
+<tr><td class="td-r">全口義齒</td><td>改用平衡咬合</td></tr>
+<tr><td class="td-r">嚴重磨牙症</td><td>犬齒磨耗，引導功能喪失 → 改用 Group Function</td></tr>
+</table>
+
+<h2>Hanau's Quint（漢諾五因素）</h2>
+
+<p>這是控制全口義齒平衡咬合的五個關鍵旋鈕：</p>
+
+<div class="visual">
+<div class="v-card"><div class="big">1</div><div class="label">Condylar Guidance</div><div class="desc">髁突引導角<br><b>不能改</b></div></div>
+<div class="v-card"><div class="big">2</div><div class="label">Incisal Guidance</div><div class="desc">前牙引導角<br><b>不能改</b></div></div>
+<div class="v-card"><div class="big">3</div><div class="label">Cusp Angle</div><div class="desc">牙尖角度<br>可調整</div></div>
+<div class="v-card"><div class="big">4</div><div class="label">Comp. Curve</div><div class="desc">補償曲線<br>可調整</div></div>
+<div class="v-card"><div class="big">5</div><div class="label">Occlusal Plane</div><div class="desc">咬合平面<br>可調整</div></div>
+</div>
+
+<div class="key">
+五因素中，1 和 2 由患者的<b>解剖結構</b>決定，<b>不能改</b>。<br>
+3、4、5 可以透過選牙和排牙來調整。<br>
+<strong>記法：</strong>前兩個（跟人體有關的）不能改，後三個（跟假牙有關的）可以調。
+</div>
+
+<h2>咬合器（Articulator）</h2>
+
+<table>
+<tr><th>Class</th><th>名稱</th><th>功能</th></tr>
+<tr><td class="td-b">I</td><td>Simple</td><td>只能開閉口（像鉸鏈）</td></tr>
+<tr><td class="td-g"><b>II</b></td><td><b>Semi-adjustable</b></td><td>可模擬部分下顎運動 → <b>臨床最常用</b></td></tr>
+<tr><td class="td-b">III</td><td>Fully adjustable</td><td>完全複製所有下顎運動（複雜病例）</td></tr>
+<tr><td class="td-b">IV</td><td>Arcon type</td><td>髁球在下顎（符合解剖）</td></tr>
+</table>
+
+<div class="key">
+<b>Arcon</b> = 髁球在下顎（anatomically correct）<br>
+<b>Non-Arcon</b> = 髁球在上顎（相反）<br>
+Arcon 較精確，代表：Whipmix、Denar<br>
+Non-Arcon 代表：Hanau
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>MPO 四條件</b>：CR=CO、CO 時後牙碰前牙不碰、側方只有犬齒引導、Class I + 牙周健康</li>
+<li>側方運動工作側後牙有接觸 = <b>Group Function</b>（不是 MPO）</li>
+<li><b>Hanau's Quint</b>：前兩個（Condylar + Incisal guidance）不能改，後三個可調</li>
+<li>全口義齒 = <b>平衡咬合</b>（兩邊同時接觸）；天然牙 = <b>MPO</b></li>
+<li>Arcon（髁球在下顎）= 符合解剖 = 較精確</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第八章：TMD -->
+<!-- ============================================ -->
+<div class="chapter" id="ch8">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch8)">CHAPTER 8</div>
+  <h1>關節的煩惱</h1>
+  <div class="ch-subtitle">TMD 分類、診斷與治療</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，我最近張嘴有喀喀聲，有時候嘴巴張不開，是怎麼了？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明，這可能是<b>顳顎關節紊亂症（TMD）</b>。讓我檢查一下。</div></div>
+</div>
+
+<h2>TMD 四大類型</h2>
+
+<table>
+<tr><th>類型</th><th>特徵</th><th>關鍵鑑別</th></tr>
+<tr><td class="td-b"><b>肌肉性（Myofascial pain）</b></td><td>咀嚼肌痠痛、壓痛</td><td>沒有關節聲音</td></tr>
+<tr><td class="td-b"><b>關節盤前移位 WITH reduction</b></td><td>張口時 <b>Click</b>（彈響）</td><td>Click 後功能正常（盤子有回位）</td></tr>
+<tr><td class="td-r"><b>關節盤前移位 WITHOUT reduction</b></td><td><b>嘴巴張不開</b>（< 40mm）</td><td>「閉鎖」（Closed lock），沒有 click</td></tr>
+<tr><td class="td-b"><b>退化性（Osteoarthritis）</b></td><td><b>Crepitus</b>（骨擦音）</td><td>X 光可見骨變化</td></tr>
+</table>
+
+<div class="key">
+<b>Click</b>（彈響）= 關節盤快速移位的聲音 → <b>With reduction</b><br>
+<b>Crepitus</b>（摩擦音）= 骨對骨摩擦 → <b>Osteoarthritis</b> 或盤穿孔<br>
+正常張口度 <b>&ge; 40mm</b>，< 40mm = limited opening
+</div>
+
+<h2>治療原則：由保守到積極</h2>
+
+<div class="steps">
+<div class="step">衛教 + 自我護理（熱敷、軟食、不要大張口）</div>
+<div class="step">咬合板治療（Night guard）</div>
+<div class="step">物理治療（肌肉放鬆、超音波）</div>
+<div class="step">藥物（NSAIDs、肌肉鬆弛劑）</div>
+<div class="step">關節腔注射（透明質酸、類固醇）</div>
+<div class="step">手術（關節鏡 → 開放手術，最後手段）</div>
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>With reduction</b> = Click；<b>Without reduction</b> = Closed lock（張不開、沒有 Click）</li>
+<li><b>Crepitus</b> = 骨擦音 = Osteoarthritis</li>
+<li>正常張口 <b>&ge; 40mm</b></li>
+<li>治療順序：保守 → 積極（衛教 → 咬合板 → 物理 → 藥物 → 注射 → 手術）</li>
+<li>TMD 是多因素疾病，單一咬合因素不一定直接導致</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第九章：美學 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch9">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch9)">CHAPTER 9</div>
+  <h1>最後的追求</h1>
+  <div class="ch-subtitle">美學、Biological Width、比色學</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，我前面的牙齒可以做漂亮一點嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">當然可以！但做美觀修復之前，我們必須先搞懂一個最基本的東西：<b>Biological Width（生物學寬度）</b>。如果侵犯了這條線，再漂亮的假牙都會失敗。</div></div>
+</div>
+
+<h2>Biological Width</h2>
+
+<div class="analogy">
+<div class="analogy-title">比喻：牙齒的「安全距離」</div>
+想像牙齒是一棟房子，牙齦是圍牆。圍牆跟房子之間有一段「不能動」的安全距離 — 這就是 Biological Width。如果你的修復體邊緣侵入了這個距離，圍牆就會開始崩壞（牙周發炎、骨吸收）。
+</div>
+
+<!-- Biological Width 圖解 -->
+<div class="diagram">
+<svg viewBox="0 0 420 340" width="420" height="340" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .bw-tooth{fill:#f5ecd8;stroke:#8B6914;stroke-width:2}
+    .bw-gum{fill:#f0a0a0;stroke:#d06060;stroke-width:1.5}
+    .bw-bone{fill:#d4c4a0;stroke:#a09060;stroke-width:2}
+    .bw-lbl{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:12px}
+    .bw-dim{stroke:#c0392b;stroke-width:1.5;stroke-dasharray:3,2}
+    .bw-bracket{stroke:#c0392b;stroke-width:2;fill:none}
+  </style>
+
+  <!-- Bone -->
+  <rect x="30" y="240" width="360" height="80" rx="4" class="bw-bone"/>
+  <text x="150" y="285" style="font-size:13px;fill:#706040;font-weight:600">牙槽骨</text>
+
+  <!-- Tooth -->
+  <rect x="150" y="20" width="70" height="280" rx="8" class="bw-tooth"/>
+  <text x="162" y="70" style="font-size:12px;fill:#8B6914;font-weight:600">牙齒</text>
+
+  <!-- Gingiva -->
+  <path d="M30,180 Q90,140 150,165 L150,240 L30,240 Z" class="bw-gum"/>
+  <path d="M220,165 Q280,140 390,180 L390,240 L220,240 Z" class="bw-gum"/>
+  <text x="55" y="215" style="font-size:11px;fill:#903030;font-weight:600">牙齦</text>
+
+  <!-- Sulcus label -->
+  <line x1="135" y1="165" x2="135" y2="195" class="bw-dim"/>
+  <text x="50" y="185" class="bw-lbl" style="fill:#8e44ad">Sulcus 齦溝<br/></text>
+  <text x="50" y="195" style="font-size:10px;fill:#8e44ad">0.5~3mm</text>
+
+  <!-- JE zone -->
+  <rect x="146" y="195" width="8" height="25" fill="#ffcc00" opacity="0.5"/>
+  <line x1="110" y1="195" x2="146" y2="195" stroke="#e67e22" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="110" y1="220" x2="146" y2="220" stroke="#e67e22" stroke-width="1" stroke-dasharray="2,2"/>
+  <text x="15" y="212" class="bw-lbl" style="fill:#e67e22">JE 0.97mm</text>
+
+  <!-- CT zone -->
+  <rect x="146" y="220" width="8" height="28" fill="#66ccff" opacity="0.4"/>
+  <line x1="110" y1="220" x2="146" y2="220" stroke="#2980b9" stroke-width="1" stroke-dasharray="2,2"/>
+  <line x1="110" y1="248" x2="146" y2="248" stroke="#2980b9" stroke-width="1" stroke-dasharray="2,2"/>
+  <text x="15" y="240" class="bw-lbl" style="fill:#2980b9">CT 1.07mm</text>
+
+  <!-- BW bracket -->
+  <path d="M100,195 L95,195 L95,248 L100,248" class="bw-bracket"/>
+  <text x="40" y="222" style="font-size:10px;fill:#c0392b">Biological</text>
+  <text x="48" y="232" style="font-size:10px;fill:#c0392b">Width</text>
+
+  <!-- Bone crest line -->
+  <line x1="30" y1="248" x2="390" y2="248" stroke="#a09060" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="250" y="262" style="font-size:11px;fill:#706040;font-weight:600">← 牙槽嵴頂 →</text>
+
+  <!-- Right side: total -->
+  <path d="M240,165 L250,165 L250,248 L240,248" stroke="#c0392b" stroke-width="2" fill="none"/>
+  <text x="258" y="195" class="bw-lbl" style="fill:#c0392b;font-size:13px">至少</text>
+  <text x="258" y="212" style="fill:#c0392b;font-size:18px;font-weight:800">~3mm</text>
+  <text x="258" y="228" style="fill:#5a5550;font-size:10px">Sulcus + BW</text>
+
+  <!-- Warning zone -->
+  <rect x="260" y="285" width="150" height="40" rx="8" fill="#ffe0e0" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="272" y="305" style="font-size:11px;fill:#c0392b;font-weight:700">修復體邊緣</text>
+  <text x="272" y="320" style="font-size:11px;fill:#c0392b;font-weight:700">不可侵入 BW！</text>
+</svg>
+<div class="caption">Biological Width 結構示意 — JE + CT = 2mm，加上齦溝至少 3mm 的安全距離</div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">0.97mm</div><div class="label">Junctional Epithelium</div><div class="desc">結合上皮</div></div>
+<div class="v-card"><div class="big">1.07mm</div><div class="label">CT Attachment</div><div class="desc">結締組織附著</div></div>
+<div class="v-card"><div class="big" style="color:var(--red)">2.04mm</div><div class="label">Biological Width</div><div class="desc">= JE + CT<br>不可侵犯！</div></div>
+</div>
+
+<div class="key">
+<b>Biological Width = 0.97 + 1.07 &asymp; 2mm</b><br>
+齦溝深度（Sulcus）0.5-3mm 不包含在 Biological Width 內<br>
+從牙槽嵴頂到齦溝底 = BW + Sulcus &asymp; <strong>至少 3mm</strong><br>
+如果修復體邊緣侵入 BW → <strong>慢性牙周炎、骨吸收、齦緣紅腫</strong>
+</div>
+
+<h3>Crown Lengthening（牙冠延長術）</h3>
+<p>如果修復體邊緣需要往下延伸，但空間不夠，就要做牙冠延長術：</p>
+<table>
+<tr><th>手術類型</th><th>等待時間</th></tr>
+<tr><td>有骨切除</td><td><b>3-6 個月</b></td></tr>
+<tr><td>只切軟組織</td><td><b>3 個月</b></td></tr>
+</table>
+
+<h2>比色學（Shade Selection）</h2>
+
+<h3>Munsell 色彩系統三要素</h3>
+<table>
+<tr><th>參數</th><th>定義</th><th>牙科意義</th></tr>
+<tr><td class="td-b"><b>Hue</b>（色調）</td><td>顏色種類</td><td>牙齒通常是黃-橙色調</td></tr>
+<tr><td class="td-b"><b>Value</b>（明度）</td><td>亮暗程度</td><td><b>最影響美觀</b>，應優先確認</td></tr>
+<tr><td class="td-b"><b>Chroma</b>（彩度）</td><td>飽和度</td><td>Chroma < 4 最自然</td></tr>
+</table>
+
+<div class="key">
+比色順序：先 <strong>Value（明度）</strong> → 再 <strong>Hue（色調）</strong> → 最後 <strong>Chroma（彩度）</strong><br>
+比色時牙齒要<b>保持濕潤</b>，用自然光（北向窗戶）或標準比色燈<br>
+PFM 要改善透明感 → 加<b>紫色</b> external stain
+</div>
+
+<h2>Ceramic Veneer（陶瓷貼面）</h2>
+<table>
+<tr><td>厚度</td><td>0.3-0.7 mm</td></tr>
+<tr><td>邊界</td><td>盡量停在<b>釉質內</b>（黏著效果最好）</td></tr>
+<tr><td>黏合劑</td><td>必須用 <b>Resin Cement</b></td></tr>
+</table>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>Biological Width = JE(0.97) + CT(1.07) &asymp; 2mm</b></li>
+<li>侵犯 BW → 慢性牙周炎、骨吸收</li>
+<li>至少需要 <b>3mm attached gingiva</b> 才能保護 BW</li>
+<li>Crown lengthening 等待：有骨切除 <b>3-6 月</b>，只切軟組織 <b>3 月</b></li>
+<li>比色順序：<b>Value → Hue → Chroma</b></li>
+<li>Ceramic veneer 邊界停在<b>釉質內</b>，用 <b>Resin cement</b></li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 總結 -->
+<!-- ============================================ -->
+<div class="chapter" id="summary">
+<div class="ch-header">
+  <div class="ch-badge" style="background:#8B6914">總結</div>
+  <h1>阿明的旅程結束了</h1>
+  <div class="ch-subtitle">但你的旅程才剛開始</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，謝謝你！我現在可以好好吃東西了。</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">不客氣，阿明。記得晚上要把活動假牙拿下來清洗喔！</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">我也謝謝陳醫師，整個義齒學的架構我都懂了！</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">很好。現在你可以回去翻互動筆記，把每個考點的細節表格再看一遍。故事幫你建立骨架，數字和表格是肉，兩個加在一起才完整。加油！</div></div>
+</div>
+
+<h2>全書考點速覽</h2>
+
+<table>
+<tr><th>章節</th><th>核心考點</th></tr>
+<tr><td>Ch.2 Kennedy</td><td>看最遠端分類、Class IV 無 Mod、數區不數顆</td></tr>
+<tr><td>Ch.3 RPD</td><td>三要素方向、卡環末端 1/3 固位、RPI 近心 Rest、間接固位體越遠越好</td></tr>
+<tr><td>Ch.4 CD</td><td>FWS 2-4mm、CR=CO、平衡咬合、Denture Stomatitis 念珠菌</td></tr>
+<tr><td>Ch.5 FPD</td><td>Taper 6&deg;、Chamfer 最常用、Pier Abutment 遠心 NR connector</td></tr>
+<tr><td>Ch.6 材料</td><td>Addition Silicone 怕硫+排氫氣、Zirconia 相轉換</td></tr>
+<tr><td>Ch.7 咬合</td><td>MPO 四條件、Hanau's 前兩個不能改、Arcon 髁球在下顎</td></tr>
+<tr><td>Ch.8 TMD</td><td>Click=With reduction、Crepitus=OA、治療由保守到積極</td></tr>
+<tr><td>Ch.9 美學</td><td>BW=2mm（0.97+1.07）、比色 Value 先、Veneer 停釉質內</td></tr>
+</table>
+
+<div class="key" style="text-align:center;font-size:16px;margin-top:24px">
+<strong>接下來的步驟：</strong><br>
+打開 ya5 互動筆記，搭配故事書一起複習<br>
+做考古題，把不確定的考點標記回來查
+</div>
+</div>
+</div>
+
+<div class="footer">
+  <p>義齒學故事書 v1.0 | 距離國考還有一段路，但你每天都在前進</p>
+  <p style="margin-top:8px"><a href="index.html" style="color:var(--warm2);text-decoration:none">&#8592; 回到 ya5 互動筆記</a></p>
+</div>
+
+<script>
+// TOC toggle
+function toggleTOC(){
+  document.getElementById('toc').classList.toggle('show');
+}
+
+// Progress bar
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  const pct=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+  document.getElementById('progressFill').style.width=pct+'%';
+});
+</script>
+</body>
+</html>

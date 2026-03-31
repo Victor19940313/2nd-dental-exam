@@ -1709,8 +1709,11 @@
       <h1>🦷 牙醫國考練習本</h1>
       <div class="header-right">
         <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
-        <button class="btn-mode active" id="btn-home" onclick="history.back()">
-          首頁
+        <button class="btn-mode" id="btn-notes" onclick="location.href='../index.html'" title="回到互動筆記首頁">
+          回到筆記頁
+        </button>
+        <button class="btn-mode active" id="btn-home" onclick="showHome()">
+          考試首頁
         </button>
         <button class="btn-mode" id="btn-db" onclick="showDB()">資料庫</button>
         <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
@@ -2084,6 +2087,7 @@
       </div>
 
       <div class="nav-row">
+        <button class="btn-skip" onclick="showHome()" style="font-size:0.82rem">← 考試首頁</button>
         <button
           class="btn-prev"
           id="btn-prev"
@@ -2108,7 +2112,7 @@
       <div id="exam-res-wrong-list"></div>
       <div class="exam-res-actions">
         <button class="start-btn secondary" onclick="showHome()">
-          ← 返回首頁
+          ← 返回考試首頁
         </button>
         <button class="start-btn" id="exam-res-retry" onclick="retryWrong()">
           🔁 只練錯題

@@ -1,0 +1,95 @@
+const CACHE_NAME = 'dental-all-v4';
+const PRECACHE = [
+  '/',
+  '/index.html',
+  '/ya3/',
+  '/ya3/index.html',
+  '/ya3/ya3-data.js',
+  '/ya4/',
+  '/ya4/index.html',
+  '/ya4/os-data.js',
+  '/ya4/rad-data.js',
+  '/ya4/diagrams.js',
+  '/ya5/',
+  '/ya5/index.html',
+  '/ya5/prostho-data.js',
+  '/ya6/',
+  '/ya6/index.html',
+  '/ya6/ya6-data.js',
+  '/ya3/tw3-data.js',
+  '/ya4/tw4-data.js',
+  '/ya5/tw5-data.js',
+  '/ya6/tw6-data.js',
+  '/sync.js',
+  '/exam/',
+  '/exam/index.html',
+  '/exam/questions-data.js',
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+// Data files that update frequently → network first, fall back to cache
+const NETWORK_FIRST = [
+  'questions-data.js',
+  'ya3-data.js',
+  'prostho-data.js',
+  'os-data.js',
+  'rad-data.js',
+  'ya6-data.js',
+  'diagrams.js',
+  'tw3-data.js',
+  'tw4-data.js',
+  'tw5-data.js',
+  'tw6-data.js',
+];
+
+function isDataFile(url) {
+  return NETWORK_FIRST.some(f => url.includes(f));
+}
+
+self.addEventListener('fetch', e => {
+  if (e.request.url.includes('supabase')) return;
+  if (e.request.url.includes('firebase') || e.request.url.includes('firebaseio')) return;
+
+  if (isDataFile(e.request.url)) {
+    // Network first for data files (get updates immediately)
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cache first for everything else (HTML, icons, etc.)
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(res => {
+        if (res.ok && e.request.method === 'GET') {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
+        return res;
+      });
+    }).catch(() => caches.match('/index.html'))
+  );
+});

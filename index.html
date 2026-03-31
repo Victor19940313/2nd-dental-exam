@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>牙醫國考互動筆記</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f8f7f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:        #f8f7f0;
+  --bg-card:   #ffffff;
+  --grid-color: rgba(160,155,130,0.18);
+  --grid-size:  22px;
+  --text:      #2d2a22;
+  --text-sub:  #7a7060;
+  --border:    #e4e0d4;
+  --border-dk: #c8c3b0;
+  --shadow:    0 2px 10px rgba(0,0,0,.07);
+  --shadow-hover: 0 8px 28px rgba(0,0,0,.13);
+
+  /* 科目色 */
+  --ya3: #0e7490;   /* 青藍 — 根管牙周 */
+  --ya4: #7c3aed;   /* 紫   — 口外放射 */
+  --ya5: #3730a3;   /* 靛   — 補綴咬合 */
+  --ya6: #166534;   /* 綠   — 矯正兒牙 */
+  --exam:#b45309;   /* 琥珀 — 試題練習 */
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  color: var(--text);
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2.5rem 1.2rem;
+}
+
+/* ── Header ── */
+.badge{
+  display:inline-block;
+  background:var(--bg-card);border:1.5px solid var(--border-dk);
+  border-radius:999px;padding:.3rem 1rem;font-size:.72rem;
+  font-weight:700;color:var(--text-sub);letter-spacing:.07em;
+  margin-bottom:1.1rem;
+}
+h1{
+  font-size:1.8rem;font-weight:900;color:var(--text);
+  text-align:center;margin-bottom:.45rem;letter-spacing:-.01em;line-height:1.25;
+}
+.sub{
+  color:var(--text-sub);font-size:.88rem;text-align:center;margin-bottom:2.6rem;
+}
+
+/* ── Card Grid ── */
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1rem;
+  width:100%;max-width:480px;
+}
+@media(max-width:400px){.grid{grid-template-columns:1fr;}}
+
+a.card{
+  display:flex;flex-direction:column;align-items:center;
+  background:var(--bg-card);
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  padding:1.7rem 1rem 1.4rem;
+  text-decoration:none;
+  color:var(--text);
+  box-shadow: var(--shadow);
+  transition:transform .2s, box-shadow .2s, border-color .2s;
+  gap:.45rem;
+  position:relative;
+  overflow:hidden;
+}
+a.card::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;
+  height:4px;
+  border-radius:18px 18px 0 0;
+}
+a.card:hover,a.card:active{
+  transform:translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color:var(--border-dk);
+}
+
+a.card.ya3::before{ background:var(--ya3); }
+a.card.ya4::before{ background:var(--ya4); }
+a.card.ya5::before{ background:var(--ya5); }
+a.card.ya6::before{ background:var(--ya6); }
+a.card.exam::before{ background:var(--exam); }
+a.card.wide{ grid-column:1/-1; flex-direction:row; gap:1.2rem; padding:1.2rem 1.6rem; justify-content:flex-start; }
+
+.emoji{ font-size:2.2rem;line-height:1; }
+.year{
+  font-size:.68rem;font-weight:700;letter-spacing:.07em;
+  border-radius:999px;padding:.15rem .65rem;
+  background:#f0ede4;color:var(--text-sub);
+}
+.name{ font-size:.95rem;font-weight:800;text-align:center;line-height:1.35;color:var(--text); }
+.topics{ font-size:.7rem;color:var(--text-sub);text-align:center;line-height:1.45; }
+
+a.card.wide .emoji{ font-size:1.8rem; }
+a.card.wide .name{ text-align:left;font-size:1rem; }
+a.card.wide .topics{ text-align:left; }
+a.card.wide .info{ display:flex;flex-direction:column;gap:.25rem; }
+
+/* ── Countdown ── */
+.countdown{
+  background:var(--bg-card);border:1.5px solid var(--border);
+  border-radius:14px;padding:.8rem 1.2rem;
+  margin-bottom:2rem;
+  text-align:center;
+  box-shadow: var(--shadow);
+  width:100%;max-width:480px;
+}
+.countdown .days{
+  font-size:2.2rem;font-weight:900;color:#b45309;
+  line-height:1;
+}
+.countdown .label{
+  font-size:.78rem;color:var(--text-sub);margin-top:.2rem;
+}
+
+/* ── Sync bar ── */
+.sync-bar{
+  width:100%;max-width:480px;
+  display:flex;align-items:center;justify-content:center;
+  gap:.5rem;
+  margin-top:1rem;
+}
+.sync-btn{
+  background:var(--bg-card);border:1.5px solid var(--border);
+  border-radius:10px;padding:.4rem .9rem;
+  font-size:.78rem;font-weight:600;color:var(--text-sub);
+  cursor:pointer;
+  transition:all .2s;
+}
+.sync-btn:hover{
+  border-color:var(--border-dk);
+  box-shadow: var(--shadow);
+}
+.sync-status{
+  font-size:.72rem;color:var(--text-sub);
+}
+
+/* ── Footer ── */
+footer{
+  margin-top:2.5rem;
+  color:var(--text-sub);font-size:.72rem;
+  text-align:center;letter-spacing:.04em;
+}
+</style>
+</head>
+<body>
+
+<span class="badge">🦷 國考互動筆記</span>
+<h1>牙醫國考互動筆記</h1>
+<p class="sub">選擇科目，開始複習</p>
+
+<div class="countdown" id="countdown">
+  <div class="days" id="days">--</div>
+  <div class="label">天後考試</div>
+</div>
+
+<div class="grid">
+  <a class="card ya3" href="ya3/index.html">
+    <span class="emoji">🔬</span>
+    <span class="year">牙醫（三）</span>
+    <span class="name">根管・補綴・牙周</span>
+    <span class="topics">Endo · Prostho · Perio</span>
+  </a>
+  <a class="card ya4" href="ya4/index.html">
+    <span class="emoji">🏥</span>
+    <span class="year">牙醫（四）</span>
+    <span class="name">口外・放射線</span>
+    <span class="topics">OS · Radiology</span>
+  </a>
+  <a class="card ya5" href="ya5/index.html">
+    <span class="emoji">👑</span>
+    <span class="year">牙醫（五）</span>
+    <span class="name">義齒與咬合</span>
+    <span class="topics">Denture · Occlusion</span>
+  </a>
+  <a class="card ya6" href="ya6/index.html">
+    <span class="emoji">🌿</span>
+    <span class="year">牙醫（六）</span>
+    <span class="name">矯正・兒牙・公衛</span>
+    <span class="topics">Ortho · Pedo · Prev</span>
+  </a>
+  <a class="card exam wide" href="exam/index.html">
+    <span class="emoji">📝</span>
+    <div class="info">
+      <span class="name">牙醫國考練習本</span>
+      <span class="topics">歷屆試題 · 111–115年 · 2880題 · 狀態追蹤</span>
+    </div>
+  </a>
+</div>
+
+<div class="sync-bar" id="sync-bar"></div>
+
+<footer>Victor Hsu · 2026</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="sync.js"></script>
+<script>
+  // Countdown to exam (approximately 2026-06-29)
+  const examDate = new Date('2026-06-29T00:00:00+08:00');
+  function updateCountdown(){
+    const now = new Date();
+    const diff = Math.ceil((examDate - now) / (1000*60*60*24));
+    document.getElementById('days').textContent = diff > 0 ? diff : 0;
+  }
+  updateCountdown();
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+  }
+
+  // Sync UI
+  if (typeof DentalSync !== 'undefined') {
+    DentalSync.init();
+    DentalSync.renderUI('#sync-bar');
+  }
+</script>
+</body>
+</html>

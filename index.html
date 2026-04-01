@@ -237,9 +237,22 @@ footer{
   }
   updateCountdown();
 
-  // Service Worker
+  // Service Worker — aggressive update
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // Check for updates every 30 seconds while page is open
+      setInterval(() => reg.update(), 30000);
+      // If a new SW is waiting, tell it to activate immediately
+      if (reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            nw.postMessage({type:'SKIP_WAITING'});
+          }
+        });
+      });
+    });
     navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
   }
 

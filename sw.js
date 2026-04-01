@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v7';
+const CACHE_NAME = 'dental-all-v8';
 const PRECACHE = [
   './',
   './index.html',
@@ -25,10 +25,20 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
+  // Precache individually — don't let one 404 block the whole install
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE))
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.all(PRECACHE.map(url =>
+        cache.add(url).catch(() => console.warn('SW precache skip:', url))
+      ))
+    )
   );
   self.skipWaiting();
+});
+
+// Allow pages to force-activate a waiting SW
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {

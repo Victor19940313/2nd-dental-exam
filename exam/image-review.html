@@ -219,6 +219,7 @@
   }
 </style>
 </head>
+<script src="review-images-data.js"></script>
 <body>
   <div class="top-bar">
     <a href="index.html">&larr; 考試首頁</a>
@@ -400,16 +401,18 @@ document.addEventListener('keydown', e => {
 
 // Init
 loadStatuses();
-fetch('review-images.json')
-  .then(r => r.json())
-  .then(data => {
-    allImages = data;
-    updateProgress();
-    renderGrid();
-  })
-  .catch(err => {
-    document.getElementById('grid').innerHTML = `<div class="empty-msg">載入失敗: ${err.message}</div>`;
-  });
+if (typeof REVIEW_IMAGES !== 'undefined') {
+  allImages = REVIEW_IMAGES;
+  updateProgress();
+  renderGrid();
+} else {
+  fetch('review-images.json')
+    .then(r => r.json())
+    .then(data => { allImages = data; updateProgress(); renderGrid(); })
+    .catch(err => {
+      document.getElementById('grid').innerHTML = `<div class="empty-msg">載入失敗: ${err.message}</div>`;
+    });
+}
 </script>
 </body>
 </html>

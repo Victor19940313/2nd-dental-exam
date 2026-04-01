@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>矯正學故事書 — 從診斷到手術的完整矯正之旅</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#faf6f0;--card:#fff;--text:#2d2a26;--text2:#5a5550;
+  --warm:#c0956c;--warm2:#a67c52;--warm-bg:#f5ede3;
+  --red:#c0392b;--green:#27ae60;--blue:#2980b9;--orange:#e67e22;--teal:#16a085;--purple:#8e44ad;
+  --ch1:#2980b9;--ch2:#27ae60;--ch3:#e67e22;--ch4:#8e44ad;
+  --ch5:#c0392b;--ch6:#16a085;--ch7:#34495e;--ch8:#d35400;--ch9:#2c3e50;
+}
+body{font-family:'Noto Sans TC','Segoe UI','PingFang TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.75;-webkit-font-smoothing:antialiased}
+
+/* === NAV === */
+.top-bar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#8B6914,#c0956c);padding:8px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.top-bar .logo{font-size:18px;font-weight:700;color:#fff;white-space:nowrap}
+.top-bar .sub{font-size:11px;color:rgba(255,255,255,.7);margin-left:auto;white-space:nowrap}
+.mode-btn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:11px;padding:4px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:all .2s;margin-left:8px}
+.mode-btn:hover{background:rgba(255,255,255,.35)}
+
+/* === CHAPTER TAB BAR === */
+.ch-tabs{position:sticky;top:42px;z-index:99;background:var(--card);border-bottom:1px solid #e8e0d4;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;white-space:nowrap;padding:0 8px}
+.ch-tabs::-webkit-scrollbar{display:none}
+.ch-tab{display:inline-block;padding:10px 14px;font-size:12px;color:var(--text2);text-decoration:none;border-bottom:3px solid transparent;transition:all .2s;cursor:pointer;font-weight:500}
+.ch-tab:hover{color:var(--warm2)}
+.ch-tab.active{color:var(--warm2);border-bottom-color:var(--warm);font-weight:700}
+.ch-tab .tab-num{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--warm-bg);color:var(--warm2);text-align:center;line-height:18px;font-size:10px;font-weight:700;margin-right:4px}
+.ch-tab.active .tab-num{background:var(--warm);color:#fff}
+
+/* === CHAPTER === */
+.chapter{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+.ch-header{text-align:center;padding:40px 16px 24px;position:relative}
+.ch-header .ch-badge{display:inline-block;padding:6px 18px;border-radius:20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:12px}
+.ch-header h1{font-size:26px;line-height:1.3;color:var(--text);margin-bottom:8px}
+.ch-header .ch-subtitle{font-size:15px;color:var(--text2)}
+
+/* === STORY CARD === */
+.story{background:var(--card);border-radius:16px;padding:24px 20px;margin:20px 0;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid var(--warm)}
+.story.clinical{border-left-color:var(--blue);background:linear-gradient(135deg,#f8fbff,#fff)}
+.story.exam{border-left-color:var(--red);background:linear-gradient(135deg,#fff8f8,#fff)}
+.story p{margin:12px 0;font-size:15px}
+.story h2{font-size:20px;color:var(--warm2);margin:24px 0 12px;padding-top:16px;border-top:1px dashed #e0d5c8}
+.story h2:first-child{border-top:none;padding-top:0;margin-top:0}
+.story h3{font-size:17px;color:var(--text);margin:20px 0 8px}
+
+/* === DIALOGUE === */
+.dialogue{margin:16px 0;padding:0}
+.line{display:flex;gap:10px;margin:10px 0;align-items:flex-start}
+.line .avatar{flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700}
+.line .avatar.doc{background:linear-gradient(135deg,#2980b9,#3498db)}
+.line .avatar.student{background:linear-gradient(135deg,#e67e22,#f39c12)}
+.line .avatar.patient{background:linear-gradient(135deg,#27ae60,#2ecc71)}
+.line .bubble{background:#f5f5f5;border-radius:12px;padding:10px 14px;font-size:14px;max-width:calc(100% - 50px);line-height:1.6}
+.line .bubble.doc-b{background:#e8f4fd}
+.line .bubble.stu-b{background:#fef5e7}
+.line .bubble.pat-b{background:#eafaf1}
+
+/* === EXAM BOX === */
+.exam-box{background:linear-gradient(135deg,#ffeaea,#fff5f5);border:2px solid #e74c3c;border-radius:12px;padding:16px;margin:20px 0}
+.exam-box .exam-title{font-size:14px;font-weight:700;color:#c0392b;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.exam-box ul{padding-left:20px;font-size:14px}
+.exam-box li{margin:4px 0}
+
+/* === KEY POINT === */
+.key{background:#fffde7;border-left:4px solid #f39c12;border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0;font-size:14px}
+.key strong{color:var(--red)}
+
+/* === TABLE === */
+.story table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.story th{background:var(--warm);color:#fff;padding:8px 10px;text-align:left;font-weight:600}
+.story td{padding:8px 10px;border-bottom:1px solid #ede6dc}
+.story tr:nth-child(even) td{background:#faf6f0}
+.story .td-r{color:var(--red);font-weight:600}
+.story .td-g{color:var(--green);font-weight:600}
+.story .td-b{color:var(--blue);font-weight:600}
+
+/* === VISUAL CARD === */
+.visual{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0}
+.v-card{background:var(--warm-bg);border-radius:12px;padding:16px;text-align:center}
+.v-card .big{font-size:28px;font-weight:800;color:var(--warm2)}
+.v-card .label{font-size:12px;color:var(--text2);margin-top:4px}
+.v-card .desc{font-size:13px;margin-top:6px;color:var(--text)}
+
+/* === MNEMONIC === */
+.mnemonic{background:linear-gradient(135deg,#f3e5f5,#fce4ec);border-radius:12px;padding:16px;margin:16px 0;text-align:center}
+.mnemonic .title{font-size:13px;color:var(--purple);font-weight:700;margin-bottom:8px}
+.mnemonic .content{font-size:18px;font-weight:700;color:var(--text);letter-spacing:2px}
+
+/* === PROGRESS === */
+.progress-bar{position:fixed;bottom:0;left:0;right:0;height:4px;background:#e0d5c8;z-index:100}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--warm),var(--warm2));width:0;transition:width .3s}
+
+/* === CHAPTER NAV === */
+.ch-nav{display:flex;justify-content:space-between;padding:24px 16px;max-width:720px;margin:0 auto}
+.ch-nav a{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--card);border-radius:10px;text-decoration:none;color:var(--warm2);font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform .2s}
+.ch-nav a:active{transform:scale(.96)}
+
+/* === STEPS === */
+.steps{counter-reset:step}
+.step{counter-increment:step;position:relative;padding:12px 12px 12px 48px;margin:8px 0;background:#f8f6f2;border-radius:8px;font-size:14px}
+.step::before{content:counter(step);position:absolute;left:12px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--warm);color:#fff;text-align:center;line-height:28px;font-size:13px;font-weight:700}
+
+/* === TRAP === */
+.trap{background:linear-gradient(135deg,#fff3e0,#fff8e1);border:2px dashed var(--orange);border-radius:12px;padding:16px;margin:16px 0}
+.trap .trap-title{font-size:14px;font-weight:700;color:var(--orange);margin-bottom:6px}
+
+/* === ANALOGY === */
+.analogy{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid var(--green)}
+.analogy .analogy-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px}
+
+/* === FOOTER === */
+.footer{text-align:center;padding:40px 16px;color:var(--text2);font-size:13px}
+
+/* === SVG DIAGRAMS === */
+.diagram{margin:20px auto;text-align:center;overflow-x:auto}
+.diagram svg{max-width:100%;height:auto}
+.diagram .caption{font-size:12px;color:var(--text2);margin-top:8px;font-style:italic}
+
+/* === RESPONSIVE === */
+@media(max-width:480px){
+  .ch-header h1{font-size:22px}
+  .story{padding:18px 14px}
+  .story table{font-size:12px}
+  .story th,.story td{padding:6px 8px}
+  .visual{grid-template-columns:repeat(2,1fr)}
+}
+
+/* === SCROLL === */
+html{scroll-behavior:smooth}
+.chapter{scroll-margin-top:60px}
+
+/* === PAGINATION MODE === */
+body.paged .chapter{display:none}
+body.paged .footer{display:none}
+@keyframes fadeSlide{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+/* === SLIDE === */
+.slide-container{max-width:720px;margin:0 auto;padding:16px 16px 80px}
+.slide{display:none;animation:fadeSlide .3s ease}
+.slide.active{display:block}
+.slide .story{border-radius:16px;padding:24px 20px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.slide .ch-header{padding:30px 16px 16px}
+
+/* === PAGE NAV === */
+.page-nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.96);border-radius:16px;padding:6px 14px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:90;backdrop-filter:blur(8px)}
+.page-nav button{width:38px;height:38px;border-radius:50%;border:2px solid var(--warm);background:var(--card);color:var(--warm2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.page-nav button:hover{background:var(--warm);color:#fff}
+.page-nav button:disabled{opacity:.3;cursor:default;background:var(--card);color:var(--warm)}
+.page-nav .page-info{font-size:12px;color:var(--text2);font-weight:600;min-width:90px;text-align:center;line-height:1.3}
+.page-nav .page-info .current{color:var(--warm2);font-size:15px;font-weight:800}
+.page-nav .page-info .ch-label{font-size:10px;display:block;color:#aaa}
+
+/* hide progress bar in paged mode */
+body.paged .progress-bar{display:none}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <span class="logo">矯正學故事書</span>
+  <span class="sub">從診斷到手術的完整矯正之旅</span>
+  <button class="mode-btn" id="modeBtn" onclick="toggleMode()">一章一頁</button>
+</div>
+
+<!-- CHAPTER TAB BAR -->
+<div class="ch-tabs" id="chTabs">
+  <a class="ch-tab active" data-page="0"><span class="tab-num">序</span>開始</a>
+  <a class="ch-tab" data-page="1"><span class="tab-num">1</span>診斷</a>
+  <a class="ch-tab" data-page="2"><span class="tab-num">2</span>發育</a>
+  <a class="ch-tab" data-page="3"><span class="tab-num">3</span>萌發</a>
+  <a class="ch-tab" data-page="4"><span class="tab-num">4</span>混合齒列</a>
+  <a class="ch-tab" data-page="5"><span class="tab-num">5</span>移動</a>
+  <a class="ch-tab" data-page="6"><span class="tab-num">6</span>裝置</a>
+  <a class="ch-tab" data-page="7"><span class="tab-num">7</span>功能性</a>
+  <a class="ch-tab" data-page="8"><span class="tab-num">8</span>全口矯正</a>
+  <a class="ch-tab" data-page="9"><span class="tab-num">9</span>正顎手術</a>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ============================================ -->
+<!-- 序章 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch0">
+<div class="ch-header">
+  <div class="ch-badge" style="background:#8B6914">序章</div>
+  <h1>矯正之旅的開始</h1>
+  <div class="ch-subtitle">認識我們的主角們</div>
+</div>
+
+<div class="story">
+<p>這本故事書的主角有三位：</p>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b"><b>林醫師</b> — 矯正專科醫師，執業 20 年，從暴牙到戽斗什麼都看過。負責把複雜的矯正觀念講得淺顯易懂。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b"><b>你</b> — 準備國考的牙醫師，白天上班晚上顧小孩，零碎時間全拿來念書。</div></div>
+  <div class="line"><div class="avatar patient">安</div><div class="bubble pat-b"><b>小安</b> — 15 歲高中生，上排暴牙加上牙齒擁擠，被媽媽帶來找林醫師諮詢。</div></div>
+</div>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">安</div><div class="bubble pat-b">林醫師，我同學都叫我暴牙妹......我可以矯正嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安別擔心，我們先做一系列檢查，再來決定治療計畫。矯正不只是讓牙齒排整齊，更重要的是建立<b>穩定的咬合</b>和<b>和諧的臉型</b>。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">林醫師，我可以在旁邊跟著學嗎？國考矯正佔分很重。</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">當然可以。跟著小安的治療過程，我會把從診斷、生長發育、牙齒移動，一直到正顎手術的所有考點都帶過一遍。</div></div>
+</div>
+
+<p>透過幫小安矯正的過程，我們會從最基本的 Angle 分類，一路學到正顎手術。每個章節結束時，會有一個紅色的「考試重點框」幫你整理必記內容。</p>
+
+<div class="key"><strong>閱讀建議：</strong>先快速讀完全部故事，建立整體觀。第二遍再仔細看考試重點框和表格。配合你的 ya6 互動筆記一起使用效果最好。</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第一章：診斷基礎 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch1">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch1)">CHAPTER 1</div>
+  <h1>矯正的語言</h1>
+  <div class="ch-subtitle">Angle 分類、Andrew's Keys、骨骼關係與臉型</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安，我們先來看你的咬合。矯正醫師的第一步就是「分類」，就像急診要先分檢傷等級一樣。我們用的是 <b>Angle Classification</b>。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">Angle 分類只看大臼齒的關係對吧？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">沒錯，看的是<b>上顎第一大臼齒的 mesiobuccal cusp</b> 跟 <b>下顎第一大臼齒的 buccal groove</b> 的關係。</div></div>
+</div>
+
+<h2>Angle 分類</h2>
+
+<table>
+<tr><th>分類</th><th>大臼齒關係</th><th>特徵</th><th>盛行率</th></tr>
+<tr><td class="td-b"><b>Class I</b></td><td>上6 MB cusp 對齊下6 buccal groove</td><td>大臼齒關係正常，但可能有擁擠、間隙、開咬等問題</td><td>~50-55%</td></tr>
+<tr><td class="td-r"><b>Class II div.1</b></td><td>下顎後縮（distal）至少半顆 cusp</td><td>上門牙<b>前傾（proclined）</b>、OJ 增加、常有 deep bite</td><td>~15%</td></tr>
+<tr><td class="td-r"><b>Class II div.2</b></td><td>下顎後縮至少半顆 cusp</td><td>上門牙<b>後傾（retroclined）</b>、OJ 正常或減少、deep bite 更嚴重</td><td>~3-5%</td></tr>
+<tr><td class="td-g"><b>Class III</b></td><td>下顎前移（mesial）至少半顆 cusp</td><td>下顎前突、anterior crossbite、negative OJ</td><td>~5% (亞洲人較高 ~15%)</td></tr>
+</table>
+
+<div class="analogy">
+<div class="analogy-title">生活化比喻</div>
+想像兩排齒輪要互相咬合：<br>
+<b>Class I</b> = 齒輪完美嚙合<br>
+<b>Class II</b> = 下排齒輪往後退了，上排突出來 → 暴牙<br>
+<b>Class III</b> = 下排齒輪往前衝了 → 戽斗
+</div>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+Angle 分類只描述<b>大臼齒的牙齒關係</b>，不等於骨骼關係！一個 Class I molar 的病人可以有 skeletal Class II 或 Class III。判斷骨骼關係要用 cephalometric analysis（ANB、Wits）。
+</div>
+
+<h2>Andrew's 六大咬合關鍵（Six Keys to Normal Occlusion）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">除了 Angle 分類之外，怎麼定義「正常咬合」？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">Andrews 在 1972 年研究了 120 副正常咬合模型，歸納出六大關鍵。這也是 straight-wire bracket 設計的理論基礎。</div></div>
+</div>
+
+<table>
+<tr><th>Key</th><th>名稱</th><th>內容</th></tr>
+<tr><td class="td-b"><b>Key 1</b></td><td>Molar relationship</td><td>上6 MB cusp 對齊下6 buccal groove；上6 distal marginal ridge 對齊下6 mesial marginal ridge</td></tr>
+<tr><td class="td-b"><b>Key 2</b></td><td>Crown angulation (tip)</td><td>每顆牙的牙冠 gingival 部分比 incisal 部分更 distal（正角度）= mesiodistal 傾斜</td></tr>
+<tr><td class="td-b"><b>Key 3</b></td><td>Crown inclination (torque)</td><td>上前牙牙冠唇側傾斜（正 torque），上後牙牙冠舌側傾斜（負 torque），下後牙也是舌側傾斜</td></tr>
+<tr><td class="td-b"><b>Key 4</b></td><td>No rotations</td><td>沒有旋轉。旋轉的牙齒佔空間、影響咬合</td></tr>
+<tr><td class="td-b"><b>Key 5</b></td><td>Tight contacts</td><td>沒有間隙（diastema），接觸點緊密</td></tr>
+<tr><td class="td-b"><b>Key 6</b></td><td>Curve of Spee</td><td>平坦到輕微（0-2 mm），不超過 1.5 mm 為理想</td></tr>
+</table>
+
+<div class="mnemonic">
+<div class="title">記憶口訣：Andrew's 六把鑰匙</div>
+<div class="content">莫（Molar）角（Angulation）傾（Inclination）轉（Rotation）隙（Spacing）彎（Curve）</div>
+</div>
+
+<h2>骨骼關係判定</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安，光看牙齒不夠，我們還需要拍側顱 X 光片（lateral cephalogram）來看<b>骨骼關係</b>。最重要的指標就是 <b>ANB angle</b> 和 <b>Wits appraisal</b>。</div></div>
+</div>
+
+<table>
+<tr><th>指標</th><th>正常值</th><th>Class II</th><th>Class III</th></tr>
+<tr><td class="td-b"><b>SNA</b></td><td>82&deg; (&plusmn;2&deg;)</td><td>上顎前突時增大</td><td>上顎後縮時減小</td></tr>
+<tr><td class="td-b"><b>SNB</b></td><td>80&deg; (&plusmn;2&deg;)</td><td>下顎後縮時減小</td><td>下顎前突時增大</td></tr>
+<tr><td class="td-r"><b>ANB</b></td><td><b>2&deg;</b> (&plusmn;2&deg;)</td><td>&gt;4&deg;</td><td>&lt;0&deg;</td></tr>
+<tr><td class="td-r"><b>Wits appraisal</b></td><td><b>-1 mm</b>（女 0 mm）</td><td>正值增大</td><td>負值增大</td></tr>
+</table>
+
+<div class="key">
+<strong>ANB = SNA - SNB</strong><br>
+ANB &gt; 4&deg; → 骨骼 Class II（上顎前突或下顎後縮）<br>
+ANB &lt; 0&deg; → 骨骼 Class III（下顎前突或上顎後縮）<br>
+<strong>Wits appraisal</strong>：將 A 點和 B 點投影到咬合平面上，測量兩投影點距離。比 ANB 不受 cranial base 影響，更可靠。
+</div>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">那 profile 怎麼看？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">看 E-line（Ricketts' esthetic line）：鼻尖到下巴尖的連線。理想是<b>上唇在 E-line 後方 4mm，下唇在後方 2mm</b>。亞洲人標準稍微放寬。</div></div>
+</div>
+
+<h2>咬合描述術語</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">protrude、procline、retrude、retrocline 這四個老是搞混。</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">很簡單！「-trude」形容的是牙齒的<b>位移（bodily）</b>，「-cline」形容的是牙齒的<b>傾斜角度</b>。</div></div>
+</div>
+
+<table>
+<tr><th>術語</th><th>意思</th><th>描述</th></tr>
+<tr><td class="td-b"><b>Protrude</b></td><td>前移</td><td>整顆牙齒位置偏前（bodily 往前）</td></tr>
+<tr><td class="td-b"><b>Retrude</b></td><td>後移</td><td>整顆牙齒位置偏後（bodily 往後）</td></tr>
+<tr><td class="td-r"><b>Procline</b></td><td>前傾</td><td>牙冠向唇側傾斜（角度問題）</td></tr>
+<tr><td class="td-r"><b>Retrocline</b></td><td>後傾</td><td>牙冠向舌側傾斜（角度問題）</td></tr>
+</table>
+
+<div class="visual">
+<div class="v-card"><div class="big">2 mm</div><div class="label">正常 OJ</div><div class="desc">Overjet 水平覆蓋</div></div>
+<div class="v-card"><div class="big">2-4 mm</div><div class="label">正常 OB</div><div class="desc">Overbite 垂直覆蓋</div></div>
+<div class="v-card"><div class="big">30-50%</div><div class="label">理想 OB</div><div class="desc">上門牙覆蓋下門牙的比例</div></div>
+</div>
+
+<div class="key">
+<strong>OJ（Overjet）</strong>= 上下門牙之間的<b>水平距離</b>，正常 2-4 mm<br>
+<strong>OB（Overbite）</strong>= 上門牙覆蓋下門牙的<b>垂直距離</b>，正常 2-4 mm（約 30-50%）<br>
+OJ 增加 → Class II div.1 特徵<br>
+OB 增加 → deep bite
+</div>
+
+<h2>臉型分類</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安的臉型偏長，我們叫 <b>dolichocephalic</b>（長頭型）。不同臉型對矯正治療的影響很大，特別是在 vertical dimension 的控制上。</div></div>
+</div>
+
+<table>
+<tr><th>臉型</th><th>別名</th><th>MPA</th><th>Divergence</th><th>特徵</th></tr>
+<tr><td class="td-b"><b>Dolichocephalic</b></td><td>長臉型 / hyperdivergent</td><td>&gt;30&deg;</td><td>高角</td><td>下顎平面角大、前開咬傾向、後旋轉、弱咬肌</td></tr>
+<tr><td class="td-g"><b>Mesocephalic</b></td><td>正常臉型 / normodivergent</td><td>25-30&deg;</td><td>平均</td><td>標準比例，治療預後最佳</td></tr>
+<tr><td class="td-r"><b>Brachycephalic</b></td><td>短臉型 / hypodivergent</td><td>&lt;25&deg;</td><td>低角</td><td>下顎平面角小、deep bite、前旋轉、強咬肌</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+高角（dolichocephalic）患者要<b>避免 extrusion</b>，因為會讓臉更長、開咬更嚴重。治療策略是<b>intrusion</b> + 控制 vertical dimension。<br>
+低角（brachycephalic）患者咬肌力量強，anchorage 消耗快，要特別注意錨定控制。
+</div>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">MPA 就是 mandibular plane angle 嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">對，就是 SN 平面或 FH 平面跟下顎平面（Go-Me）的夾角。FMA（Frankfort Mandibular Angle）正常值約 25&deg;，SN-MP 正常值約 32&deg;。高角超過這個值，低角低於這個值。</div></div>
+</div>
+
+<h2>診斷基礎考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li><b>Angle Class I</b>：上6 MB cusp 對齊下6 buccal groove（正常大臼齒關係）</li>
+<li><b>Class II div.1</b>：上門牙 proclined，OJ 增加；<b>div.2</b>：上門牙 retroclined，deep bite 嚴重</li>
+<li><b>Class III</b>：下顎前移至少半顆 cusp，亞洲人盛行率較高（~15%）</li>
+<li><b>ANB = 2&deg;</b>（正常），&gt;4&deg; = skeletal Class II，&lt;0&deg; = skeletal Class III</li>
+<li><b>Wits appraisal = -1 mm</b>：不受 cranial base 影響，比 ANB 可靠</li>
+<li>Andrew's 六鍵：molar relationship、angulation、inclination、rotation、spacing、Curve of Spee</li>
+<li>Protrude/retrude = 位移；Procline/retrocline = 傾斜</li>
+<li><b>OJ = 2-4 mm</b>（水平），<b>OB = 2-4 mm</b>（垂直，30-50%）</li>
+<li>高角 = MPA &gt; 30&deg; → 避免 extrusion；低角 = MPA &lt; 25&deg; → anchorage 消耗快</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第二章：生長發育 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch2">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch2)">CHAPTER 2</div>
+  <h1>生長的節奏</h1>
+  <div class="ch-subtitle">Scammon 曲線、骨化模式與顎骨生長</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">林醫師，小安現在 15 歲，她還在生長嗎？矯正治療的時機跟生長有關係嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">關係非常大！矯正很多時候是在「借力使力」，利用病人還在長的時候來導引顎骨生長。先來搞清楚<b>生長（growth）</b>和<b>發育（development）</b>的差別。</div></div>
+</div>
+
+<h2>生長 vs 發育 + Scammon 曲線</h2>
+
+<div class="key">
+<strong>Growth（生長）</strong>= 大小的增加（量的改變），可以測量<br>
+<strong>Development（發育）</strong>= 成熟度的改變（質的改變），功能的進步<br>
+<strong>Maturation（成熟）</strong>= 達到成人狀態的過程
+</div>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">Scammon 在 1930 年發表了著名的生長曲線，把身體各系統的生長模式分成四種。國考超愛考。</div></div>
+</div>
+
+<table>
+<tr><th>系統</th><th>曲線型態</th><th>關鍵時間點</th><th>例子</th></tr>
+<tr><td class="td-b"><b>Neural（神經型）</b></td><td>早期快速上升</td><td>6-7 歲達成人的 <b>~90%</b>，12 歲 ~100%</td><td>腦部、眼睛、頭顱</td></tr>
+<tr><td class="td-r"><b>Lymphoid（淋巴型）</b></td><td>先升後降（倒 U 型）</td><td><b>10-12 歲達 200%</b> 高峰，然後退縮到 100%</td><td>扁桃腺、腺樣體、淋巴結</td></tr>
+<tr><td class="td-g"><b>General（一般型）</b></td><td>S 型曲線</td><td>嬰幼期快 → 兒童期慢 → <b>青春期第二波加速</b></td><td>骨骼、肌肉、內臟、身高</td></tr>
+<tr><td class="td-b"><b>Genital（生殖型）</b></td><td>青春期才起飛</td><td>青春期前幾乎不長，<b>12-18 歲急速上升</b></td><td>性腺、性器官</td></tr>
+</table>
+
+<div class="diagram">
+<img src="images/ortho-ch2-scammon.png" alt="Scammon生長曲線" style="max-width:100%;border-radius:12px">
+<div class="caption">Scammon 四大生長曲線：Neural（最早達100%）、Lymphoid（倒U型超過100%）、General（S型）、Genital（最晚起飛）</div>
+</div>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+「淋巴型組織在什麼年齡達到最大？」→ <b>10-12 歲</b>，而且會超過成人值（達 200%）！之後才退縮。<br>
+「腦部在幾歲達到成人大小的 90%？」→ <b>6-7 歲</b>（Neural 型）。這就是為什麼頭圍在嬰幼兒期就接近成人。
+</div>
+
+<h2>骨化模式</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">顎骨的生長方式有兩種：<b>膜內骨化（intramembranous）</b>和<b>軟骨內骨化（endochondral）</b>。哪裡用哪種，考試一定要會。</div></div>
+</div>
+
+<table>
+<tr><th>骨化模式</th><th>機制</th><th>位置</th></tr>
+<tr><td class="td-b"><b>Intramembranous</b><br>（膜內骨化）</td><td>間葉組織直接變成骨頭，不經過軟骨階段</td><td>上顎、顱蓋骨（calvaria）、下顎骨體部、鎖骨</td></tr>
+<tr><td class="td-r"><b>Endochondral</b><br>（軟骨內骨化）</td><td>先形成軟骨模型 → 軟骨被骨頭取代</td><td>顱底（cranial base）、下顎髁突（condyle）、長骨</td></tr>
+</table>
+
+<h3>顱底縫合（Synchondroses）</h3>
+
+<table>
+<tr><th>縫合</th><th>全名</th><th>閉合時間</th></tr>
+<tr><td class="td-b"><b>SES</b></td><td>Spheno-ethmoidal synchondrosis</td><td><b>6-7 歲</b></td></tr>
+<tr><td class="td-b"><b>ISS</b></td><td>Intersphenoid synchondrosis</td><td><b>出生前</b>已閉合</td></tr>
+<tr><td class="td-b"><b>SOS</b></td><td>Spheno-occipital synchondrosis</td><td><b>生長期結束</b>才閉合（~13-16 歲女；15-17 歲男）</td></tr>
+</table>
+
+<div class="mnemonic">
+<div class="title">SOS 最晚閉合的記憶法</div>
+<div class="content">SOS = Save Our Ship = 最後才離開船（最晚閉合）</div>
+</div>
+
+<div class="key">
+<strong>SOS 是國考最常考的 synchondrosis</strong>，因為它是最晚閉合的，也是顱底最後的生長中心。SOS 閉合後，顱底長度就固定了。
+</div>
+
+<h2>上下顎生長</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">上顎跟下顎的生長方式一樣嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">完全不一樣！上顎主要靠<b>膜內骨化 + 縫合生長</b>，下顎主要靠<b>髁突的軟骨內骨化</b>。</div></div>
+</div>
+
+<h3>上顎（Maxilla）生長</h3>
+<table>
+<tr><th>方向</th><th>機制</th><th>時間</th></tr>
+<tr><td class="td-b"><b>寬度</b></td><td>Midpalatal suture 膜內骨化</td><td>~10 歲左右完成大部分</td></tr>
+<tr><td class="td-b"><b>前後長度</b></td><td>後方骨沈積（tuberosity apposition）</td><td>~10 歲完成大部分</td></tr>
+<tr><td class="td-b"><b>垂直高度</b></td><td>前方 = bone apposition；後方 = 鼻底下降 + alveolar 生長</td><td>持續到青春期後</td></tr>
+</table>
+
+<div class="key">
+上顎整體是<b>向前向下</b>生長（forward and downward），但生長的方式其實是<b>後方和上方</b>做 apposition（骨沉積），前方和下方做 resorption（骨吸收），等於「翻譯」到前下方。
+</div>
+
+<h3>下顎（Mandible）生長</h3>
+<table>
+<tr><th>結構</th><th>機制</th></tr>
+<tr><td class="td-b"><b>Condyle（髁突）</b></td><td>軟骨內骨化 → 向後上方生長 → 下顎整體位移到前下方</td></tr>
+<tr><td class="td-b"><b>Ramus</b></td><td>前方吸收（resorption）+ 後方沈積（apposition）→ ramus 後退、body 變長</td></tr>
+<tr><td class="td-b"><b>Chin</b></td><td>幾乎不生長（remodeling only）</td></tr>
+</table>
+
+<div class="analogy">
+<div class="analogy-title">比喻時間</div>
+下顎 ramus 的生長就像「倒退走路」：前面的骨頭被挖掉（吸收），後面長出新骨頭（沈積）。結果 ramus 整體「往後退」，但下顎 body 的空間就變長了。
+</div>
+
+<h3>下顎旋轉與臉型</h3>
+<table>
+<tr><th>旋轉方向</th><th>臉型結果</th><th>特徵</th></tr>
+<tr><td class="td-g"><b>前旋轉 (Forward rotation)</b></td><td>短臉型 / deep bite</td><td>下顎平面角減小、chin 變突出、brachycephalic</td></tr>
+<tr><td class="td-r"><b>後旋轉 (Backward rotation)</b></td><td>長臉型 / open bite</td><td>下顎平面角增大、chin 後縮、dolichocephalic</td></tr>
+</table>
+
+<h2>顎骨生長完成時間</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">小安 15 歲，她的骨頭還在長嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">女生大約 14-16 歲生長趨緩，但不代表完全停止。記住這個順序：<b>寬度最先停、長度其次、高度最晚</b>。</div></div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">寬</div><div class="label">最先完成</div><div class="desc">青春期前即大致完成</div></div>
+<div class="v-card"><div class="big">長</div><div class="label">第二完成</div><div class="desc">青春期結束時完成</div></div>
+<div class="v-card"><div class="big">高</div><div class="label">最晚完成</div><div class="desc">男 ~20 歲 / 女 ~18 歲</div></div>
+</div>
+
+<div class="key">
+<strong>臉部發育的順序：</strong>cranium 先 → midface 次 → mandible 最後<br>
+<strong>生長高峰期（PHV, Peak Height Velocity）：</strong>女生約 11-12 歲，男生約 13-14 歲<br>
+<strong>骨齡評估：</strong>hand-wrist X-ray（Greulich-Pyle / TW3）或頸椎成熟度指標（CVMI / CVM）
+</div>
+
+<h2>生長發育考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li>Scammon 曲線：<b>Neural 6-7 歲 90%</b>、<b>Lymphoid 10-12 歲達 200% peak</b>、General = S 型、Genital 青春期才起飛</li>
+<li>膜內骨化：上顎、顱蓋骨、下顎骨體部；軟骨內骨化：顱底、下顎髁突</li>
+<li><b>SOS 最晚閉合</b>（生長期結束才閉合）；SES 6-7 歲；ISS 出生前</li>
+<li>上顎生長向前向下，靠縫合 + tuberosity apposition；下顎靠 condyle 軟骨內骨化</li>
+<li>Ramus：<b>前吸後沈</b> → body 變長</li>
+<li>前旋轉 → 短臉 / deep bite；後旋轉 → 長臉 / open bite</li>
+<li>顎骨生長完成順序：<b>寬 &gt; 長 &gt; 高</b></li>
+<li>臉部發育：cranium → midface → mandible</li>
+<li>PHV：女 11-12 歲，男 13-14 歲</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第三章：牙齒萌發與空間 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch3">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch3)">CHAPTER 3</div>
+  <h1>牙齒的時刻表</h1>
+  <div class="ch-subtitle">萌發順序、牙弓發育與空間分析</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安，你的乳牙都掉完了嗎？</div></div>
+  <div class="line"><div class="avatar patient">安</div><div class="bubble pat-b">我記得國小六年級才掉完最後一顆。</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">那很正常。每顆牙齒都有自己的「出場時間」，記住這個時間表，對矯正治療計畫非常重要。</div></div>
+</div>
+
+<h2>萌發時間</h2>
+
+<h3>乳牙萌發順序（上下皆類似）</h3>
+<table>
+<tr><th>順序</th><th>牙齒</th><th>代號</th><th>萌發時間</th></tr>
+<tr><td>1</td><td>乳門齒</td><td><b>A</b></td><td>6-10 個月</td></tr>
+<tr><td>2</td><td>乳側門齒</td><td><b>B</b></td><td>8-13 個月</td></tr>
+<tr><td>3</td><td>乳第一臼齒</td><td><b>D</b></td><td>13-19 個月</td></tr>
+<tr><td>4</td><td>乳犬齒</td><td><b>C</b></td><td>16-23 個月</td></tr>
+<tr><td>5</td><td>乳第二臼齒</td><td><b>E</b></td><td>25-33 個月</td></tr>
+</table>
+
+<div class="mnemonic">
+<div class="title">乳牙萌發記憶口訣</div>
+<div class="content">A → B → D → C → E（門、側、一臼、犬、二臼）</div>
+</div>
+
+<h3>恆牙萌發順序</h3>
+<table>
+<tr><th>上顎順序</th><th>下顎順序</th></tr>
+<tr><td><b>6 → 1 → 2 → 4 → 3 → 5 → 7 → 8</b></td><td><b>6 → 1 → 2 → 3 → 4 → 5 → 7 → 8</b></td></tr>
+</table>
+
+<div class="key">
+<strong>上下顎差異的關鍵：</strong>上顎犬齒（3）在第一小臼齒（4）<b>之後</b>萌發，下顎犬齒在第一小臼齒<b>之前</b>。<br>
+上顎犬齒是最後萌發的前牙（~11-12 歲），因此最容易發生阻生（impaction）。
+</div>
+
+<h2>萌發問題</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">萌發延遲怎麼定義？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">通常超過正常萌發時間 <b>6 個月到 1 年</b>以上就算延遲。原因很多：局部性（多生牙、牙瘤、纖維化牙齦）或全身性（甲狀腺低下、cleidocranial dysplasia、Down syndrome）。</div></div>
+</div>
+
+<table>
+<tr><th>問題</th><th>定義</th><th>關鍵點</th></tr>
+<tr><td class="td-b"><b>Delayed eruption</b></td><td>萌發比正常時間延遲</td><td>先排除局部障礙（多生牙、牙瘤），再考慮全身因素</td></tr>
+<tr><td class="td-r"><b>PFE（Primary failure of eruption）</b></td><td>牙齒無法萌發，且無法被矯正力拉出</td><td>突變基因：<b>PTHR1</b>（PTH1R）。施力拉牙會 ankylose，禁止orthodontic traction</td></tr>
+<tr><td class="td-b"><b>Ankylosis（黏連）</b></td><td>牙齒與骨頭直接融合，無 PDL</td><td>叩診有金屬音（high-pitched）、infraocclusion、不能矯正移動</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+PFE 跟 ankylosis 不一樣！PFE 是基因突變（<b>PTHR1</b>）導致牙齒「不想萌發」，即使用矯正力拉也沒用而且會造成 ankylosis。而一般 ankylosis 是外傷或感染後「已萌發的牙齒」跟骨頭黏住。
+</div>
+
+<h2>牙弓發育</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">牙弓的寬度和周長在不同年紀會改變。矯正醫師要知道哪些尺寸還會變，哪些已經定型了。</div></div>
+</div>
+
+<table>
+<tr><th>測量</th><th>變化</th><th>臨床意義</th></tr>
+<tr><td class="td-b"><b>Intercanine width</b></td><td>乳牙列到恆牙早期增加 ~3-4 mm，之後<b>幾乎不再增加</b></td><td>矯正不宜過度擴張犬齒間寬度（容易復發）</td></tr>
+<tr><td class="td-b"><b>Intermolar width</b></td><td>混合齒列到恆牙列增加 ~1-2 mm</td><td>擴弓在青春期前效果較好（midpalatal suture 未閉合）</td></tr>
+<tr><td class="td-r"><b>Arch perimeter</b></td><td>從混合齒列到恆牙列<b>減少 ~3-4 mm</b>（下顎更明顯）</td><td>牙弓周長自然會縮小，這是正常現象</td></tr>
+<tr><td class="td-b"><b>Curve of Spee</b></td><td>正常 0-4 mm，理想 &le; 2 mm</td><td>每 1 mm 的 Curve of Spee 需要約 1 mm 的空間來整平</td></tr>
+</table>
+
+<h2>擁擠與空間來源</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">小安的牙齒很擠，空間從哪裡來？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">先搞清楚一個重要觀念：<b>incisor liability</b>（門齒負債）。</div></div>
+</div>
+
+<div class="key">
+<strong>Incisor liability（門齒負債）</strong>：恆門齒比乳門齒寬 ~7 mm（上顎 7.6 mm / 下顎 6 mm）。<br>
+這個「負債」靠三個來源償還：<br>
+1. <b>Developmental spacing（發育間隙）</b>：乳牙列的靈長類間隙 + 生長間隙 ~3 mm<br>
+2. <b>Primate space（靈長類間隙）</b>：上顎在乳側門齒和乳犬齒之間；下顎在乳犬齒和乳第一臼齒之間<br>
+3. <b>Intercanine width 增加</b> + 恆門牙更 proclined ~4 mm
+</div>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+「靈長類間隙在上顎和下顎的位置一樣嗎？」→ <b>不一樣！</b><br>
+上顎：乳側門齒（B）和乳犬齒（C）<b>之間</b><br>
+下顎：乳犬齒（C）和乳第一臼齒（D）<b>之間</b>
+</div>
+
+<h2>空間分析法</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">矯正診斷一定要做<b>空間分析</b>（space analysis），看「可用空間」和「所需空間」的差距。如果差太多，可能需要拔牙。</div></div>
+</div>
+
+<table>
+<tr><th>分析法</th><th>原理</th><th>關鍵數值</th></tr>
+<tr><td class="td-b"><b>Bolton analysis</b></td><td>上下顎牙齒大小比例</td><td>Anterior ratio = <b>77.2%</b>（&plusmn;1.65）<br>Overall ratio = <b>91.3%</b>（&plusmn;1.91）</td></tr>
+<tr><td class="td-b"><b>Tanaka-Johnston</b></td><td>用下顎四顆恆門齒寬度預測未萌發的犬齒和小臼齒</td><td>下顎：(4門齒寬度和/2) + <b>10.5 mm</b><br>上顎：(4門齒寬度和/2) + <b>11.0 mm</b></td></tr>
+<tr><td class="td-b"><b>Moyers</b></td><td>用下顎門齒寬度查機率表預測犬齒+小臼齒寬度</td><td>常用 <b>75th percentile</b>（適度高估避免低估空間需求）</td></tr>
+<tr><td class="td-b"><b>Nance analysis</b></td><td>直接測量牙弓周長 vs 牙齒寬度總和</td><td>差值 = space discrepancy</td></tr>
+</table>
+
+<div class="mnemonic">
+<div class="title">Bolton ratio 記憶法</div>
+<div class="content">77（前牙）/ 91（全牙）→ 「吃（7）就（9）要（1）」</div>
+</div>
+
+<h2>空間維持器</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">如果乳牙提早掉了，旁邊的牙齒會不會擠過來？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">會！所以要用<b>空間維持器（space maintainer）</b>來佔住位子。選哪一種取決於掉的是哪顆牙、對側有沒有牙。</div></div>
+</div>
+
+<table>
+<tr><th>維持器</th><th>類型</th><th>適應症</th><th>特點</th></tr>
+<tr><td class="td-b"><b>Distal Shoe</b></td><td>固定式 / 單側</td><td><b>乳二臼齒（E）提早喪失</b>且恆第一大臼齒尚未萌發</td><td>金屬片插入牙齦導引第一大臼齒萌發方向</td></tr>
+<tr><td class="td-b"><b>Band &amp; Loop</b></td><td>固定式 / 單側</td><td>單顆乳臼齒（D 或 E）提早喪失，後方牙已萌發</td><td>最常用的單側固定式維持器</td></tr>
+<tr><td class="td-b"><b>Nance holding arch</b></td><td>固定式 / 雙側</td><td>上顎雙側乳臼齒喪失</td><td>壓克力 button 靠在前顎皺壁（rugae 區）</td></tr>
+<tr><td class="td-b"><b>Lingual holding arch (LHA)</b></td><td>固定式 / 雙側</td><td>下顎雙側乳臼齒喪失</td><td>wire 靠在下前牙舌側 cingulum 上方</td></tr>
+<tr><td class="td-b"><b>Kiddy Denture</b></td><td>活動式</td><td>多顆前牙喪失（美觀+功能）</td><td>兼顧美觀、發音、可取下清潔</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+<b>Distal Shoe 是唯一可以在恆牙未萌發時使用的維持器</b>。因為它的金屬片伸入牙齦下方引導恆第一大臼齒的萌發路徑。但缺點是需要 subgingival 插入 → 感染風險。<br>
+如果恆第一大臼齒<b>已經萌發</b>，改用 Band &amp; Loop 就好。
+</div>
+
+<h2>萌發與空間考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li>乳牙萌發順序：<b>A → B → D → C → E</b></li>
+<li>恆牙上顎 3 在 4 之後萌發（上顎犬齒最晚 → 最常阻生）</li>
+<li><b>PFE 基因 = PTHR1</b>，不能用矯正力拉（會 ankylose）</li>
+<li>Intercanine width 恆牙早期後幾乎不變 → 不宜過度擴張（易復發）</li>
+<li>Arch perimeter 自然減少 ~3-4 mm</li>
+<li><b>Incisor liability ≈ 7 mm</b>：靠發育間隙 + 靈長類間隙 + 犬齒間距增加</li>
+<li>靈長類間隙：上顎 B-C 之間，下顎 <b>C-D 之間</b></li>
+<li>Bolton：anterior <b>77.2%</b>、overall <b>91.3%</b></li>
+<li>Tanaka-Johnston：下 +10.5 mm，上 +11.0 mm</li>
+<li>Moyers：用 <b>75th percentile</b></li>
+<li><b>Distal Shoe</b>：唯一適用於恆第一大臼齒未萌發時</li>
+<li>Nance = 上顎雙側，LHA = 下顎雙側</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第四章：混合齒列問題 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch4">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch4)">CHAPTER 4</div>
+  <h1>過渡期的挑戰</h1>
+  <div class="ch-subtitle">多生牙、先天缺牙、錯咬與序列拔牙</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">混合齒列期（大概 6-12 歲）是矯正醫師最忙的時候，各種問題都在這時候浮現。小安當時如果有早期處理，現在可能就不用拔牙了。</div></div>
+</div>
+
+<h2>多生牙與阻生齒</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">多生牙最常長在哪裡？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">最常見的是 <b>mesiodens</b>（正中多生牙），長在上顎正中門齒之間。它會造成門牙間隙（diastema）、鄰牙萌發延遲或偏移。處理方式通常是<b>手術拔除</b>。</div></div>
+</div>
+
+<h3>阻生犬齒</h3>
+<div class="key">
+<strong>上顎犬齒是（排除智齒後）最常阻生的恆牙</strong><br>
+阻生位置：<b>顎側（palatal）比頰側（buccal）更常見</b>（約 85% palatal vs 15% buccal）<br>
+<b>Kurol 研究</b>：如果在 10-13 歲拔掉乳犬齒，有 <b>~78%</b> 的顎側阻生犬齒可以自行改善萌發方向。<br>
+判定方法：<b>CBCT</b> 最準確，傳統 parallax technique（Clark's rule / buccal object rule）也可用。
+</div>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+「最常阻生的牙齒」→ 如果選項包含智齒，答案是<b>下顎第三大臼齒</b>。如果「排除智齒」，答案是<b>上顎犬齒</b>。題目怎麼問要看清楚！
+</div>
+
+<h2>先天缺牙</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">先天缺牙也是很常見的問題。國考一定會考哪些牙齒最容易先天缺失。</div></div>
+</div>
+
+<table>
+<tr><th>排名</th><th>牙齒</th><th>處理策略</th></tr>
+<tr><td>1</td><td class="td-r"><b>上顎第三大臼齒（#18/#28）</b></td><td>不需處理</td></tr>
+<tr><td>2</td><td class="td-r"><b>下顎第三大臼齒（#38/#48）</b></td><td>不需處理</td></tr>
+<tr><td>3</td><td class="td-r"><b>上顎側門齒（#12/#22）</b></td><td>關空間（canine substitution）或開空間（植牙/FPD）</td></tr>
+<tr><td>4</td><td class="td-b"><b>下顎第二小臼齒（#35/#45）</b></td><td>保留乳臼齒（E）或拔除後矯正關空間</td></tr>
+<tr><td>5</td><td class="td-b"><b>上顎第二小臼齒（#15/#25）</b></td><td>保留乳臼齒或關空間</td></tr>
+</table>
+
+<div class="mnemonic">
+<div class="title">先天缺牙頻率記憶法</div>
+<div class="content">8 → 8 → 2 → 5 → 5（「八八二五五」智齒→側門→小臼）</div>
+</div>
+
+<div class="key">
+<strong>上顎側門齒缺失的處理：</strong><br>
+<b>1. Canine substitution（關空間）</b>：用犬齒取代側門齒位置 → 需要 reshaping 犬齒成側門齒外觀<br>
+適合：Class II 不需要最大 anchorage 的案例、犬齒形態較小<br>
+<b>2. 開空間 + 假牙/植牙</b>：維持或開出側門齒空間後用補綴替代<br>
+適合：Class I / Class III、需要維持 canine guidance
+</div>
+
+<h2>錯咬矯治</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">小安有一顆上門牙是 anterior crossbite，怎麼處理？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">單顆前牙錯咬通常是<b>牙齒性（dental）</b>的，治療相對簡單。但如果是多顆前牙錯咬，就要考慮是不是<b>骨骼性 Class III</b>。</div></div>
+</div>
+
+<table>
+<tr><th>錯咬類型</th><th>常見方法</th></tr>
+<tr><td class="td-b"><b>Anterior crossbite（單顆牙齒性）</b></td><td>Tongue blade（壓舌板咬合法）、2x4 appliance、Z-spring on removable plate</td></tr>
+<tr><td class="td-b"><b>Anterior crossbite（骨骼性 Class III）</b></td><td>Facemask / reverse-pull headgear（8 歲前最佳）</td></tr>
+<tr><td class="td-r"><b>Posterior crossbite（unilateral）</b></td><td>先確認是否為 <b>functional shift</b> → 有 shift 就擴弓（RPE / Quad-helix）</td></tr>
+<tr><td class="td-b"><b>Posterior crossbite（bilateral）</b></td><td>RPE（Rapid Palatal Expansion）</td></tr>
+</table>
+
+<div class="key">
+<strong>Functional crossbite（功能性錯咬）：</strong>CR 時牙弓對稱，但 CO 時下顎偏移造成單側錯咬。<br>
+判定法：讓病人從 CR 咬到 CO，觀察是否有<b>下顎側方偏移（functional shift）</b>。<br>
+如果有 shift → 真正問題是上顎窄 → <b>治療：擴弓</b>，不是調整單側。
+</div>
+
+<h2>序列拔牙與口腔習慣</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">對於嚴重擁擠的混合齒列，有一種古典做法叫 <b>Serial Extraction（序列拔牙）</b>，按特定順序拔牙來引導恆牙排列。</div></div>
+</div>
+
+<h3>序列拔牙步驟（Tweed 法）</h3>
+<div class="steps">
+<div class="step">拔除<b>乳犬齒（C）</b> → 讓擁擠的門齒自行排列</div>
+<div class="step">拔除<b>乳第一臼齒（D）</b> → 促進第一小臼齒提早萌發</div>
+<div class="step">等待<b>第一小臼齒（4）萌發</b></div>
+<div class="step">拔除<b>第一小臼齒（4）</b> → 讓犬齒移入空間</div>
+</div>
+
+<div class="mnemonic">
+<div class="title">序列拔牙記憶法</div>
+<div class="content">C → D → 等4萌 → 拔4（「C D 4」三步走）</div>
+</div>
+
+<h3>口腔習慣</h3>
+<table>
+<tr><th>習慣</th><th>影響</th><th>處理時機</th></tr>
+<tr><td class="td-r"><b>吸手指（Thumb sucking）</b></td><td>上門牙 procline + 下門牙 retrocline → OJ 增加、anterior open bite、上顎窄（V-shaped arch）</td><td>3 歲前可觀察；<b>4 歲後需介入</b></td></tr>
+<tr><td class="td-b"><b>口呼吸（Mouth breathing）</b></td><td>長臉型、narrow maxilla、gummy smile、lip incompetence</td><td>先排除鼻咽阻塞（adenoid 肥大），再考慮矯正</td></tr>
+<tr><td class="td-b"><b>舌頭前推（Tongue thrusting）</b></td><td>anterior open bite</td><td>通常是 adaptive（適應性），open bite 矯正後常自行改善</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+吸手指到底要不要處理？<br>
+<b>3 歲以前</b>：正常行為，不需介入<br>
+<b>4 歲以後還在吸</b>：需要行為矯正（提醒、獎勵、habit breaker）<br>
+<b>乳牙列時期</b>：造成的 open bite 通常戒除後會<b>自行改善</b><br>
+<b>恆牙列時期</b>：骨骼變化可能已固定，需要矯正治療
+</div>
+
+<h2>混合齒列考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li><b>Mesiodens</b>：最常見多生牙，位於上顎正中，造成 diastema 和萌發延遲</li>
+<li>排除智齒，最常阻生 = <b>上顎犬齒</b>（palatal &gt; buccal）</li>
+<li>Kurol：10-13 歲拔乳犬齒 → <b>78%</b> 阻生犬齒可自行改善</li>
+<li>先天缺牙頻率：<b>8 &gt; 8 &gt; 2 &gt; 5 &gt; 5</b></li>
+<li>上側門齒缺失：Class II → canine substitution；Class I/III → 開空間</li>
+<li>Functional crossbite：CR 對稱但 CO 偏移 → 擴弓治療</li>
+<li>序列拔牙：<b>C → D → 等4萌 → 拔4</b></li>
+<li>吸手指 <b>4 歲後需介入</b>；乳牙期 open bite 戒除後可自行改善</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第五章：牙齒移動生理學 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch5">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch5)">CHAPTER 5</div>
+  <h1>骨頭的回應</h1>
+  <div class="ch-subtitle">力的傳導、骨吸收與牙齒移動生理學</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">安</div><div class="bubble pat-b">林醫師，矯正器的力量是怎麼讓牙齒移動的？不會弄壞骨頭嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">好問題！牙齒移動的本質就是：<b>施力 → 牙周韌帶（PDL）感受壓力 → 骨頭重塑（remodeling）</b>。壓力側骨吸收，張力側骨沈積。但力量太大反而會適得其反。</div></div>
+</div>
+
+<h2>力的傳導（Mechanotransduction）</h2>
+
+<div class="key">
+矯正力施加到牙齒 → <b>PDL 受壓</b> → 細胞感應到機械刺激 → 轉化為生化訊號 → 啟動骨吸收 / 骨沈積<br>
+<strong>Piezoelectric effect（壓電效應）</strong>：骨頭受壓彎曲時產生微小電流。<br>
+壓力側（compression side）→ 負電 → 骨吸收（osteoclast 活化）<br>
+張力側（tension side）→ 正電 → 骨沈積（osteoblast 活化）
+</div>
+
+<div class="analogy">
+<div class="analogy-title">比喻時間</div>
+把牙齒想像成插在泥土裡的木樁。你推木樁，前面的泥土被壓縮（壓力側 → 挖掉），後面的泥土被拉開（張力側 → 填土）。結果木樁就移動了。但如果你用力過猛，前面的泥土會塌陷（hyalinization），反而移不動。
+</div>
+
+<h2>輕力 vs 重力反應</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">為什麼矯正教科書一直強調要用「輕力」？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">因為<b>輕力（light force）</b>產生的是直接骨吸收（frontal resorption），速度快、損傷小。<b>重力</b>會壓死 PDL → 產生玻璃樣變（hyalinization）→ 只能靠間接吸收（undermining resorption），速度慢而且傷牙根。</div></div>
+</div>
+
+<table>
+<tr><th>時間</th><th>輕力反應</th><th>重力反應</th></tr>
+<tr><td>&lt; 1 秒</td><td colspan="2">PDL 中液體流動、牙齒在齒槽窩中微移</td></tr>
+<tr><td>1-2 秒</td><td colspan="2">Piezoelectric signal 產生</td></tr>
+<tr><td>1-2 小時</td><td colspan="2">PDL 血流改變、細胞開始反應</td></tr>
+<tr><td>4-20 小時</td><td>Prostaglandin 釋放、osteoclast 前驅細胞聚集</td><td>PDL 壓迫缺血 → 細胞壞死開始</td></tr>
+<tr><td>2 天</td><td class="td-g"><b>Direct/frontal resorption 開始</b></td><td class="td-r"><b>Hyalinization zone 形成</b></td></tr>
+<tr><td>7-14 天</td><td>牙齒穩定移動中</td><td>Undermining resorption 才從骨髓側開始挖掘</td></tr>
+<tr><td>14 天+</td><td>持續平穩移動</td><td>Hyalinized tissue 被移除後才恢復移動（lag phase）</td></tr>
+</table>
+
+<h2>骨吸收系統</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">骨吸收的分子機轉核心是 <b>RANK-RANKL-OPG 系統</b>。</div></div>
+</div>
+
+<table>
+<tr><th>分子</th><th>來源</th><th>功能</th></tr>
+<tr><td class="td-r"><b>RANKL</b></td><td>Osteoblast / PDL 細胞表面</td><td>與 osteoclast 前驅細胞上的 RANK 結合 → <b>促進骨吸收</b></td></tr>
+<tr><td class="td-b"><b>RANK</b></td><td>Osteoclast 前驅細胞 / 成熟 osteoclast</td><td>接受 RANKL 訊號 → 分化成成熟 osteoclast</td></tr>
+<tr><td class="td-g"><b>OPG</b></td><td>Osteoblast</td><td>誘餌受體（decoy receptor），攔截 RANKL → <b>抑制骨吸收</b></td></tr>
+</table>
+
+<div class="key">
+<strong>Frontal resorption（直接吸收）</strong>：osteoclast 直接從 PDL 側吸收壓力側的骨板。效率高，是理想的移動方式。<br>
+<strong>Undermining resorption（間接吸收）</strong>：PDL 壞死（hyalinization）→ osteoclast 從<b>骨髓腔側</b>向外挖掘。速度慢、不可控、可能造成 EARR。<br>
+<strong>Hyalinization（玻璃樣變）</strong>：PDL 中膠原纖維壞死，呈現透明無結構的外觀 → 阻礙牙齒移動 → 力量去除或減輕後才能恢復。
+</div>
+
+<h2>移動類型速度</h2>
+
+<table>
+<tr><th>移動類型</th><th>速度（mm/月）</th><th>力量需求</th><th>難度</th></tr>
+<tr><td class="td-g"><b>Extrusion（拔出）</b></td><td>~1.0</td><td>最輕（25-50 g）</td><td>最容易</td></tr>
+<tr><td class="td-b"><b>Tipping（傾斜移動）</b></td><td>~1.0</td><td>輕（35-60 g）</td><td>容易（但不精確）</td></tr>
+<tr><td class="td-b"><b>Bodily translation（整體移動）</b></td><td>~0.5-1.0</td><td>中等（70-120 g）</td><td>中等</td></tr>
+<tr><td class="td-r"><b>Intrusion（壓入）</b></td><td>~0.5</td><td>輕但集中（10-20 g / 牙）</td><td>最難 + 最危險（EARR 風險最高）</td></tr>
+<tr><td class="td-b"><b>Rotation（旋轉）</b></td><td>~0.5-1.0</td><td>35-60 g</td><td>容易做但最容易復發</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+「哪種移動最容易造成牙根吸收（EARR）？」→ <b>Intrusion</b>！因為力量集中在 root apex，PDL 面積最小。<br>
+「哪種移動最容易復發？」→ <b>Rotation</b>！因為牙周纖維（特別是 transseptal fiber）有彈性記憶。需要做 <b>circumferential fiberotomy</b> 或長期維持。
+</div>
+
+<h2>建議力量與藥物</h2>
+
+<table>
+<tr><th>移動類型</th><th>建議力量</th></tr>
+<tr><td>Tipping</td><td>35-60 g</td></tr>
+<tr><td>Bodily movement</td><td>70-120 g</td></tr>
+<tr><td>Intrusion（前牙）</td><td><b>10-20 g / 牙</b></td></tr>
+<tr><td>Extrusion</td><td>25-50 g</td></tr>
+<tr><td>Rotation</td><td>35-60 g</td></tr>
+<tr><td>Torque (root movement)</td><td>50-100 g</td></tr>
+</table>
+
+<h3>藥物對牙齒移動的影響</h3>
+<table>
+<tr><th>藥物</th><th>效果</th><th>機轉</th></tr>
+<tr><td class="td-r"><b>NSAIDs（Ibuprofen）</b></td><td><b>抑制</b>牙齒移動</td><td>抑制 COX → 減少 prostaglandin → 減少骨吸收</td></tr>
+<tr><td class="td-g"><b>Acetaminophen</b></td><td><b>不影響</b>牙齒移動</td><td>中樞止痛，不抑制周邊 PG 合成</td></tr>
+<tr><td class="td-r"><b>Bisphosphonates</b></td><td><b>強力抑制</b>牙齒移動</td><td>抑制 osteoclast → 幾乎停止骨吸收</td></tr>
+<tr><td class="td-g"><b>Corticosteroid（短期）</b></td><td>可能<b>促進</b></td><td>短期刺激骨吸收</td></tr>
+<tr><td class="td-r"><b>Corticosteroid（長期）</b></td><td><b>抑制</b>（骨質疏鬆化）</td><td>長期抑制成骨</td></tr>
+<tr><td class="td-g"><b>Vitamin D</b></td><td><b>促進</b></td><td>促進鈣吸收和骨代謝</td></tr>
+<tr><td class="td-g"><b>Prostaglandin E2</b></td><td><b>促進</b></td><td>直接刺激 osteoclast</td></tr>
+</table>
+
+<div class="key">
+<strong>矯正病人疼痛時的止痛選擇：</strong>首選 <b>Acetaminophen</b>（不影響移動）<br>
+避免 NSAIDs（會減慢移動速度）<br>
+使用 bisphosphonates 的病人 → 矯正治療要非常謹慎（幾乎不動 + BRONJ 風險）
+</div>
+
+<h2>副作用與加速方法</h2>
+
+<table>
+<tr><th>副作用</th><th>說明</th></tr>
+<tr><td class="td-r"><b>EARR（External Apical Root Resorption）</b></td><td>牙根尖吸收，最常見於上顎門牙。危險因子：intrusion、重力、長治療時間、牙根異常形態</td></tr>
+<tr><td class="td-b"><b>TFO（Tooth Fenestration/Dehiscence）</b></td><td>牙根穿出骨板。常見於過度傾斜移動（labial tipping）</td></tr>
+<tr><td class="td-b"><b>White spot lesion</b></td><td>bracket 周圍脫鈣，與口腔衛生有關</td></tr>
+</table>
+
+<h3>加速牙齒移動的方法</h3>
+<table>
+<tr><th>方法</th><th>原理</th></tr>
+<tr><td class="td-b"><b>PAOO / Corticotomy</b></td><td>Periodontally Accelerated Osteogenic Orthodontics。在骨皮質上做切口 → RAP（Regional Acceleratory Phenomenon）→ 暫時加速骨代謝 2-3 倍</td></tr>
+<tr><td class="td-b"><b>Micro-osteoperforation</b></td><td>微穿刺骨皮質 → 局部刺激 cytokine 釋放 → 加速</td></tr>
+<tr><td class="td-b"><b>Low-level laser therapy (LLLT)</b></td><td>光生物調節 → 促進細胞活性 → 加速移動、減輕疼痛</td></tr>
+<tr><td class="td-b"><b>Vibration（如 AcceleDent）</b></td><td>低頻振動促進骨代謝（證據仍有爭議）</td></tr>
+</table>
+
+<h2>牙齒移動考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li>壓力側 → osteoclast → 骨吸收；張力側 → osteoblast → 骨沈積</li>
+<li><b>輕力 → frontal resorption</b>（理想）；重力 → <b>hyalinization → undermining resorption</b>（不理想）</li>
+<li>RANK-RANKL-OPG：RANKL 促吸收，OPG 是 decoy receptor 抑制吸收</li>
+<li>移動速度：<b>extrusion 最快最易</b>、<b>intrusion 最慢最難且 EARR 風險最高</b></li>
+<li><b>Rotation 最容易復發</b>（transseptal fiber）→ 需 circumferential fiberotomy</li>
+<li>Intrusion 力量：<b>10-20 g / 牙</b></li>
+<li>止痛首選：<b>Acetaminophen</b>（不影響移動），避免 NSAIDs</li>
+<li>Bisphosphonates → 幾乎停止骨吸收，矯正要非常謹慎</li>
+<li>PAOO / Corticotomy → RAP → 加速 2-3 倍</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第六章：矯正裝置與線材 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch6">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch6)">CHAPTER 6</div>
+  <h1>工具箱大公開</h1>
+  <div class="ch-subtitle">線材力學、NiTi、摩擦力與 Bracket</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">安</div><div class="bubble pat-b">林醫師，你手上那捲金屬線看起來好可怕。</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安別怕，這就是矯正線（archwire）。每種線材的特性不同，什麼時候用什麼線，是矯正的核心知識。</div></div>
+</div>
+
+<h2>線材力學基礎</h2>
+
+<table>
+<tr><th>性質</th><th>英文</th><th>定義</th><th>臨床意義</th></tr>
+<tr><td class="td-b"><b>勁度</b></td><td>Stiffness</td><td>使線材變形一定量所需的力</td><td>勁度越高 → 施力越大、不好控制</td></tr>
+<tr><td class="td-b"><b>強度</b></td><td>Strength</td><td>線材能承受的最大力量（不永久變形）</td><td>強度越高 → 不易被病人咬變形</td></tr>
+<tr><td class="td-b"><b>範圍</b></td><td>Range</td><td>線材可彈性變形的最大距離</td><td>範圍越大 → 不用常換線</td></tr>
+<tr><td class="td-g"><b>回彈力</b></td><td>Springback</td><td>線材變形後回復原狀時釋放的能量</td><td>回彈越好 → 持續施力越穩定</td></tr>
+<tr><td class="td-b"><b>成形性</b></td><td>Formability</td><td>可以彎折成形的程度</td><td>成形性好 → 方便做 loop 和 bend</td></tr>
+</table>
+
+<h2>線徑線長效應</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">教科書上那些 2 倍、8 倍、16 倍的數字到底怎麼記？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">記住 <b>beam theory</b> 就好。直徑（d）和長度（L）對力學性質的影響有固定的指數關係。</div></div>
+</div>
+
+<div class="key">
+<strong>直徑加倍（2x diameter）的效果：</strong><br>
+Strength ↑ <b>8 倍</b>（d&sup3;）<br>
+Stiffness ↑ <b>16 倍</b>（d&#x2074;）<br>
+Range ↓ <b>1/2</b><br><br>
+<strong>長度加倍（2x length）的效果：</strong><br>
+Strength 不變<br>
+Stiffness ↓ <b>1/8</b>（1/L&sup3;）<br>
+Range ↑ <b>8 倍</b>
+</div>
+
+<div class="mnemonic">
+<div class="title">線材物理記憶法</div>
+<div class="content">直徑 → 強8勁16半範圍 / 長度 → 勁度降8範圍升8</div>
+</div>
+
+<h3>三大線材比較</h3>
+<table>
+<tr><th>性質</th><th>SSW (Stainless Steel)</th><th>TMA (Beta-Titanium)</th><th>NiTi</th></tr>
+<tr><td class="td-b"><b>Stiffness</b></td><td>最高（100%）</td><td>中（~42%）</td><td>低（~28%）</td></tr>
+<tr><td class="td-b"><b>Range</b></td><td>最小</td><td>中</td><td>最大</td></tr>
+<tr><td class="td-b"><b>Springback</b></td><td>低</td><td>中</td><td>最高</td></tr>
+<tr><td class="td-b"><b>Formability</b></td><td>最好（可焊接、彎 loop）</td><td>好（可彎 bend）</td><td>最差（不可彎折）</td></tr>
+<tr><td class="td-b"><b>摩擦力</b></td><td>最低</td><td>最高</td><td>中</td></tr>
+<tr><td class="td-b"><b>用途</b></td><td>中後期、主力線、sliding</td><td>finishing、torque control</td><td>初期排列、leveling</td></tr>
+</table>
+
+<h2>NiTi 特性</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">NiTi（鎳鈦合金）是矯正界的明星材料。它有兩個獨特性質：<b>shape memory（形狀記憶）</b>和 <b>superelasticity（超彈性 / 偽彈性）</b>。</div></div>
+</div>
+
+<table>
+<tr><th>相態</th><th>溫度</th><th>特性</th></tr>
+<tr><td class="td-r"><b>Austenite（沃斯田鐵相）</b></td><td>高溫（口腔溫度以上）</td><td>硬、有彈性、是「記憶形狀」的相態</td></tr>
+<tr><td class="td-b"><b>Martensite（麻田散鐵相）</b></td><td>低溫</td><td>軟、可變形、是「容易彎」的相態</td></tr>
+</table>
+
+<div class="key">
+<strong>Shape memory effect（形狀記憶效應）</strong>：在低溫 martensite 態變形 → 加熱（放入口腔）→ 轉變回 austenite → 回到原來形狀 → 施力排牙<br>
+<strong>Superelasticity（超彈性）</strong>：在恆溫（口腔溫度）下，施力造成 stress-induced martensite 轉變 → 卸力後回到 austenite → 大範圍彈性變形 + 恆定力量<br>
+<strong>Copper NiTi</strong>：加入銅使 transition temperature 更精準，常設定在 <b>27&deg;C</b>（略低於口腔溫度，確保在口內為 austenite）
+</div>
+
+<h2>摩擦力</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">sliding mechanics 時，摩擦力是不是越小越好？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">大部分情況是的。摩擦力（friction）會消耗你施加的力量，實際到達牙齒的力就變少了。但也有人認為適度摩擦有助於 controlled movement。</div></div>
+</div>
+
+<h3>影響摩擦力的五大因素</h3>
+<table>
+<tr><th>因素</th><th>影響</th></tr>
+<tr><td class="td-b"><b>線材材質</b></td><td><b>TMA &gt; NiTi &gt; SSW</b>（TMA 摩擦力最大）</td></tr>
+<tr><td class="td-b"><b>Bracket 材質</b></td><td>Ceramic &gt; Metal（陶瓷 bracket 摩擦力較大）</td></tr>
+<tr><td class="td-b"><b>線徑與 slot 的配合</b></td><td>線越粗（填滿 slot）→ 摩擦力越大</td></tr>
+<tr><td class="td-b"><b>結紮方式</b></td><td>Steel ligature &gt; Elastic ligature；Self-ligating bracket 摩擦力最低</td></tr>
+<tr><td class="td-r"><b>接觸角度</b></td><td>角度增加 → 摩擦力急遽上升：<b>5&deg; → 2x、10&deg; → 3x、20&deg; → 4x</b></td></tr>
+</table>
+
+<h2>Bracket 與矯正器</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安，你的 bracket 我用的是 <b>Straight-wire appliance</b>（SWA）。這是 Andrews 根據他的六把鑰匙設計的，把 tip、torque、in-out 的資訊都<b>預先內建在 bracket</b> 裡。</div></div>
+</div>
+
+<h3>Slot 大小</h3>
+<table>
+<tr><th>Slot</th><th>常用線材</th><th>特點</th></tr>
+<tr><td class="td-b"><b>0.018" slot</b></td><td>0.016" / 0.016x0.022"</td><td>更精確的 torque 表現（play 較少）</td></tr>
+<tr><td class="td-b"><b>0.022" slot</b></td><td>0.019x0.025"</td><td>較大 range → 較輕柔的力量；更大 play</td></tr>
+</table>
+
+<div class="key">
+<strong>Play（遊隙）</strong>= slot 與線材之間的角度差<br>
+0.019x0.025" wire in 0.022" slot → play = <b>~9.6&deg;</b><br>
+這表示 wire 要先「晃」9.6&deg; 才能開始傳遞 torque 到牙齒。<br>
+0.018" slot 因為 play 較小，torque 表達更直接。
+</div>
+
+<h3>Bracket 材質比較</h3>
+<table>
+<tr><th>材質</th><th>優點</th><th>缺點</th></tr>
+<tr><td class="td-b"><b>Stainless Steel</b></td><td>強度高、摩擦力低、耐用</td><td>不美觀</td></tr>
+<tr><td class="td-b"><b>Ceramic（氧化鋁 / 氧化鋯）</b></td><td>美觀（透明 / 牙色）</td><td>摩擦力高、脆、可能傷對咬牙</td></tr>
+<tr><td class="td-b"><b>Plastic / Composite</b></td><td>美觀</td><td>容易變色、變形、強度差</td></tr>
+<tr><td class="td-g"><b>Self-ligating</b></td><td>摩擦力低、回診間隔可拉長</td><td>較貴、某些設計 torque 控制較弱</td></tr>
+</table>
+
+<h2>隱形矯正</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">安</div><div class="bubble pat-b">林醫師，我可以用隱形牙套嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">可以考慮，但隱形矯正有它的限制。最重要的觀念是：傳統矯正器是<b>拉（pull）</b>，隱形矯正器是<b>推（push）</b>。</div></div>
+</div>
+
+<table>
+<tr><th>特性</th><th>說明</th></tr>
+<tr><td class="td-b"><b>力學機制</b></td><td><b>Push mechanism</b>（推力），不是傳統的 pull</td></tr>
+<tr><td class="td-b"><b>每步移動量</b></td><td>&le; <b>0.2 mm</b> translation / &le; <b>1.5&deg;</b> rotation per aligner</td></tr>
+<tr><td class="td-b"><b>材質</b></td><td>PET-G 或 SmartTrack（聚氨酯共聚物）</td></tr>
+<tr><td class="td-b"><b>Attachment</b></td><td>複合樹脂小突起黏在牙面 → 提供施力點和固位</td></tr>
+<tr><td class="td-b"><b>Power ridge</b></td><td>aligner 內側的壓痕 → 提供 torque 力（尤其前牙 root torque）</td></tr>
+<tr><td class="td-r"><b>限制</b></td><td>大量 extrusion、大量 rotation、大量 bodily movement 效果較差</td></tr>
+</table>
+
+<h2>裝置與線材考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li>2x 直徑 → strength <b>8x</b>、stiffness <b>16x</b>、range <b>1/2</b></li>
+<li>2x 長度 → stiffness <b>1/8</b>、range <b>8x</b></li>
+<li>SSW 勁度最高 / NiTi 範圍最大回彈最好 / TMA 摩擦力最大</li>
+<li>NiTi：Austenite = 高溫硬（記憶形狀）；Martensite = 低溫軟（可變形）</li>
+<li><b>Copper NiTi 轉換溫度 27&deg;C</b></li>
+<li>摩擦力：<b>TMA &gt; NiTi &gt; SSW</b>；角度 <b>5&deg;→2x, 10&deg;→3x, 20&deg;→4x</b></li>
+<li>0.019x0.025" in 0.022" slot → play = <b>9.6&deg;</b></li>
+<li>隱形矯正 = push mechanism，每步 &le; <b>0.2 mm / 1.5&deg;</b></li>
+<li>Self-ligating bracket 摩擦力最低</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第七章：功能性矯正與擴弓 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch7">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch7)">CHAPTER 7</div>
+  <h1>生長的助推器</h1>
+  <div class="ch-subtitle">功能性矯正裝置、Headgear 與擴弓</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">林醫師，功能性矯正裝置（FA）到底是怎麼運作的？真的能改變骨骼嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">FA 的理論基礎是 <b>Moss 的 Functional Matrix Theory</b>：「不是骨頭決定功能，而是功能決定骨頭。」改變肌肉、軟組織的功能環境 → 引導骨骼生長方向。但要在<b>生長期</b>才有效。</div></div>
+</div>
+
+<h2>功能性矯正原理</h2>
+
+<div class="key">
+<strong>Functional Matrix Theory（Moss, 1962）</strong>：骨骼的生長受到周圍軟組織功能的調控。<br>
+FA 透過改變下顎位置（前移或後移）→ 改變肌肉張力和關節受力 → 刺激或抑制骨骼生長<br><br>
+<strong>最佳使用時機：</strong>生長高峰前 1-3 年（女生 ~9-10 歲，男生 ~11-12 歲）<br>
+<strong>效果：</strong>大部分 FA 的效果是 <b>70% 牙齒性 + 30% 骨骼性</b>（不是純粹改變骨骼）
+</div>
+
+<h2>主要功能性矯正裝置一覽</h2>
+
+<table>
+<tr><th>裝置</th><th>類型</th><th>主要適應症</th><th>特點</th></tr>
+<tr><td class="td-b"><b>Headgear</b></td><td>口外裝置</td><td>Class II（抑制上顎生長）</td><td>施力 300-500g，每天 12-14 小時</td></tr>
+<tr><td class="td-b"><b>Activator</b></td><td>活動式 / 被動型</td><td>Class II div.1</td><td>最早的 FA（Andresen），一體成型，只能夜戴</td></tr>
+<tr><td class="td-b"><b>Bionator</b></td><td>活動式</td><td>Class II</td><td>Activator 的改良版（Balters），較小、舒適</td></tr>
+<tr><td class="td-r"><b>Twin Block</b></td><td>活動式 / 主動型</td><td>Class II div.1</td><td><b>上下兩片</b>，70&deg;斜面互鎖 → 下顎前移。可全天戴、效果快</td></tr>
+<tr><td class="td-b"><b>Fr&auml;nkel (FR)</b></td><td>活動式</td><td>Class I/II/III</td><td>Vestibular shield 消除頰肌壓力 → 擴弓效果。FR-I(Class I)、FR-II(Class II)、FR-III(Class III)</td></tr>
+<tr><td class="td-g"><b>Herbst</b></td><td><b>固定式</b></td><td>Class II</td><td>Telescope 裝置固定在牙齒上 → 持續 24hr 前移下顎。效果可靠但對牙齒有 side effects</td></tr>
+<tr><td class="td-b"><b>Jasper Jumper</b></td><td>固定式</td><td>Class II</td><td>彈簧裝置接在上下弓線上</td></tr>
+<tr><td class="td-b"><b>MARA</b></td><td>固定式</td><td>Class II</td><td>Mandibular Anterior Repositioning Appliance</td></tr>
+<tr><td class="td-b"><b>Forsus</b></td><td>固定式</td><td>Class II</td><td>Spring-loaded，不需病人合作</td></tr>
+<tr><td class="td-b"><b>Myofunctional trainer</b></td><td>預成型活動式</td><td>功能不良</td><td>訓練唇舌肌、改善口呼吸</td></tr>
+<tr><td class="td-b"><b>Bimler</b></td><td>活動式</td><td>Class I/II/III</td><td>Wire-based 彈性裝置</td></tr>
+<tr><td class="td-b"><b>Facemask</b></td><td>口外裝置</td><td><b>Class III</b>（前拉上顎）</td><td>350-450g，每天 12-14 小時，<b>8 歲前最佳</b></td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+「Herbst 是活動式還是固定式？」→ <b>固定式</b>！它是黏在牙齒上的 telescope，病人不能自己拿下來。<br>
+「Twin Block 是一體成型嗎？」→ <b>不是</b>！它是<b>上下兩片分開</b>的，靠 70&deg; 斜面互鎖。Activator 才是一體成型。
+</div>
+
+<h2>Headgear 與早期裝置</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">Headgear 的方向不同，效果完全不同。</div></div>
+</div>
+
+<table>
+<tr><th>類型</th><th>拉力方向</th><th>效果</th><th>適應症</th></tr>
+<tr><td class="td-b"><b>Cervical pull (Low pull)</b></td><td>向後向下</td><td>上顎後移 + <b>extrusion 上臼齒</b> → 下顎順時針旋轉（開咬方向）</td><td>Class II + low angle</td></tr>
+<tr><td class="td-b"><b>Occipital pull (High pull)</b></td><td>向後向上</td><td>上顎後移 + <b>intrusion 上臼齒</b> → 控制 vertical</td><td>Class II + <b>high angle</b></td></tr>
+<tr><td class="td-b"><b>Combination pull</b></td><td>向正後方</td><td>平衡效果</td><td>Class II + normal angle</td></tr>
+</table>
+
+<div class="key">
+<strong>Reverse-pull headgear (Facemask / Protraction facemask)：</strong><br>
+適應症：<b>骨骼 Class III（上顎後縮型）</b><br>
+力量：<b>350-450 g</b>，每天 <b>12-14 小時</b><br>
+最佳時機：<b>8 歲前</b>（midpalatal suture 未閉合，骨縫牽引效果好）<br>
+通常搭配 RPE（先擴弓打鬆 suture → 再前拉效果更好）
+</div>
+
+<h3>其他早期裝置</h3>
+<table>
+<tr><th>裝置</th><th>功能</th></tr>
+<tr><td class="td-b"><b>Chin cap</b></td><td>抑制下顎向前生長（但效果有限，主要改變生長方向使下顎順時針旋轉）</td></tr>
+<tr><td class="td-b"><b>Lip bumper</b></td><td>擋住下唇壓力 → 讓下顎牙弓自然擴張 + 下臼齒 distalization</td></tr>
+</table>
+
+<h2>RPE vs SPE</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">RPE 和 SPE 有什麼差別？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">RPE 是「快速擴弓」，SPE 是「慢速擴弓」。速度不同，比例不同，適合年齡也不同。</div></div>
+</div>
+
+<table>
+<tr><th>項目</th><th>RPE (Rapid Palatal Expansion)</th><th>SPE (Slow Palatal Expansion)</th></tr>
+<tr><td class="td-b"><b>速度</b></td><td>0.25 mm/turn，每天轉 <b>2 次</b>（0.5 mm/天）</td><td>每天 &le; <b>1 mm/週</b></td></tr>
+<tr><td class="td-b"><b>總擴張量</b></td><td>5-10 mm（2-3 週完成）</td><td>2-4 mm（數月完成）</td></tr>
+<tr><td class="td-r"><b>牙齒:骨性 比例</b></td><td><b>~50:50</b>（半骨性半牙齒性）</td><td><b>~30:70</b>（以牙齒傾斜為主）</td></tr>
+<tr><td class="td-b"><b>維持期</b></td><td>擴完後固定 <b>3-6 個月</b></td><td>較短</td></tr>
+<tr><td class="td-b"><b>適合年齡</b></td><td>青春期前（<b>&lt; 14-15 歲</b>）最佳</td><td>各年齡皆可</td></tr>
+<tr><td class="td-b"><b>副作用</b></td><td>Midpalatal suture 打開 → 門牙間隙（會自行關閉）、鼻腔擴張</td><td>副作用較少</td></tr>
+</table>
+
+<h2>擴弓裝置一覽</h2>
+
+<table>
+<tr><th>裝置</th><th>類型</th><th>特點</th></tr>
+<tr><td class="td-b"><b>Hyrax</b></td><td>Tooth-borne RPE</td><td>螺旋架連接到第一小臼齒和第一大臼齒上的 band</td></tr>
+<tr><td class="td-b"><b>Haas</b></td><td>Tissue + Tooth-borne RPE</td><td>有壓克力板貼在腭側黏膜，力量分散</td></tr>
+<tr><td class="td-r"><b>MSE (Miniscrew-assisted RPE)</b></td><td>Bone-borne</td><td>用 4 支 mini-screw 固定 → 直接擴骨 → <b>適用成人</b>（suture 已閉合）</td></tr>
+<tr><td class="td-b"><b>W-arch</b></td><td>固定式慢速</td><td>W 型 wire，力量輕柔，適合兒童</td></tr>
+<tr><td class="td-b"><b>Quad-helix</b></td><td>固定式慢速</td><td>四個 helix 提供持續輕力，可差異性擴張前後段</td></tr>
+<tr><td class="td-b"><b>Schwartz plate</b></td><td>活動式慢速</td><td>壓克力基板 + 螺旋，病人自行轉。需病人合作</td></tr>
+<tr><td class="td-b"><b>TPA (Transpalatal Arch)</b></td><td>固定式</td><td>主要作為 anchorage（防臼齒 mesial 移動），也可做輕微擴弓或 rotation</td></tr>
+</table>
+
+<div class="key">
+<strong>SARPE vs MARPE：</strong><br>
+<b>SARPE</b>（Surgically Assisted RPE）：成人 suture 已融合 → 手術切開 suture + RPE → 骨性擴張<br>
+<b>MARPE / MSE</b>：用 mini-screw 固定，不需全身麻醉手術，也可在成人達到骨性擴張 → 逐漸取代 SARPE
+</div>
+
+<h2>功能性矯正考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li><b>Functional Matrix Theory（Moss）</b>：功能決定骨骼形態</li>
+<li>FA 最佳時機：<b>生長高峰前 1-3 年</b></li>
+<li>FA 效果：~<b>70% dental + 30% skeletal</b></li>
+<li><b>Herbst = 固定式</b>；Twin Block = 活動式（上下兩片、70&deg; 斜面）；Activator = 一體成型</li>
+<li>Headgear：low pull（Class II + low angle）→ extrude molar；<b>high pull（Class II + high angle）→ intrude molar</b></li>
+<li>Facemask：Class III 上顎後縮，<b>350-450g，12-14hr，8 歲前最佳</b></li>
+<li>RPE 牙齒:骨性 = <b>50:50</b>；SPE = <b>30:70</b>（牙齒為主）</li>
+<li>RPE 維持 <b>3-6 個月</b>，適合 &lt; 14-15 歲</li>
+<li><b>MSE/MARPE = bone-borne</b>，可用於成人擴弓</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第八章：全口矯正三階段 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch8">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch8)">CHAPTER 8</div>
+  <h1>三階段的旅程</h1>
+  <div class="ch-subtitle">全口矯正的排列、關空間與完成</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">小安，你的治療計畫出來了：拔除上下四顆第一小臼齒，使用全口矯正器。整個治療分三個階段。</div></div>
+  <div class="line"><div class="avatar patient">安</div><div class="bubble pat-b">要拔四顆牙！好可怕......</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">別怕，這是為了讓其他牙齒有空間排整齊。我先跟你解釋矯正力學的基礎概念。</div></div>
+</div>
+
+<h2>力學基礎</h2>
+
+<div class="key">
+<strong>Center of Resistance（CR，抵抗中心）</strong>：相當於牙齒的「重心」<br>
+- 單根牙：牙根中 1/3 到上 1/3 處（約距 alveolar crest 牙根 1/3 處）<br>
+- 多根牙：根分岔處附近<br>
+力量通過 CR → bodily movement；不通過 CR → 產生 moment → tipping
+</div>
+
+<h3>M/F Ratio 與移動類型</h3>
+<table>
+<tr><th>M/F Ratio</th><th>移動類型</th><th>說明</th></tr>
+<tr><td class="td-b"><b>0</b></td><td>Uncontrolled tipping</td><td>純力量，無 moment → 牙冠傾倒，牙根不動</td></tr>
+<tr><td class="td-b"><b>&lt; 7:1</b></td><td>Controlled tipping</td><td>牙冠移動，牙根尖幾乎不動</td></tr>
+<tr><td class="td-r"><b>~10:1</b></td><td><b>Bodily translation</b></td><td>牙冠和牙根等量移動（理想的 en-masse retraction）</td></tr>
+<tr><td class="td-b"><b>&gt; 12:1</b></td><td>Root torque</td><td>牙根移動比牙冠多</td></tr>
+<tr><td class="td-b"><b>極大</b></td><td>Pure rotation (around CR)</td><td>只有 couple，沒有 net force</td></tr>
+</table>
+
+<h3>Bend 的分類</h3>
+<table>
+<tr><th>Order</th><th>方向</th><th>功能</th></tr>
+<tr><td class="td-b"><b>1st order（in-out）</b></td><td>頰舌向</td><td>調整牙齒在牙弓中的頰舌位置</td></tr>
+<tr><td class="td-b"><b>2nd order（tip）</b></td><td>近遠心向</td><td>調整牙冠近遠心傾斜角度（angulation）</td></tr>
+<tr><td class="td-r"><b>3rd order（torque）</b></td><td>唇舌向旋轉</td><td>調整牙根唇舌向傾斜（inclination）→ 用方線在方 slot 中扭轉</td></tr>
+</table>
+
+<h2>拔牙選擇</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">不同的 Angle 分類，拔牙選擇不一樣嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">對！拔哪顆牙要考慮 molar relationship 的矯正方向。</div></div>
+</div>
+
+<table>
+<tr><th>分類</th><th>拔牙選擇</th><th>理由</th></tr>
+<tr><td class="td-b"><b>Class II</b></td><td>上顎 <b>4</b> + 下顎 <b>5</b><br>（或只拔上顎 4）</td><td>上顎拔前一點的（4）→ 後退前牙更多；下顎拔後一點的（5）→ 保留 canine 更多空間</td></tr>
+<tr><td class="td-b"><b>Class III</b></td><td>上顎 <b>5</b> + 下顎 <b>4</b></td><td>下顎拔前一點的（4）→ 後退下前牙更多；上顎拔後一點的（5）→ 保留上前牙位置</td></tr>
+<tr><td class="td-r"><b>Bimaxillary protrusion</b></td><td><b>上下四顆 4（4x4）</b></td><td>需要大量前牙內收（retraction）→ 改善 profile</td></tr>
+<tr><td class="td-b"><b>Class I 擁擠</b></td><td>上下四顆 4（最常見）</td><td>擁擠 &gt; 5mm 通常需要拔牙</td></tr>
+</table>
+
+<div class="mnemonic">
+<div class="title">拔牙口訣</div>
+<div class="content">Class II 上4下5 / Class III 上5下4 / 暴嘴 4x4</div>
+</div>
+
+<h2>Stage 1：排列（Alignment &amp; Leveling）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">第一階段用輕柔的 NiTi 線把牙齒排整齊、整平 Curve of Spee。如果有 crossbite，這時候也要一起處理。</div></div>
+</div>
+
+<table>
+<tr><th>步驟</th><th>線材</th><th>目標</th></tr>
+<tr><td>初始排列</td><td>0.014" NiTi → 0.016" NiTi</td><td>解除擁擠和旋轉</td></tr>
+<tr><td>Leveling</td><td>0.016x0.022" NiTi → 0.017x0.025" NiTi</td><td>整平 Curve of Spee、torque 初步表達</td></tr>
+<tr><td>Crossbite 處理</td><td>Bite turbo / RPE / MSE</td><td>排除咬合干擾和橫向問題</td></tr>
+</table>
+
+<div class="key">
+<strong>Piggyback technique</strong>：在主弓線上再加一條輕的 NiTi 線 → 對嚴重不整齊的牙齒施加額外輕力。<br>
+<strong>Bite turbo</strong>：在臼齒上黏 composite 或在前牙上做 → 暫時打開咬合 → 讓 crossbite 的牙齒有空間跳過。
+</div>
+
+<h2>Stage 2：關空間（Space Closure）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">拔牙後的空間怎麼關？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">兩大流派：<b>Loop mechanics</b>（用 closing loop）和 <b>Sliding mechanics</b>（用 sliding 沿線滑動）。另外還要決定是 en-masse 一起退還是先退犬齒。</div></div>
+</div>
+
+<table>
+<tr><th>方法</th><th>Loop mechanics</th><th>Sliding mechanics</th></tr>
+<tr><td class="td-b"><b>原理</b></td><td>Loop 本身產生力量（活化 loop）</td><td>沿 archwire 滑動（靠 coil spring 或 elastic chain）</td></tr>
+<tr><td class="td-b"><b>摩擦力</b></td><td>無摩擦（frictionless）</td><td>有摩擦（friction present）</td></tr>
+<tr><td class="td-b"><b>線材</b></td><td>SSW 或 TMA</td><td>SSW（摩擦力最低）</td></tr>
+<tr><td class="td-b"><b>優點</b></td><td>M/F ratio 可精確控制</td><td>操作簡單、appointment time 短</td></tr>
+</table>
+
+<h3>Anchorage（錨定）分類</h3>
+<table>
+<tr><th>類型</th><th>定義</th><th>方法</th></tr>
+<tr><td class="td-b"><b>Minimum</b></td><td>前後牙可以等量移動</td><td>不需特別措施</td></tr>
+<tr><td class="td-b"><b>Moderate</b></td><td>前牙需比後牙移動更多</td><td>TPA、headgear（兼職）</td></tr>
+<tr><td class="td-r"><b>Maximum</b></td><td>後牙幾乎不動，前牙大量後退</td><td>Headgear、Nance、多顆牙結紮</td></tr>
+<tr><td class="td-r"><b>Absolute</b></td><td>後牙完全不能動</td><td><b>TADs（骨釘）</b>= 唯一真正的 absolute anchorage</td></tr>
+</table>
+
+<h2>骨釘（TADs, Temporary Anchorage Devices）</h2>
+
+<table>
+<tr><th>項目</th><th>說明</th></tr>
+<tr><td class="td-b"><b>材質</b></td><td>鈦合金（Ti-6Al-4V）或純鈦</td></tr>
+<tr><td class="td-b"><b>尺寸</b></td><td>直徑 <b>1.3-2.0 mm</b>，長度 6-12 mm</td></tr>
+<tr><td class="td-b"><b>穩定性</b></td><td>靠<b>機械性嵌合（mechanical retention）</b>，不是 osseointegration！</td></tr>
+<tr><td class="td-b"><b>loading 時機</b></td><td>植入後可<b>立即或 2 週後</b>施力（不需等 osseointegration）</td></tr>
+<tr><td class="td-b"><b>施力範圍</b></td><td><b>100-500 g</b></td></tr>
+<tr><td class="td-b"><b>常見植入位置</b></td><td>Buccal shelf、infrazygomatic crest、palate（anterior/posterior）、interradicular area</td></tr>
+<tr><td class="td-r"><b>成功率</b></td><td>~80-90%（比植牙低，因為不 osseointegrate）</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+「TADs 靠什麼穩定？」→ <b>Mechanical retention（機械嵌合）</b>，不是 osseointegration！<br>
+如果 TADs 產生了 osseointegration 反而不好，因為拔除會更困難。<br>
+這跟植牙（implant）完全不同 — 植牙要 osseointegration，TADs 不要。
+</div>
+
+<h2>Stage 3：完成 + 橡皮筋 + 維持器</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">最後一個階段是 finishing，要做的是微調咬合、確認每顆牙都在對的位置。橡皮筋（elastics）在這個階段非常重要。</div></div>
+</div>
+
+<h3>Class II vs Class III elastics</h3>
+<table>
+<tr><th>類型</th><th>掛法</th><th>效果</th></tr>
+<tr><td class="td-b"><b>Class II elastics</b></td><td>上顎犬齒 → 下顎臼齒</td><td>下顎前移 + 上顎後退 → 矯正 Class II</td></tr>
+<tr><td class="td-b"><b>Class III elastics</b></td><td>下顎犬齒 → 上顎臼齒</td><td>上顎前移 + 下顎後退 → 矯正 Class III</td></tr>
+<tr><td class="td-b"><b>Vertical elastics (Box)</b></td><td>上下對應牙齒</td><td>改善 open bite</td></tr>
+<tr><td class="td-b"><b>Cross elastics</b></td><td>上頰側 → 下舌側</td><td>矯正 crossbite</td></tr>
+</table>
+
+<h3>維持器（Retainer）比較</h3>
+<table>
+<tr><th>類型</th><th>材質</th><th>優點</th><th>缺點</th></tr>
+<tr><td class="td-b"><b>透明維持器（Essix）</b></td><td>PET-G / PETG</td><td>美觀、舒適</td><td>不耐久、磨損後需更換、可能影響 posterior settling</td></tr>
+<tr><td class="td-b"><b>Hawley retainer</b></td><td>壓克力 + wire</td><td>耐久、可調整、允許 posterior settling</td><td>較不美觀、有金屬線外露</td></tr>
+<tr><td class="td-b"><b>Fixed retainer</b></td><td>Braided wire 黏在舌側</td><td>24hr 維持、不需病人合作</td><td>口腔衛生維護困難、wire 斷裂風險</td></tr>
+</table>
+
+<div class="key">
+<strong>維持期組織重塑時間表：</strong><br>
+<b>PDL 重組：3-4 個月</b><br>
+<b>Collagen fiber 重組：4-6 個月</b><br>
+<b>Elastic fiber（特別是 gingival + transseptal）：&gt; 1 年</b><br>
+<strong>因此維持器建議至少戴 1 年全天（只吃飯拿下來），之後改夜戴</strong><br><br>
+<strong>最容易復發的情況：</strong><br>
+1. Rotation（transseptal fiber 記憶）<br>
+2. 下前牙擁擠（late mandibular growth + 3rd molar 壓力說有爭議）<br>
+3. 擴弓後（arch width 傾向回到原來）
+</div>
+
+<h2>全口矯正考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li>M/F ratio：<b>0=tipping、~10:1=bodily、&gt;12:1=root torque</b></li>
+<li>1st order = in-out、2nd order = tip、<b>3rd order = torque</b></li>
+<li>拔牙：Class II <b>上4下5</b>；Class III <b>上5下4</b>；暴嘴 <b>4x4</b></li>
+<li>Stage 1 用 NiTi 排列；Stage 2 關空間（loop vs sliding）；Stage 3 finishing</li>
+<li><b>Absolute anchorage = TADs</b>（唯一真正的 absolute）</li>
+<li>TADs 靠 <b>mechanical retention</b>，不是 osseointegration；可立即施力</li>
+<li>TADs 施力：<b>100-500 g</b>；尺寸 <b>1.3-2.0 mm</b></li>
+<li>Class II elastics：上犬齒 → 下臼齒；Class III：反向</li>
+<li>維持：PDL <b>3-4 月</b>、collagen <b>4-6 月</b>、elastic fiber <b>&gt; 1 年</b></li>
+<li><b>Rotation 最易復發</b> → circumferential fiberotomy</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第九章：正顎手術 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch9">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch9)">CHAPTER 9</div>
+  <h1>骨頭的重整</h1>
+  <div class="ch-subtitle">正顎手術適應症、術式與 Surgery First</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">林醫師，什麼情況下矯正做不到的，要靠正顎手術？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">當骨骼差異太大，光靠牙齒移動無法 camouflage（偽裝）時，就需要手術介入。國考會考適應症的閾值和術式比較。</div></div>
+</div>
+
+<h2>適應症</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">以 Class III（下顎前突或上顎後縮）為例，當超過以下數值時，通常建議手術。</div></div>
+</div>
+
+<table>
+<tr><th>指標</th><th>手術閾值</th><th>說明</th></tr>
+<tr><td class="td-r"><b>Overjet (OJ)</b></td><td>&le; <b>-4.73 mm</b></td><td>嚴重反咬</td></tr>
+<tr><td class="td-r"><b>Wits appraisal</b></td><td>&le; <b>-11.18 mm</b></td><td>嚴重骨骼 Class III</td></tr>
+<tr><td class="td-b"><b>L1-MP angle</b></td><td>&le; <b>80.8&deg;</b></td><td>下門牙已過度後傾（代償到極限）</td></tr>
+<tr><td class="td-b"><b>Mx/Mn ratio</b></td><td>&le; <b>65.9%</b></td><td>上下顎長度比嚴重失衡</td></tr>
+</table>
+
+<div class="key">
+<strong>手術的一般適應症：</strong><br>
+1. 骨骼差異嚴重（ANB 過大或過小）無法單靠矯正代償<br>
+2. Vertical excess（gummy smile / open bite 嚴重）<br>
+3. 顏面不對稱（asymmetry）<br>
+4. Obstructive sleep apnea（OSA）→ mandibular advancement
+</div>
+
+<h2>術式</h2>
+
+<table>
+<tr><th>術式</th><th>全名</th><th>作用</th><th>適應症</th></tr>
+<tr><td class="td-b"><b>LeFort I</b></td><td>LeFort I osteotomy</td><td>上顎整體切開 → 可<b>前移/後移/上移/下移/傾斜</b></td><td>上顎後縮、open bite（impaction）、gummy smile</td></tr>
+<tr><td class="td-r"><b>BSSO</b></td><td>Bilateral Sagittal Split Osteotomy</td><td>下顎 ramus 矢狀劈開 → 可<b>前移/後移</b></td><td>最常用的下顎手術</td></tr>
+<tr><td class="td-b"><b>BVRO</b></td><td>Bilateral Vertical Ramus Osteotomy</td><td>下顎 ramus 垂直切開 → 主要<b>後退</b></td><td>下顎前突、condyle 問題</td></tr>
+<tr><td class="td-b"><b>Genioplasty</b></td><td>頦成形術</td><td>下巴骨切開 → 前移/後退/上移/下移</td><td>改善 chin profile、chin asymmetry</td></tr>
+</table>
+
+<h2>BSSO vs BVRO</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">BSSO 和 BVRO 都是做下顎的，有什麼差別？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">差很多！BSSO 是切 sagittal（矢狀），BVRO 是切 vertical（垂直）。兩者的適應症、固定方式、併發症都不一樣。</div></div>
+</div>
+
+<table>
+<tr><th>項目</th><th>BSSO</th><th>BVRO</th></tr>
+<tr><td class="td-b"><b>切開方向</b></td><td>矢狀（sagittal split）</td><td>垂直（vertical cut）</td></tr>
+<tr><td class="td-b"><b>移動方向</b></td><td><b>前移 + 後退</b>都可以</td><td>主要<b>後退</b>（setback）</td></tr>
+<tr><td class="td-b"><b>固定方式</b></td><td>Rigid fixation（plate + screw）→ <b>不需 IMF</b></td><td>Wire fixation → 通常需要 <b>IMF（6-8 週）</b></td></tr>
+<tr><td class="td-r"><b>神經損傷</b></td><td><b>IAN（下齒槽神經）損傷風險較高</b></td><td>IAN 損傷風險較低</td></tr>
+<tr><td class="td-b"><b>穩定度</b></td><td>前移穩定；後退較不穩定</td><td>後退穩定性佳（condyle sag 風險低）</td></tr>
+<tr><td class="td-b"><b>Condyle 問題</b></td><td>有 condylar sag / torque 風險</td><td>Condyle 可自由定位 → 適合有 TMD 或 condyle 問題的人</td></tr>
+<tr><td class="td-b"><b>Proximal segment 控制</b></td><td>需仔細控制</td><td>較好（不固定近端 → condyle 自行就位）</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">陷阱題</div>
+「BSSO 最主要的併發症是什麼？」→ <b>IAN（下齒槽神經）損傷</b>（暫時性 ~30-50%，永久性 ~5%）。<br>
+「哪個手術比較適合有 TMD 的病人？」→ <b>BVRO</b>，因為 condyle 可以自由定位，不被 rigid fixation 限制。
+</div>
+
+<h2>移動量限制</h2>
+
+<table>
+<tr><th>方向</th><th>限制</th><th>原因</th></tr>
+<tr><td class="td-b"><b>上顎前移</b></td><td>&le; <b>6-8 mm</b></td><td>超過則血液供應不足、soft tissue 張力過大</td></tr>
+<tr><td class="td-b"><b>下顎前移</b></td><td>&le; <b>10 mm</b></td><td>超過則復發率高、soft tissue adaptation 差</td></tr>
+<tr><td class="td-r"><b>下顎後退</b></td><td>注意 <b>OSA 風險</b></td><td>後退下顎 → 舌根後移 → 氣道變窄 → 打鼾/OSA</td></tr>
+<tr><td class="td-b"><b>上顎 impaction（上移）</b></td><td>最穩定的手術動作</td><td>有骨對骨接觸 → 穩定</td></tr>
+<tr><td class="td-r"><b>上顎 downward movement（下移）</b></td><td>最不穩定</td><td>需要骨移植填補間隙</td></tr>
+</table>
+
+<div class="key">
+<strong>穩定度排名：</strong><br>
+<b>上顎上移（impaction）最穩定</b> → 上顎前移 → 下顎前移 → 下顎後退 → <b>上顎下移最不穩定</b>
+</div>
+
+<h2>術前矯正與 Surgery First</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">傳統正顎手術的流程是：<b>術前矯正（12-18 個月）→ 手術 → 術後矯正（6-12 個月）</b>。術前矯正的目的是 <b>decompensation</b>（去代償）。</div></div>
+</div>
+
+<div class="key">
+<strong>Decompensation（去代償）</strong>：牙齒為了代償骨骼不正，會自行傾斜來維持咬合。<br>
+例如：Class III 病人的下門牙會自然 retrocline、上門牙會 procline → 代償骨骼差異<br>
+術前矯正要<b>把這些代償拿掉</b> → 讓牙齒回到「正確的骨骼角度」→ 手術後才能咬得正<br>
+結果：術前矯正期間咬合會<b>暫時變更差</b>（因為去掉代償了），病人要理解這是正常的。
+</div>
+
+<h3>Surgery First Approach</h3>
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">聽說有 Surgery First 不用做術前矯正？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">對，但不是每個人都適合。Surgery First 是先手術再矯正，優點是治療時間短（手術後利用 RAP 加速牙齒移動），但有嚴格的適用條件。</div></div>
+</div>
+
+<table>
+<tr><th>Surgery First 適用條件</th></tr>
+<tr><td>輕度擁擠（minimal crowding）</td></tr>
+<tr><td>Curve of Spee 平坦</td></tr>
+<tr><td>上下門牙角度接近正常（不需大量 decompensation）</td></tr>
+<tr><td>可以用手術定位預測最終咬合</td></tr>
+</table>
+
+<div class="key">
+<strong>Stabilization wire</strong>：術前矯正最後階段會放上粗的 SSW（如 0.019x0.025" SSW）作為穩定弓線，手術中用來做 IMF（intermaxillary fixation）。
+</div>
+
+<h2>術後照護與 Distraction Osteogenesis</h2>
+
+<table>
+<tr><th>時間</th><th>照護重點</th></tr>
+<tr><td>術後 1-2 天</td><td>IMF（顎間固定）或 guiding elastics；流質飲食</td></tr>
+<tr><td>術後 1-2 週</td><td>改軟質飲食；開始輕柔張口練習</td></tr>
+<tr><td>術後 2-4 週</td><td>漸進增加食物硬度；持續 elastics（引導咬合）</td></tr>
+<tr><td>術後 4-6 週</td><td>移除 IMF（如果有用）；正常飲食</td></tr>
+<tr><td>術後 6-8 週</td><td>開始術後矯正</td></tr>
+<tr><td>術後 3-6 個月</td><td>骨癒合穩定；追蹤 X 光</td></tr>
+</table>
+
+<h3>Distraction Osteogenesis（DO，牽引成骨）</h3>
+<table>
+<tr><th>階段</th><th>名稱</th><th>時間</th><th>內容</th></tr>
+<tr><td class="td-b"><b>1</b></td><td>Latency（潛伏期）</td><td>術後 5-7 天</td><td>等待初始骨痂形成，不動</td></tr>
+<tr><td class="td-r"><b>2</b></td><td>Activation（活化期）</td><td>每天 <b>0.5-1.0 mm</b></td><td>緩慢牽開 → 新骨在間隙中生成</td></tr>
+<tr><td class="td-g"><b>3</b></td><td>Consolidation（固化期）</td><td>8-12 週</td><td>新生骨鈣化成熟；裝置不動</td></tr>
+</table>
+
+<div class="key">
+<strong>DO 的優點：</strong>可以移動骨骼超過傳統手術的限制量，軟組織隨之漸進延展，復發率低。<br>
+常用於：hemifacial microsomia、Pierre Robin sequence、嚴重下顎後縮。
+</div>
+
+<h2>正顎手術考試重點</h2>
+
+<div class="exam-box">
+<div class="exam-title">考試重點框</div>
+<ul>
+<li>Class III 手術閾值：OJ &le; <b>-4.73</b>、Wits &le; <b>-11.18</b>、L1-MP &le; <b>80.8&deg;</b>、Mx/Mn &le; <b>65.9%</b></li>
+<li>LeFort I = 上顎（可全方向移動）；<b>BSSO = 下顎矢狀劈開（最常用）</b>；BVRO = 垂直切</li>
+<li>BSSO 可前移+後退，用 rigid fixation；BVRO 主要後退，用 wire fixation + IMF</li>
+<li><b>BSSO 主要併發症 = IAN 損傷</b>；有 TMD 者優先考慮 BVRO</li>
+<li>穩定度：上顎 impaction <b>最穩定</b> → 上顎 downward <b>最不穩定</b></li>
+<li>下顎後退要注意 <b>OSA 風險</b></li>
+<li>術前矯正 = <b>decompensation</b>（去代償），咬合會暫時變差</li>
+<li>Surgery First 條件：輕度擁擠 + 平 Spee + 門牙角度正常</li>
+<li>DO 三階段：<b>Latency（5-7天）→ Activation（0.5-1mm/天）→ Consolidation（8-12週）</b></li>
+</ul>
+</div>
+</div>
+</div>
+
+<div class="footer">
+  <p>矯正學故事書 v1.0 | 距離國考還有一段路，但你每天都在前進</p>
+  <p style="margin-top:8px"><a href="index.html" style="color:var(--warm2);text-decoration:none">&#8592; 回到 ya6 互動筆記</a></p>
+</div>
+
+<!-- PAGE NAV (only visible in paged mode) -->
+<div class="page-nav" id="pageNav" style="display:none">
+  <button id="prevBtn" onclick="goPage(-1)" title="← 上一頁 (左鍵)">&larr;</button>
+  <div class="page-info"><span class="ch-label" id="pageChLabel"></span><span class="current" id="pageCur">1</span> / <span id="pageTotal"></span></div>
+  <button id="nextBtn" onclick="goPage(1)" title="→ 下一頁 (右鍵)">&rarr;</button>
+</div>
+
+<script>
+// === BUILD SLIDES FROM CHAPTERS ===
+const chapters=document.querySelectorAll('.chapter');
+const tabs=document.querySelectorAll('.ch-tab');
+const slides=[];          // flat array of slide DOM nodes
+const chapterStart=[];    // chapterStart[chIdx] = first slide index
+const slideChapter=[];    // slideChapter[slideIdx] = which chapter
+const chapterNames=['序','Ch.1 診斷','Ch.2 發育','Ch.3 萌發','Ch.4 混合齒列','Ch.5 移動','Ch.6 裝置','Ch.7 功能性','Ch.8 全口矯正','Ch.9 正顎手術'];
+
+// Create slide container
+const container=document.createElement('div');
+container.className='slide-container';
+
+chapters.forEach((ch,chIdx)=>{
+  chapterStart.push(slides.length);
+
+  // 1) Chapter header → its own slide
+  const header=ch.querySelector('.ch-header');
+  if(header){
+    const s=document.createElement('div');
+    s.className='slide';
+    s.appendChild(header.cloneNode(true));
+    // If there's intro content before first h2, grab it too
+    const story=ch.querySelector('.story');
+    if(story){
+      const introNodes=[];
+      for(const child of story.children){
+        if(child.tagName==='H2')break;
+        introNodes.push(child);
+      }
+      if(introNodes.length>0){
+        const wrap=document.createElement('div');
+        wrap.className='story';
+        wrap.style.borderLeft='4px solid var(--warm)';
+        introNodes.forEach(n=>wrap.appendChild(n.cloneNode(true)));
+        s.appendChild(wrap);
+      }
+    }
+    slides.push(s);
+    slideChapter.push(chIdx);
+    container.appendChild(s);
+  }
+
+  // 2) Split story at each <h2>
+  const storyEls=ch.querySelectorAll('.story');
+  storyEls.forEach(story=>{
+    let group=[];
+    let pastFirstH2=false;
+    Array.from(story.children).forEach(child=>{
+      if(child.tagName==='H2'){
+        if(pastFirstH2&&group.length>0){
+          // flush previous group
+          const s=document.createElement('div');
+          s.className='slide';
+          const wrap=document.createElement('div');
+          wrap.className='story';
+          wrap.style.borderLeft=story.style.borderLeft||'4px solid var(--warm)';
+          if(story.classList.contains('clinical'))wrap.classList.add('clinical');
+          if(story.classList.contains('exam'))wrap.classList.add('exam');
+          group.forEach(n=>wrap.appendChild(n.cloneNode(true)));
+          s.appendChild(wrap);
+          slides.push(s);
+          slideChapter.push(chIdx);
+          container.appendChild(s);
+          group=[];
+        }
+        pastFirstH2=true;
+        group.push(child);
+      } else if(pastFirstH2){
+        group.push(child);
+      }
+    });
+    // flush last group
+    if(group.length>0){
+      const s=document.createElement('div');
+      s.className='slide';
+      const wrap=document.createElement('div');
+      wrap.className='story';
+      if(story.classList.contains('clinical'))wrap.classList.add('clinical');
+      if(story.classList.contains('exam'))wrap.classList.add('exam');
+      group.forEach(n=>wrap.appendChild(n.cloneNode(true)));
+      s.appendChild(wrap);
+      slides.push(s);
+      slideChapter.push(chIdx);
+      container.appendChild(s);
+    }
+  });
+});
+
+// Insert container before footer
+const footer=document.querySelector('.footer');
+document.body.insertBefore(container,footer);
+
+// Activate paged mode
+document.body.classList.add('paged');
+document.getElementById('pageNav').style.display='flex';
+
+let cur=0;
+showSlide(0);
+
+function showSlide(idx){
+  if(idx<0||idx>=slides.length)return;
+  cur=idx;
+  slides.forEach((s,i)=>s.classList.toggle('active',i===idx));
+  // highlight chapter tab
+  const chIdx=slideChapter[idx];
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===chIdx));
+  tabs[chIdx]?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  // update nav
+  document.getElementById('pageCur').textContent=idx+1;
+  document.getElementById('pageTotal').textContent=slides.length;
+  document.getElementById('prevBtn').disabled=idx===0;
+  document.getElementById('nextBtn').disabled=idx===slides.length-1;
+  // chapter label
+  const label=document.getElementById('pageChLabel');
+  if(label)label.textContent=chapterNames[chIdx]||'';
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function goPage(dir){showSlide(cur+dir)}
+
+// Keyboard
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='ArrowRight'){e.preventDefault();goPage(1)}
+  else if(e.key==='ArrowLeft'){e.preventDefault();goPage(-1)}
+});
+
+// Touch swipe
+let touchStartX=0;
+document.addEventListener('touchstart',(e)=>{touchStartX=e.changedTouches[0].screenX},{passive:true});
+document.addEventListener('touchend',(e)=>{
+  const diff=e.changedTouches[0].screenX-touchStartX;
+  if(Math.abs(diff)>60){diff<0?goPage(1):goPage(-1)}
+},{passive:true});
+
+// Tab clicks → jump to first slide of that chapter
+tabs.forEach(t=>{
+  t.addEventListener('click',()=>{
+    const chIdx=+t.dataset.page;
+    if(mode==='chapter'){
+      showChapter(chIdx);
+    } else {
+      if(chapterStart[chIdx]!=null)showSlide(chapterStart[chIdx]);
+    }
+  });
+});
+
+// === MODE TOGGLE ===
+let mode='slide'; // 'slide' or 'chapter'
+
+function toggleMode(){
+  if(mode==='slide'){
+    mode='chapter';
+    document.getElementById('modeBtn').textContent='細分頁面';
+    // figure out which chapter we're in
+    const chIdx=slideChapter[cur];
+    slides.forEach(s=>s.classList.remove('active'));
+    showChapter(chIdx);
+  } else {
+    mode='slide';
+    document.getElementById('modeBtn').textContent='一章一頁';
+    // go back to first slide of current chapter
+    hideAllChapterViews();
+    const chIdx=currentChapter||0;
+    showSlide(chapterStart[chIdx]);
+  }
+}
+
+let currentChapter=0;
+const chapterViews=[];
+
+// Build chapter-level slides (one slide per chapter, full content)
+chapters.forEach((ch,i)=>{
+  const s=document.createElement('div');
+  s.className='slide chapter-view';
+  s.innerHTML=ch.innerHTML;
+  s.style.display='none';
+  container.appendChild(s);
+  chapterViews.push(s);
+});
+
+function hideAllChapterViews(){
+  chapterViews.forEach(v=>v.style.display='none');
+  chapterViews.forEach(v=>v.classList.remove('active'));
+}
+
+function showChapter(idx){
+  if(idx<0||idx>=chapterViews.length)return;
+  currentChapter=idx;
+  slides.forEach(s=>s.classList.remove('active'));
+  hideAllChapterViews();
+  chapterViews[idx].style.display='block';
+  chapterViews[idx].classList.add('active');
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===idx));
+  tabs[idx]?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  document.getElementById('pageCur').textContent=idx+1;
+  document.getElementById('pageTotal').textContent=chapterViews.length;
+  document.getElementById('prevBtn').disabled=idx===0;
+  document.getElementById('nextBtn').disabled=idx===chapterViews.length-1;
+  const label=document.getElementById('pageChLabel');
+  if(label)label.textContent=chapterNames[idx]||'';
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+// Override goPage to respect mode
+goPage=function(dir){
+  if(mode==='chapter') showChapter(currentChapter+dir);
+  else showSlide(cur+dir);
+};
+</script>
+</body>
+</html>

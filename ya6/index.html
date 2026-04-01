@@ -211,13 +211,13 @@ ul.n li::before{content:"▸";position:absolute;left:0;color:var(--primary2);}
 
 /* 防溢出 */
 body{overflow-x:hidden;}
-.content-body table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;}
+.content-body table{width:100%;min-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;table-layout:auto;}
 .content-body svg{max-width:100% !important;height:auto !important;}
 .content-body img{max-width:100%;height:auto;}
 .content-body div[style*="grid"]{min-width:0;}
 
 @media(max-width:700px){
-  .content-body table { display:block !important; }
+  .content-body table { overflow-x:auto !important; }
   .content-body thead { display:none !important; }
   .content-body tbody, .content-body tr { display:block !important; width:100% !important; }
   .content-body tr { margin-bottom:.6rem !important; border:1px solid #e4e0d4 !important; border-radius:8px !important; overflow:hidden !important; }

@@ -439,6 +439,15 @@ function escapeHTML(s) {
   return div.innerHTML;
 }
 
+function formatCell(s) {
+  let h = escapeHTML(s);
+  // "中文名 (English Name, ABBR)" → 中文名<br><small>English Name, ABBR</small>
+  h = h.replace(/^(.+?)\s*\(([A-Za-z][\w\s,./\-'']+)\)\s*$/, '$1<br><span style="font-size:.78em;color:#78716c">($2)</span>');
+  // "English (中文)" pattern too
+  h = h.replace(/^([A-Z][\w\s\-]+)\s*[（\(]([^\x00-\x7F]+)[）\)]\s*$/, '$1<br><span style="font-size:.78em;color:#78716c">（$2）</span>');
+  return h;
+}
+
 function buildTableHTML(t) {
   let html = '<div class="scroll-hint">← 左右滑動查看完整表格 →</div>';
   html += '<table><thead><tr>';
@@ -449,7 +458,7 @@ function buildTableHTML(t) {
   for (const row of t.rows) {
     html += '<tr>';
     for (let i = 0; i < row.length; i++) {
-      html += '<td>' + escapeHTML(row[i]) + '</td>';
+      html += '<td>' + formatCell(row[i]) + '</td>';
     }
     html += '</tr>';
   }

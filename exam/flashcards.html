@@ -70,16 +70,13 @@ background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,#e8
 
 <div class="toolbar" id="toolbar">
   <button class="tab active" data-s="all">全部</button>
-  <button class="tab" data-s="ya3">牙三</button>
-  <button class="tab" data-s="ya4">牙四</button>
-  <button class="tab" data-s="ya5">牙五</button>
-  <button class="tab" data-s="ya6">牙六</button>
   <div class="toolbar-right">
     <button class="small-btn" id="btnShuffle">🔀 隨機</button>
     <button class="small-btn" id="btnReset">重設</button>
     <span class="progress-text" id="progressText"></span>
   </div>
 </div>
+<div class="toolbar" id="chapterBar" style="flex-wrap:wrap;gap:4px;padding:6px 12px"></div>
 
 <div class="stats" id="stats"></div>
 
@@ -101,18 +98,57 @@ background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,#e8
 <script>
 const SUBJ_NAMES={ya3:'牙三',ya4:'牙四',ya5:'牙五',ya6:'牙六'};
 const SUBJ_COLORS={ya3:'var(--ya3)',ya4:'var(--ya4)',ya5:'var(--ya5)',ya6:'var(--ya6)'};
+const CHAPTER_COLORS={
+  '牙髓病學':'#3b82f6','牙體復形學':'#6366f1','牙周病學':'#0ea5e9',
+  '口腔外科':'#7c3aed','放射影像學':'#a855f7',
+  '義齒補綴學':'#0d9488',
+  '矯正學':'#d97706','兒童牙科':'#ea580c','公共衛生學':'#65a30d'
+};
 let allCards = typeof CONCEPT_CARDS !== 'undefined' ? CONCEPT_CARDS : [];
 let filtered = [];
 let idx = 0;
-let subject = 'all';
+let activeChapter = 'all';
 let known = JSON.parse(localStorage.getItem('fc-known') || '{}');
 
 function saveKnown(){ localStorage.setItem('fc-known', JSON.stringify(known)); }
 
 function cardKey(c){ return c.subject + ':' + c.front.slice(0,40); }
 
+function buildChapterTabs(){
+  const chapters = [...new Set(allCards.map(c => c.chapter))];
+  const bar = document.getElementById('chapterBar');
+  bar.innerHTML = chapters.map(ch => {
+    const count = allCards.filter(c => c.chapter === ch).length;
+    const color = CHAPTER_COLORS[ch] || '#888';
+    return `<button class="tab" data-ch="${ch}" style="font-size:.75rem;padding:4px 10px;border-color:${color};color:${color}" onclick="selectChapter(this,'${ch.replace(/'/g,"\\'")}')">` +
+      `${ch} <span style="opacity:.6">${count}</span></button>`;
+  }).join('');
+}
+
+function selectChapter(el, ch){
+  document.querySelectorAll('#chapterBar .tab').forEach(t => {
+    t.classList.remove('active');
+    t.style.background = '';
+    t.style.color = CHAPTER_COLORS[t.dataset.ch] || '#888';
+  });
+  // Also reset "全部" tab
+  document.querySelectorAll('#toolbar .tab').forEach(t => t.classList.remove('active'));
+
+  if(activeChapter === ch){ // 再按一次取消
+    activeChapter = 'all';
+    document.querySelector('#toolbar .tab[data-s="all"]').classList.add('active');
+  } else {
+    activeChapter = ch;
+    el.classList.add('active');
+    const color = CHAPTER_COLORS[ch] || '#888';
+    el.style.background = color;
+    el.style.color = '#fff';
+  }
+  applyFilter();
+}
+
 function applyFilter(){
-  filtered = subject === 'all' ? [...allCards] : allCards.filter(c => c.subject === subject);
+  filtered = activeChapter === 'all' ? [...allCards] : allCards.filter(c => c.chapter === activeChapter);
   idx = 0;
   render();
 }
@@ -142,20 +178,17 @@ function render(){
   }
 
   const c = filtered[idx];
-  const color = SUBJ_COLORS[c.subject] || '#666';
-  const subjName = SUBJ_NAMES[c.subject] || c.subject;
+  const color = CHAPTER_COLORS[c.chapter] || SUBJ_COLORS[c.subject] || '#666';
+  const chapterName = c.chapter || SUBJ_NAMES[c.subject] || c.subject;
   const isKnown = !!known[cardKey(c)];
-  const typeLabel = c.type === 'table' ? '表格' : '定義';
 
   document.getElementById('front').innerHTML =
-    `<span class="card-label" style="background:${color}">${subjName}</span>` +
-    `<span class="card-chapter">${c.chapter || ''}</span>` +
+    `<span class="card-label" style="background:${color}">${chapterName}</span>` +
     `<div class="card-text">${c.front}</div>` +
-    `<div class="card-hint">點擊翻面看答案</div>` +
-    `<span class="card-type">${typeLabel}</span>`;
+    `<div class="card-hint">點擊翻面看答案</div>`;
 
   document.getElementById('back').innerHTML =
-    `<span class="card-label" style="background:${color}">${subjName}</span>` +
+    `<span class="card-label" style="background:${color}">${chapterName}</span>` +
     `<div class="card-text">${c.back}</div>`;
 
   document.getElementById('counter').textContent = `${idx + 1} / ${filtered.length}`;
@@ -185,24 +218,31 @@ function updateStats(){
   document.getElementById('progressText').textContent = `${k}/${total} 已學會`;
 
   const stats = document.getElementById('stats');
-  const bySubj = {};
+  const byCh = {};
   for(const c of filtered){
-    if(!bySubj[c.subject]) bySubj[c.subject] = {total:0, known:0};
-    bySubj[c.subject].total++;
-    if(known[cardKey(c)]) bySubj[c.subject].known++;
+    const ch = c.chapter || c.subject;
+    if(!byCh[ch]) byCh[ch] = {total:0, known:0};
+    byCh[ch].total++;
+    if(known[cardKey(c)]) byCh[ch].known++;
   }
-  stats.innerHTML = Object.entries(bySubj).map(([s, d]) =>
-    `<span class="stat">${SUBJ_NAMES[s]}: <b>${d.known}/${d.total}</b></span>`
+  stats.innerHTML = Object.entries(byCh).map(([ch, d]) =>
+    `<span class="stat">${ch}: <b>${d.known}/${d.total}</b></span>`
   ).join('');
 }
 
 // Event listeners
 document.getElementById('toolbar').addEventListener('click', e => {
   if(!e.target.classList.contains('tab')) return;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  e.target.classList.add('active');
-  subject = e.target.dataset.s;
-  applyFilter();
+  if(e.target.dataset.s === 'all'){
+    activeChapter = 'all';
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.remove('active');
+      t.style.background = '';
+      t.style.color = CHAPTER_COLORS[t.dataset.ch] || '';
+    });
+    e.target.classList.add('active');
+    applyFilter();
+  }
 });
 
 document.getElementById('btnShuffle').addEventListener('click', shuffle);
@@ -226,6 +266,7 @@ document.getElementById('cardArea').addEventListener('touchend', e => {
 });
 
 // Init
+buildChapterTabs();
 applyFilter();
 shuffle();
 </script>

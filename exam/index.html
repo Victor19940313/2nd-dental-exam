@@ -2805,6 +2805,8 @@
       const expandedSubjs = new Set(["ya3"]);
 
       function toggleSbjGrp(subj) {
+        if (expandedSubjs.has(subj)) expandedSubjs.delete(subj);
+        else expandedSubjs.add(subj);
         const el = document.getElementById("tsg-" + subj);
         if (!el) return;
         el.classList.toggle("collapsed");
@@ -2894,6 +2896,7 @@
 
       function selectCat(subj, cat) {
         activeKey = subj + "|" + cat;
+        expandedSubjs.add(subj);
         renderTopicSidebar();
         updateGoBtn();
       }

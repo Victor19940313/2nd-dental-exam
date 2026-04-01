@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圖片庫審核</title>
+<style>
+  :root {
+    --bg: #f8f7f0;
+    --card: #fffffe;
+    --border: #e7e5e0;
+    --text: #44403c;
+    --muted: #78716c;
+    --purple: #7c3aed;
+    --green: #16a34a;
+    --red: #dc2626;
+    --orange: #ea580c;
+    --blue: #2563eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .top-bar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: .6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-wrap: wrap;
+  }
+  .top-bar a {
+    color: var(--purple);
+    text-decoration: none;
+    font-size: .85rem;
+    white-space: nowrap;
+  }
+  .top-bar h1 {
+    font-size: 1.05rem;
+    flex-shrink: 0;
+  }
+  .progress {
+    font-size: .82rem;
+    color: var(--muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+  .controls {
+    width: 100%;
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-top: .4rem;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 150px;
+    padding: .45rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: .85rem;
+    background: var(--bg);
+  }
+  .search-box:focus { outline: 2px solid var(--purple); border-color: transparent; }
+  .tabs {
+    display: flex;
+    gap: .3rem;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: .35rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: white;
+    font-size: .78rem;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all .15s;
+  }
+  .tab:hover { border-color: var(--purple); color: var(--purple); }
+  .tab.active {
+    background: var(--purple);
+    color: white;
+    border-color: var(--purple);
+  }
+  .filter-status {
+    display: flex;
+    gap: .3rem;
+    flex-wrap: wrap;
+  }
+  .filter-status .tab.st-approved.active { background: var(--green); border-color: var(--green); }
+  .filter-status .tab.st-rejected.active { background: var(--red); border-color: var(--red); }
+  .filter-status .tab.st-pending.active { background: var(--orange); border-color: var(--orange); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .7rem;
+    padding: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card.status-approved { border-color: var(--green); border-width: 2px; }
+  .card.status-rejected { border-color: var(--red); border-width: 2px; opacity: .6; }
+  .card-img-wrap {
+    background: #f0efe8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    max-height: 250px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+  .card-img-wrap img {
+    max-width: 100%;
+    max-height: 250px;
+    object-fit: contain;
+  }
+  .card-body {
+    padding: .6rem .7rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+  .card-source {
+    font-size: .75rem;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .card-context {
+    font-size: .78rem;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+  }
+  .card-subject {
+    font-size: .7rem;
+    padding: .15rem .4rem;
+    border-radius: 4px;
+    background: #ede9fe;
+    color: var(--purple);
+    align-self: flex-start;
+  }
+  .card-actions {
+    display: flex;
+    gap: .3rem;
+    padding: .4rem .7rem .6rem;
+  }
+  .act-btn {
+    flex: 1;
+    padding: .4rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: .78rem;
+    cursor: pointer;
+    background: white;
+    transition: all .15s;
+  }
+  .act-btn:hover { transform: scale(1.03); }
+  .act-btn.approve { color: var(--green); }
+  .act-btn.approve.chosen { background: var(--green); color: white; border-color: var(--green); }
+  .act-btn.reject { color: var(--red); }
+  .act-btn.reject.chosen { background: var(--red); color: white; border-color: var(--red); }
+  .act-btn.skip { color: var(--muted); }
+  .act-btn.skip.chosen { background: #78716c; color: white; border-color: #78716c; }
+  .empty-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    font-size: .95rem;
+  }
+  /* lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.85);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img {
+    max-width: 95vw;
+    max-height: 95vh;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; padding: .7rem; }
+    .top-bar { padding: .5rem .7rem; }
+  }
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+  <div class="top-bar">
+    <a href="index.html">&larr; 考試首頁</a>
+    <h1>🖼️ 圖片庫審核</h1>
+    <span class="progress" id="progress">載入中...</span>
+    <div class="controls">
+      <input type="text" class="search-box" id="search" placeholder="搜尋來源 / 內文...">
+      <div class="tabs" id="subject-tabs">
+        <button class="tab active" data-subject="all">全部</button>
+        <button class="tab" data-subject="ya3">牙三</button>
+        <button class="tab" data-subject="ya4">牙四</button>
+        <button class="tab" data-subject="ya5">牙五</button>
+        <button class="tab" data-subject="ya6">牙六</button>
+      </div>
+      <div class="filter-status" id="status-tabs">
+        <button class="tab active" data-status="all">全部</button>
+        <button class="tab st-pending" data-status="pending">待審</button>
+        <button class="tab st-approved" data-status="approved">已通過</button>
+        <button class="tab st-rejected" data-status="rejected">已拒絕</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lb-img" src="">
+  </div>
+
+<script>
+const SUBJECT_LABELS = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
+let allImages = [];
+let statusMap = {};
+let currentSubject = 'all';
+let currentStatus = 'all';
+let searchQuery = '';
+
+// Load saved statuses from localStorage
+function loadStatuses() {
+  try {
+    const saved = localStorage.getItem('image-review-status');
+    if (saved) statusMap = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveStatuses() {
+  localStorage.setItem('image-review-status', JSON.stringify(statusMap));
+}
+
+function getStatus(filename) {
+  return statusMap[filename] || 'pending';
+}
+
+function setStatus(filename, status) {
+  if (status === 'pending') {
+    delete statusMap[filename];
+  } else {
+    statusMap[filename] = status;
+  }
+  saveStatuses();
+  updateProgress();
+}
+
+function updateProgress() {
+  const reviewed = Object.keys(statusMap).length;
+  document.getElementById('progress').textContent = `已審核 ${reviewed} / ${allImages.length}`;
+}
+
+function getFiltered() {
+  return allImages.filter(img => {
+    if (currentSubject !== 'all' && img.subject !== currentSubject) return false;
+    const st = getStatus(img.filename);
+    if (currentStatus !== 'all' && st !== currentStatus) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const haystack = (img.source + ' ' + img.context + ' ' + img.filename).toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  const filtered = getFiltered();
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-msg">沒有符合條件的圖片</div>';
+    return;
+  }
+  // Render in batches for performance
+  const BATCH = 60;
+  const toShow = filtered.slice(0, BATCH);
+  grid.innerHTML = toShow.map(img => {
+    const st = getStatus(img.filename);
+    return `
+    <div class="card status-${st}" data-fn="${img.filename}">
+      <div class="card-img-wrap" onclick="openLightbox('images/review/${img.filename}')">
+        <img loading="lazy" src="images/review/${img.filename}" alt="${img.filename}">
+      </div>
+      <div class="card-body">
+        <span class="card-subject">${SUBJECT_LABELS[img.subject] || img.subject}</span>
+        <div class="card-source" title="${esc(img.source)}">${esc(img.source)}</div>
+        <div class="card-context">${esc(img.context || '')}</div>
+      </div>
+      <div class="card-actions">
+        <button class="act-btn approve${st==='approved'?' chosen':''}" onclick="doAction('${img.filename}','approved',this)">✓ 通過</button>
+        <button class="act-btn reject${st==='rejected'?' chosen':''}" onclick="doAction('${img.filename}','rejected',this)">✗ 拒絕</button>
+        <button class="act-btn skip${st==='pending'&&statusMap[img.filename]===undefined?'':st==='pending'?' chosen':''}" onclick="doAction('${img.filename}','pending',this)">⟳ 重置</button>
+      </div>
+    </div>`;
+  }).join('');
+  if (filtered.length > BATCH) {
+    grid.innerHTML += `<div class="empty-msg">顯示前 ${BATCH} 筆，共 ${filtered.length} 筆符合。請用搜尋或篩選縮小範圍。</div>`;
+  }
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function doAction(filename, status, btn) {
+  // Toggle: if already this status, reset to pending
+  const current = getStatus(filename);
+  if (current === status && status !== 'pending') {
+    setStatus(filename, 'pending');
+  } else {
+    setStatus(filename, status);
+  }
+  // Update card without full re-render
+  const card = btn.closest('.card');
+  const st = getStatus(filename);
+  card.className = `card status-${st}`;
+  card.querySelectorAll('.act-btn').forEach(b => b.classList.remove('chosen'));
+  if (st === 'approved') card.querySelector('.approve').classList.add('chosen');
+  else if (st === 'rejected') card.querySelector('.reject').classList.add('chosen');
+}
+
+function openLightbox(src) {
+  document.getElementById('lb-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// Tab handlers
+document.getElementById('subject-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('#subject-tabs .tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  currentSubject = tab.dataset.subject;
+  renderGrid();
+});
+
+document.getElementById('status-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('#status-tabs .tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  currentStatus = tab.dataset.status;
+  renderGrid();
+});
+
+// Search with debounce
+let searchTimer;
+document.getElementById('search').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchQuery = e.target.value.trim();
+    renderGrid();
+  }, 250);
+});
+
+// Keyboard: Escape closes lightbox
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// Init
+loadStatuses();
+fetch('review-images.json')
+  .then(r => r.json())
+  .then(data => {
+    allImages = data;
+    updateProgress();
+    renderGrid();
+  })
+  .catch(err => {
+    document.getElementById('grid').innerHTML = `<div class="empty-msg">載入失敗: ${err.message}</div>`;
+  });
+</script>
+</body>
+</html>

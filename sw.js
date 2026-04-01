@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v4';
+const CACHE_NAME = 'dental-all-v5';
 const PRECACHE = [
   '/',
   '/index.html',
@@ -24,6 +24,15 @@ const PRECACHE = [
   '/exam/',
   '/exam/index.html',
   '/exam/questions-data.js',
+  '/exam/compare.html',
+  '/exam/numbers.html',
+  '/exam/flashcards.html',
+  '/exam/image-review.html',
+  '/exam/comparison-tables.json',
+  '/exam/number-reference.json',
+  '/exam/flashcards.json',
+  '/exam/cross-links.json',
+  '/exam/similar-questions.json',
 ];
 
 self.addEventListener('install', e => {

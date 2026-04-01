@@ -626,6 +626,47 @@
       .expl-body p:last-child {
         margin-bottom: 0;
       }
+      .expl-body p.expl-li {
+        padding-left: 1.6em;
+        text-indent: -1.6em;
+        margin: 0 0 0.5em 0;
+        line-height: 1.7;
+      }
+      .cross-links, .similar-qs {
+        margin-top: 0.6em;
+        padding: 0.5em 0.7em;
+        background: #f0fdf4;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        line-height: 1.8;
+      }
+      .similar-qs { background: #eff6ff; }
+      .cross-label {
+        font-weight: 600;
+        color: #374151;
+        margin-right: 0.3em;
+      }
+      .cross-tag {
+        display: inline-block;
+        background: #dcfce7;
+        color: #166534;
+        padding: 0.15em 0.5em;
+        border-radius: 4px;
+        margin: 0.15em 0.2em;
+        font-size: 0.78rem;
+      }
+      .sim-link {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.15em 0.5em;
+        border-radius: 4px;
+        margin: 0.15em 0.2em;
+        font-size: 0.78rem;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .sim-link:hover { background: #bfdbfe; }
       .expl-box img {
         max-width: 100%;
         border-radius: 6px;
@@ -2023,6 +2064,15 @@
               📃 整卷捲動
             </button>
           </div>
+        <div style="margin-top:1.2rem">
+          <h3 style="font-size:.95rem;color:#78716c;margin-bottom:.6rem">📚 學習工具</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <a href="compare.html" class="start-btn secondary" style="text-decoration:none;text-align:center;font-size:.82rem;padding:.55rem">📊 比較表速查</a>
+            <a href="numbers.html" class="start-btn secondary" style="text-decoration:none;text-align:center;font-size:.82rem;padding:.55rem">🔢 數字速查表</a>
+            <a href="flashcards.html" class="start-btn secondary" style="text-decoration:none;text-align:center;font-size:.82rem;padding:.55rem">🃏 圖片記憶卡</a>
+            <a href="image-review.html" class="start-btn secondary" style="text-decoration:none;text-align:center;font-size:.82rem;padding:.55rem">🖼️ 圖片庫審核</a>
+          </div>
+        </div>
         </div>
         <!-- end .home-main -->
       </div>
@@ -2292,6 +2342,12 @@
     <div class="toast" id="toast"></div>
 
     <script src="questions-data.js"></script>
+    <script>
+      let CROSS_LINKS = {};
+      let SIMILAR_QS = {};
+      fetch('cross-links.json').then(r=>r.json()).then(d=>{CROSS_LINKS=d||{}}).catch(()=>{});
+      fetch('similar-questions.json').then(r=>r.json()).then(d=>{SIMILAR_QS=d||{}}).catch(()=>{});
+    </script>
     <script>
       // ════════════════════════════════════════════
       //  Supabase config
@@ -2909,6 +2965,27 @@
         );
       }
 
+      function renderCrossLinks(qid) {
+        let html = '';
+        const links = CROSS_LINKS[qid];
+        if (links && links.length) {
+          html += '<div class="cross-links"><span class="cross-label">📘 相關筆記：</span>';
+          html += links.map(l => `<span class="cross-tag">${l}</span>`).join('');
+          html += '</div>';
+        }
+        const sims = SIMILAR_QS[qid];
+        if (sims && sims.length) {
+          html += '<div class="similar-qs"><span class="cross-label">🔗 相似題：</span>';
+          html += sims.map(sid => {
+            const sq = QS.find(q => q.id === sid);
+            const label = sq ? sq.meta : sid;
+            return `<a class="sim-link" href="#" onclick="event.preventDefault();jumpToQ('${sid}')">${label}</a>`;
+          }).join('');
+          html += '</div>';
+        }
+        return html;
+      }
+
       function formatExpl(text) {
         if (!text) return "";
         // Remove answer-confirmation preamble sentences
@@ -2965,6 +3042,11 @@
           /(注意[：:]?|關鍵[：:]?|重要[：:]?|禁忌[：:]?)/g,
           '<span class="kw-warn">$1</span>',
         );
+        // Break numbered lists that are crammed on one line: "1. xxx 2. xxx" → separate lines
+        text = text.replace(/([。；！」）\)：:])\s*(\d+)[.．、]\s/g, '$1\n$2. ');
+        text = text.replace(/^(\d+)[.．、]\s/gm, '$1. ');
+        // Also break dash/bullet lists on same line
+        text = text.replace(/([。；！」）\)：:])\s*[-–—•]\s/g, '$1\n- ');
         // Section-aware rendering: split by 【...】 headers
         const lines = text.split("\n");
         const sections = [];
@@ -3007,17 +3089,22 @@
 
         function buildParaHtml(content, lines) {
           const all = content ? [content, ...lines] : lines;
-          const paras = all
-            .reduce(
-              (acc, l) => {
-                if (l === "") acc.push([]);
-                else acc[acc.length - 1].push(l);
-                return acc;
-              },
-              [[]],
-            )
-            .filter((p) => p.length > 0);
-          return paras.map((p) => `<p>${p.join(" ")}</p>`).join("");
+          const isList = (l) => /^\s*\d+[.、．)\）]\s/.test(l) || /^\s*[\*\-–—•‧·]\s/.test(l);
+          const hasAnyList = all.some(l => isList(l));
+          if (hasAnyList) {
+            // Section contains list items → render every non-empty line as its own <p>
+            return all.filter(l => l.trim()).map(l => {
+              if (isList(l)) return `<p class="expl-li">${l.trim()}</p>`;
+              return `<p>${l}</p>`;
+            }).join('');
+          }
+          // Normal prose: group consecutive non-empty lines into paragraphs
+          const paras = all.reduce((acc, l) => {
+            if (l === '') acc.push([]);
+            else acc[acc.length - 1].push(l);
+            return acc;
+          }, [[]]).filter(p => p.length > 0);
+          return paras.map(p => `<p>${p.join(' ')}</p>`).join('');
         }
 
         let out = '<div class="expl-body">';
@@ -3031,12 +3118,14 @@
           } else {
             out += paraHtml
               ? paraHtml.replace(
-                  /^<p>/,
-                  `<p><span class="expl-section">【${sec.header}】</span> `,
+                  /^<p[^>]*>/,
+                  `$&<span class="expl-section">【${sec.header}】</span> `,
                 )
               : `<p><span class="expl-section">【${sec.header}】</span></p>`;
           }
         }
+        // Final pass: break any remaining inline numbered items (e.g. "...句號。 2. xxx")
+        out = out.replace(/([。；！」）\)：])\s*(\d+)\.\s\s*/g, '$1</p><p class="expl-li">$2. ');
         out += "</div>";
         return out;
       }
@@ -3068,6 +3157,23 @@
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.add("active");
         renderBrowse();
+      }
+
+      function jumpToQ(qid) {
+        const idx = filteredQs.findIndex(q => q.id === qid);
+        if (idx >= 0) {
+          currentIdx = idx;
+          showQuestion();
+          showPractice();
+        } else {
+          const q = QS.find(q => q.id === qid);
+          if (q) {
+            document.getElementById('filter-subj').value = q.subject;
+            applyFilters();
+            const idx2 = filteredQs.findIndex(qq => qq.id === qid);
+            if (idx2 >= 0) { currentIdx = idx2; showQuestion(); showPractice(); }
+          }
+        }
       }
 
       function showPractice() {
@@ -3373,7 +3479,8 @@
           explBox2.innerHTML =
             formatExpl(expl2) +
             topicTag2 +
-            (src2 ? `<div class="expl-source">📖 ${src2}</div>` : "");
+            (src2 ? `<div class="expl-source">📖 ${src2}</div>` : "") +
+            renderCrossLinks(q.id);
           explBox2.classList.add("visible");
         } else {
           explBox2.classList.remove("visible");
@@ -3862,7 +3969,7 @@
           .join("");
 
         const explHtml = expl
-          ? `<div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}</div>`
+          ? `<div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>`
           : `<p class="no-expl">尚無詳解</p>`;
 
         return `
@@ -4310,7 +4417,7 @@
   </div>
   <div class="db-body">
     <div class="q-opt-list">${optHtml}</div>
-    <div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}</div>
+    <div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>
     <div class="q-actions">
       <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️ 編輯</button>
     </div>

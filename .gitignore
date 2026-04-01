@@ -1,0 +1,4 @@
+# Review images too large for GitHub (149MB)
+exam/images/review/
+# Review metadata (references local images)
+exam/review-images.json

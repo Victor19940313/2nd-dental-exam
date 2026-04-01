@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+  <title>🃏 圖片記憶卡</title>
+  <style>
+    :root {
+      --bg: #f8f7f0;
+      --bg2: #f3f1e8;
+      --line: #e8e4d9;
+      --text: #3d3929;
+      --text2: #7a7460;
+      --accent: #7c3aed;
+      --accent-light: #ede9fe;
+      --accent-dark: #5b21b6;
+      --ya3: #3b82f6;
+      --ya4: #7c3aed;
+      --ya5: #0d9488;
+      --ya6: #d97706;
+      --green: #22c55e;
+      --green-bg: #dcfce7;
+      --card-w: min(92vw, 520px);
+      --card-h: min(72vh, 560px);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 31px, var(--line) 31px, var(--line) 32px),
+        repeating-linear-gradient(90deg, transparent, transparent 31px, var(--line) 31px, var(--line) 32px);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, #4c1d95, var(--accent));
+      color: white;
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    }
+    .header h1 { font-size: 1rem; font-weight: 700; }
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 4px;
+      color: rgba(255,255,255,0.85); text-decoration: none;
+      font-size: 0.82rem; padding: 0.25rem 0.5rem;
+      border-radius: 8px; transition: background 0.15s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.15); }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      padding: 0.75rem 1rem; align-items: center;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--line);
+    }
+    .toolbar select, .toolbar button {
+      font-family: inherit; font-size: 0.82rem;
+      padding: 0.35rem 0.7rem; border-radius: 8px;
+      border: 1px solid var(--line); background: white;
+      color: var(--text); cursor: pointer; transition: all 0.15s;
+    }
+    .toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+    .toolbar button:active { transform: scale(0.96); }
+    .btn-shuffle { font-weight: 600; }
+    .progress-text {
+      margin-left: auto; font-size: 0.8rem; color: var(--text2);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .progress-text .learned-dot {
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--green);
+    }
+
+    /* ── CARD AREA ── */
+    .card-area {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 1.2rem 0.5rem 0.5rem;
+      min-height: calc(100vh - 160px);
+    }
+    .counter {
+      font-size: 0.9rem; color: var(--text2);
+      margin-bottom: 0.7rem; font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── 3D FLIP ── */
+    .card-container {
+      perspective: 1200px;
+      width: var(--card-w); height: var(--card-h);
+      cursor: pointer; position: relative;
+    }
+    .card-inner {
+      position: relative; width: 100%; height: 100%;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .card-container.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    .card-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: var(--radius);
+      background: white;
+      border: 1px solid var(--line);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
+      overflow: hidden;
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      background: linear-gradient(160deg, #fefefe, var(--bg2));
+    }
+    .card-face img {
+      max-width: 100%; max-height: 55%;
+      object-fit: contain; border-radius: 8px;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+    }
+    .card-face .card-text {
+      font-size: 1.1rem; line-height: 1.65;
+      text-align: center; word-break: break-word;
+    }
+    .card-back .card-text {
+      font-size: 1.15rem; font-weight: 500;
+    }
+    .card-face .hint {
+      position: absolute; bottom: 12px;
+      font-size: 0.72rem; color: var(--text2); opacity: 0.7;
+    }
+    .card-face .subject-badge {
+      position: absolute; top: 12px; left: 14px;
+      font-size: 0.7rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 6px;
+      color: white;
+    }
+    .subject-badge.ya3 { background: var(--ya3); }
+    .subject-badge.ya4 { background: var(--ya4); }
+    .subject-badge.ya5 { background: var(--ya5); }
+    .subject-badge.ya6 { background: var(--ya6); }
+
+    .card-face .learned-badge {
+      position: absolute; top: 12px; right: 14px;
+      font-size: 0.72rem; font-weight: 600;
+      padding: 2px 8px; border-radius: 6px;
+      background: var(--green-bg); color: #15803d;
+    }
+
+    /* ── NAV BUTTONS ── */
+    .nav-row {
+      display: flex; align-items: center; gap: 1rem;
+      margin-top: 1rem;
+    }
+    .nav-btn {
+      width: 52px; height: 52px; border-radius: 50%;
+      border: 1.5px solid var(--line); background: white;
+      font-size: 1.3rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      color: var(--text);
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-btn:active { transform: scale(0.92); }
+    .btn-learned {
+      padding: 0.5rem 1.2rem; border-radius: 24px;
+      border: 1.5px solid var(--line); background: white;
+      font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+      color: var(--text2);
+    }
+    .btn-learned:hover { border-color: var(--green); color: #15803d; }
+    .btn-learned.is-learned {
+      background: var(--green-bg); border-color: var(--green);
+      color: #15803d;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar-wrap {
+      width: var(--card-w); height: 6px;
+      background: var(--line); border-radius: 3px;
+      margin-top: 1rem; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: var(--green);
+      border-radius: 3px; transition: width 0.3s;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 3rem 1rem;
+      color: var(--text2); font-size: 1rem;
+    }
+
+    /* ── KEYBOARD HINTS ── */
+    .kbd-hints {
+      display: flex; gap: 1rem; margin-top: 0.8rem;
+      font-size: 0.72rem; color: var(--text2); opacity: 0.6;
+    }
+    .kbd-hints kbd {
+      display: inline-block; padding: 1px 6px;
+      border: 1px solid var(--line); border-radius: 4px;
+      background: var(--bg2); font-family: inherit; font-size: 0.7rem;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 700px) {
+      :root {
+        --card-w: 94vw;
+        --card-h: 62vh;
+      }
+      .header h1 { font-size: 0.92rem; }
+      .toolbar { padding: 0.5rem 0.6rem; gap: 0.4rem; }
+      .card-face .card-text { font-size: 1rem; }
+      .card-face { padding: 1rem; }
+      .kbd-hints { display: none; }
+      .nav-btn { width: 46px; height: 46px; font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="btn-back">&larr; 考試首頁</a>
+  <h1>🃏 圖片記憶卡</h1>
+  <div style="width:70px"></div>
+</div>
+
+<div class="toolbar">
+  <select id="filterSubject">
+    <option value="all">全部科目</option>
+    <option value="ya3">牙三</option>
+    <option value="ya4">牙四</option>
+    <option value="ya5">牙五</option>
+    <option value="ya6">牙六</option>
+  </select>
+  <button class="btn-shuffle" id="btnShuffle">🔀 隨機</button>
+  <button id="btnReset">重設進度</button>
+  <div class="progress-text">
+    <span class="learned-dot"></span>
+    <span id="learnedCount">0</span> 已學會
+  </div>
+</div>
+
+<div class="card-area" id="cardArea">
+  <div class="counter" id="counter">0 / 0</div>
+
+  <div class="card-container" id="cardContainer">
+    <div class="card-inner" id="cardInner">
+      <div class="card-face card-front" id="cardFront">
+        <span class="subject-badge" id="badgeFront"></span>
+        <span class="learned-badge" id="learnedBadgeFront" style="display:none">已學會</span>
+        <img id="cardImg" src="" alt="" style="display:none"/>
+        <div class="card-text" id="frontText"></div>
+        <div class="hint">點擊翻面</div>
+      </div>
+      <div class="card-face card-back" id="cardBack">
+        <span class="subject-badge" id="badgeBack"></span>
+        <span class="learned-badge" id="learnedBadgeBack" style="display:none">已學會</span>
+        <div class="card-text" id="backText"></div>
+        <div class="hint">點擊翻回</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" id="btnPrev" title="上一張">&larr;</button>
+    <button class="btn-learned" id="btnLearned">標記已學會</button>
+    <button class="nav-btn" id="btnNext" title="下一張">&rarr;</button>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+
+  <div class="kbd-hints">
+    <span><kbd>&larr;</kbd> 上一張</span>
+    <span><kbd>&rarr;</kbd> 下一張</span>
+    <span><kbd>Space</kbd> 翻面</span>
+  </div>
+</div>
+
+<div class="empty-state" id="emptyState" style="display:none">
+  此科目沒有記憶卡
+</div>
+
+<script>
+(function(){
+  const LS_KEY = 'flashcards_learned';
+  let allCards = [];
+  let deck = [];
+  let idx = 0;
+  let learned = {};
+
+  // ── Load learned from localStorage ──
+  try { learned = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch(e) { learned = {}; }
+  function saveLearned() { localStorage.setItem(LS_KEY, JSON.stringify(learned)); }
+
+  // ── DOM refs ──
+  const $ = id => document.getElementById(id);
+  const cardContainer = $('cardContainer');
+  const cardImg = $('cardImg');
+  const frontText = $('frontText');
+  const backText = $('backText');
+  const badgeFront = $('badgeFront');
+  const badgeBack = $('badgeBack');
+  const learnedBadgeFront = $('learnedBadgeFront');
+  const learnedBadgeBack = $('learnedBadgeBack');
+  const counter = $('counter');
+  const learnedCount = $('learnedCount');
+  const progressBar = $('progressBar');
+  const btnLearned = $('btnLearned');
+  const emptyState = $('emptyState');
+  const cardArea = $('cardArea');
+  const filterSubject = $('filterSubject');
+
+  function extractSubject(id) {
+    const m = id.match(/^(ya\d)/);
+    return m ? m[1] : 'ya3';
+  }
+
+  function subjectLabel(s) {
+    return {ya3:'牙三',ya4:'牙四',ya5:'牙五',ya6:'牙六'}[s] || s;
+  }
+
+  // ── Shuffle (Fisher-Yates) ──
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ── Filter & rebuild deck ──
+  function rebuildDeck() {
+    const subj = filterSubject.value;
+    deck = subj === 'all'
+      ? allCards.slice()
+      : allCards.filter(c => extractSubject(c.id) === subj);
+    idx = 0;
+    unflip();
+    render();
+  }
+
+  // ── Flip ──
+  function flip() { cardContainer.classList.toggle('flipped'); }
+  function unflip() { cardContainer.classList.remove('flipped'); }
+
+  // ── Render current card ──
+  function render() {
+    // Update learned count (across all cards)
+    const totalLearned = allCards.filter(c => learned[c.id]).length;
+    learnedCount.textContent = totalLearned;
+    progressBar.style.width = allCards.length
+      ? ((totalLearned / allCards.length) * 100).toFixed(1) + '%'
+      : '0%';
+
+    if (!deck.length) {
+      cardArea.style.display = 'none';
+      emptyState.style.display = '';
+      return;
+    }
+    cardArea.style.display = '';
+    emptyState.style.display = 'none';
+
+    if (idx < 0) idx = deck.length - 1;
+    if (idx >= deck.length) idx = 0;
+
+    const card = deck[idx];
+    const subj = extractSubject(card.id);
+
+    counter.textContent = (idx + 1) + ' / ' + deck.length;
+
+    // Front
+    frontText.textContent = card.front;
+    badgeFront.textContent = subjectLabel(subj);
+    badgeFront.className = 'subject-badge ' + subj;
+    badgeBack.textContent = subjectLabel(subj);
+    badgeBack.className = 'subject-badge ' + subj;
+
+    if (card.image) {
+      cardImg.src = 'images/' + card.image;
+      cardImg.alt = card.front;
+      cardImg.style.display = '';
+    } else {
+      cardImg.style.display = 'none';
+      cardImg.src = '';
+    }
+
+    // Back
+    backText.textContent = card.back;
+
+    // Learned state
+    const isLearned = !!learned[card.id];
+    learnedBadgeFront.style.display = isLearned ? '' : 'none';
+    learnedBadgeBack.style.display = isLearned ? '' : 'none';
+    btnLearned.classList.toggle('is-learned', isLearned);
+    btnLearned.textContent = isLearned ? '已學會 ✓' : '標記已學會';
+  }
+
+  // ── Navigation ──
+  function prev() { idx--; unflip(); render(); }
+  function next() { idx++; unflip(); render(); }
+  function toggleLearned() {
+    if (!deck.length) return;
+    const card = deck[idx];
+    if (learned[card.id]) delete learned[card.id];
+    else learned[card.id] = 1;
+    saveLearned();
+    render();
+  }
+
+  // ── Events ──
+  cardContainer.addEventListener('click', flip);
+  $('btnPrev').addEventListener('click', prev);
+  $('btnNext').addEventListener('click', next);
+  btnLearned.addEventListener('click', toggleLearned);
+  $('btnShuffle').addEventListener('click', function() {
+    shuffle(deck);
+    idx = 0;
+    unflip();
+    render();
+  });
+  filterSubject.addEventListener('change', rebuildDeck);
+  $('btnReset').addEventListener('click', function() {
+    if (!confirm('確定要重設所有學習進度嗎？')) return;
+    learned = {};
+    saveLearned();
+    render();
+  });
+
+  // ── Keyboard ──
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    else if (e.key === ' ') { e.preventDefault(); flip(); }
+  });
+
+  // ── Swipe support ──
+  let touchStartX = 0;
+  let touchStartY = 0;
+  cardContainer.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, {passive: true});
+  cardContainer.addEventListener('touchend', function(e) {
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    const dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      e.preventDefault();
+      if (dx < 0) next(); else prev();
+    }
+  });
+
+  // ── Load data ──
+  fetch('flashcards.json')
+    .then(r => r.json())
+    .then(function(data) {
+      allCards = data;
+      rebuildDeck();
+    })
+    .catch(function(err) {
+      emptyState.textContent = '載入失敗: ' + err.message;
+      emptyState.style.display = '';
+      cardArea.style.display = 'none';
+    });
+})();
+</script>
+</body>
+</html>

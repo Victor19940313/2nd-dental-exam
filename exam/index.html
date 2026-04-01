@@ -2342,11 +2342,13 @@
     <div class="toast" id="toast"></div>
 
     <script src="questions-data.js"></script>
+    <script src="cross-links-data.js"></script>
+    <script src="similar-questions-data.js"></script>
     <script>
-      let CROSS_LINKS = {};
-      let SIMILAR_QS = {};
-      fetch('cross-links.json').then(r=>r.json()).then(d=>{CROSS_LINKS=d||{}}).catch(()=>{});
-      fetch('similar-questions.json').then(r=>r.json()).then(d=>{SIMILAR_QS=d||{}}).catch(()=>{});
+      let CROSS_LINKS = typeof CROSS_LINKS_DATA !== 'undefined' ? CROSS_LINKS_DATA : {};
+      let SIMILAR_QS = typeof SIMILAR_QS_DATA !== 'undefined' ? SIMILAR_QS_DATA : {};
+      if (!Object.keys(CROSS_LINKS).length) fetch('cross-links.json').then(r=>r.json()).then(d=>{CROSS_LINKS=d||{}}).catch(()=>{});
+      if (!Object.keys(SIMILAR_QS).length) fetch('similar-questions.json').then(r=>r.json()).then(d=>{SIMILAR_QS=d||{}}).catch(()=>{});
     </script>
     <script>
       // ════════════════════════════════════════════
@@ -3115,6 +3117,12 @@
             out += paraHtml;
           } else if (sec.header.includes("其他選項")) {
             out += `<details class="expl-details"><summary><span class="expl-section">【其他選項】</span></summary><div class="expl-details-body">${formatOptBlock(paraHtml)}</div></details>`;
+          } else if (sec.header.includes("核心理論") || sec.header.match(/為何選/)) {
+            // 核心理論 and 為何選X: collapsible, header on its own line
+            out += `<details class="expl-details" open><summary><span class="expl-section">【${sec.header}】</span></summary><div class="expl-details-body">${paraHtml}</div></details>`;
+          } else if (sec.header.includes("出題者想考什麼")) {
+            // 出題者想考什麼: always visible, header on its own line
+            out += `<p><span class="expl-section">【${sec.header}】</span></p>${paraHtml}`;
           } else {
             out += paraHtml
               ? paraHtml.replace(

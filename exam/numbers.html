@@ -116,13 +116,15 @@ td:last-child{color:var(--text2);font-size:.8rem}
 
 <div class="table-wrap" id="tableWrap"></div>
 
+<script src="number-reference-data.js"></script>
 <script>
 let DATA=[];
 let state={subject:'all',query:'',sort:'value',group:null};
 
 const SUBJ_NAMES={ya3:'牙三',ya4:'牙四',ya5:'牙五',ya6:'牙六'};
 
-fetch('number-reference.json').then(r=>r.json()).then(d=>{DATA=d;render()});
+if(typeof NUMBER_REFERENCE!=='undefined'){DATA=NUMBER_REFERENCE;requestAnimationFrame(render)}
+else{fetch('number-reference.json').then(r=>r.json()).then(d=>{DATA=d;render()})}
 
 // UI bindings
 document.getElementById('search').addEventListener('input',e=>{state.query=e.target.value.trim().toLowerCase();render()});

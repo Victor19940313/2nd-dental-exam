@@ -373,24 +373,31 @@ body {
   <p>找不到符合條件的比較表</p>
 </div>
 
+<script src="comparison-tables-data.js"></script>
 <script>
 const SUBJECT_LABELS = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
 let allTables = [];
 let currentSubject = 'all';
 let searchQuery = '';
 
-// Load data
-fetch('comparison-tables.json')
-  .then(r => r.json())
-  .then(data => {
-    allTables = data;
-    updateStats(data);
-    render();
-  })
-  .catch(err => {
-    document.getElementById('tableList').innerHTML =
-      '<div class="empty-state"><div class="icon">⚠️</div><p>無法載入資料: ' + err.message + '</p></div>';
-  });
+// Load data: prefer global variable (works on file://), fall back to fetch
+if (typeof COMPARISON_TABLES !== 'undefined') {
+  allTables = COMPARISON_TABLES;
+  updateStats(allTables);
+  render();
+} else {
+  fetch('comparison-tables.json')
+    .then(r => r.json())
+    .then(data => {
+      allTables = data;
+      updateStats(data);
+      render();
+    })
+    .catch(err => {
+      document.getElementById('tableList').innerHTML =
+        '<div class="empty-state"><div class="icon">⚠️</div><p>無法載入資料: ' + err.message + '</p></div>';
+    });
+}
 
 function updateStats(data) {
   const counts = { ya3: 0, ya4: 0, ya5: 0, ya6: 0 };

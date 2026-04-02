@@ -127,7 +127,7 @@ const RAD_TREE = [
 </tr>
 </table>
 <div class="pearl">口訣：<strong>「陡短平長、切空重疊」</strong> = 垂直角太陡→縮短；太平→拉長；中心未對→錐切；水平偏→重疊</div>
-`,
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/periapical-radiograph' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Periapical Radiograph →</a></div><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/dental-panoramic-tomograph' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Dental Panoramic Radiograph →</a></div>`,
     },
     {
       label:"各攝影法適應症配對", freq:"critical",
@@ -204,7 +204,7 @@ const RAD_TREE = [
     </div>
   </div>
 </details>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/bitewing-radiograph' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Bitewing Radiograph →</a></div><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/lateral-cephalogram' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Lateral Cephalogram →</a></div>`
     }
   ]
 },
@@ -339,7 +339,7 @@ const RAD_TREE = [
 <div class="img-row">
 
 </div>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/dental-cone-beam-ct' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Dental Cone Beam CT (CBCT) →</a></div>`
     }
   ]
 }

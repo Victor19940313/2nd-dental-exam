@@ -414,7 +414,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
     </div>
   </div>
 </details>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/odontogenic-keratocyst' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Odontogenic Keratocyst (OKC) →</a></div><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/dentigerous-cyst' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Dentigerous Cyst →</a></div>`
     },
     {
       label:"發育性囊腫", freq:"critical",
@@ -552,7 +552,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <tr><td class="td-k">復發率</td><td class="td-r">剜出術：55–100% ｜ 廣泛切除：&lt;15%</td></tr>
 </table>
 </details>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/ameloblastoma' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Ameloblastoma →</a></div>`
     },
     {
       label:"惡性與骨骼病灶", freq:"critical",
@@ -629,7 +629,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
     </div>
   </div>
 </details>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/osteosarcoma' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Osteosarcoma →</a></div><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/fibrous-dysplasia' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Fibrous Dysplasia →</a></div><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/squamous-cell-carcinoma-of-the-oral-cavity' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Oral Squamous Cell Carcinoma →</a></div>`
     },
     {
       label:"手術選擇原則", freq:"high",
@@ -935,7 +935,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <li>全身原因：凝血疾病、抗凝血藥物、白血病</li>
 <li>處置：局部壓迫（紗布咬 30–45 分鐘）→ 縫合 → 明膠海綿（Gelfoam）</li>
 </ul>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/alveolar-osteitis' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Alveolar Osteitis (Dry Socket) →</a></div>`
     }
   ]
 },
@@ -1100,7 +1100,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <li>顎裂修補（Palatoplasty）：12–18個月（語言發展前，避免代償性發音）</li>
 <li>齒槽骨移植：8–10 歲（犬齒萌出前，混合牙列期）</li>
 </ul>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/le-fort-fracture-classification' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Le Fort Fracture Classification →</a></div><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/mandibular-fracture' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Mandibular Fractures →</a></div>`
     }
   ]
 },
@@ -1137,7 +1137,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <div class="box box-orange">
 牙源性感染 → Submandibular/Sublingual/Masticator → <strong>Parapharyngeal</strong> → <strong>Retropharyngeal</strong> → <strong>縱膈腔（Mediastinum）</strong> → 死亡！
 </div>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/deep-neck-space-infections' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Deep Neck Space Infections →</a></div>`
     },
     {
       label:"Ludwig's Angina & 感染處置", freq:"high",
@@ -1203,7 +1203,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
   <td class="td-r"><strong>Onion-skin</strong>（洋蔥皮狀骨膜新骨）</td>
   <td>去除感染來源（根管/拔牙）；骨膜新骨多自行吸收</td>
 </tr>
-</table>`
+</table><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/ludwigs-angina' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Ludwig's Angina →</a></div>`
     },
     {
       label:"齒源性感染抗生素選擇", freq:"critical",
@@ -1371,7 +1371,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <tr><td class="td-k">用藥前</td><td>全口牙科評估；拔除無法保留的牙齒；完成牙周治療</td></tr>
 <tr><td class="td-k">口服Bisphosphonates用藥中需拔牙</td><td>• 使用 &lt; 4年且無風險因子：可正常拔牙<br>• 使用 &gt; 4年或合併免疫抑制劑：考慮<strong>停藥（Drug holiday）3個月</strong>後再拔，術後再持續停藥3個月</td></tr>
 <tr><td class="td-k">靜脈注射Bisphosphonates</td><td class="td-r">風險極高；任何侵入性手術前需充分與內科醫師會診評估</td></tr>
-</table>`
+</table><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/medication-related-osteonecrosis-of-the-jaw' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: MRONJ (藥物相關骨壞死) →</a></div>`
     }
   ]
 },
@@ -1469,7 +1469,7 @@ Le Fort I 上顎游離後血流 → <strong>升腭動脈、升咽動脈</strong>
 顏面神經穿過腮腺 → 腫瘤侵犯 CN VII → 同側顏面肌肉麻痺<br>
 任何腮腺腫瘤 + 顏面神經麻痺 = 惡性，直到排除為止
 </div>
-`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/pleomorphic-adenoma' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Pleomorphic Adenoma →</a></div><div style='margin-top:12px'><a href='https://radiopaedia.org/articles/mucoepidermoid-carcinoma' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Mucoepidermoid Carcinoma →</a></div>`
     },
     {
       label:"唾液腺炎與結石", freq:"mid",

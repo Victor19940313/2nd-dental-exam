@@ -235,6 +235,12 @@ footer{
   cursor:pointer;color:var(--text-sub);font-size:.88rem;font-weight:600;
   transition:all .15s;
 }
+.user-del{
+  background:none;border:none;font-size:.9rem;color:#ccc;
+  cursor:pointer;padding:.3rem .5rem;margin-left:auto;border-radius:8px;
+  transition:all .15s;
+}
+.user-del:hover{color:#ef4444;background:#fef2f2;}
 .user-add:hover{border-color:var(--border-dk);color:var(--text);}
 </style>
 </head>
@@ -341,15 +347,34 @@ footer{
     const users = getUsers();
     const list = document.getElementById('user-list');
     list.innerHTML = users.map(u =>
-      `<div class="user-item" onclick="selectUser('${u.id}')">
-        <div class="ua" style="background:${u.color}">${u.name[0]}</div>
-        <div class="ui">
+      `<div class="user-item">
+        <div class="ua" style="background:${u.color}" onclick="selectUser('${u.id}')">${u.name[0]}</div>
+        <div class="ui" onclick="selectUser('${u.id}')">
           <span class="un">${u.name}</span>
           <span class="ud">點擊進入</span>
         </div>
+        <button class="user-del" onclick="event.stopPropagation();deleteUser('${u.id}')" title="刪除">✕</button>
       </div>`
     ).join('') +
     `<div class="user-add" onclick="addNewUser()">+ 新增使用者</div>`;
+  }
+
+  function deleteUser(id){
+    const users = getUsers();
+    const u = users.find(x=>x.id===id);
+    if(!u) return;
+    if(!confirm('確定要刪除「' + u.name + '」嗎？\n此使用者的所有標記、錯題本、練習紀錄都會消失。')) return;
+    if(!confirm('最後確認：刪除「' + u.name + '」的所有資料？\n此操作無法復原。')) return;
+    // Remove localStorage data
+    ['wrongbook_state','daily_log','wrongbook_lastpos'].forEach(k=>{
+      localStorage.removeItem(id + '_' + k);
+    });
+    // Remove from user list
+    const remaining = users.filter(x=>x.id!==id);
+    saveUsers(remaining);
+    // If deleting current user, clear selection
+    if(getCurUser()===id) localStorage.removeItem('dental_cur_user');
+    renderUserOverlay();
   }
 
   function addNewUser(){

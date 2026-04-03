@@ -363,7 +363,8 @@ footer{
     const users = getUsers();
     const u = users.find(x=>x.id===id);
     if(!u) return;
-    if(!confirm('確定要刪除「' + u.name + '」嗎？\n此使用者的所有標記、錯題本、練習紀錄都會消失。')) return;
+    const pw = prompt('輸入密碼才能刪除使用者\n提示：車號');
+    if(pw !== '6536') { if(pw !== null) alert('密碼錯誤'); return; }
     if(!confirm('最後確認：刪除「' + u.name + '」的所有資料？\n此操作無法復原。')) return;
     // Remove localStorage data
     ['wrongbook_state','daily_log','wrongbook_lastpos'].forEach(k=>{

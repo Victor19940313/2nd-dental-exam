@@ -370,7 +370,7 @@ body.paged .progress-bar{display:none}
 
 <!-- Kennedy 分類 Class I-IV -->
 <div class="diagram">
-<img src="images/kennedy-classes.png" alt="Kennedy 分類 Class I-IV" style="max-width:100%;border-radius:12px">
+<img src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kennedy_Classification.svg" alt="Kennedy Classification" style="max-width:100%;border-radius:12px">
 <div class="caption">Kennedy 分類 Class I-IV</div>
 </div>
 
@@ -509,13 +509,114 @@ body.paged .progress-bar{display:none}
 
 <!-- RPD 三要素力量方向圖 -->
 <div class="diagram">
-<img src="images/rpd-three-elements.png" alt="RPD 三要素：支持、固位、穩定" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 500" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">RPD Three Elements (Buccal View)</text>
+  <!-- Tooth shape -->
+  <path d="M300,120 Q300,80 400,80 Q500,80 500,120 L510,280 Q510,380 400,400 Q290,380 290,280Z" fill="#fffde7" stroke="#333" stroke-width="2.5"/>
+  <!-- Survey line -->
+  <path d="M290,250 Q340,270 400,275 Q460,270 510,250" fill="none" stroke="#c0392b" stroke-width="3" stroke-dasharray="8,4"/>
+  <text x="535" y="255" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">Survey Line</text>
+  <!-- Occlusal rest on top -->
+  <rect x="370" y="85" width="60" height="15" rx="5" fill="#2980b9" opacity="0.7"/>
+  <!-- Vertical arrow for Support -->
+  <line x1="400" y1="50" x2="400" y2="85" stroke="#2980b9" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2980b9"/></marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/></marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#27ae60"/></marker>
+  </defs>
+  <!-- Clasp tip below survey line (retention) -->
+  <path d="M280,300 Q260,300 260,320 Q260,340 280,340" fill="none" stroke="#c0392b" stroke-width="3.5"/>
+  <line x1="200" y1="320" x2="260" y2="320" stroke="#c0392b" stroke-width="3" marker-end="url(#arrowRed)"/>
+  <!-- Reciprocal arm above survey line (stability) -->
+  <path d="M520,200 Q540,200 540,220 Q540,240 520,240" fill="none" stroke="#27ae60" stroke-width="3.5"/>
+  <line x1="600" y1="220" x2="540" y2="220" stroke="#27ae60" stroke-width="3" marker-end="url(#arrowGreen)"/>
+  <!-- Labels -->
+  <rect x="80" y="30" width="160" height="55" rx="10" fill="#e8f4fd" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="160" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#2980b9">Support</text>
+  <text x="160" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#2980b9">Rest Seat (vertical)</text>
+  <line x1="240" y1="58" x2="395" y2="58" stroke="#2980b9" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <rect x="40" y="295" width="160" height="55" rx="10" fill="#fdecea" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="120" y="317" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#c0392b">Retention</text>
+  <text x="120" y="337" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#c0392b">Clasp Tip (infrabulge)</text>
+  <rect x="600" y="195" width="170" height="55" rx="10" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="685" y="217" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#27ae60">Stability</text>
+  <text x="685" y="237" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#27ae60">Reciprocal Arm (suprabulge)</text>
+  <!-- Suprabulge / Infrabulge labels -->
+  <text x="545" y="175" font-family="Arial,sans-serif" font-size="12" fill="#888">Suprabulge</text>
+  <text x="545" y="310" font-family="Arial,sans-serif" font-size="12" fill="#888">Infrabulge</text>
+  <!-- Footer -->
+  <text x="400" y="465" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#666">Three essential elements: Support + Retention + Stability</text>
+</svg>
 <div class="caption">RPD 三要素：支持、固位、穩定</div>
 </div>
 
 <!-- RPD 各部件組成圖 -->
 <div class="diagram">
-<img src="images/rpd-components.png" alt="RPD 各部件組成圖" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 600" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">RPD Components (Maxillary Occlusal View)</text>
+  <!-- Palate outline -->
+  <ellipse cx="400" cy="320" rx="260" ry="230" fill="#fce4ec" stroke="#c0392b" stroke-width="2"/>
+  <!-- Palatal plate (major connector) -->
+  <rect x="260" y="200" width="280" height="120" rx="20" fill="rgba(192,57,43,0.15)" stroke="#c0392b" stroke-width="2.5" stroke-dasharray="8,4"/>
+  <text x="400" y="270" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#c0392b">Major Connector</text>
+  <text x="400" y="290" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#c0392b">(Palatal Plate)</text>
+  <!-- Teeth arch -->
+  <path d="M180,380 Q180,160 400,140 Q620,160 620,380" fill="none" stroke="#888" stroke-width="2"/>
+  <!-- Individual teeth -->
+  <ellipse cx="210" cy="370" rx="22" ry="18" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="255" cy="330" rx="22" ry="18" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="295" cy="290" rx="18" ry="16" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="330" cy="255" rx="16" ry="14" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="365" cy="230" rx="14" ry="14" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="400" cy="220" rx="14" ry="14" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="435" cy="230" rx="14" ry="14" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="470" cy="255" rx="16" ry="14" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="505" cy="290" rx="18" ry="16" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="545" cy="330" rx="22" ry="18" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <ellipse cx="590" cy="370" rx="22" ry="18" fill="#fff" stroke="#555" stroke-width="1.5"/>
+  <!-- Missing teeth (edentulous area) shown with X -->
+  <text x="210" y="375" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#c0392b">X</text>
+  <text x="255" y="335" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#c0392b">X</text>
+  <!-- Denture base over missing area -->
+  <path d="M185,355 Q200,310 270,310 L270,370 Q230,385 185,385Z" fill="rgba(41,128,185,0.2)" stroke="#2980b9" stroke-width="2"/>
+  <!-- Clasp on tooth -->
+  <path d="M290,275 Q270,275 270,290 Q270,305 290,305" fill="none" stroke="#c0392b" stroke-width="3"/>
+  <!-- Occlusal rest -->
+  <rect x="285" y="278" width="20" height="8" rx="3" fill="#c0392b"/>
+  <!-- Minor connector -->
+  <line x1="295" y1="286" x2="295" y2="200" stroke="#e67e22" stroke-width="2.5"/>
+  <!-- Indirect retainer -->
+  <rect x="460" y="243" width="20" height="8" rx="3" fill="#27ae60"/>
+  <!-- Labels with leader lines -->
+  <line x1="220" y1="400" x2="220" y2="440" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="220" y="458" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#2980b9">Denture Base</text>
+  <text x="220" y="474" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#2980b9">+ Artificial Teeth</text>
+  <line x1="265" y1="305" x2="120" y2="430" stroke="#c0392b" stroke-width="1"/>
+  <text x="100" y="450" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c0392b">Direct Retainer</text>
+  <text x="100" y="466" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#c0392b">(Clasp)</text>
+  <line x1="295" y1="282" x2="130" y2="350" stroke="#c0392b" stroke-width="1"/>
+  <text x="100" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c0392b">Occlusal Rest</text>
+  <line x1="295" y1="240" x2="140" y2="200" stroke="#e67e22" stroke-width="1"/>
+  <text x="110" y="200" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#e67e22">Minor Connector</text>
+  <line x1="470" y1="247" x2="650" y2="180" stroke="#27ae60" stroke-width="1"/>
+  <text x="680" y="178" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#27ae60">Indirect Retainer</text>
+  <!-- Legend box -->
+  <rect x="560" y="440" width="220" height="140" rx="10" fill="#f8f8f8" stroke="#ddd" stroke-width="1"/>
+  <text x="670" y="465" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#333">Components</text>
+  <rect x="575" y="478" width="12" height="12" fill="#c0392b"/>
+  <text x="595" y="489" font-family="Arial,sans-serif" font-size="12" fill="#333">Major Connector</text>
+  <rect x="575" y="498" width="12" height="12" fill="#c0392b" opacity="0.6"/>
+  <text x="595" y="509" font-family="Arial,sans-serif" font-size="12" fill="#333">Direct Retainer / Rest</text>
+  <rect x="575" y="518" width="12" height="12" fill="#e67e22"/>
+  <text x="595" y="529" font-family="Arial,sans-serif" font-size="12" fill="#333">Minor Connector</text>
+  <rect x="575" y="538" width="12" height="12" fill="#27ae60"/>
+  <text x="595" y="549" font-family="Arial,sans-serif" font-size="12" fill="#333">Indirect Retainer</text>
+  <rect x="575" y="558" width="12" height="12" fill="#2980b9"/>
+  <text x="595" y="569" font-family="Arial,sans-serif" font-size="12" fill="#333">Denture Base</text>
+</svg>
 <div class="caption">RPD 各部件組成圖</div>
 </div>
 
@@ -542,7 +643,41 @@ body.paged .progress-bar{display:none}
 
 <!-- Survey Line 圖解 -->
 <div class="diagram">
-<img src="images/survey-line-clasp.png" alt="Survey Line 與卡環定位示意圖" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 520" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="520" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Survey Line and Clasp Placement</text>
+  <!-- Tooth -->
+  <path d="M280,100 Q280,60 400,60 Q520,60 520,100 L530,280 Q530,400 400,420 Q270,400 270,280Z" fill="#fffde7" stroke="#333" stroke-width="2.5"/>
+  <!-- Survey line (height of contour) -->
+  <path d="M270,250 Q330,275 400,280 Q470,275 530,250" fill="none" stroke="#c0392b" stroke-width="3.5"/>
+  <text x="555" y="255" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#c0392b">Survey Line</text>
+  <text x="555" y="272" font-family="Arial,sans-serif" font-size="12" fill="#c0392b">(Height of Contour)</text>
+  <!-- Suprabulge zone shading -->
+  <path d="M270,250 Q330,275 400,280 Q470,275 530,250 L520,100 Q520,60 400,60 Q280,60 280,100Z" fill="rgba(41,128,185,0.08)" stroke="none"/>
+  <!-- Infrabulge zone shading -->
+  <path d="M270,250 Q330,275 400,280 Q470,275 530,250 L530,280 Q530,400 400,420 Q270,400 270,280Z" fill="rgba(192,57,43,0.08)" stroke="none"/>
+  <!-- Suprabulge label -->
+  <text x="400" y="170" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#2980b9">Suprabulge Area</text>
+  <text x="400" y="190" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#2980b9">Rigid / Reciprocal Arm</text>
+  <!-- Infrabulge label -->
+  <text x="400" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#c0392b">Infrabulge Area</text>
+  <text x="400" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#c0392b">Retentive Clasp Tip</text>
+  <!-- Rigid arm above survey line -->
+  <path d="M530,200 Q555,200 555,220 Q555,240 530,240" fill="none" stroke="#2980b9" stroke-width="4"/>
+  <text x="580" y="225" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#2980b9">Rigid Arm</text>
+  <!-- Clasp tip below survey line -->
+  <path d="M265,300 Q240,300 240,330 Q240,360 265,360" fill="none" stroke="#c0392b" stroke-width="4"/>
+  <circle cx="265" cy="360" r="5" fill="#c0392b"/>
+  <text x="210" y="380" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c0392b">Clasp Tip</text>
+  <!-- Rest seat at occlusal -->
+  <rect x="370" y="62" width="60" height="14" rx="5" fill="#27ae60" opacity="0.7"/>
+  <line x1="400" y1="62" x2="400" y2="40" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="400" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#27ae60">Rest Seat</text>
+  <!-- Summary -->
+  <rect x="150" y="450" width="500" height="50" rx="12" fill="#f8f8f8" stroke="#ddd" stroke-width="1"/>
+  <text x="400" y="472" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#333"><tspan fill="#2980b9" font-weight="bold">Suprabulge</tspan> = Rigid (stability) | <tspan fill="#c0392b" font-weight="bold">Infrabulge</tspan> = Flexible (retention)</text>
+  <text x="400" y="490" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#666">Clasp tip engages undercut below survey line for retention</text>
+</svg>
 <div class="caption">Survey Line 與卡環定位示意圖</div>
 </div>
 
@@ -615,7 +750,65 @@ body.paged .progress-bar{display:none}
 
 <!-- 四種常見卡環比較 -->
 <div class="diagram">
-<img src="images/clasp-types.png" alt="四種常見卡環比較" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 600" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Four Common Clasp Types</text>
+  <!-- Panel 1: Circumferential/Akers -->
+  <rect x="20" y="55" width="370" height="245" rx="12" fill="#f8fbff" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="205" y="80" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#2980b9">1. Circumferential (Akers)</text>
+  <text x="205" y="98" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#2980b9">Suprabulge | Cast</text>
+  <!-- Tooth -->
+  <path d="M155,140 Q155,115 205,115 Q255,115 255,140 L260,220 Q260,270 205,280 Q150,270 150,220Z" fill="#fffde7" stroke="#555" stroke-width="1.5"/>
+  <path d="M150,200 Q175,215 205,218 Q235,215 260,200" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <!-- Clasp from occlusal wrapping around -->
+  <path d="M220,118 Q280,130 275,180 Q270,210 255,215" fill="none" stroke="#2980b9" stroke-width="3.5"/>
+  <text x="290" y="155" font-family="Arial,sans-serif" font-size="11" fill="#2980b9">Approaches</text>
+  <text x="290" y="168" font-family="Arial,sans-serif" font-size="11" fill="#2980b9">from occlusal</text>
+  <path d="M290,170 L290,190" stroke="#2980b9" stroke-width="1" marker-end="url(#dn1)"/>
+  <defs><marker id="dn1" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#2980b9"/></marker></defs>
+  <!-- Panel 2: Bar/I-bar -->
+  <rect x="410" y="55" width="370" height="245" rx="12" fill="#fef5e7" stroke="#e67e22" stroke-width="1.5"/>
+  <text x="595" y="80" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#e67e22">2. Bar / I-bar Clasp</text>
+  <text x="595" y="98" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#e67e22">Infrabulge</text>
+  <!-- Tooth -->
+  <path d="M545,140 Q545,115 595,115 Q645,115 645,140 L650,220 Q650,270 595,280 Q540,270 540,220Z" fill="#fffde7" stroke="#555" stroke-width="1.5"/>
+  <path d="M540,200 Q565,215 595,218 Q625,215 650,200" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <!-- I-bar from gingival -->
+  <line x1="530" y1="290" x2="530" y2="240" stroke="#e67e22" stroke-width="3"/>
+  <path d="M530,240 Q530,230 538,230" fill="none" stroke="#e67e22" stroke-width="3.5"/>
+  <text x="680" y="260" font-family="Arial,sans-serif" font-size="11" fill="#e67e22">Approaches</text>
+  <text x="680" y="273" font-family="Arial,sans-serif" font-size="11" fill="#e67e22">from gingival</text>
+  <path d="M680,245 L680,255" stroke="#e67e22" stroke-width="1"/>
+  <!-- Panel 3: RPI -->
+  <rect x="20" y="315" width="370" height="260" rx="12" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="205" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#27ae60">3. RPI System</text>
+  <text x="205" y="358" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#27ae60">Rest + Proximal Plate + I-bar</text>
+  <!-- Tooth -->
+  <path d="M155,395 Q155,370 205,370 Q255,370 255,395 L260,475 Q260,520 205,535 Q150,520 150,475Z" fill="#fffde7" stroke="#555" stroke-width="1.5"/>
+  <!-- Rest -->
+  <rect x="170" y="372" width="25" height="10" rx="3" fill="#27ae60"/>
+  <text x="140" y="380" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#27ae60">R (Rest)</text>
+  <!-- Proximal plate -->
+  <rect x="258" y="395" width="10" height="60" rx="2" fill="#27ae60" opacity="0.6"/>
+  <text x="280" y="430" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#27ae60">P (Proximal Plate)</text>
+  <!-- I-bar -->
+  <line x1="140" y1="540" x2="140" y2="490" stroke="#27ae60" stroke-width="3"/>
+  <path d="M140,490 Q140,480 150,480" fill="none" stroke="#27ae60" stroke-width="3"/>
+  <text x="120" y="555" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#27ae60">I (I-bar)</text>
+  <text x="205" y="565" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">Best for free-end (distal extension)</text>
+  <!-- Panel 4: Back-Action -->
+  <rect x="410" y="315" width="370" height="260" rx="12" fill="#f3e5f5" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="595" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#8e44ad">4. Back-Action Clasp</text>
+  <text x="595" y="358" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#8e44ad">Lingual to Buccal</text>
+  <!-- Tooth -->
+  <path d="M545,395 Q545,370 595,370 Q645,370 645,395 L650,475 Q650,520 595,535 Q540,520 540,475Z" fill="#fffde7" stroke="#555" stroke-width="1.5"/>
+  <path d="M540,455 Q565,468 595,470 Q625,468 650,455" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <!-- Clasp from lingual wrapping to buccal -->
+  <path d="M660,400 Q680,400 680,430 Q680,470 650,470" fill="none" stroke="#8e44ad" stroke-width="3.5"/>
+  <path d="M540,460 Q520,465 520,480 Q520,495 540,495" fill="none" stroke="#8e44ad" stroke-width="3.5"/>
+  <text x="700" y="395" font-family="Arial,sans-serif" font-size="11" fill="#8e44ad">From lingual</text>
+  <text x="490" y="510" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#8e44ad">To buccal</text>
+</svg>
 <div class="caption">四種常見卡環比較</div>
 </div>
 
@@ -802,7 +995,55 @@ Horseshoe 連接體是在無法避開 torus 時的不得已選擇
 
 <!-- VD 圖解 -->
 <div class="diagram">
-<img src="images/rvd-ovd-freeway.png" alt="RVD、OVD 與 Freeway Space 的關係" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 480" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="480" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">RVD, OVD, and Freeway Space</text>
+  <!-- LEFT: Rest position (RVD) -->
+  <text x="200" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="#2980b9">Rest Position (RVD)</text>
+  <!-- Face profile - simplified -->
+  <path d="M150,100 Q120,100 110,140 Q100,180 105,220 L110,250 Q115,280 130,310 Q150,350 160,370 Q165,385 175,395 Q190,410 200,400 Q215,395 220,380 Q225,360 225,340 L225,300 Q230,280 235,260 Q240,220 235,180 Q230,140 220,115 Q210,100 200,95Z" fill="#ffe0cc" stroke="#555" stroke-width="2"/>
+  <!-- Nose -->
+  <path d="M235,180 Q245,185 240,200 Q235,210 225,210" fill="none" stroke="#555" stroke-width="1.5"/>
+  <!-- Lips slightly apart -->
+  <path d="M225,260 Q215,255 200,258" fill="none" stroke="#c0392b" stroke-width="2"/>
+  <path d="M225,270 Q215,275 200,273" fill="none" stroke="#c0392b" stroke-width="2"/>
+  <!-- Gap between lips -->
+  <text x="240" y="268" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">Lips apart</text>
+  <!-- Upper teeth -->
+  <rect x="195" y="248" width="30" height="12" rx="2" fill="#fff" stroke="#888" stroke-width="1"/>
+  <!-- Lower teeth -->
+  <rect x="195" y="268" width="30" height="12" rx="2" fill="#fff" stroke="#888" stroke-width="1"/>
+  <!-- Gap indicator -->
+  <line x1="180" y1="260" x2="190" y2="260" stroke="#2980b9" stroke-width="1.5"/>
+  <line x1="180" y1="268" x2="190" y2="268" stroke="#2980b9" stroke-width="1.5"/>
+  <line x1="185" y1="260" x2="185" y2="268" stroke="#2980b9" stroke-width="2"/>
+  <!-- RVD measurement arrow -->
+  <line x1="270" y1="115" x2="270" y2="395" stroke="#2980b9" stroke-width="2"/>
+  <polygon points="267,118 273,118 270,108" fill="#2980b9"/>
+  <polygon points="267,392 273,392 270,402" fill="#2980b9"/>
+  <text x="285" y="260" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#2980b9">RVD</text>
+  <!-- RIGHT: Occlusion (OVD) -->
+  <text x="550" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="#c0392b">Occlusion (OVD)</text>
+  <!-- Face profile -->
+  <path d="M500,100 Q470,100 460,140 Q450,180 455,220 L460,250 Q465,275 480,305 Q500,340 510,360 Q515,375 525,385 Q540,395 550,390 Q565,385 570,375 Q575,360 575,340 L575,295 Q580,275 585,255 Q590,220 585,180 Q580,140 570,115 Q560,100 550,95Z" fill="#ffe0cc" stroke="#555" stroke-width="2"/>
+  <!-- Nose -->
+  <path d="M585,180 Q595,185 590,200 Q585,210 575,210" fill="none" stroke="#555" stroke-width="1.5"/>
+  <!-- Lips together -->
+  <path d="M575,260 Q565,255 550,258 Q540,260 530,258" fill="none" stroke="#c0392b" stroke-width="2.5"/>
+  <text x="590" y="262" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">Lips together</text>
+  <!-- Teeth in contact -->
+  <rect x="545" y="248" width="30" height="12" rx="2" fill="#fff" stroke="#888" stroke-width="1"/>
+  <rect x="545" y="260" width="30" height="12" rx="2" fill="#fff" stroke="#888" stroke-width="1"/>
+  <!-- OVD measurement arrow -->
+  <line x1="620" y1="115" x2="620" y2="385" stroke="#c0392b" stroke-width="2"/>
+  <polygon points="617,118 623,118 620,108" fill="#c0392b"/>
+  <polygon points="617,382 623,382 620,392" fill="#c0392b"/>
+  <text x="635" y="255" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">OVD</text>
+  <!-- Bottom formula -->
+  <rect x="150" y="420" width="500" height="50" rx="12" fill="#f8f8f8" stroke="#ddd" stroke-width="1.5"/>
+  <text x="400" y="440" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#333">Freeway Space = RVD - OVD = <tspan fill="#c0392b">2-4 mm</tspan></text>
+  <text x="400" y="460" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#666">The space between teeth when jaw is at rest position</text>
+</svg>
 <div class="caption">RVD、OVD 與 Freeway Space 的關係</div>
 </div>
 
@@ -846,7 +1087,70 @@ Buccal shelf 的骨頭厚、表面平坦、上方有較厚的角化黏膜。
 
 <!-- 全口義齒邊界解剖標誌 -->
 <div class="diagram">
-<img src="images/cd-borders.png" alt="全口義齒邊界解剖標誌" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 600" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#fff"/>
+  <text x="400" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Complete Denture Borders (Occlusal View)</text>
+  <!-- UPPER JAW -->
+  <text x="200" y="60" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="#2980b9">Maxillary</text>
+  <!-- Palate outline -->
+  <ellipse cx="200" cy="230" rx="155" ry="180" fill="#fce4ec" stroke="#c0392b" stroke-width="2"/>
+  <!-- Anterior ridge -->
+  <path d="M80,300 Q80,100 200,80 Q320,100 320,300" fill="none" stroke="#555" stroke-width="2"/>
+  <!-- Incisive papilla -->
+  <ellipse cx="200" cy="140" rx="12" ry="8" fill="#c0392b" opacity="0.6"/>
+  <line x1="212" y1="138" x2="330" y2="100" stroke="#c0392b" stroke-width="1"/>
+  <text x="340" y="100" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c0392b">Incisive Papilla</text>
+  <!-- Rugae -->
+  <path d="M170,165 Q200,155 230,165" fill="none" stroke="#e67e22" stroke-width="2"/>
+  <path d="M165,180 Q200,170 235,180" fill="none" stroke="#e67e22" stroke-width="2"/>
+  <path d="M168,195 Q200,185 232,195" fill="none" stroke="#e67e22" stroke-width="2"/>
+  <line x1="235" y1="180" x2="340" y2="145" stroke="#e67e22" stroke-width="1"/>
+  <text x="345" y="148" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#e67e22">Rugae</text>
+  <!-- Hamular notch -->
+  <circle cx="85" cy="345" r="6" fill="#8e44ad"/>
+  <circle cx="315" cy="345" r="6" fill="#8e44ad"/>
+  <line x1="315" y1="345" x2="345" y2="365" stroke="#8e44ad" stroke-width="1"/>
+  <text x="348" y="368" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#8e44ad">Hamular Notch</text>
+  <!-- Posterior palatal seal / vibrating line -->
+  <path d="M85,345 Q200,380 315,345" fill="none" stroke="#2980b9" stroke-width="2.5" stroke-dasharray="6,3"/>
+  <text x="200" y="400" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#2980b9">Posterior Palatal Seal</text>
+  <text x="200" y="415" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#2980b9">(Vibrating Line)</text>
+  <!-- Labial flange -->
+  <path d="M100,180 Q80,160 70,200" fill="none" stroke="#27ae60" stroke-width="3"/>
+  <line x1="70" y1="200" x2="35" y2="185" stroke="#27ae60" stroke-width="1"/>
+  <text x="30" y="178" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#27ae60">Labial</text>
+  <text x="30" y="192" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#27ae60">Flange</text>
+  <!-- LOWER JAW -->
+  <text x="600" y="60" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="#c0392b">Mandibular</text>
+  <!-- Mandible outline -->
+  <path d="M470,280 Q470,120 600,100 Q730,120 730,280 Q730,350 680,370 Q620,395 600,395 Q580,395 520,370 Q470,350 470,280Z" fill="#e8f4fd" stroke="#555" stroke-width="2"/>
+  <!-- Inner ridge -->
+  <path d="M510,270 Q510,170 600,155 Q690,170 690,270 Q690,310 660,325 Q630,340 600,340 Q570,340 540,325 Q510,310 510,270Z" fill="#fff" stroke="#888" stroke-width="1.5"/>
+  <!-- Buccal shelf -->
+  <rect x="700" y="220" width="5" height="60" rx="2" fill="#c0392b" opacity="0.4"/>
+  <line x1="705" y1="250" x2="755" y2="230" stroke="#c0392b" stroke-width="1"/>
+  <text x="758" y="228" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c0392b">Buccal Shelf</text>
+  <!-- Retromolar pad -->
+  <ellipse cx="710" cy="310" rx="18" ry="14" fill="#e67e22" opacity="0.4"/>
+  <line x1="725" y1="313" x2="755" y2="330" stroke="#e67e22" stroke-width="1"/>
+  <text x="758" y="333" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#e67e22">Retromolar Pad</text>
+  <!-- Mylohyoid ridge -->
+  <path d="M520,290 Q560,310 600,315 Q640,310 680,290" fill="none" stroke="#8e44ad" stroke-width="2.5"/>
+  <line x1="560" y1="310" x2="450" y2="340" stroke="#8e44ad" stroke-width="1"/>
+  <text x="445" y="345" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#8e44ad">Mylohyoid Ridge</text>
+  <!-- Sublingual crescent -->
+  <path d="M540,280 Q570,295 600,298 Q630,295 660,280" fill="rgba(39,174,96,0.2)" stroke="#27ae60" stroke-width="1.5"/>
+  <line x1="600" y1="298" x2="600" y2="380" stroke="#27ae60" stroke-width="1"/>
+  <text x="600" y="395" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#27ae60">Sublingual Crescent</text>
+  <!-- Labial flange lower -->
+  <path d="M510,180 Q490,160 480,200" fill="none" stroke="#2980b9" stroke-width="3"/>
+  <line x1="480" y1="200" x2="445" y2="190" stroke="#2980b9" stroke-width="1"/>
+  <text x="440" y="188" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#2980b9">Labial Flange</text>
+  <!-- Footer note -->
+  <rect x="100" y="450" width="600" height="50" rx="10" fill="#f8f8f8" stroke="#ddd" stroke-width="1"/>
+  <text x="400" y="472" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#333">Upper: Posterior border = Hamular Notch to Hamular Notch via Vibrating Line</text>
+  <text x="400" y="490" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#333">Lower: Primary stress-bearing area = Buccal Shelf</text>
+</svg>
 <div class="caption">全口義齒邊界解剖標誌</div>
 </div>
 
@@ -897,7 +1201,54 @@ Buccal shelf 的骨頭厚、表面平坦、上方有較厚的角化黏膜。
 
 <!-- 全口義齒排牙原則 -->
 <div class="diagram">
-<img src="images/cd-tooth-arrangement.png" alt="全口義齒排牙原則" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 550" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="550" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Complete Denture Tooth Arrangement</text>
+  <!-- Cross-section view of ridge with teeth -->
+  <!-- Ridge outline -->
+  <path d="M100,320 Q100,280 200,270 Q300,260 400,255 Q500,260 600,270 Q700,280 700,320 L700,360 L100,360Z" fill="#f5e6d0" stroke="#a67c52" stroke-width="2"/>
+  <text x="400" y="350" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#a67c52">Ridge Crest</text>
+  <!-- Anterior teeth - slight labial inclination -->
+  <rect x="330" y="160" width="18" height="95" rx="3" fill="#fff" stroke="#333" stroke-width="1.5" transform="rotate(-8,339,207)"/>
+  <rect x="352" y="155" width="18" height="100" rx="3" fill="#fff" stroke="#333" stroke-width="1.5" transform="rotate(-4,361,205)"/>
+  <rect x="374" y="152" width="18" height="103" rx="3" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <rect x="400" y="152" width="18" height="103" rx="3" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <rect x="422" y="155" width="18" height="100" rx="3" fill="#fff" stroke="#333" stroke-width="1.5" transform="rotate(4,431,205)"/>
+  <rect x="444" y="160" width="18" height="95" rx="3" fill="#fff" stroke="#333" stroke-width="1.5" transform="rotate(8,453,207)"/>
+  <!-- Label: anterior inclination -->
+  <path d="M350,150 L340,120" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="280" y="115" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#2980b9">Slight Labial</text>
+  <text x="280" y="130" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#2980b9">Inclination</text>
+  <!-- Posterior teeth -->
+  <rect x="200" y="210" width="24" height="50" rx="3" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <rect x="230" y="210" width="24" height="50" rx="3" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <rect x="530" y="210" width="24" height="50" rx="3" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <rect x="560" y="210" width="24" height="50" rx="3" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <!-- Buccal cusp over ridge crest - arrow -->
+  <line x1="218" y1="260" x2="218" y2="270" stroke="#c0392b" stroke-width="2"/>
+  <circle cx="218" cy="210" r="4" fill="#c0392b"/>
+  <text x="175" y="200" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c0392b">Buccal Cusp</text>
+  <text x="175" y="213" text-anchor="end" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#c0392b">over Ridge Crest</text>
+  <!-- Lower section: Curves -->
+  <text x="400" y="410" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">Occlusal Curves (Sagittal and Frontal View)</text>
+  <!-- Curve of Spee (sagittal) -->
+  <path d="M150,470 Q300,510 500,470 Q550,460 600,470" fill="none" stroke="#2980b9" stroke-width="3"/>
+  <text x="350" y="525" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#2980b9">Curve of Spee (sagittal)</text>
+  <!-- Small teeth along curve -->
+  <rect x="160" y="455" width="16" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1"/>
+  <rect x="200" y="460" width="20" height="18" rx="2" fill="#fff" stroke="#555" stroke-width="1"/>
+  <rect x="240" y="465" width="20" height="18" rx="2" fill="#fff" stroke="#555" stroke-width="1"/>
+  <rect x="280" y="470" width="20" height="18" rx="2" fill="#fff" stroke="#555" stroke-width="1"/>
+  <!-- Curve of Wilson (frontal) -->
+  <path d="M620,480 Q680,500 740,480" fill="none" stroke="#c0392b" stroke-width="3"/>
+  <rect x="625" y="465" width="18" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1"/>
+  <rect x="722" y="465" width="18" height="15" rx="2" fill="#fff" stroke="#555" stroke-width="1"/>
+  <text x="680" y="525" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c0392b">Curve of Wilson</text>
+  <text x="680" y="540" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">(frontal)</text>
+  <!-- Balanced occlusion note -->
+  <rect x="200" y="380" width="400" height="28" rx="8" fill="#eafaf1" stroke="#27ae60" stroke-width="1"/>
+  <text x="400" y="399" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#27ae60">Balanced Occlusion: bilateral simultaneous contacts</text>
+</svg>
 <div class="caption">全口義齒排牙原則</div>
 </div>
 
@@ -1003,7 +1354,50 @@ Buccal shelf 的骨頭厚、表面平坦、上方有較厚的角化黏膜。
 
 <!-- Taper 圖解 -->
 <div class="diagram">
-<img src="images/crown-taper.png" alt="牙冠修磨錐度比較" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 450" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="450" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Crown Preparation Taper</text>
+  <!-- Panel 1: Too much taper -->
+  <rect x="30" y="55" width="230" height="370" rx="12" fill="#fff8f8" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="145" y="80" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#c0392b">Too Much Taper</text>
+  <text x="145" y="98" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#c0392b">>12 per wall (>24 total)</text>
+  <!-- Wide taper tooth prep -->
+  <path d="M90,140 L60,350 L230,350 L200,140Z" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Taper angle lines -->
+  <line x1="145" y1="140" x2="145" y2="350" stroke="#c0392b" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="90" y1="140" x2="60" y2="350" stroke="#c0392b" stroke-width="1.5"/>
+  <line x1="200" y1="140" x2="230" y2="350" stroke="#c0392b" stroke-width="1.5"/>
+  <!-- Angle arc -->
+  <path d="M145,160 Q130,160 125,175" fill="none" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="115" y="170" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">>12</text>
+  <text x="145" y="390" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c0392b">Poor Retention</text>
+  <text x="145" y="408" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">Crown slides off easily</text>
+  <!-- Panel 2: Ideal -->
+  <rect x="285" y="55" width="230" height="370" rx="12" fill="#eafaf1" stroke="#27ae60" stroke-width="2"/>
+  <text x="400" y="80" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#27ae60">Ideal Taper</text>
+  <text x="400" y="98" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#27ae60">6 per wall (12 total)</text>
+  <!-- Moderate taper tooth prep -->
+  <path d="M365,140 L350,350 L450,350 L435,140Z" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Taper angle lines -->
+  <line x1="400" y1="140" x2="400" y2="350" stroke="#27ae60" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="365" y1="140" x2="350" y2="350" stroke="#27ae60" stroke-width="1.5"/>
+  <line x1="435" y1="140" x2="450" y2="350" stroke="#27ae60" stroke-width="1.5"/>
+  <path d="M400,160 Q393,160 391,172" fill="none" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="382" y="168" font-family="Arial,sans-serif" font-size="11" fill="#27ae60">6</text>
+  <text x="400" y="390" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#27ae60">Good Retention</text>
+  <text x="400" y="408" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#27ae60">Optimal balance</text>
+  <!-- Panel 3: Too little -->
+  <rect x="540" y="55" width="230" height="370" rx="12" fill="#fef5e7" stroke="#e67e22" stroke-width="1.5"/>
+  <text x="655" y="80" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#e67e22">Too Little Taper</text>
+  <text x="655" y="98" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#e67e22">&lt;3 per wall</text>
+  <!-- Nearly parallel tooth prep -->
+  <path d="M637,140 L635,350 L675,350 L673,140Z" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <line x1="655" y1="140" x2="655" y2="350" stroke="#e67e22" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="637" y1="140" x2="635" y2="350" stroke="#e67e22" stroke-width="1.5"/>
+  <line x1="673" y1="140" x2="675" y2="350" stroke="#e67e22" stroke-width="1.5"/>
+  <text x="655" y="390" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#e67e22">Cannot Seat</text>
+  <text x="655" y="408" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#e67e22">Crown binds on walls</text>
+</svg>
 <div class="caption">牙冠修磨錐度比較</div>
 </div>
 
@@ -1019,7 +1413,57 @@ Buccal shelf 的骨頭厚、表面平坦、上方有較厚的角化黏膜。
 
 <!-- Margin Design 截面圖 -->
 <div class="diagram">
-<img src="images/margin-designs.png" alt="四種 Margin Design 截面比較" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 420" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="420" fill="#fff"/>
+  <text x="400" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Margin Designs (Cross-Section)</text>
+  <!-- Panel 1: Knife-edge -->
+  <rect x="20" y="50" width="180" height="350" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <text x="110" y="75" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">Knife-edge</text>
+  <text x="110" y="92" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#888">(Feather-edge)</text>
+  <!-- Tooth cross section -->
+  <rect x="70" y="120" width="80" height="200" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Knife-edge margin: tapers to nothing -->
+  <path d="M70,320 L70,280 L50,320Z" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <text x="110" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">Thinnest margin</text>
+  <text x="110" y="378" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#888">Full metal crowns</text>
+  <!-- Panel 2: Chamfer -->
+  <rect x="215" y="50" width="180" height="350" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <text x="305" y="75" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#2980b9">Chamfer</text>
+  <!-- Tooth -->
+  <rect x="265" y="120" width="80" height="200" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Chamfer: concave curve at margin -->
+  <path d="M265,320 L265,290 Q248,290 245,310 Q243,320 245,320Z" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Highlight the concave curve -->
+  <path d="M265,290 Q248,290 245,310" fill="none" stroke="#2980b9" stroke-width="3"/>
+  <text x="305" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#2980b9">Concave curve</text>
+  <text x="305" y="378" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#888">PFM / Zirconia</text>
+  <!-- Panel 3: Shoulder -->
+  <rect x="410" y="50" width="180" height="350" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <text x="500" y="75" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#27ae60">Shoulder</text>
+  <!-- Tooth -->
+  <rect x="460" y="120" width="80" height="200" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Shoulder: 90-degree step -->
+  <path d="M460,320 L430,320 L430,290 L460,290" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Right angle indicator -->
+  <rect x="430" y="290" width="10" height="10" fill="none" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="500" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#27ae60">90 right angle</text>
+  <text x="500" y="378" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#888">All-ceramic crowns</text>
+  <!-- Panel 4: Shoulder with Bevel -->
+  <rect x="605" y="50" width="180" height="350" rx="10" fill="#fafafa" stroke="#ddd" stroke-width="1"/>
+  <text x="695" y="75" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#8e44ad">Shoulder + Bevel</text>
+  <!-- Tooth -->
+  <rect x="655" y="120" width="80" height="200" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Shoulder with bevel -->
+  <path d="M655,320 L625,320 L625,290 L640,290 L655,280 L655,290" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Bevel line highlight -->
+  <line x1="640" y1="290" x2="655" y2="280" stroke="#8e44ad" stroke-width="3"/>
+  <text x="695" y="360" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#8e44ad">Bevel for metal fit</text>
+  <text x="695" y="378" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#888">PFM (metal collar)</text>
+  <!-- Arrow showing increasing bulk -->
+  <line x1="100" y1="405" x2="700" y2="405" stroke="#333" stroke-width="1.5" marker-end="url(#arrowBk)"/>
+  <defs><marker id="arrowBk" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#333"/></marker></defs>
+  <text x="400" y="418" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#333">Increasing margin bulk and tooth reduction</text>
+</svg>
 <div class="caption">四種 Margin Design 截面比較</div>
 </div>
 
@@ -1048,7 +1492,55 @@ Buccal shelf 的骨頭厚、表面平坦、上方有較厚的角化黏膜。
 
 <!-- 固定義齒（牙橋）組成 -->
 <div class="diagram">
-<img src="images/fpd-components.png" alt="固定義齒（牙橋）組成" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 400" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="400" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Fixed Partial Denture (Bridge) Components</text>
+  <!-- Left abutment tooth -->
+  <path d="M100,120 Q100,70 155,65 Q210,70 210,120 L215,260 Q215,310 155,320 Q95,310 95,260Z" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Left retainer (crown) -->
+  <path d="M95,120 Q95,60 155,55 Q215,60 215,120 L215,180 Q215,190 155,192 Q95,190 95,180Z" fill="rgba(41,128,185,0.15)" stroke="#2980b9" stroke-width="2.5"/>
+  <!-- Left connector -->
+  <rect x="210" y="130" width="35" height="55" rx="4" fill="rgba(39,174,96,0.2)" stroke="#27ae60" stroke-width="2"/>
+  <!-- Pontic (missing tooth replaced) -->
+  <path d="M245,120 Q245,65 310,60 Q375,65 375,120 L375,200 Q375,230 310,235 Q245,230 245,200Z" fill="rgba(192,57,43,0.1)" stroke="#c0392b" stroke-width="2.5"/>
+  <!-- Right connector -->
+  <rect x="375" y="130" width="35" height="55" rx="4" fill="rgba(39,174,96,0.2)" stroke="#27ae60" stroke-width="2"/>
+  <!-- Right abutment tooth -->
+  <path d="M410,120 Q410,70 465,65 Q520,70 520,120 L525,260 Q525,310 465,320 Q405,310 405,260Z" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Right retainer (crown) -->
+  <path d="M405,120 Q405,60 465,55 Q525,60 525,120 L525,180 Q525,190 465,192 Q405,190 405,180Z" fill="rgba(41,128,185,0.15)" stroke="#2980b9" stroke-width="2.5"/>
+  <!-- Gap where pontic sits (no root) -->
+  <path d="M260,240 Q310,260 360,240" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="310" y="270" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">(Edentulous span)</text>
+  <!-- Labels -->
+  <line x1="155" y1="55" x2="155" y2="25" stroke="#333" stroke-width="1"/>
+  <line x1="465" y1="55" x2="465" y2="25" stroke="#333" stroke-width="1"/>
+  <!-- Flow diagram below -->
+  <rect x="60" y="340" width="100" height="35" rx="8" fill="#fffde7" stroke="#a67c52" stroke-width="1.5"/>
+  <text x="110" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#a67c52">Abutment</text>
+  <text x="175" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#333">&rarr;</text>
+  <rect x="190" y="340" width="90" height="35" rx="8" fill="#e8f4fd" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="235" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#2980b9">Retainer</text>
+  <text x="295" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#333">&rarr;</text>
+  <rect x="310" y="340" width="100" height="35" rx="8" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="360" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">Connector</text>
+  <text x="425" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#333">&rarr;</text>
+  <rect x="440" y="340" width="80" height="35" rx="8" fill="#fdecea" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="480" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c0392b">Pontic</text>
+  <text x="535" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#333">&rarr;</text>
+  <rect x="550" y="340" width="100" height="35" rx="8" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="600" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">Connector</text>
+  <text x="665" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" fill="#333">&rarr;</text>
+  <rect x="680" y="340" width="90" height="35" rx="8" fill="#e8f4fd" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="725" y="362" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#2980b9">Retainer</text>
+  <!-- Diagram labels -->
+  <line x1="155" y1="170" x2="55" y2="310" stroke="#2980b9" stroke-width="1"/>
+  <text x="45" y="320" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#2980b9">Retainer</text>
+  <line x1="227" y1="155" x2="227" y2="310" stroke="#27ae60" stroke-width="1"/>
+  <text x="227" y="323" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">Connector</text>
+  <line x1="310" y1="100" x2="310" y2="60" stroke="#c0392b" stroke-width="1"/>
+  <text x="310" y="55" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">Pontic</text>
+</svg>
 <div class="caption">固定義齒（牙橋）組成</div>
 </div>
 
@@ -1191,7 +1683,7 @@ Ferrule 不足 → 考慮 <b>Crown Lengthening（牙冠延長術）</b> 或 <b>O
 
 <!-- Pontic 設計圖解 -->
 <div class="diagram">
-<img src="images/pontic-designs.png" alt="五種 Pontic 設計截面比較" style="max-width:100%;border-radius:12px">
+<img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/f589/6089067/e25af3b569c9/EJD-12-375-g001.jpg" alt="Pontic Designs" style="max-width:100%;border-radius:12px">
 <div class="caption">五種 Pontic 設計截面比較</div>
 </div>
 
@@ -1233,7 +1725,78 @@ Ferrule 不足 → 考慮 <b>Crown Lengthening（牙冠延長術）</b> 或 <b>O
 
 <!-- 牙科黏著劑比較 -->
 <div class="diagram">
-<img src="images/cement-comparison.png" alt="牙科黏著劑比較" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 380" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="380" fill="#fff"/>
+  <text x="400" y="32" text-anchor="middle" font-family="Arial,sans-serif" font-size="20" font-weight="bold" fill="#2c3e50">Dental Cement Comparison</text>
+  <!-- Table header -->
+  <rect x="20" y="50" width="120" height="45" rx="4" fill="#34495e"/>
+  <rect x="140" y="50" width="155" height="45" rx="4" fill="#34495e"/>
+  <rect x="295" y="50" width="155" height="45" rx="4" fill="#34495e"/>
+  <rect x="450" y="50" width="155" height="45" rx="4" fill="#34495e"/>
+  <rect x="605" y="50" width="175" height="45" rx="4" fill="#34495e"/>
+  <text x="80" y="77" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#fff">Property</text>
+  <text x="217" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#fff">ZPC</text>
+  <text x="217" y="88" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#bbb">(Zinc Phosphate)</text>
+  <text x="372" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#fff">GIC</text>
+  <text x="372" y="88" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#bbb">(Glass Ionomer)</text>
+  <text x="527" y="72" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#fff">RMGIC</text>
+  <text x="527" y="88" text-anchor="middle" font-family="Arial,sans-serif" font-size="10" fill="#bbb">(Resin-Modified GIC)</text>
+  <text x="692" y="77" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#fff">Resin Cement</text>
+  <!-- Row 1: Bond -->
+  <rect x="20" y="98" width="120" height="50" fill="#f0ece4"/>
+  <text x="80" y="127" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#333">Bond Type</text>
+  <rect x="140" y="98" width="155" height="50" fill="#fafafa"/>
+  <text x="217" y="127" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Mechanical</text>
+  <rect x="295" y="98" width="155" height="50" fill="#fafafa"/>
+  <text x="372" y="127" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#2980b9" font-weight="bold">Chemical</text>
+  <rect x="450" y="98" width="155" height="50" fill="#fafafa"/>
+  <text x="527" y="120" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#2980b9" font-weight="bold">Chemical</text>
+  <text x="527" y="136" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#2980b9">+ Resin</text>
+  <rect x="605" y="98" width="175" height="50" fill="#fafafa"/>
+  <text x="692" y="127" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Micromechanical</text>
+  <!-- Row 2: Fluoride -->
+  <rect x="20" y="150" width="120" height="50" fill="#f0ece4"/>
+  <text x="80" y="179" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#333">Fluoride</text>
+  <rect x="140" y="150" width="155" height="50" fill="#fff8f8"/>
+  <text x="217" y="179" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">No</text>
+  <rect x="295" y="150" width="155" height="50" fill="#eafaf1"/>
+  <text x="372" y="179" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#27ae60">Yes</text>
+  <rect x="450" y="150" width="155" height="50" fill="#eafaf1"/>
+  <text x="527" y="179" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#27ae60">Yes</text>
+  <rect x="605" y="150" width="175" height="50" fill="#fff8f8"/>
+  <text x="692" y="179" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">No</text>
+  <!-- Row 3: Strength -->
+  <rect x="20" y="202" width="120" height="50" fill="#f0ece4"/>
+  <text x="80" y="231" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#333">Strength</text>
+  <rect x="140" y="202" width="155" height="50" fill="#fafafa"/>
+  <text x="217" y="231" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Low-Mid</text>
+  <rect x="295" y="202" width="155" height="50" fill="#fafafa"/>
+  <text x="372" y="231" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Low-Mid</text>
+  <rect x="450" y="202" width="155" height="50" fill="#fafafa"/>
+  <text x="527" y="231" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Mid</text>
+  <rect x="605" y="202" width="175" height="50" fill="#eafaf1"/>
+  <text x="692" y="231" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#27ae60">Highest</text>
+  <!-- Row 4: Moisture -->
+  <rect x="20" y="254" width="120" height="50" fill="#f0ece4"/>
+  <text x="80" y="278" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#333">Moisture</text>
+  <text x="80" y="293" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#333">Sensitivity</text>
+  <rect x="140" y="254" width="155" height="50" fill="#fff8f8"/>
+  <text x="217" y="283" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c0392b">Sensitive</text>
+  <rect x="295" y="254" width="155" height="50" fill="#eafaf1"/>
+  <text x="372" y="283" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">Tolerant</text>
+  <rect x="450" y="254" width="155" height="50" fill="#eafaf1"/>
+  <text x="527" y="283" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">Tolerant</text>
+  <rect x="605" y="254" width="175" height="50" fill="#fff8f8"/>
+  <text x="692" y="283" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c0392b">Sensitive</text>
+  <!-- Grid lines -->
+  <line x1="20" y1="95" x2="780" y2="95" stroke="#ddd" stroke-width="1"/>
+  <line x1="20" y1="148" x2="780" y2="148" stroke="#ddd" stroke-width="1"/>
+  <line x1="20" y1="200" x2="780" y2="200" stroke="#ddd" stroke-width="1"/>
+  <line x1="20" y1="252" x2="780" y2="252" stroke="#ddd" stroke-width="1"/>
+  <line x1="20" y1="304" x2="780" y2="304" stroke="#ddd" stroke-width="1"/>
+  <!-- Summary -->
+  <text x="400" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#555">GIC/RMGIC: Fluoride release + moisture tolerant | Resin: Strongest bond | ZPC: Oldest, still widely used</text>
+</svg>
 <div class="caption">牙科黏著劑比較</div>
 </div>
 
@@ -1308,7 +1871,77 @@ Working time <b>最長</b>（好處：全口義齒有足夠操作時間）<br>
 
 <!-- 三種印模技術比較 -->
 <div class="diagram">
-<img src="images/impression-techniques.png" alt="三種印模技術比較" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 500" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="#fff"/>
+  <text x="400" y="32" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Impression Techniques (Cross-Section)</text>
+  <!-- Panel 1: Mucostatic -->
+  <rect x="20" y="55" width="240" height="420" rx="12" fill="#e8f4fd" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="140" y="82" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#2980b9">Mucostatic</text>
+  <text x="140" y="100" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#2980b9">Minimal Pressure</text>
+  <!-- Tray -->
+  <path d="M50,160 L50,200 Q50,210 60,210 L220,210 Q230,210 230,200 L230,160" fill="#aaa" stroke="#666" stroke-width="2"/>
+  <!-- Impression material (thin, uniform) -->
+  <path d="M60,195 Q140,185 220,195" fill="#b3d9ff" stroke="#2980b9" stroke-width="1.5"/>
+  <!-- Tissue (relaxed, natural shape) -->
+  <path d="M55,280 Q80,250 140,240 Q200,250 225,280" fill="#ffcccc" stroke="#c0392b" stroke-width="2"/>
+  <!-- Ridge below -->
+  <path d="M50,280 Q80,260 140,250 Q200,260 230,280 L230,340 Q200,350 140,355 Q80,350 50,340Z" fill="#f5e6d0" stroke="#a67c52" stroke-width="1.5"/>
+  <!-- Space between material and tissue -->
+  <path d="M80,210 L80,240" stroke="#2980b9" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="140" y="330" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Tissue relaxed</text>
+  <text x="140" y="380" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#2980b9">Material: ZOE</text>
+  <text x="140" y="400" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">Records tissue at rest</text>
+  <!-- Arrows showing minimal pressure -->
+  <line x1="100" y1="210" x2="100" y2="230" stroke="#2980b9" stroke-width="1.5"/>
+  <line x1="140" y1="210" x2="140" y2="225" stroke="#2980b9" stroke-width="1.5"/>
+  <line x1="180" y1="210" x2="180" y2="230" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="140" y="440" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#2980b9">Minimal pressure</text>
+  <!-- Panel 2: Mucocompressive -->
+  <rect x="280" y="55" width="240" height="420" rx="12" fill="#fdecea" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="400" y="82" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#c0392b">Mucocompressive</text>
+  <text x="400" y="100" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#c0392b">Heavy Pressure</text>
+  <!-- Tray pushed down -->
+  <path d="M310,200 L310,250 Q310,260 320,260 L480,260 Q490,260 490,250 L490,200" fill="#aaa" stroke="#666" stroke-width="2"/>
+  <!-- Impression material (compressed against tissue) -->
+  <path d="M320,245 Q400,240 480,245" fill="#ffb3b3" stroke="#c0392b" stroke-width="1.5"/>
+  <!-- Tissue (compressed, flattened) -->
+  <path d="M315,280 Q360,270 400,268 Q440,270 485,280" fill="#ffcccc" stroke="#c0392b" stroke-width="2"/>
+  <!-- Ridge below (compressed) -->
+  <path d="M310,280 Q360,270 400,265 Q440,270 490,280 L490,340 Q440,345 400,348 Q360,345 310,340Z" fill="#f5e6d0" stroke="#a67c52" stroke-width="1.5"/>
+  <text x="400" y="330" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Tissue compressed</text>
+  <text x="400" y="380" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c0392b">Material: Compound</text>
+  <text x="400" y="400" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">Records tissue under load</text>
+  <!-- Heavy pressure arrows -->
+  <line x1="360" y1="200" x2="360" y2="260" stroke="#c0392b" stroke-width="2.5" marker-end="url(#arrDown)"/>
+  <line x1="400" y1="200" x2="400" y2="255" stroke="#c0392b" stroke-width="2.5" marker-end="url(#arrDown)"/>
+  <line x1="440" y1="200" x2="440" y2="260" stroke="#c0392b" stroke-width="2.5" marker-end="url(#arrDown)"/>
+  <defs><marker id="arrDown" markerWidth="8" markerHeight="6" refX="4" refY="6" orient="auto"><polygon points="0 0,8 0,4 6" fill="#c0392b"/></marker></defs>
+  <text x="400" y="440" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#c0392b">Heavy pressure</text>
+  <!-- Panel 3: Selective Pressure -->
+  <rect x="540" y="55" width="240" height="420" rx="12" fill="#eafaf1" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="660" y="82" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#27ae60">Selective Pressure</text>
+  <text x="660" y="100" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#27ae60">Combination</text>
+  <!-- Tray with windows -->
+  <path d="M570,180 L570,240 Q570,250 580,250 L740,250 Q750,250 750,240 L750,180" fill="#aaa" stroke="#666" stroke-width="2"/>
+  <!-- Windows/relief in tray -->
+  <rect x="590" y="190" width="25" height="40" rx="3" fill="#fff" stroke="#27ae60" stroke-width="1.5"/>
+  <rect x="700" y="190" width="25" height="40" rx="3" fill="#fff" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="603" y="215" text-anchor="middle" font-family="Arial,sans-serif" font-size="8" fill="#27ae60">relief</text>
+  <text x="713" y="215" text-anchor="middle" font-family="Arial,sans-serif" font-size="8" fill="#27ae60">relief</text>
+  <!-- Tissue (mixed compression) -->
+  <path d="M575,280 Q620,270 660,265 Q700,270 745,280" fill="#ffcccc" stroke="#c0392b" stroke-width="2"/>
+  <!-- Ridge -->
+  <path d="M570,280 Q620,270 660,260 Q700,270 750,280 L750,340 Q700,345 660,348 Q620,345 570,340Z" fill="#f5e6d0" stroke="#a67c52" stroke-width="1.5"/>
+  <!-- Pressure arrows (varied) -->
+  <line x1="620" y1="200" x2="620" y2="245" stroke="#27ae60" stroke-width="1.5"/>
+  <line x1="660" y1="180" x2="660" y2="255" stroke="#c0392b" stroke-width="2.5" marker-end="url(#arrDown2)"/>
+  <line x1="700" y1="200" x2="700" y2="245" stroke="#27ae60" stroke-width="1.5"/>
+  <defs><marker id="arrDown2" markerWidth="8" markerHeight="6" refX="4" refY="6" orient="auto"><polygon points="0 0,8 0,4 6" fill="#c0392b"/></marker></defs>
+  <text x="660" y="330" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#555">Selective loading</text>
+  <text x="660" y="380" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">Custom Tray</text>
+  <text x="660" y="400" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">Relief over sensitive areas</text>
+  <text x="660" y="440" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#27ae60">Windows in tray</text>
+</svg>
 <div class="caption">三種印模技術比較</div>
 </div>
 
@@ -1572,7 +2205,68 @@ T = 厚度 &rarr; 影響第二大！<b>厚度加倍 &rarr; 撓度變 1/8</b><br>
 
 <!-- CR、CO 與下顎運動 -->
 <div class="diagram">
-<img src="images/occlusion-concepts.png" alt="CR、CO 與下顎運動" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 520" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="520" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Occlusion Concepts: CR, CO, and Excursions</text>
+  <!-- TMJ Fossa diagram -->
+  <text x="200" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#2980b9">Centric Relation (CR)</text>
+  <!-- Fossa outline -->
+  <path d="M100,180 Q200,100 300,180" fill="none" stroke="#333" stroke-width="3"/>
+  <!-- Articular eminence -->
+  <path d="M100,180 Q80,190 70,210" fill="none" stroke="#333" stroke-width="2.5"/>
+  <!-- Disc -->
+  <ellipse cx="200" cy="155" rx="35" ry="12" fill="#ffcc80" stroke="#e67e22" stroke-width="1.5"/>
+  <!-- Condyle -->
+  <ellipse cx="200" cy="185" rx="32" ry="25" fill="#f5e6d0" stroke="#a67c52" stroke-width="2"/>
+  <!-- Arrow showing most superior-anterior position -->
+  <path d="M200,210 L200,165" stroke="#2980b9" stroke-width="2.5" marker-end="url(#arUp)"/>
+  <defs><marker id="arUp" markerWidth="10" markerHeight="7" refX="5" refY="0" orient="auto"><polygon points="0 7,5 0,10 7" fill="#2980b9"/></marker></defs>
+  <text x="200" y="240" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#2980b9">Most superior-anterior</text>
+  <text x="200" y="258" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#2980b9">position in fossa</text>
+  <text x="200" y="278" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">(Bone-to-bone relationship)</text>
+  <!-- CO/MIP diagram -->
+  <text x="600" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#c0392b">CO / MIP</text>
+  <text x="600" y="90" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#888">(Centric Occlusion / Maximum Intercuspation)</text>
+  <!-- Upper teeth -->
+  <path d="M500,140 L510,180 L530,165 L550,185 L570,160 L590,180 L610,165 L630,185 L650,160 L670,180 L680,140" fill="none" stroke="#333" stroke-width="2.5"/>
+  <!-- Lower teeth (meshing) -->
+  <path d="M500,220 L510,185 L530,200 L550,180 L570,205 L590,185 L610,200 L630,180 L650,205 L670,185 L680,220" fill="none" stroke="#555" stroke-width="2.5"/>
+  <!-- Contact points -->
+  <circle cx="530" cy="182" r="4" fill="#c0392b"/>
+  <circle cx="570" cy="182" r="4" fill="#c0392b"/>
+  <circle cx="610" cy="182" r="4" fill="#c0392b"/>
+  <circle cx="650" cy="182" r="4" fill="#c0392b"/>
+  <text x="600" y="250" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c0392b">Maximum tooth contacts</text>
+  <text x="600" y="270" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">(Tooth-to-tooth relationship)</text>
+  <!-- Bottom section: Excursions -->
+  <line x1="50" y1="310" x2="750" y2="310" stroke="#ddd" stroke-width="1.5"/>
+  <text x="400" y="340" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="#2c3e50">Mandibular Excursions</text>
+  <!-- Protrusive -->
+  <rect x="50" y="360" width="220" height="130" rx="10" fill="#e8f4fd" stroke="#2980b9" stroke-width="1"/>
+  <text x="160" y="385" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#2980b9">Protrusive</text>
+  <!-- Arrow forward -->
+  <line x1="100" y1="420" x2="200" y2="420" stroke="#2980b9" stroke-width="3" marker-end="url(#arRt)"/>
+  <defs><marker id="arRt" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#2980b9"/></marker></defs>
+  <text x="160" y="450" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#2980b9">Mandible moves forward</text>
+  <text x="160" y="468" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">Guided by incisal edges</text>
+  <text x="160" y="483" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">(Incisal guidance)</text>
+  <!-- Lateral - Working -->
+  <rect x="290" y="360" width="220" height="130" rx="10" fill="#eafaf1" stroke="#27ae60" stroke-width="1"/>
+  <text x="400" y="385" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#27ae60">Lateral (Working Side)</text>
+  <!-- Arrow to side -->
+  <line x1="350" y1="420" x2="440" y2="410" stroke="#27ae60" stroke-width="3" marker-end="url(#arRtG)"/>
+  <defs><marker id="arRtG" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#27ae60"/></marker></defs>
+  <text x="400" y="450" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#27ae60">Mandible shifts laterally</text>
+  <text x="400" y="468" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">Guided by canine</text>
+  <text x="400" y="483" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">(Canine guidance)</text>
+  <!-- Lateral - Balancing -->
+  <rect x="530" y="360" width="220" height="130" rx="10" fill="#fdecea" stroke="#c0392b" stroke-width="1"/>
+  <text x="640" y="385" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">Balancing Side</text>
+  <text x="640" y="420" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#c0392b">Opposite side of working</text>
+  <text x="640" y="450" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#c0392b" font-weight="bold">No contact in natural</text>
+  <text x="640" y="468" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#c0392b" font-weight="bold">dentition</text>
+  <text x="640" y="486" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" fill="#666">(Contact needed in CD)</text>
+</svg>
 <div class="caption">CR、CO 與下顎運動</div>
 </div>
 
@@ -2017,7 +2711,86 @@ CT 是看骨頭的；MRI 是看盤子的。考試問「哪個檢查看 disc posi
 
 <!-- Biological Width 圖解 -->
 <div class="diagram">
-<img src="images/biological-width.png" alt="自然牙 vs 植體 Biological Width" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 500" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="500" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Biological Width Comparison</text>
+  <!-- LEFT: Natural Tooth -->
+  <text x="200" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#2980b9">Natural Tooth</text>
+  <!-- Tooth -->
+  <rect x="170" y="130" width="60" height="300" rx="4" fill="#fffde7" stroke="#333" stroke-width="2"/>
+  <!-- Crown portion -->
+  <path d="M160,130 Q160,90 200,85 Q240,90 240,130" fill="#fff" stroke="#333" stroke-width="2"/>
+  <!-- Gingiva -->
+  <path d="M120,210 Q160,190 200,185 Q240,190 280,210" fill="#ffb3b3" stroke="#c0392b" stroke-width="1.5"/>
+  <!-- Bone level -->
+  <rect x="120" y="310" width="160" height="120" rx="4" fill="#f5e6d0" stroke="#a67c52" stroke-width="1.5"/>
+  <!-- Measurement brackets - RIGHT side of tooth -->
+  <!-- Sulcus -->
+  <line x1="250" y1="185" x2="290" y2="185" stroke="#333" stroke-width="1"/>
+  <line x1="250" y1="220" x2="290" y2="220" stroke="#333" stroke-width="1"/>
+  <line x1="280" y1="185" x2="280" y2="220" stroke="#c0392b" stroke-width="2"/>
+  <text x="295" y="207" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c0392b">Sulcus</text>
+  <text x="340" y="207" font-family="Arial,sans-serif" font-size="12" fill="#c0392b">~1 mm</text>
+  <!-- Junctional Epithelium -->
+  <line x1="250" y1="220" x2="290" y2="220" stroke="#333" stroke-width="1"/>
+  <line x1="250" y1="260" x2="290" y2="260" stroke="#333" stroke-width="1"/>
+  <line x1="280" y1="220" x2="280" y2="260" stroke="#e67e22" stroke-width="2"/>
+  <text x="295" y="245" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#e67e22">JE</text>
+  <text x="340" y="245" font-family="Arial,sans-serif" font-size="12" fill="#e67e22">~1 mm</text>
+  <!-- Connective Tissue -->
+  <line x1="250" y1="260" x2="290" y2="260" stroke="#333" stroke-width="1"/>
+  <line x1="250" y1="310" x2="290" y2="310" stroke="#333" stroke-width="1"/>
+  <line x1="280" y1="260" x2="280" y2="310" stroke="#27ae60" stroke-width="2"/>
+  <text x="295" y="290" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">CT</text>
+  <text x="340" y="290" font-family="Arial,sans-serif" font-size="12" fill="#27ae60">~1 mm</text>
+  <!-- Total -->
+  <rect x="130" y="440" width="140" height="35" rx="8" fill="#e8f4fd" stroke="#2980b9" stroke-width="1.5"/>
+  <text x="200" y="462" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#2980b9">Total ~3 mm</text>
+  <!-- RIGHT: Implant -->
+  <text x="600" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#c0392b">Implant</text>
+  <!-- Implant fixture -->
+  <rect x="575" y="210" width="50" height="220" rx="4" fill="#bbb" stroke="#666" stroke-width="2"/>
+  <!-- Thread lines -->
+  <line x1="575" y1="240" x2="625" y2="240" stroke="#999" stroke-width="1"/>
+  <line x1="575" y1="270" x2="625" y2="270" stroke="#999" stroke-width="1"/>
+  <line x1="575" y1="300" x2="625" y2="300" stroke="#999" stroke-width="1"/>
+  <line x1="575" y1="330" x2="625" y2="330" stroke="#999" stroke-width="1"/>
+  <line x1="575" y1="360" x2="625" y2="360" stroke="#999" stroke-width="1"/>
+  <line x1="575" y1="390" x2="625" y2="390" stroke="#999" stroke-width="1"/>
+  <!-- Abutment -->
+  <rect x="580" y="160" width="40" height="55" rx="3" fill="#ccc" stroke="#555" stroke-width="1.5"/>
+  <!-- Crown -->
+  <path d="M560,160 Q560,100 600,95 Q640,100 640,160" fill="#fff" stroke="#333" stroke-width="2"/>
+  <!-- Gingiva -->
+  <path d="M520,210 Q560,190 600,185 Q640,190 680,210" fill="#ffb3b3" stroke="#c0392b" stroke-width="1.5"/>
+  <!-- Bone -->
+  <rect x="520" y="310" width="160" height="120" rx="4" fill="#f5e6d0" stroke="#a67c52" stroke-width="1.5"/>
+  <!-- Measurements -->
+  <!-- Sulcus -->
+  <line x1="650" y1="185" x2="690" y2="185" stroke="#333" stroke-width="1"/>
+  <line x1="650" y1="230" x2="690" y2="230" stroke="#333" stroke-width="1"/>
+  <line x1="680" y1="185" x2="680" y2="230" stroke="#c0392b" stroke-width="2"/>
+  <text x="695" y="212" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#c0392b">Sulcus</text>
+  <text x="750" y="212" font-family="Arial,sans-serif" font-size="12" fill="#c0392b">~1.5 mm</text>
+  <!-- JE -->
+  <line x1="650" y1="230" x2="690" y2="230" stroke="#333" stroke-width="1"/>
+  <line x1="650" y1="270" x2="690" y2="270" stroke="#333" stroke-width="1"/>
+  <line x1="680" y1="230" x2="680" y2="270" stroke="#e67e22" stroke-width="2"/>
+  <text x="695" y="255" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#e67e22">JE</text>
+  <text x="750" y="255" font-family="Arial,sans-serif" font-size="12" fill="#e67e22">~1 mm</text>
+  <!-- CT -->
+  <line x1="650" y1="270" x2="690" y2="270" stroke="#333" stroke-width="1"/>
+  <line x1="650" y1="310" x2="690" y2="310" stroke="#333" stroke-width="1"/>
+  <line x1="680" y1="270" x2="680" y2="310" stroke="#27ae60" stroke-width="2"/>
+  <text x="695" y="295" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#27ae60">CT</text>
+  <text x="750" y="295" font-family="Arial,sans-serif" font-size="12" fill="#27ae60">0-0.5 mm</text>
+  <!-- Total -->
+  <rect x="530" y="440" width="140" height="35" rx="8" fill="#fdecea" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="600" y="462" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#c0392b">Total ~3 mm</text>
+  <!-- VS divider -->
+  <line x1="400" y1="80" x2="400" y2="430" stroke="#ddd" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="400" y="478" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#666">Both ~3 mm, but implant has longer sulcus and shorter/absent CT attachment</text>
+</svg>
 <div class="caption">自然牙 vs 植體 Biological Width</div>
 </div>
 
@@ -2190,7 +2963,67 @@ Veneer 成功的關鍵：<b>bonding 在釉質上</b><br>
 
 <!-- 人工植體解剖構造 -->
 <div class="diagram">
-<img src="images/implant-anatomy.png" alt="人工植體解剖構造" style="max-width:100%;border-radius:12px">
+<svg viewBox="0 0 800 600" width="100%" style="max-width:600px;border-radius:12px" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="600" fill="#fff"/>
+  <text x="400" y="35" text-anchor="middle" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#2c3e50">Implant Anatomy (Cross-Section)</text>
+  <!-- Bone background -->
+  <rect x="200" y="300" width="400" height="260" rx="8" fill="#f5e6d0" stroke="#a67c52" stroke-width="2"/>
+  <!-- Cortical bone -->
+  <rect x="200" y="300" width="400" height="40" rx="4" fill="#d4a574" stroke="#a67c52" stroke-width="1.5"/>
+  <!-- Cancellous bone pattern -->
+  <circle cx="300" cy="400" r="8" fill="none" stroke="#c9a47a" stroke-width="1" opacity="0.5"/>
+  <circle cx="400" cy="420" r="10" fill="none" stroke="#c9a47a" stroke-width="1" opacity="0.5"/>
+  <circle cx="500" cy="390" r="7" fill="none" stroke="#c9a47a" stroke-width="1" opacity="0.5"/>
+  <circle cx="350" cy="460" r="9" fill="none" stroke="#c9a47a" stroke-width="1" opacity="0.5"/>
+  <circle cx="450" cy="480" r="8" fill="none" stroke="#c9a47a" stroke-width="1" opacity="0.5"/>
+  <!-- Fixture (implant body) -->
+  <rect x="370" y="300" width="60" height="200" rx="4" fill="#bbb" stroke="#666" stroke-width="2"/>
+  <!-- Thread pattern -->
+  <line x1="370" y1="330" x2="430" y2="330" stroke="#999" stroke-width="1"/>
+  <line x1="368" y1="350" x2="432" y2="350" stroke="#999" stroke-width="1"/>
+  <line x1="370" y1="370" x2="430" y2="370" stroke="#999" stroke-width="1"/>
+  <line x1="368" y1="390" x2="432" y2="390" stroke="#999" stroke-width="1"/>
+  <line x1="370" y1="410" x2="430" y2="410" stroke="#999" stroke-width="1"/>
+  <line x1="368" y1="430" x2="432" y2="430" stroke="#999" stroke-width="1"/>
+  <line x1="370" y1="450" x2="430" y2="450" stroke="#999" stroke-width="1"/>
+  <line x1="368" y1="470" x2="432" y2="470" stroke="#999" stroke-width="1"/>
+  <!-- Apex rounded -->
+  <path d="M370,500 Q370,510 400,515 Q430,510 430,500" fill="#bbb" stroke="#666" stroke-width="2"/>
+  <!-- Abutment -->
+  <path d="M378,300 L378,230 Q378,220 382,220 L418,220 Q422,220 422,230 L422,300" fill="#ccc" stroke="#555" stroke-width="2"/>
+  <!-- Abutment screw indication -->
+  <line x1="400" y1="220" x2="400" y2="310" stroke="#888" stroke-width="1" stroke-dasharray="4,3"/>
+  <!-- Crown -->
+  <path d="M340,220 Q340,130 400,120 Q460,130 460,220Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+  <!-- Crown enamel look -->
+  <path d="M355,215 Q355,150 400,140 Q445,150 445,215" fill="#f8f8f8" stroke="none"/>
+  <!-- Soft tissue (gingiva) -->
+  <path d="M280,305 Q340,275 400,270 Q460,275 520,305" fill="#ffb3b3" stroke="#c0392b" stroke-width="1.5"/>
+  <!-- Sulcus -->
+  <path d="M385,270 L385,290 M415,270 L415,290" stroke="#c0392b" stroke-width="1.5"/>
+  <!-- Labels - Right side -->
+  <line x1="460" y1="170" x2="560" y2="120" stroke="#333" stroke-width="1"/>
+  <text x="565" y="118" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#333">Crown</text>
+  <line x1="425" y1="260" x2="560" y2="200" stroke="#555" stroke-width="1"/>
+  <text x="565" y="198" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#555">Abutment</text>
+  <line x1="435" y1="400" x2="560" y2="380" stroke="#666" stroke-width="1"/>
+  <text x="565" y="378" font-family="Arial,sans-serif" font-size="15" font-weight="bold" fill="#666">Fixture</text>
+  <text x="565" y="395" font-family="Arial,sans-serif" font-size="12" fill="#666">(Implant Body)</text>
+  <!-- Labels - Left side (tissues) -->
+  <line x1="375" y1="275" x2="230" y2="200" stroke="#c0392b" stroke-width="1"/>
+  <text x="225" y="198" text-anchor="end" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c0392b">Sulcus</text>
+  <line x1="375" y1="285" x2="230" y2="240" stroke="#c0392b" stroke-width="1"/>
+  <text x="225" y="238" text-anchor="end" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c0392b">Junctional Epithelium</text>
+  <line x1="325" y1="310" x2="180" y2="320" stroke="#a67c52" stroke-width="1"/>
+  <text x="175" y="322" text-anchor="end" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#a67c52">Crestal Bone</text>
+  <line x1="280" y1="320" x2="180" y2="360" stroke="#a67c52" stroke-width="1"/>
+  <text x="175" y="362" text-anchor="end" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#a67c52">Cortical Bone</text>
+  <line x1="280" y1="430" x2="180" y2="430" stroke="#c9a47a" stroke-width="1"/>
+  <text x="175" y="432" text-anchor="end" font-family="Arial,sans-serif" font-size="13" font-weight="bold" fill="#c9a47a">Cancellous Bone</text>
+  <!-- Bracket showing implant parts -->
+  <path d="M640,110 L650,110 L650,400 L640,400" fill="none" stroke="#333" stroke-width="1.5"/>
+  <text x="660" y="260" font-family="Arial,sans-serif" font-size="12" fill="#333" transform="rotate(90,660,260)">Implant Prosthesis</text>
+</svg>
 <div class="caption">人工植體解剖構造</div>
 </div>
 

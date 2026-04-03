@@ -2374,6 +2374,7 @@
         <button class="start-btn" onclick="practiceWrongbook()" style="font-size:.85rem;padding:.5rem 1.2rem">開始練習錯題</button>
         <button class="start-btn secondary" onclick="exportWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯出</button>
         <button class="start-btn secondary" onclick="importWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯入</button>
+        <button class="start-btn secondary" onclick="resetWrongbook()" style="font-size:.82rem;padding:.5rem 1rem;color:#ef4444;border-color:#fca5a5">重置錯題本</button>
         <input type="file" id="wb-import-file" accept=".json" style="display:none" onchange="handleWBImport(event)">
       </div>
       <div class="wb-list" id="wb-list"></div>
@@ -4766,6 +4767,21 @@
         };
         reader.readAsText(file);
         e.target.value = '';
+      }
+
+      // ════════════════════════════════════════════
+      //  Reset wrongbook
+      // ════════════════════════════════════════════
+      function resetWrongbook(){
+        if(!confirm('確定要清空錯題本嗎？\n所有 🚩 標記都會被移除。')) return;
+        if(!confirm('最後確認：清空錯題本？\n此操作無法復原。')) return;
+        for(var id in qState){
+          if(qState[id].flagged) qState[id].flagged = false;
+        }
+        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+        if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        renderWrongbook();
+        showToast('錯題本已清空');
       }
 
       // ════════════════════════════════════════════

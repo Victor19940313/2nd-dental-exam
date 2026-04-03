@@ -54,6 +54,7 @@ const RAD_TREE = [
 <div class="box box-red">⚠️ 極高頻！每年必考 2–4 題。考題常附圖請你判斷是哪種錯誤。</div>
 
 <h3>全景X光片（Panoramic）常見錯誤</h3>
+<details class="diag-block"><summary>📷 全景X光片 Dental Panoramic 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/16491189/ce76f196d49069dba67520e91241663719417d5d7ccfa38e72c87f1ca351558d_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
 <table>
 <tr><th>錯誤類型</th><th>發生原因</th><th>影像特徵（辨識重點）</th></tr>
 <tr>
@@ -127,7 +128,7 @@ const RAD_TREE = [
 </tr>
 </table>
 <div class="pearl">口訣：<strong>「陡短平長、切空重疊」</strong> = 垂直角太陡→縮短；太平→拉長；中心未對→錐切；水平偏→重疊</div>
-<details class="diag-block"><summary>📷 全景X光片 Dental Panoramic 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/16491189/ce76f196d49069dba67520e91241663719417d5d7ccfa38e72c87f1ca351558d_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>`,
+`
     },
     {
       label:"各攝影法適應症配對", freq:"critical",

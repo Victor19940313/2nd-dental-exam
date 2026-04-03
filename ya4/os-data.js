@@ -422,6 +422,8 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <div class="box box-red">⚠️ 極高頻！Dentigerous cyst X光定義 + OKC 復發率 + Gorlin syndrome 每年必考</div>
 
 <h3>Dentigerous Cyst（含齒囊腫）</h3>
+<details class="diag-block"><summary>📷 含齒囊腫 Dentigerous Cyst 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/52596306/e736fa1af6c9dce203afcde9ee68e61b5ea8ec01ffad4e525be0d1a3082067aa_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
+<details class="diag-block"><summary>📷 角化囊腫 OKC 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/529992/371eeb7ba2d8dc7a348f95e3fa2d58_big_gallery.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
 <div class="box box-blue">🔑 關鍵定義：囊腫從 <strong>CEJ（牙骨質釉質交界處）</strong> 開始包覆未萌出的牙冠</div>
 <table>
 <tr><th>項目</th><th>內容</th></tr>
@@ -486,8 +488,6 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
     </div>
   </div>
 </details>
-<details class="diag-block"><summary>📷 含齒囊腫 Dentigerous Cyst 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/52596306/e736fa1af6c9dce203afcde9ee68e61b5ea8ec01ffad4e525be0d1a3082067aa_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
-<details class="diag-block"><summary>📷 角化囊腫 OKC 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/529992/371eeb7ba2d8dc7a348f95e3fa2d58_big_gallery.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
 `
     },
     {
@@ -554,7 +554,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <tr><td class="td-k">復發率</td><td class="td-r">剜出術：55–100% ｜ 廣泛切除：&lt;15%</td></tr>
 </table>
 </details>
-<details class="diag-block"><summary>📷 成釉細胞瘤 Ameloblastoma 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/multiple_choice_questions/901/ameloblastoma01_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>`
+`<details class="diag-block"><summary>📷 成釉細胞瘤 Ameloblastoma 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/multiple_choice_questions/901/ameloblastoma01_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
     },
     {
       label:"惡性與骨骼病灶", freq:"critical",
@@ -604,6 +604,8 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 </tr>
 </table>
 <h3>Oral Squamous Cell Carcinoma（口腔鱗狀細胞癌）</h3>
+<details class="diag-block"><summary>📷 骨肉瘤 Osteosarcoma 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/sarcoma5.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>
+<details class="diag-block"><summary>📷 纖維性發育不良 Fibrous Dysplasia 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/fibrousdysplmixed0.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>
 <ul class="n">
 <li class="td-r">最常見的口腔惡性腫瘤（佔口腔癌 90%）</li>
 <li>最好發位置：舌側緣（Lateral border of tongue）</li>
@@ -631,9 +633,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
     </div>
   </div>
 </details>
-<details class="diag-block"><summary>📷 骨肉瘤 Osteosarcoma 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/sarcoma5.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>
-<details class="diag-block"><summary>📷 纖維性發育不良 Fibrous Dysplasia 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/fibrousdysplmixed0.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>
-<details class="diag-block"><summary>📷 口腔鱗狀細胞癌 Oral SCC 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/squamous1.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>`
+`<details class="diag-block"><summary>📷 口腔鱗狀細胞癌 Oral SCC 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/squamous1.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>
     },
     {
       label:"手術選擇原則", freq:"high",
@@ -676,6 +676,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
       label:"拔牙適應症與禁忌症", freq:"high",
       content:`
 <h3>拔牙適應症</h3>
+<details class="diag-block"><summary>📷 藥物相關性顎骨壞死 MRONJ 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/20676169/c94fd2fe78d9b3cad930bf1e7ae622_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
 <ul class="n">
 <li>嚴重齲齒，無法修復</li>
 <li>嚴重牙周病（骨喪失>75%）</li>
@@ -709,7 +710,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <strong>一般建議放射治療結束後等待 6–12 個月再拔牙</strong><br>
 若必須拔牙：高壓氧治療（HBO）輔助、謹慎手術
 </div>
-<details class="diag-block"><summary>📷 藥物相關性顎骨壞死 MRONJ 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/20676169/c94fd2fe78d9b3cad930bf1e7ae622_big_gallery.jpeg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
+
 `
     },
     {
@@ -1061,6 +1062,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
       label:"顏面骨折", freq:"high",
       content:`
 <h3>Le Fort 骨折分類（必背）</h3>
+<details class="diag-block"><summary>📷 Le Fort 骨折分類 影像</summary><div class="diag-inner"><img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/e701/5556744/b63d15dd1980/acfs-18-5-g001.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：PubMed Central</p></div></details>
 <table>
 <tr><th>分類</th><th>骨折線路徑</th><th>特徵</th><th>記憶法</th></tr>
 <tr><td class="td-k">Le Fort I</td><td class="td-r">水平骨折，從梨狀孔底部橫跨至翼突</td><td>上顎牙弓（floating maxilla）可移動；顴骨固定</td><td>Level I = 最低</td></tr>
@@ -1105,8 +1107,8 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <li>顎裂修補（Palatoplasty）：12–18個月（語言發展前，避免代償性發音）</li>
 <li>齒槽骨移植：8–10 歲（犬齒萌出前，混合牙列期）</li>
 </ul>
-<details class="diag-block"><summary>📷 Le Fort 骨折分類 影像</summary><div class="diag-inner"><img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/e701/5556744/b63d15dd1980/acfs-18-5-g001.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：PubMed Central</p></div></details>
-<details class="diag-block"><summary>📷 下顎骨折 Mandibular Fracture 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/6091704/003040fce6440fc52c1133912ae6d2_big_gallery.JPG" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>`
+
+`<details class="diag-block"><summary>📷 下顎骨折 Mandibular Fracture 影像（Radiopaedia）</summary><div class="diag-inner"><img src="https://prod-images-static.radiopaedia.org/images/6091704/003040fce6440fc52c1133912ae6d2_big_gallery.JPG" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：Radiopaedia.org</p></div></details>
     }
   ]
 },
@@ -1143,7 +1145,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
 <div class="box box-orange">
 牙源性感染 → Submandibular/Sublingual/Masticator → <strong>Parapharyngeal</strong> → <strong>Retropharyngeal</strong> → <strong>縱膈腔（Mediastinum）</strong> → 死亡！
 </div>
-<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/deep-neck-space-infections' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Deep Neck Space Infections →</a></div><details class="diag-block"><summary>📷 深頸部感染 Deep Neck Space Infection 影像</summary><div class="diag-inner"><img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/7d3b/3251794/cc32e0913911/isd-41-189-g001.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：PubMed Central</p></div></details>`
+<div style='margin-top:12px'><a href='https://radiopaedia.org/articles/deep-neck-space-infections' target='_blank' rel='noopener' style='display:inline-block;padding:6px 14px;background:#1e40af;color:#fff;border-radius:8px;font-size:.78rem;text-decoration:none;font-weight:600'>📷 Radiopaedia: Deep Neck Space Infections →</a></div>`<details class="diag-block"><summary>📷 深頸部感染 Deep Neck Space Infection 影像</summary><div class="diag-inner"><img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/7d3b/3251794/cc32e0913911/isd-41-189-g001.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：PubMed Central</p></div></details>
     },
     {
       label:"Ludwig's Angina & 感染處置", freq:"high",
@@ -1209,7 +1211,7 @@ X 光：必要時可照，務必穿鉛衣 + 甲狀腺護套<br>
   <td class="td-r"><strong>Onion-skin</strong>（洋蔥皮狀骨膜新骨）</td>
   <td>去除感染來源（根管/拔牙）；骨膜新骨多自行吸收</td>
 </tr>
-</table><details class="diag-block"><summary>📷 乴德威氏咽峽炎 Ludwig's Angina 影像</summary><div class="diag-inner"><img src="https://f1000research-files.f1000.com/manuscripts/166856/e2bb2f7d-1304-4607-9873-6363af3c7ed4_figure3.gif" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：F1000Research</p></div></details>`
+</table>`<details class="diag-block"><summary>📷 乴德威氏咽峽炎 Ludwig's Angina 影像</summary><div class="diag-inner"><img src="https://f1000research-files.f1000.com/manuscripts/166856/e2bb2f7d-1304-4607-9873-6363af3c7ed4_figure3.gif" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：F1000Research</p></div></details>
     },
     {
       label:"齒源性感染抗生素選擇", freq:"critical",
@@ -1439,6 +1441,7 @@ Le Fort I 上顎游離後血流 → <strong>升腭動脈、升咽動脈</strong>
       content:`
 <div class="box box-blue">腮腺（Parotid）腫瘤 80% 良性；顎下腺（Submandibular）和舌下腺（Sublingual）惡性率更高！</div>
 <h3>唾液腺腫瘤分佈規律</h3>
+<details class="diag-block"><summary>📷 多形性腺瘤 Pleomorphic Adenoma 影像</summary><div class="diag-inner"><img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/8ba9/10685388/51412467094a/cureus-0015-00000047957-i04.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：PubMed Central</p></div></details>
 <div class="box box-orange">
 「越小的腺體，惡性率越高」：<br>
 腮腺：80% 良性 ↔ 顎下腺：50% 良性 ↔ 舌下腺：大多惡性
@@ -1475,8 +1478,8 @@ Le Fort I 上顎游離後血流 → <strong>升腭動脈、升咽動脈</strong>
 顏面神經穿過腮腺 → 腫瘤侵犯 CN VII → 同側顏面肌肉麻痺<br>
 任何腮腺腫瘤 + 顏面神經麻痺 = 惡性，直到排除為止
 </div>
-<details class="diag-block"><summary>📷 多形性腺瘤 Pleomorphic Adenoma 影像</summary><div class="diag-inner"><img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/8ba9/10685388/51412467094a/cureus-0015-00000047957-i04.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：PubMed Central</p></div></details>
-<details class="diag-block"><summary>📷 黏液表皮樣癌 Mucoepidermoid Carcinoma 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/mucoep5.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>`
+
+`<details class="diag-block"><summary>📷 黏液表皮樣癌 Mucoepidermoid Carcinoma 影像</summary><div class="diag-inner"><img src="https://ddmfr.org/wp-content/uploads/2024/04/mucoep5.jpg" style="max-width:100%;border-radius:8px"><p style="font-size:.75rem;color:#888;margin-top:6px">來源：DDMFR.org</p></div></details>
     },
     {
       label:"唾液腺炎與結石", freq:"mid",

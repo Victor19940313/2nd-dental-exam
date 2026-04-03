@@ -1,6 +1,7 @@
 /**
  * DentalSync — Firebase 跨裝置同步模組
- * 同名使用者 = 自動同步，last-write-wins（以時間戳判斷新舊）
+ * 同名使用者 = 自動同步，last-write-wins
+ * 相容新舊路徑：新版寫 users/{id}/，舊版寫 users/{id}/data/
  */
 (function () {
   "use strict";
@@ -27,9 +28,8 @@
     return FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY" && !!FIREBASE_CONFIG.databaseURL;
   }
 
-  function userRef() {
-    return _db.ref("users/" + _userId);
-  }
+  function userRef() { return _db.ref("users/" + _userId); }
+  function userDataRef() { return _db.ref("users/" + _userId + "/data"); }
 
   function isSyncKey(key) {
     if (!_userId) return false;
@@ -37,42 +37,64 @@
   }
 
   // ══════════════════════════════════════════
-  // Core: timestamp-based last-write-wins
-  // ══════════════════════════════════════════
 
-  /** Push local data + timestamp to Firebase */
+  /** Push to BOTH new path and old data/ path for backward compat */
   function pushToFirebase() {
     if (!_db || !_userId) return Promise.resolve();
     var payload = { _ts: Date.now() };
+    var oldPayload = {};
     SYNC_KEYS.forEach(function(sk) {
       var val = localStorage.getItem(_userId + "_" + sk);
-      if (val !== null) payload[sk] = val;
+      if (val !== null) {
+        payload[sk] = val;
+        oldPayload[sk] = val;
+      }
     });
     _syncing = true;
-    return userRef().update(payload)
-      .catch(function(err) { console.error("[Sync] push error:", err); })
-      .finally(function() { _syncing = false; });
+    // Write to both paths
+    return Promise.all([
+      userRef().update(payload),
+      userDataRef().update(oldPayload)
+    ])
+    .catch(function(err) { console.error("[Sync] push error:", err); })
+    .finally(function() { _syncing = false; });
   }
 
-  /** On startup: compare timestamps, newer wins entirely */
+  /** Read from both paths, pick whichever has data */
+  function readRemote() {
+    return userRef().once("value").then(function(snap) {
+      var root = snap.val() || {};
+      var result = {};
+      // Try new path first (root level)
+      SYNC_KEYS.forEach(function(sk) {
+        if (root[sk] !== undefined && root[sk] !== null) {
+          result[sk] = root[sk];
+        } else if (root.data && root.data[sk] !== undefined && root.data[sk] !== null) {
+          // Fall back to old data/ path
+          result[sk] = root.data[sk];
+        }
+      });
+      result._ts = root._ts || 0;
+      return result;
+    });
+  }
+
+  /** On startup: compare timestamps, newer wins */
   function syncOnLoad() {
     if (!_db || !_userId) return Promise.resolve();
     _syncing = true;
-    return userRef().once("value").then(function(snap) {
-      var remote = snap.val() || {};
+    return readRemote().then(function(remote) {
       var remoteTs = remote._ts || 0;
       var localTs = parseInt(localStorage.getItem(_userId + "__ts") || "0");
 
       if (remoteTs > localTs) {
-        // Remote is newer → pull everything
         SYNC_KEYS.forEach(function(sk) {
-          if (remote[sk] !== undefined && remote[sk] !== null) {
+          if (remote[sk] !== undefined) {
             localStorage.setItem(_userId + "_" + sk, remote[sk]);
           }
         });
         localStorage.setItem(_userId + "__ts", String(remoteTs));
       } else {
-        // Local is newer or equal → push everything
         return pushToFirebase().then(function() {
           localStorage.setItem(_userId + "__ts", String(Date.now()));
         });
@@ -82,36 +104,70 @@
     .finally(function() { _syncing = false; });
   }
 
-  /** Listen for realtime changes from other devices */
+  /** Listen for changes on BOTH paths */
   function startListening() {
     stopListening();
     if (!_db || !_userId) return;
 
-    var ref = userRef();
-    var firstLoad = true;
-
-    var unsub = ref.on("value", function(snap) {
-      // Skip the initial fire (we handle that in syncOnLoad)
-      if (firstLoad) { firstLoad = false; return; }
+    function handleUpdate(snap) {
       if (_syncing) return;
+      var val = snap.val();
+      if (!val || typeof val !== 'object') return;
 
-      var remote = snap.val() || {};
-      var remoteTs = remote._ts || 0;
+      // Check if this is a root-level update (has _ts) or data/ update
+      var hasData = false;
+      var source = val;
+      var remoteTs = val._ts || 0;
+
+      // If no _ts, it's from old data/ path — treat as new
+      if (!remoteTs) remoteTs = Date.now();
+
       var localTs = parseInt(localStorage.getItem(_userId + "__ts") || "0");
+      if (remoteTs <= localTs) return;
 
-      // Only apply if remote is actually newer
-      if (remoteTs > localTs) {
-        _syncing = true;
-        SYNC_KEYS.forEach(function(sk) {
-          if (remote[sk] !== undefined && remote[sk] !== null) {
-            localStorage.setItem(_userId + "_" + sk, remote[sk]);
-          }
-        });
-        localStorage.setItem(_userId + "__ts", String(remoteTs));
-        _syncing = false;
-      }
+      _syncing = true;
+      SYNC_KEYS.forEach(function(sk) {
+        if (source[sk] !== undefined && source[sk] !== null) {
+          localStorage.setItem(_userId + "_" + sk, source[sk]);
+        }
+      });
+      localStorage.setItem(_userId + "__ts", String(remoteTs));
+      _syncing = false;
+    }
+
+    // Listen on root (new path)
+    var firstRoot = true;
+    var unsubRoot = userRef().on("value", function(snap) {
+      if (firstRoot) { firstRoot = false; return; }
+      handleUpdate(snap);
     });
-    _listeners.push(function() { ref.off("value", unsub); });
+    _listeners.push(function() { userRef().off("value", unsubRoot); });
+
+    // Also listen on data/ (old path from phone)
+    var firstData = true;
+    var unsubData = userDataRef().on("value", function(snap) {
+      if (firstData) { firstData = false; return; }
+      if (_syncing) return;
+      var val = snap.val();
+      if (!val || typeof val !== 'object') return;
+      // Old path doesn't have _ts, always apply if changed
+      _syncing = true;
+      var changed = false;
+      SYNC_KEYS.forEach(function(sk) {
+        if (val[sk] !== undefined && val[sk] !== null) {
+          var cur = localStorage.getItem(_userId + "_" + sk);
+          if (cur !== val[sk]) {
+            localStorage.setItem(_userId + "_" + sk, val[sk]);
+            changed = true;
+          }
+        }
+      });
+      if (changed) {
+        localStorage.setItem(_userId + "__ts", String(Date.now()));
+      }
+      _syncing = false;
+    });
+    _listeners.push(function() { userDataRef().off("value", unsubData); });
   }
 
   function stopListening() {
@@ -119,17 +175,13 @@
     _listeners = [];
   }
 
-  /** When localStorage changes locally → push to Firebase */
   function onLocalChange(e) {
     if (_syncing || !_db || !_userId) return;
     if (!e.key || !isSyncKey(e.key)) return;
-    // Update local timestamp and push
     localStorage.setItem(_userId + "__ts", String(Date.now()));
     pushToFirebase();
   }
 
-  // ══════════════════════════════════════════
-  // Public API
   // ══════════════════════════════════════════
 
   var DentalSync = {
@@ -142,7 +194,6 @@
         if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         _db = firebase.database();
 
-        // Monkey-patch localStorage to detect local writes
         var origSetItem = localStorage.setItem.bind(localStorage);
         localStorage.setItem = function (key, value) {
           origSetItem(key, value);
@@ -151,7 +202,6 @@
           }
         };
 
-        // Auto-connect if user already selected
         _userId = localStorage.getItem("dental_cur_user");
         if (_userId) {
           return syncOnLoad().then(function() { startListening(); });
@@ -190,10 +240,8 @@
       var status = this.getStatus();
       if (status.connected) {
         container.innerHTML = '<span class="sync-btn" style="color:#16a34a;border-color:#bbf7d0">🟢 同步中</span>';
-      } else if (!status.configured) {
-        container.innerHTML = '<span class="sync-btn" style="color:#94a3b8">⚠️ 同步未設定</span>';
       } else {
-        container.innerHTML = '<span class="sync-btn" style="color:#94a3b8">⏸ 請先選擇使用者</span>';
+        container.innerHTML = '';
       }
     },
   };

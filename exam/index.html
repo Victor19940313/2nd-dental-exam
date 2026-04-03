@@ -2187,7 +2187,7 @@
           ></div>
           <div class="start-btn-row">
             <button class="start-btn" onclick="startPractice(false)">
-              ▶ 逐題模式
+              ▶ 逐題模式（含答案）
             </button>
             <button class="start-btn secondary" onclick="startPractice(true)">
               🔀 隨機
@@ -2198,14 +2198,14 @@
           </label>
           <div class="start-btn-row" style="margin-top: 0.3rem">
             <button class="start-btn exam-btn" onclick="startExam(false)">
-              📋 逐題試卷
+              📋 逐題試卷（寫完才給答案）
             </button>
             <button
               class="start-btn exam-btn"
               style="background: #0d9488"
               onclick="startExam(true)"
             >
-              📃 整卷捲動
+              📃 整頁捲動（寫完才給答案）
             </button>
           </div>
         <div style="margin-top:1.2rem">
@@ -3003,7 +3003,7 @@
       }
 
       // Expand state (subject groups)
-      const expandedSubjs = new Set(["ya3"]);
+      const expandedSubjs = new Set();
 
       function toggleSbjGrp(subj) {
         if (expandedSubjs.has(subj)) expandedSubjs.delete(subj);

@@ -357,7 +357,9 @@ footer{
     if(!name||!name.trim()) return;
     const users = getUsers();
     if(users.length>=5){ alert('最多 5 位使用者'); return; }
-    const id = name.trim().toLowerCase().replace(/\s+/g,'_') + '_' + Date.now().toString(36);
+    const id = name.trim().toLowerCase().replace(/\s+/g,'_');
+    // Check for duplicate name
+    if(users.find(u=>u.id===id)){ alert('此名稱已存在'); return; }
     const color = USER_COLORS[users.length % USER_COLORS.length];
     users.push({id, name:name.trim(), color});
     saveUsers(users);
@@ -366,6 +368,7 @@ footer{
 
   function selectUser(id){
     setCurUser(id);
+    if(typeof DentalSync !== 'undefined') DentalSync.switchUser(id);
     showMain();
   }
 
@@ -388,6 +391,31 @@ footer{
     document.getElementById('ub-avatar').textContent = u.name[0];
     document.getElementById('ub-name').textContent = u.name;
   }
+
+  // Migrate old timestamp-based user IDs to simple name IDs
+  (function migrateUserIds(){
+    const users = getUsers();
+    let changed = false;
+    users.forEach(u => {
+      // Old format: "hua_lxxxxxxx" → new format: "hua"
+      const simpleName = u.name.trim().toLowerCase().replace(/\s+/g,'_');
+      if(u.id !== simpleName){
+        // Migrate localStorage keys
+        const KEYS = ['wrongbook_state','daily_log','wrongbook_lastpos'];
+        KEYS.forEach(k => {
+          const oldVal = localStorage.getItem(u.id + '_' + k);
+          if(oldVal && !localStorage.getItem(simpleName + '_' + k)){
+            localStorage.setItem(simpleName + '_' + k, oldVal);
+          }
+        });
+        // Update current user pointer if needed
+        if(getCurUser() === u.id) setCurUser(simpleName);
+        u.id = simpleName;
+        changed = true;
+      }
+    });
+    if(changed) saveUsers(users);
+  })();
 
   // Init: check if user already selected
   (function(){

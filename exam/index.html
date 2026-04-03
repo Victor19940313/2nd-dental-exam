@@ -3253,6 +3253,8 @@
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.remove("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
+        examMode = false;
+        examAnswers = {};
         stopTimer();
         updateHomeStats();
         updateMatchCount();
@@ -3419,6 +3421,8 @@
             showToast("找不到上次的題目");
             return;
           }
+          examMode = false;
+          examAnswers = {};
           practiceList = list;
           practiceIdx = Math.min(pos.idx, list.length - 1);
           showPractice();
@@ -4678,6 +4682,8 @@
         const flagged = QS.filter(q=>getS(q.id).flagged);
         if(!flagged.length) return;
         const idx = flagged.findIndex(q=>q.id===id);
+        examMode = false;
+        examAnswers = {};
         practiceList = flagged;
         practiceIdx = idx >= 0 ? idx : 0;
         clearLastPos();
@@ -4693,6 +4699,8 @@
           return true;
         });
         if(!flagged.length){ showToast('錯題本是空的'); return; }
+        examMode = false;
+        examAnswers = {};
         practiceList = flagged;
         practiceIdx = 0;
         clearLastPos();

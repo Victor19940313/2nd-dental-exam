@@ -1796,6 +1796,45 @@
       }
       .wb-card-remove:hover{color:#ef4444;}
       .wb-empty{text-align:center;padding:3rem 1rem;color:var(--gray);font-size:.92rem;}
+
+      /* ════ Question Grid ════ */
+      .qgrid-toggle{
+        text-align:center;padding:.5rem;margin-top:.5rem;
+        font-size:.82rem;font-weight:600;color:var(--purple);
+        cursor:pointer;user-select:none;
+      }
+      .qgrid-toggle:hover{text-decoration:underline;}
+      .qgrid-panel{
+        background:white;border:1.5px solid #e2e8f0;border-radius:12px;
+        padding:.8rem;margin:0 .5rem .8rem;
+      }
+      .qgrid-legend{
+        display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;
+        font-size:.7rem;color:#64748b;margin-bottom:.6rem;
+      }
+      .qgrid-legend span{display:flex;align-items:center;gap:.25rem;}
+      .qg-dot{width:14px;height:14px;border-radius:4px;display:inline-block;border:1.5px solid #cbd5e1;}
+      .qg-current{background:#7c3aed;border-color:#7c3aed;}
+      .qg-answered{background:#22c55e;border-color:#22c55e;}
+      .qg-skipped{background:#f59e0b;border-color:#f59e0b;}
+      .qg-flagged{background:#ef4444;border-color:#ef4444;}
+      .qg-none{background:#f1f5f9;border-color:#cbd5e1;}
+      .qgrid{
+        display:grid;grid-template-columns:repeat(10,1fr);gap:4px;
+      }
+      @media(max-width:500px){.qgrid{grid-template-columns:repeat(8,1fr);}}
+      .qg-cell{
+        aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;
+        font-size:.68rem;font-weight:700;color:white;cursor:pointer;
+        transition:transform .1s;border:1.5px solid transparent;
+        background:#f1f5f9;color:#94a3b8;
+      }
+      .qg-cell:hover{transform:scale(1.15);}
+      .qg-cell.qg-current{background:#7c3aed;color:white;border-color:#5b21b6;box-shadow:0 0 0 2px rgba(124,58,237,.3);}
+      .qg-cell.qg-answered{background:#22c55e;color:white;}
+      .qg-cell.qg-skipped{background:#f59e0b;color:white;}
+      .qg-cell.qg-flagged{background:#ef4444;color:white;}
+      .qg-cell.qg-answered.qg-flagged{background:linear-gradient(135deg,#22c55e 50%,#ef4444 50%);}
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -2212,6 +2251,19 @@
         <button class="btn-next" id="btn-next" onclick="nextQ()">
           下一題 →
         </button>
+      </div>
+
+      <!-- Question Grid -->
+      <div class="qgrid-toggle" id="qgrid-toggle" onclick="toggleQGrid()">📋 題號總覽</div>
+      <div class="qgrid-panel" id="qgrid-panel" style="display:none">
+        <div class="qgrid-legend">
+          <span><span class="qg-dot qg-current"></span>目前</span>
+          <span><span class="qg-dot qg-answered"></span>已答</span>
+          <span><span class="qg-dot qg-skipped"></span>跳過</span>
+          <span><span class="qg-dot qg-flagged"></span>🚩</span>
+          <span><span class="qg-dot qg-none"></span>未作答</span>
+        </div>
+        <div class="qgrid" id="qgrid"></div>
       </div>
     </div>
 
@@ -3449,6 +3501,7 @@
         if (shuffle) list = list.slice().sort(() => Math.random() - 0.5);
         examMode = false;
         examAnswers = {};
+        qgridSkipped = {};
         activeTopic = null;
         practiceList = list;
         practiceIdx = 0;
@@ -3544,6 +3597,7 @@
 
         // Save position so user can resume next time
         saveLastPos();
+        renderQGrid();
       }
 
       function answerQ(idx) {
@@ -3622,6 +3676,8 @@
         }
         persist(q.id);
         updateMarkButtons(q.id);
+        qgridSkipped[practiceIdx] = false; // mark as answered
+        renderQGrid();
       }
 
       function toggleExpl() {
@@ -3807,6 +3863,7 @@
         }
         examMode = true;
         examAnswers = {};
+        qgridSkipped = {};
         practiceList = list;
         practiceIdx = 0;
         clearLastPos();
@@ -4768,6 +4825,59 @@
         reader.readAsText(file);
         e.target.value = '';
       }
+
+      // ════════════════════════════════════════════
+      //  Question Grid
+      // ════════════════════════════════════════════
+      var qgridVisible = false;
+      var qgridSkipped = {}; // {index: true} — tracks skipped questions
+
+      function toggleQGrid(){
+        qgridVisible = !qgridVisible;
+        document.getElementById('qgrid-panel').style.display = qgridVisible ? 'block' : 'none';
+        document.getElementById('qgrid-toggle').textContent = qgridVisible ? '▲ 收起題號' : '📋 題號總覽';
+        if(qgridVisible) renderQGrid();
+      }
+
+      function renderQGrid(){
+        var el = document.getElementById('qgrid');
+        if(!el || !practiceList.length) return;
+        var html = '';
+        for(var i = 0; i < practiceList.length; i++){
+          var q = practiceList[i];
+          var cls = 'qg-cell';
+          // Determine status
+          var isAnswered = examMode ? (examAnswers[q.id] !== undefined) : (qgridSkipped[i] === false);
+          var isSkipped = qgridSkipped[i] === true;
+          var isFlagged = getS(q.id).flagged;
+          var isCurrent = (i === practiceIdx);
+
+          if(isCurrent) cls += ' qg-current';
+          else if(isAnswered && isFlagged) cls += ' qg-answered qg-flagged';
+          else if(isAnswered) cls += ' qg-answered';
+          else if(isFlagged) cls += ' qg-flagged';
+          else if(isSkipped) cls += ' qg-skipped';
+
+          html += '<div class="' + cls + '" onclick="jumpToIdx(' + i + ')" title="第' + (i+1) + '題">' + (i+1) + '</div>';
+        }
+        el.innerHTML = html;
+      }
+
+      function jumpToIdx(idx){
+        if(idx < 0 || idx >= practiceList.length) return;
+        practiceIdx = idx;
+        answered = false;
+        loadPracticeQ();
+        renderQGrid();
+      }
+
+      // Track answered/skipped in qgrid
+      var _origSkipQ = skipQ;
+      skipQ = function(){
+        qgridSkipped[practiceIdx] = true;
+        _origSkipQ();
+        renderQGrid();
+      };
 
       // ════════════════════════════════════════════
       //  Reset wrongbook

@@ -1737,6 +1737,60 @@
       #screen-review {
         background: transparent !important;
       }
+      /* ════ Header user badge ════ */
+      .header-user{
+        display:inline-flex;align-items:center;justify-content:center;
+        width:24px;height:24px;border-radius:50%;
+        font-size:.72rem;font-weight:700;color:#fff;
+        margin-right:.2rem;flex-shrink:0;
+      }
+
+      /* ════ Flag button ════ */
+      .btn-flag{
+        padding:.35rem .8rem;border-radius:20px;
+        border:2px solid #ef4444;background:#fff5f5;
+        color:#ef4444;font-size:.78rem;font-weight:700;
+        cursor:pointer;transition:all .15s;
+      }
+      .btn-flag:hover{background:#fecaca;}
+      .btn-flag.flagged{
+        background:#ef4444;color:white;border-color:#ef4444;
+      }
+
+      /* ════ Wrongbook screen ════ */
+      #screen-wrongbook{padding:1rem;max-width:700px;margin:0 auto;}
+      .wb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+      .wb-title{font-size:1.15rem;font-weight:800;}
+      .wb-stats{font-size:.82rem;color:var(--gray);}
+      .wb-filters{display:flex;gap:.4rem;margin-bottom:.8rem;flex-wrap:wrap;}
+      .wb-chip{
+        padding:.3rem .7rem;border-radius:20px;border:1.5px solid #e2e8f0;
+        background:white;font-size:.78rem;font-weight:600;
+        color:#64748b;cursor:pointer;transition:all .15s;
+      }
+      .wb-chip.sel{background:var(--purple);color:white;border-color:var(--purple);}
+      .wb-actions{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+      .wb-list{display:flex;flex-direction:column;gap:.5rem;}
+      .wb-group-title{
+        font-size:.88rem;font-weight:700;color:var(--purple-dark);
+        margin-top:.8rem;margin-bottom:.3rem;
+        padding:.3rem .6rem;background:#ede9fe;border-radius:8px;
+      }
+      .wb-card{
+        background:white;border:1.5px solid #e2e8f0;border-radius:12px;
+        padding:.8rem 1rem;cursor:pointer;transition:all .15s;
+      }
+      .wb-card:hover{border-color:#c8c3b0;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+      .wb-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;}
+      .wb-card-id{font-size:.72rem;color:var(--gray);font-weight:600;}
+      .wb-card-topic{font-size:.68rem;padding:.15rem .5rem;border-radius:10px;background:#f1f5f9;color:#475569;font-weight:600;}
+      .wb-card-q{font-size:.85rem;color:#1e293b;line-height:1.5;}
+      .wb-card-remove{
+        background:none;border:none;font-size:.82rem;cursor:pointer;
+        color:#94a3b8;padding:.2rem;margin-left:.5rem;
+      }
+      .wb-card-remove:hover{color:#ef4444;}
+      .wb-empty{text-align:center;padding:3rem 1rem;color:var(--gray);font-size:.92rem;}
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -1750,12 +1804,14 @@
       <h1>🦷 牙醫國考練習本</h1>
       <div class="header-right">
         <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
+        <span class="header-user" id="header-user" title="目前使用者"></span>
         <button class="btn-mode" id="btn-notes" onclick="location.href='../index.html'" title="回到互動筆記首頁">
           回到筆記頁
         </button>
         <button class="btn-mode active" id="btn-home" onclick="showHome()">
           考試首頁
         </button>
+        <button class="btn-mode" id="btn-wrongbook" onclick="showWrongbook()">錯題本</button>
         <button class="btn-mode" id="btn-db" onclick="showDB()">資料庫</button>
         <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
           瀏覽
@@ -2108,6 +2164,7 @@
           ✏️ 編輯詳解
         </button>
         <div class="mark-row">
+          <button class="btn-flag" id="mk-flag" onclick="toggleFlag()" title="加入錯題本">🚩 錯題本</button>
           <span class="mark-label">標記：</span>
           <button
             class="btn-mark btn-mark-understood"
@@ -2295,6 +2352,28 @@
       <div class="db-list" id="db-list"></div>
     </div>
 
+    <!-- ═══════════════ WRONGBOOK SCREEN ═══════════════ -->
+    <div id="screen-wrongbook" style="display:none">
+      <div class="wb-header">
+        <h2 class="wb-title">🚩 錯題本</h2>
+        <div class="wb-stats" id="wb-stats"></div>
+      </div>
+      <div class="wb-filters" id="wb-filters">
+        <button class="wb-chip sel" data-wbs="all" onclick="setWBFilter(this,'all')">全部</button>
+        <button class="wb-chip" data-wbs="ya3" onclick="setWBFilter(this,'ya3')">牙三</button>
+        <button class="wb-chip" data-wbs="ya4" onclick="setWBFilter(this,'ya4')">牙四</button>
+        <button class="wb-chip" data-wbs="ya5" onclick="setWBFilter(this,'ya5')">牙五</button>
+        <button class="wb-chip" data-wbs="ya6" onclick="setWBFilter(this,'ya6')">牙六</button>
+      </div>
+      <div class="wb-actions">
+        <button class="start-btn" onclick="practiceWrongbook()" style="font-size:.85rem;padding:.5rem 1.2rem">開始練習錯題</button>
+        <button class="start-btn secondary" onclick="exportWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯出</button>
+        <button class="start-btn secondary" onclick="importWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯入</button>
+        <input type="file" id="wb-import-file" accept=".json" style="display:none" onchange="handleWBImport(event)">
+      </div>
+      <div class="wb-list" id="wb-list"></div>
+    </div>
+
     <!-- EDIT MODAL -->
     <div class="overlay" id="modal-overlay" onclick="maybeClose(event)">
       <div class="modal">
@@ -2352,6 +2431,12 @@
     </script>
     <script>
       // ════════════════════════════════════════════
+      //  Per-user localStorage
+      // ════════════════════════════════════════════
+      const _curUserId = localStorage.getItem('dental_cur_user') || 'default';
+      function uKey(key){ return _curUserId + '_' + key; }
+
+      // ════════════════════════════════════════════
       //  Supabase config
       // ════════════════════════════════════════════
       const SUPABASE_URL = "YOUR_SUPABASE_URL";
@@ -2393,8 +2478,22 @@
       let homeStatus = "all";
 
       // ════════════════════════════════════════════
-      //  Load / Save
+      //  Load / Save (migrate old non-prefixed data)
       // ════════════════════════════════════════════
+      (function migrateOldData(){
+        // If user has old unprefixed data and no new prefixed data, copy it over
+        const old = localStorage.getItem("wrongbook_state");
+        const cur = localStorage.getItem(uKey("wrongbook_state"));
+        if(old && !cur){
+          localStorage.setItem(uKey("wrongbook_state"), old);
+        }
+        const oldLog = localStorage.getItem("daily_log");
+        const curLog = localStorage.getItem(uKey("daily_log"));
+        if(oldLog && !curLog){
+          localStorage.setItem(uKey("daily_log"), oldLog);
+        }
+      })();
+
       async function loadState() {
         try {
           if (USE_SUPABASE) {
@@ -2408,11 +2507,11 @@
               };
             });
           } else {
-            const s = localStorage.getItem("wrongbook_state");
+            const s = localStorage.getItem(uKey("wrongbook_state"));
             if (s) qState = JSON.parse(s);
           }
         } catch (e) {
-          const s = localStorage.getItem("wrongbook_state");
+          const s = localStorage.getItem(uKey("wrongbook_state"));
           if (s) qState = JSON.parse(s);
         }
         updateHomeStats();
@@ -2940,7 +3039,7 @@
 
       async function persist(id) {
         const s = qState[id] || { status: "none", count: 0 };
-        localStorage.setItem("wrongbook_state", JSON.stringify(qState));
+        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
         if (!USE_SUPABASE) return;
         try {
           await sb
@@ -3149,9 +3248,11 @@
         document.getElementById("screen-practice").style.display = "none";
         document.getElementById("screen-browse").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
+        document.getElementById("screen-wrongbook").style.display = "none";
         document.getElementById("btn-home").classList.add("active");
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.remove("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
         stopTimer();
         updateHomeStats();
         updateMatchCount();
@@ -3164,9 +3265,11 @@
         document.getElementById("screen-practice").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
         document.getElementById("screen-browse").style.display = "block";
+        document.getElementById("screen-wrongbook").style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.add("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
         renderBrowse();
       }
 
@@ -3192,11 +3295,13 @@
         document.getElementById("screen-practice").style.display = "block";
         document.getElementById("screen-browse").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
+        document.getElementById("screen-wrongbook").style.display = "none";
         const er = document.getElementById("screen-exam-results");
         if (er) er.style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.remove("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
       }
 
       // ════════════════════════════════════════════
@@ -3263,7 +3368,7 @@
       // ════════════════════════════════════════════
       //  Last position (resume)
       // ════════════════════════════════════════════
-      const LASTPOS_KEY = "wrongbook_lastpos";
+      const LASTPOS_KEY = uKey("wrongbook_lastpos");
 
       function saveLastPos() {
         if (!practiceList.length) return;
@@ -3520,6 +3625,7 @@
         });
         const cb = document.getElementById("mk-count");
         if (cb) cb.textContent = `已寫過 ${getS(id).count} 次`;
+        updateFlagBtn(id);
       }
 
       async function markQ(status) {
@@ -4113,7 +4219,7 @@
       // ════════════════════════════════════════════
       function getDailyLog() {
         try {
-          return JSON.parse(localStorage.getItem("daily_log") || "{}");
+          return JSON.parse(localStorage.getItem(uKey("daily_log")) || "{}");
         } catch {
           return {};
         }
@@ -4138,7 +4244,7 @@
             ex[key].max = Math.max(ex[key].max, q.number);
           }
         }
-        localStorage.setItem("daily_log", JSON.stringify(log));
+        localStorage.setItem(uKey("daily_log"), JSON.stringify(log));
         renderDailyLog();
       }
 
@@ -4257,7 +4363,7 @@
           qState[id].status = "none";
           qState[id].count = 0;
         }
-        localStorage.setItem("wrongbook_state", JSON.stringify(qState));
+        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
 
         if (USE_SUPABASE) {
           try {
@@ -4312,10 +4418,12 @@
         document.getElementById("screen-practice").style.display = "none";
         document.getElementById("screen-browse").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
+        document.getElementById("screen-wrongbook").style.display = "none";
         document.getElementById("screen-db").style.display = "block";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.add("active");
         document.getElementById("btn-browse").classList.remove("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
         renderDB();
       }
 
@@ -4434,6 +4542,212 @@
     </div>
   </div>
 </div>`;
+      }
+
+      // ════════════════════════════════════════════
+      //  User badge in header
+      // ════════════════════════════════════════════
+      (function initUserBadge(){
+        const uid = localStorage.getItem('dental_cur_user');
+        const users = JSON.parse(localStorage.getItem('dental_users')||'[]');
+        const u = users.find(x=>x.id===uid);
+        const el = document.getElementById('header-user');
+        if(u && el){
+          el.style.background = u.color;
+          el.textContent = u.name[0];
+          el.title = '使用者：' + u.name;
+        } else if(el){
+          el.style.display='none';
+        }
+      })();
+
+      // ════════════════════════════════════════════
+      //  Flag (wrongbook) toggle
+      // ════════════════════════════════════════════
+      function toggleFlag(){
+        const q = practiceList[practiceIdx];
+        if(!q) return;
+        if(!qState[q.id]) qState[q.id] = {status:'none',count:0};
+        qState[q.id].flagged = !qState[q.id].flagged;
+        persist(q.id);
+        updateFlagBtn(q.id);
+        showToast(qState[q.id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
+      }
+
+      function updateFlagBtn(id){
+        const btn = document.getElementById('mk-flag');
+        if(!btn) return;
+        const s = getS(id);
+        if(s.flagged){
+          btn.classList.add('flagged');
+          btn.textContent = '🚩 已收錄';
+        } else {
+          btn.classList.remove('flagged');
+          btn.textContent = '🚩 錯題本';
+        }
+      }
+
+      // ════════════════════════════════════════════
+      //  Wrongbook screen
+      // ════════════════════════════════════════════
+      let wbFilter = 'all';
+
+      function setWBFilter(el, val){
+        document.querySelectorAll('.wb-chip').forEach(c=>c.classList.remove('sel'));
+        el.classList.add('sel');
+        wbFilter = val;
+        renderWrongbook();
+      }
+
+      function showWrongbook(){
+        document.getElementById('screen-home').style.display='none';
+        document.getElementById('screen-practice').style.display='none';
+        document.getElementById('screen-db').style.display='none';
+        const er = document.getElementById('screen-exam-results');
+        if(er) er.style.display='none';
+        document.getElementById('screen-wrongbook').style.display='block';
+        // Update header buttons
+        document.querySelectorAll('.btn-mode').forEach(b=>b.classList.remove('active'));
+        document.getElementById('btn-wrongbook').classList.add('active');
+        renderWrongbook();
+      }
+
+      function renderWrongbook(){
+        const flagged = QS.filter(q=>{
+          const s = getS(q.id);
+          if(!s.flagged) return false;
+          if(wbFilter!=='all' && q.subject!==wbFilter) return false;
+          return true;
+        });
+
+        const statsEl = document.getElementById('wb-stats');
+        statsEl.textContent = flagged.length + ' 題';
+
+        const listEl = document.getElementById('wb-list');
+        if(!flagged.length){
+          listEl.innerHTML = '<div class="wb-empty">錯題本是空的<br>做題時按 🚩 加入題目</div>';
+          return;
+        }
+
+        // Group by subject → topic
+        const SMAP = {ya3:'牙三',ya4:'牙四',ya5:'牙五',ya6:'牙六'};
+        const groups = {};
+        flagged.forEach(q=>{
+          const topic = (getS(q.id).topic || q.topic || '未分類');
+          const key = q.subject + '||' + topic;
+          if(!groups[key]) groups[key] = {subj:q.subject, topic, items:[]};
+          groups[key].items.push(q);
+        });
+
+        // Sort groups: by subject order then topic name
+        const sorted = Object.values(groups).sort((a,b)=>{
+          const si = ['ya3','ya4','ya5','ya6'];
+          return (si.indexOf(a.subj)-si.indexOf(b.subj)) || a.topic.localeCompare(b.topic);
+        });
+
+        let html = '';
+        sorted.forEach(g=>{
+          html += `<div class="wb-group-title">${SMAP[g.subj]||g.subj} — ${g.topic} (${g.items.length})</div>`;
+          g.items.forEach(q=>{
+            const qText = q.question.length>80 ? q.question.slice(0,80)+'…' : q.question;
+            html += `<div class="wb-card" onclick="startFromWrongbook('${q.id}')">
+              <div class="wb-card-top">
+                <span class="wb-card-id">${q.meta||q.id}</span>
+                <div>
+                  <span class="wb-card-topic">${getS(q.id).topic||q.topic||''}</span>
+                  <button class="wb-card-remove" onclick="event.stopPropagation();removeFromWB('${q.id}')" title="移除">✕</button>
+                </div>
+              </div>
+              <div class="wb-card-q">${qText}</div>
+            </div>`;
+          });
+        });
+        listEl.innerHTML = html;
+      }
+
+      function removeFromWB(id){
+        if(!qState[id]) return;
+        qState[id].flagged = false;
+        persist(id);
+        renderWrongbook();
+        showToast('已從錯題本移除');
+      }
+
+      function startFromWrongbook(id){
+        // Find the question and start practice from it
+        const flagged = QS.filter(q=>getS(q.id).flagged);
+        if(!flagged.length) return;
+        const idx = flagged.findIndex(q=>q.id===id);
+        practiceList = flagged;
+        practiceIdx = idx >= 0 ? idx : 0;
+        clearLastPos();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      function practiceWrongbook(){
+        const flagged = QS.filter(q=>{
+          const s = getS(q.id);
+          if(!s.flagged) return false;
+          if(wbFilter!=='all' && q.subject!==wbFilter) return false;
+          return true;
+        });
+        if(!flagged.length){ showToast('錯題本是空的'); return; }
+        practiceList = flagged;
+        practiceIdx = 0;
+        clearLastPos();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      // ════════════════════════════════════════════
+      //  Export / Import wrongbook
+      // ════════════════════════════════════════════
+      function exportWrongbook(){
+        const flagged = QS.filter(q=>getS(q.id).flagged).map(q=>({
+          id:q.id, subject:q.subject, topic:q.topic,
+          question:q.question, meta:q.meta,
+          status:getS(q.id).status, count:getS(q.id).count
+        }));
+        const blob = new Blob([JSON.stringify(flagged,null,2)],{type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const uid = localStorage.getItem('dental_cur_user')||'default';
+        const users = JSON.parse(localStorage.getItem('dental_users')||'[]');
+        const u = users.find(x=>x.id===uid);
+        a.download = (u?u.name:'wrongbook') + '_錯題本_' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        showToast('已匯出 ' + flagged.length + ' 題');
+      }
+
+      function importWrongbook(){
+        document.getElementById('wb-import-file').click();
+      }
+
+      function handleWBImport(e){
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev){
+          try{
+            const arr = JSON.parse(ev.target.result);
+            let count = 0;
+            arr.forEach(item=>{
+              if(item.id){
+                if(!qState[item.id]) qState[item.id] = {status:'none',count:0};
+                qState[item.id].flagged = true;
+                count++;
+              }
+            });
+            localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+            renderWrongbook();
+            showToast('已匯入 ' + count + ' 題');
+          }catch(err){
+            showToast('匯入失敗：格式錯誤');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
       }
 
       // ════════════════════════════════════════════

@@ -166,9 +166,96 @@ footer{
   color:var(--text-sub);font-size:.72rem;
   text-align:center;letter-spacing:.04em;
 }
+
+/* ── User bar ── */
+.user-bar{
+  width:100%;max-width:480px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.2rem;
+  background:var(--bg-card);border:1.5px solid var(--border);
+  border-radius:12px;padding:.5rem 1rem;
+  box-shadow:var(--shadow);
+}
+.user-bar-left{display:flex;align-items:center;gap:.5rem;}
+.user-avatar{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;font-weight:700;color:#fff;
+}
+.user-name{font-size:.88rem;font-weight:700;color:var(--text);}
+.user-switch{
+  background:none;border:1.5px solid var(--border);
+  border-radius:8px;padding:.25rem .7rem;
+  font-size:.72rem;color:var(--text-sub);cursor:pointer;
+  font-weight:600;
+}
+.user-switch:hover{border-color:var(--border-dk);background:#f5f3ec;}
+
+/* ── User select overlay ── */
+.user-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2rem;
+}
+.user-overlay.hidden{display:none;}
+.user-overlay h2{
+  font-size:1.3rem;font-weight:800;margin-bottom:.3rem;color:var(--text);
+}
+.user-overlay .sub2{
+  font-size:.82rem;color:var(--text-sub);margin-bottom:1.8rem;
+}
+.user-list{
+  display:flex;flex-direction:column;gap:.7rem;
+  width:100%;max-width:320px;
+}
+.user-item{
+  display:flex;align-items:center;gap:.8rem;
+  background:var(--bg-card);border:1.5px solid var(--border);
+  border-radius:14px;padding:.85rem 1.1rem;
+  cursor:pointer;transition:all .15s;
+  box-shadow:var(--shadow);
+}
+.user-item:hover,.user-item:active{
+  transform:translateY(-2px);box-shadow:var(--shadow-hover);
+  border-color:var(--border-dk);
+}
+.user-item .ua{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;font-weight:800;color:#fff;flex-shrink:0;
+}
+.user-item .ui{display:flex;flex-direction:column;gap:.1rem;}
+.user-item .un{font-size:.95rem;font-weight:700;color:var(--text);}
+.user-item .ud{font-size:.7rem;color:var(--text-sub);}
+.user-add{
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  background:var(--bg-card);border:2px dashed var(--border);
+  border-radius:14px;padding:.85rem 1.1rem;
+  cursor:pointer;color:var(--text-sub);font-size:.88rem;font-weight:600;
+  transition:all .15s;
+}
+.user-add:hover{border-color:var(--border-dk);color:var(--text);}
 </style>
 </head>
 <body>
+
+<!-- User selection overlay -->
+<div class="user-overlay" id="user-overlay">
+  <h2>歡迎回來</h2>
+  <p class="sub2">選擇你的帳號，開始學習</p>
+  <div class="user-list" id="user-list"></div>
+</div>
+
+<!-- Main content (hidden until user selected) -->
+<div id="main-content">
+<div class="user-bar" id="user-bar">
+  <div class="user-bar-left">
+    <div class="user-avatar" id="ub-avatar"></div>
+    <span class="user-name" id="ub-name"></span>
+  </div>
+  <button class="user-switch" onclick="switchUser()">切換</button>
+</div>
 
 <span class="badge">🦷 國考互動筆記</span>
 <h1>牙醫國考互動筆記</h1>
@@ -230,11 +317,90 @@ footer{
 <div class="sync-bar" id="sync-bar"></div>
 
 <footer>Victor Hsu · 2026</footer>
+</div><!-- /main-content -->
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="sync.js"></script>
 <script>
+  // ════════════════════════════════════════════
+  //  User Management
+  // ════════════════════════════════════════════
+  const USER_COLORS = ['#0e7490','#7c3aed','#b45309','#166534','#dc2626'];
+  const USERS_KEY = 'dental_users';      // [{id,name,color}]
+  const CUR_USER_KEY = 'dental_cur_user'; // user id
+
+  function getUsers(){
+    try{ return JSON.parse(localStorage.getItem(USERS_KEY)||'[]'); }catch{ return []; }
+  }
+  function saveUsers(u){ localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+  function getCurUser(){ return localStorage.getItem(CUR_USER_KEY); }
+  function setCurUser(id){ localStorage.setItem(CUR_USER_KEY, id); }
+
+  function renderUserOverlay(){
+    const users = getUsers();
+    const list = document.getElementById('user-list');
+    list.innerHTML = users.map(u =>
+      `<div class="user-item" onclick="selectUser('${u.id}')">
+        <div class="ua" style="background:${u.color}">${u.name[0]}</div>
+        <div class="ui">
+          <span class="un">${u.name}</span>
+          <span class="ud">點擊進入</span>
+        </div>
+      </div>`
+    ).join('') +
+    `<div class="user-add" onclick="addNewUser()">+ 新增使用者</div>`;
+  }
+
+  function addNewUser(){
+    const name = prompt('輸入名稱（例如：Victor）');
+    if(!name||!name.trim()) return;
+    const users = getUsers();
+    if(users.length>=5){ alert('最多 5 位使用者'); return; }
+    const id = name.trim().toLowerCase().replace(/\s+/g,'_') + '_' + Date.now().toString(36);
+    const color = USER_COLORS[users.length % USER_COLORS.length];
+    users.push({id, name:name.trim(), color});
+    saveUsers(users);
+    selectUser(id);
+  }
+
+  function selectUser(id){
+    setCurUser(id);
+    showMain();
+  }
+
+  function switchUser(){
+    document.getElementById('main-content').style.display='none';
+    const ov = document.getElementById('user-overlay');
+    ov.classList.remove('hidden');
+    renderUserOverlay();
+  }
+
+  function showMain(){
+    const users = getUsers();
+    const cur = getCurUser();
+    const u = users.find(x=>x.id===cur);
+    if(!u){ switchUser(); return; }
+
+    document.getElementById('user-overlay').classList.add('hidden');
+    document.getElementById('main-content').style.display='';
+    document.getElementById('ub-avatar').style.background = u.color;
+    document.getElementById('ub-avatar').textContent = u.name[0];
+    document.getElementById('ub-name').textContent = u.name;
+  }
+
+  // Init: check if user already selected
+  (function(){
+    const cur = getCurUser();
+    const users = getUsers();
+    if(cur && users.find(x=>x.id===cur)){
+      showMain();
+    } else {
+      document.getElementById('main-content').style.display='none';
+      renderUserOverlay();
+    }
+  })();
+
   // Countdown to exam (2026-07-17)
   const examDate = new Date('2026-07-17T00:00:00+08:00');
   function updateCountdown(){

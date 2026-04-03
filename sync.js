@@ -182,6 +182,19 @@
     pushToFirebase();
   }
 
+  /** Auto-push: check every 3 seconds if local data changed, push if so */
+  var _lastPushed = "";
+  function startAutoSync() {
+    setInterval(function() {
+      if (!_db || !_userId || _syncing) return;
+      var cur = localStorage.getItem(_userId + "_wrongbook_state") || "";
+      if (cur && cur !== _lastPushed) {
+        _lastPushed = cur;
+        pushToFirebase();
+      }
+    }, 3000);
+  }
+
   // ══════════════════════════════════════════
 
   var DentalSync = {
@@ -204,6 +217,8 @@
 
         _userId = localStorage.getItem("dental_cur_user");
         if (_userId) {
+          _lastPushed = localStorage.getItem(_userId + "_wrongbook_state") || "";
+          startAutoSync();
           return syncOnLoad().then(function() { startListening(); });
         }
       } catch (err) {

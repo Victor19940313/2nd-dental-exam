@@ -1,11 +1,11 @@
 /**
- * DentalSync — Firebase 跨裝置同步模組（使用者名稱自動同步版）
- * 同名使用者 = 自動同步，不需要輸入同步碼
+ * DentalSync — Firebase 跨裝置同步模組
+ * 同名使用者 = 自動同步，last-write-wins（以時間戳判斷新舊）
  */
 (function () {
   "use strict";
 
-  const FIREBASE_CONFIG = {
+  var FIREBASE_CONFIG = {
     apiKey: "AIzaSyACFnTGWEuhUp0htnMWe8i7XbHiAWjgoAc",
     authDomain: "dental-exam-sync.firebaseapp.com",
     databaseURL: "https://dental-exam-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -15,267 +15,163 @@
     appId: "1:136556858599:web:de382cbbef5099d63e2642",
   };
 
-  // Keys to sync (per-user prefixed)
-  const SYNC_KEYS = ["wrongbook_state", "daily_log", "wrongbook_lastpos"];
+  var SYNC_KEYS = ["wrongbook_state", "daily_log", "wrongbook_lastpos"];
 
-  let _db = null;
-  let _userId = null; // current user id (e.g. "hua")
-  let _listeners = [];
-  let _initialized = false;
-  let _syncing = false;
+  var _db = null;
+  var _userId = null;
+  var _listeners = [];
+  var _initialized = false;
+  var _syncing = false;
 
   function isConfigured() {
     return FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY" && !!FIREBASE_CONFIG.databaseURL;
   }
 
-  /** Get the full localStorage key for a sync key */
-  function lsKey(key) {
-    return _userId + "_" + key;
-  }
-
-  /** Firebase path for current user's data */
   function userRef() {
-    return _db.ref("users/" + _userId + "/data");
+    return _db.ref("users/" + _userId);
   }
 
-  /** Encode key for Firebase (no . # $ [ ] /) */
-  function encodeKey(key) {
-    return key.replace(/\./g, "%2E").replace(/#/g, "%23").replace(/\$/g, "%24").replace(/\[/g, "%5B").replace(/\]/g, "%5D").replace(/\//g, "%2F");
-  }
-  function decodeKey(key) {
-    return key.replace(/%2E/g, ".").replace(/%23/g, "#").replace(/%24/g, "$").replace(/%5B/g, "[").replace(/%5D/g, "]").replace(/%2F/g, "/");
-  }
-
-  /** Check if a localStorage key belongs to current user and should be synced */
   function isSyncKey(key) {
     if (!_userId) return false;
-    return SYNC_KEYS.some((sk) => key === _userId + "_" + sk);
+    return SYNC_KEYS.some(function(sk) { return key === _userId + "_" + sk; });
   }
 
   // ══════════════════════════════════════════
-  // Core sync logic
+  // Core: timestamp-based last-write-wins
   // ══════════════════════════════════════════
 
-  /** Listen to Firebase changes → write to localStorage */
+  /** Push local data + timestamp to Firebase */
+  function pushToFirebase() {
+    if (!_db || !_userId) return Promise.resolve();
+    var payload = { _ts: Date.now() };
+    SYNC_KEYS.forEach(function(sk) {
+      var val = localStorage.getItem(_userId + "_" + sk);
+      if (val !== null) payload[sk] = val;
+    });
+    _syncing = true;
+    return userRef().update(payload)
+      .catch(function(err) { console.error("[Sync] push error:", err); })
+      .finally(function() { _syncing = false; });
+  }
+
+  /** On startup: compare timestamps, newer wins entirely */
+  function syncOnLoad() {
+    if (!_db || !_userId) return Promise.resolve();
+    _syncing = true;
+    return userRef().once("value").then(function(snap) {
+      var remote = snap.val() || {};
+      var remoteTs = remote._ts || 0;
+      var localTs = parseInt(localStorage.getItem(_userId + "__ts") || "0");
+
+      if (remoteTs > localTs) {
+        // Remote is newer → pull everything
+        SYNC_KEYS.forEach(function(sk) {
+          if (remote[sk] !== undefined && remote[sk] !== null) {
+            localStorage.setItem(_userId + "_" + sk, remote[sk]);
+          }
+        });
+        localStorage.setItem(_userId + "__ts", String(remoteTs));
+      } else {
+        // Local is newer or equal → push everything
+        return pushToFirebase().then(function() {
+          localStorage.setItem(_userId + "__ts", String(Date.now()));
+        });
+      }
+    })
+    .catch(function(err) { console.error("[Sync] syncOnLoad error:", err); })
+    .finally(function() { _syncing = false; });
+  }
+
+  /** Listen for realtime changes from other devices */
   function startListening() {
     stopListening();
     if (!_db || !_userId) return;
 
-    const ref = userRef();
+    var ref = userRef();
+    var firstLoad = true;
 
-    const onChanged = ref.on("child_changed", (snap) => {
+    var unsub = ref.on("value", function(snap) {
+      // Skip the initial fire (we handle that in syncOnLoad)
+      if (firstLoad) { firstLoad = false; return; }
       if (_syncing) return;
-      const key = _userId + "_" + decodeKey(snap.key);
-      const val = snap.val();
-      if (val !== null && val !== undefined) {
+
+      var remote = snap.val() || {};
+      var remoteTs = remote._ts || 0;
+      var localTs = parseInt(localStorage.getItem(_userId + "__ts") || "0");
+
+      // Only apply if remote is actually newer
+      if (remoteTs > localTs) {
         _syncing = true;
-        localStorage.setItem(key, val);
+        SYNC_KEYS.forEach(function(sk) {
+          if (remote[sk] !== undefined && remote[sk] !== null) {
+            localStorage.setItem(_userId + "_" + sk, remote[sk]);
+          }
+        });
+        localStorage.setItem(_userId + "__ts", String(remoteTs));
         _syncing = false;
       }
     });
-    _listeners.push(() => ref.off("child_changed", onChanged));
-
-    const onAdded = ref.on("child_added", (snap) => {
-      if (_syncing) return;
-      const key = _userId + "_" + decodeKey(snap.key);
-      const val = snap.val();
-      if (val !== null && val !== undefined) {
-        _syncing = true;
-        localStorage.setItem(key, val);
-        _syncing = false;
-      }
-    });
-    _listeners.push(() => ref.off("child_added", onAdded));
-
-    const onRemoved = ref.on("child_removed", (snap) => {
-      if (_syncing) return;
-      const key = _userId + "_" + decodeKey(snap.key);
-      _syncing = true;
-      localStorage.removeItem(key);
-      _syncing = false;
-    });
-    _listeners.push(() => ref.off("child_removed", onRemoved));
+    _listeners.push(function() { ref.off("value", unsub); });
   }
 
   function stopListening() {
-    _listeners.forEach((fn) => fn());
+    _listeners.forEach(function(fn) { fn(); });
     _listeners = [];
   }
 
-  /** Listen to localStorage changes → push to Firebase */
-  function onStorageChange(e) {
+  /** When localStorage changes locally → push to Firebase */
+  function onLocalChange(e) {
     if (_syncing || !_db || !_userId) return;
     if (!e.key || !isSyncKey(e.key)) return;
-
-    // Strip the userId prefix to get the Firebase key
-    const fbKey = encodeKey(e.key.replace(_userId + "_", ""));
-
-    if (e.newValue === null) {
-      userRef().child(fbKey).remove().catch(() => {});
-    } else {
-      const update = {};
-      update[fbKey] = e.newValue;
-      _syncing = true;
-      userRef()
-        .update(update)
-        .catch(() => {})
-        .finally(() => { _syncing = false; });
-    }
-  }
-
-  /** Push all local user data to Firebase */
-  function pushAll() {
-    if (!_db || !_userId) return Promise.resolve();
-    const data = {};
-    SYNC_KEYS.forEach((sk) => {
-      const val = localStorage.getItem(_userId + "_" + sk);
-      if (val !== null) data[encodeKey(sk)] = val;
-    });
-    if (!Object.keys(data).length) return Promise.resolve();
-    _syncing = true;
-    return userRef().update(data).catch(() => {}).finally(() => { _syncing = false; });
-  }
-
-  /** Merge wrongbook_state: per-question merge keeping more data */
-  function mergeWrongbookState(localStr, remoteStr) {
-    var local = {}, remote = {};
-    try { if (localStr) local = JSON.parse(localStr); } catch(e) {}
-    try { if (remoteStr) remote = JSON.parse(remoteStr); } catch(e) {}
-    // Start from remote, then merge local on top
-    var merged = JSON.parse(JSON.stringify(remote));
-    Object.keys(local).forEach(function(qid) {
-      var l = local[qid], r = merged[qid];
-      if (!r) { merged[qid] = l; return; }
-      // Keep flagged if either has it
-      if (l.flagged) r.flagged = true;
-      // Keep higher count
-      if ((l.count || 0) > (r.count || 0)) r.count = l.count;
-      // Keep non-"none" status (prefer local if both non-none)
-      if (l.status && l.status !== 'none' && (!r.status || r.status === 'none')) {
-        r.status = l.status;
-      }
-      // Keep expl/src overrides
-      if (l.expl_override && !r.expl_override) r.expl_override = l.expl_override;
-      if (l.src_override && !r.src_override) r.src_override = l.src_override;
-    });
-    return JSON.stringify(merged);
-  }
-
-  /** Sync: merge local + Firebase, write merged to both */
-  function syncAll() {
-    if (!_db || !_userId) return Promise.resolve();
-    _syncing = true;
-    return userRef()
-      .once("value")
-      .then(function(snap) {
-        var remoteData = snap.val() || {};
-        var updates = {};
-
-        SYNC_KEYS.forEach(function(sk) {
-          var localVal = localStorage.getItem(_userId + "_" + sk);
-          var remoteVal = remoteData[encodeKey(sk)] || null;
-
-          if (sk === 'wrongbook_state') {
-            // Smart merge for wrongbook
-            var merged = mergeWrongbookState(localVal, remoteVal);
-            localStorage.setItem(_userId + "_" + sk, merged);
-            updates[encodeKey(sk)] = merged;
-          } else if (sk === 'daily_log') {
-            // Merge daily logs: keep all days, higher counts
-            var localLog = {}, remoteLog = {};
-            try { if (localVal) localLog = JSON.parse(localVal); } catch(e) {}
-            try { if (remoteVal) remoteLog = JSON.parse(remoteVal); } catch(e) {}
-            var mergedLog = JSON.parse(JSON.stringify(remoteLog));
-            Object.keys(localLog).forEach(function(day) {
-              if (!mergedLog[day]) { mergedLog[day] = localLog[day]; return; }
-              var lc = typeof localLog[day] === 'number' ? localLog[day] : (localLog[day].count || 0);
-              var rc = typeof mergedLog[day] === 'number' ? mergedLog[day] : (mergedLog[day].count || 0);
-              if (lc > rc) mergedLog[day] = localLog[day];
-            });
-            var mergedLogStr = JSON.stringify(mergedLog);
-            localStorage.setItem(_userId + "_" + sk, mergedLogStr);
-            updates[encodeKey(sk)] = mergedLogStr;
-          } else {
-            // For other keys (lastpos), prefer local if exists, else remote
-            if (localVal) {
-              updates[encodeKey(sk)] = localVal;
-            } else if (remoteVal) {
-              localStorage.setItem(_userId + "_" + sk, remoteVal);
-            }
-          }
-        });
-
-        // Push merged data back to Firebase
-        if (Object.keys(updates).length) {
-          return userRef().update(updates);
-        }
-      })
-      .catch(function(err) { console.error("[DentalSync] syncAll error:", err); })
-      .finally(function() { _syncing = false; });
+    // Update local timestamp and push
+    localStorage.setItem(_userId + "__ts", String(Date.now()));
+    pushToFirebase();
   }
 
   // ══════════════════════════════════════════
   // Public API
   // ══════════════════════════════════════════
 
-  const DentalSync = {
+  var DentalSync = {
     init: function () {
       if (_initialized) return Promise.resolve();
       _initialized = true;
-
-      if (!isConfigured()) {
-        console.warn("[DentalSync] Firebase 尚未設定");
-        return Promise.resolve();
-      }
+      if (!isConfigured()) return Promise.resolve();
 
       try {
-        if (!firebase.apps.length) {
-          firebase.initializeApp(FIREBASE_CONFIG);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
         _db = firebase.database();
 
-        // Intercept localStorage writes for sync
-        const origSetItem = localStorage.setItem.bind(localStorage);
+        // Monkey-patch localStorage to detect local writes
+        var origSetItem = localStorage.setItem.bind(localStorage);
         localStorage.setItem = function (key, value) {
-          const oldValue = localStorage.getItem(key);
           origSetItem(key, value);
           if (isSyncKey(key) && !_syncing) {
-            onStorageChange({ key: key, newValue: value, oldValue: oldValue });
-          }
-        };
-        const origRemoveItem = localStorage.removeItem.bind(localStorage);
-        localStorage.removeItem = function (key) {
-          origRemoveItem(key);
-          if (isSyncKey(key) && !_syncing) {
-            onStorageChange({ key: key, newValue: null });
+            onLocalChange({ key: key, newValue: value });
           }
         };
 
         // Auto-connect if user already selected
         _userId = localStorage.getItem("dental_cur_user");
         if (_userId) {
-          startListening();
-          return syncAll();
+          return syncOnLoad().then(function() { startListening(); });
         }
       } catch (err) {
-        console.error("[DentalSync] init error:", err);
+        console.error("[Sync] init error:", err);
       }
       return Promise.resolve();
     },
 
-    /** Switch to a different user (called when user selects account) */
     switchUser: function (userId) {
       stopListening();
       _userId = userId;
       if (_db && _userId) {
-        startListening();
-        return syncAll();
+        return syncOnLoad().then(function() { startListening(); });
       }
       return Promise.resolve();
     },
 
-    pushAll: pushAll,
-    syncAll: syncAll,
+    pushAll: pushToFirebase,
 
     getStatus: function () {
       return {
@@ -285,24 +181,19 @@
       };
     },
 
-    /** Render sync status UI */
     renderUI: function (containerSelector) {
-      const container =
+      var container =
         typeof containerSelector === "string"
           ? document.querySelector(containerSelector)
           : containerSelector;
       if (!container) return;
-
-      const status = this.getStatus();
+      var status = this.getStatus();
       if (status.connected) {
-        container.innerHTML =
-          '<span class="sync-btn" style="color:#16a34a;border-color:#bbf7d0">🟢 同步中</span>';
+        container.innerHTML = '<span class="sync-btn" style="color:#16a34a;border-color:#bbf7d0">🟢 同步中</span>';
       } else if (!status.configured) {
-        container.innerHTML =
-          '<span class="sync-btn" style="color:#94a3b8">⚠️ 同步未設定</span>';
+        container.innerHTML = '<span class="sync-btn" style="color:#94a3b8">⚠️ 同步未設定</span>';
       } else {
-        container.innerHTML =
-          '<span class="sync-btn" style="color:#94a3b8">⏸ 請先選擇使用者</span>';
+        container.innerHTML = '<span class="sync-btn" style="color:#94a3b8">⏸ 請先選擇使用者</span>';
       }
     },
   };

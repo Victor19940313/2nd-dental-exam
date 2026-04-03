@@ -4783,6 +4783,40 @@
           renderDailyLog();
         });
       }
+      // Live reload when Firebase pushes new data
+      window.addEventListener('storage', function(e){
+        if(e.key === uKey('wrongbook_state') && e.newValue){
+          try{ qState = JSON.parse(e.newValue); }catch(ex){}
+          updateHomeStats();
+          updateMatchCount();
+          renderDailyLog();
+          // If wrongbook screen is visible, refresh it
+          if(document.getElementById('screen-wrongbook').style.display !== 'none'){
+            renderWrongbook();
+          }
+        }
+        if(e.key === uKey('daily_log')){
+          renderDailyLog();
+        }
+      });
+      // Also listen for same-tab changes from Firebase listener
+      (function(){
+        const _origQState = uKey('wrongbook_state');
+        let _lastVal = localStorage.getItem(_origQState);
+        setInterval(function(){
+          const cur = localStorage.getItem(_origQState);
+          if(cur !== _lastVal){
+            _lastVal = cur;
+            try{ if(cur) qState = JSON.parse(cur); }catch(ex){}
+            updateHomeStats();
+            updateMatchCount();
+            renderDailyLog();
+            if(document.getElementById('screen-wrongbook').style.display !== 'none'){
+              renderWrongbook();
+            }
+          }
+        }, 2000);
+      })();
     </script>
   </body>
 </html>

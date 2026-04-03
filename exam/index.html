@@ -4769,5 +4769,20 @@
       // ════════════════════════════════════════════
       loadState();
     </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="../sync.js"></script>
+    <script>
+      if(typeof DentalSync !== 'undefined'){
+        DentalSync.init().then(()=>{
+          // Reload state after sync pulls data
+          const s = localStorage.getItem(uKey("wrongbook_state"));
+          if(s){ try{ qState = JSON.parse(s); }catch(e){} }
+          updateHomeStats();
+          updateMatchCount();
+          renderDailyLog();
+        });
+      }
+    </script>
   </body>
 </html>

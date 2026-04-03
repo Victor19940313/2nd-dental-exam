@@ -3045,6 +3045,8 @@
       async function persist(id) {
         const s = qState[id] || { status: "none", count: 0 };
         localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+        // Firebase sync
+        if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
         if (!USE_SUPABASE) return;
         try {
           await sb
@@ -3061,7 +3063,6 @@
         } catch (e) {
           console.error(e);
         }
-        if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
       }
 
       function getS(id) {

@@ -1771,11 +1771,16 @@
       .wb-chip.sel{background:var(--purple);color:white;border-color:var(--purple);}
       .wb-actions{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
       .wb-list{display:flex;flex-direction:column;gap:.5rem;}
+      .wb-group{margin-top:.5rem;}
       .wb-group-title{
         font-size:.88rem;font-weight:700;color:var(--purple-dark);
-        margin-top:.8rem;margin-bottom:.3rem;
-        padding:.3rem .6rem;background:#ede9fe;border-radius:8px;
+        padding:.5rem .8rem;background:#ede9fe;border-radius:8px;
+        cursor:pointer;list-style:none;display:flex;align-items:center;gap:.4rem;
       }
+      .wb-group-title::-webkit-details-marker{display:none;}
+      .wb-group-title::before{content:'▶';font-size:.65rem;transition:transform .2s;}
+      .wb-group[open]>.wb-group-title::before{transform:rotate(90deg);}
+      .wb-group[open]>.wb-group-title{margin-bottom:.4rem;border-radius:8px 8px 0 0;}
       .wb-card{
         background:white;border:1.5px solid #e2e8f0;border-radius:12px;
         padding:.8rem 1rem;cursor:pointer;transition:all .15s;
@@ -4651,10 +4656,10 @@
 
         let html = '';
         sorted.forEach(g=>{
-          html += `<div class="wb-group-title">${SMAP[g.subj]||g.subj} — ${g.topic} (${g.items.length})</div>`;
+          let inner = '';
           g.items.forEach(q=>{
             const qText = q.question.length>80 ? q.question.slice(0,80)+'…' : q.question;
-            html += `<div class="wb-card" onclick="startFromWrongbook('${q.id}')">
+            inner += `<div class="wb-card" onclick="startFromWrongbook('${q.id}')">
               <div class="wb-card-top">
                 <span class="wb-card-id">${q.meta||q.id}</span>
                 <div>
@@ -4665,6 +4670,7 @@
               <div class="wb-card-q">${qText}</div>
             </div>`;
           });
+          html += `<details class="wb-group"><summary class="wb-group-title">${SMAP[g.subj]||g.subj} — ${g.topic} (${g.items.length})</summary>${inner}</details>`;
         });
         listEl.innerHTML = html;
       }

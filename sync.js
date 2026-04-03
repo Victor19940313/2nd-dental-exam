@@ -136,24 +136,82 @@
     return userRef().update(data).catch(() => {}).finally(() => { _syncing = false; });
   }
 
-  /** Pull all Firebase data to local */
-  function pullAll() {
+  /** Merge wrongbook_state: per-question merge keeping more data */
+  function mergeWrongbookState(localStr, remoteStr) {
+    var local = {}, remote = {};
+    try { if (localStr) local = JSON.parse(localStr); } catch(e) {}
+    try { if (remoteStr) remote = JSON.parse(remoteStr); } catch(e) {}
+    // Start from remote, then merge local on top
+    var merged = JSON.parse(JSON.stringify(remote));
+    Object.keys(local).forEach(function(qid) {
+      var l = local[qid], r = merged[qid];
+      if (!r) { merged[qid] = l; return; }
+      // Keep flagged if either has it
+      if (l.flagged) r.flagged = true;
+      // Keep higher count
+      if ((l.count || 0) > (r.count || 0)) r.count = l.count;
+      // Keep non-"none" status (prefer local if both non-none)
+      if (l.status && l.status !== 'none' && (!r.status || r.status === 'none')) {
+        r.status = l.status;
+      }
+      // Keep expl/src overrides
+      if (l.expl_override && !r.expl_override) r.expl_override = l.expl_override;
+      if (l.src_override && !r.src_override) r.src_override = l.src_override;
+    });
+    return JSON.stringify(merged);
+  }
+
+  /** Sync: merge local + Firebase, write merged to both */
+  function syncAll() {
     if (!_db || !_userId) return Promise.resolve();
     _syncing = true;
     return userRef()
       .once("value")
-      .then((snap) => {
-        const data = snap.val();
-        if (!data) return;
-        Object.keys(data).forEach((encodedKey) => {
-          const sk = decodeKey(encodedKey);
-          if (SYNC_KEYS.includes(sk)) {
-            localStorage.setItem(_userId + "_" + sk, data[encodedKey]);
+      .then(function(snap) {
+        var remoteData = snap.val() || {};
+        var updates = {};
+
+        SYNC_KEYS.forEach(function(sk) {
+          var localVal = localStorage.getItem(_userId + "_" + sk);
+          var remoteVal = remoteData[encodeKey(sk)] || null;
+
+          if (sk === 'wrongbook_state') {
+            // Smart merge for wrongbook
+            var merged = mergeWrongbookState(localVal, remoteVal);
+            localStorage.setItem(_userId + "_" + sk, merged);
+            updates[encodeKey(sk)] = merged;
+          } else if (sk === 'daily_log') {
+            // Merge daily logs: keep all days, higher counts
+            var localLog = {}, remoteLog = {};
+            try { if (localVal) localLog = JSON.parse(localVal); } catch(e) {}
+            try { if (remoteVal) remoteLog = JSON.parse(remoteVal); } catch(e) {}
+            var mergedLog = JSON.parse(JSON.stringify(remoteLog));
+            Object.keys(localLog).forEach(function(day) {
+              if (!mergedLog[day]) { mergedLog[day] = localLog[day]; return; }
+              var lc = typeof localLog[day] === 'number' ? localLog[day] : (localLog[day].count || 0);
+              var rc = typeof mergedLog[day] === 'number' ? mergedLog[day] : (mergedLog[day].count || 0);
+              if (lc > rc) mergedLog[day] = localLog[day];
+            });
+            var mergedLogStr = JSON.stringify(mergedLog);
+            localStorage.setItem(_userId + "_" + sk, mergedLogStr);
+            updates[encodeKey(sk)] = mergedLogStr;
+          } else {
+            // For other keys (lastpos), prefer local if exists, else remote
+            if (localVal) {
+              updates[encodeKey(sk)] = localVal;
+            } else if (remoteVal) {
+              localStorage.setItem(_userId + "_" + sk, remoteVal);
+            }
           }
         });
+
+        // Push merged data back to Firebase
+        if (Object.keys(updates).length) {
+          return userRef().update(updates);
+        }
       })
-      .catch(() => {})
-      .finally(() => { _syncing = false; });
+      .catch(function(err) { console.error("[DentalSync] syncAll error:", err); })
+      .finally(function() { _syncing = false; });
   }
 
   // ══════════════════════════════════════════
@@ -197,7 +255,7 @@
         _userId = localStorage.getItem("dental_cur_user");
         if (_userId) {
           startListening();
-          return this.pullAll();
+          return syncAll();
         }
       } catch (err) {
         console.error("[DentalSync] init error:", err);
@@ -211,13 +269,13 @@
       _userId = userId;
       if (_db && _userId) {
         startListening();
-        return this.pullAll();
+        return syncAll();
       }
       return Promise.resolve();
     },
 
     pushAll: pushAll,
-    pullAll: pullAll,
+    syncAll: syncAll,
 
     getStatus: function () {
       return {

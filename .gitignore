@@ -2,3 +2,4 @@
 exam/images/review/
 # Review metadata (references local images)
 exam/review-images.json
+.claude

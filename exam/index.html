@@ -3045,23 +3045,31 @@
         const list = document.getElementById("topic-list");
         if (!list) return;
 
-        // Aggregate: subj → cat → total count
-        const data = {}; // {subj: {cat: count}}
+        // Aggregate: subj → cat → total count AND filtered count
+        const data = {};     // {subj: {cat: totalCount}}
+        const filtered = {}; // {subj: {cat: filteredCount}}
         QS.forEach((q) => {
           if (!q.topic) return;
           const s = q.subject;
           const c = getTopicCat(q.topic);
-          if (!data[s]) data[s] = {};
+          if (!data[s]) { data[s] = {}; filtered[s] = {}; }
           data[s][c] = (data[s][c] || 0) + 1;
+          // Check if this question passes the sidebar status filter
+          const st = getS(q.id).status;
+          const pass = sidebarStatus === "all" ? true
+            : sidebarStatus === "unmarked" ? st === "none"
+            : st === sidebarStatus;
+          if (pass) filtered[s][c] = (filtered[s][c] || 0) + 1;
         });
+
+        const isFiltered = sidebarStatus !== "all";
 
         let html = "";
         SUBJ_ORDER.forEach((subj) => {
           if (!data[subj]) return;
-          const subjTotal = Object.values(data[subj]).reduce(
-            (a, b) => a + b,
-            0,
-          );
+          const subjTotal = isFiltered
+            ? Object.values(filtered[subj] || {}).reduce((a, b) => a + b, 0)
+            : Object.values(data[subj]).reduce((a, b) => a + b, 0);
           const isCollapsed = !expandedSubjs.has(subj) ? " collapsed" : "";
           html += `<div class="ts-subj-grp${isCollapsed}" id="tsg-${subj}">`;
           html += `<div class="ts-subj-hdr" onclick="toggleSbjGrp('${subj}')">`;
@@ -3070,16 +3078,19 @@
           html += `<span class="ts-subj-badge">${subjTotal}</span>`;
           html += `</div><div class="ts-subj-body">`;
 
-          // Sort cats by count desc
+          // Sort cats by total count desc
           const cats = Object.entries(data[subj]).sort((a, b) => b[1] - a[1]);
-          cats.forEach(([cat, count]) => {
+          cats.forEach(([cat, totalCount]) => {
+            const filtCount = (filtered[subj] || {})[cat] || 0;
+            const displayCount = isFiltered ? filtCount : totalCount;
             const key = subj + "|" + cat;
             const esc_subj = subj.replace(/'/g, "\\'");
             const esc_cat = cat.replace(/'/g, "\\'");
             const active = key === activeKey ? " active" : "";
+            const dimmed = isFiltered && filtCount === 0 ? ' style="opacity:.35;pointer-events:none"' : "";
             html +=
-              `<div class="topic-item${active}" onclick="selectCat('${esc_subj}','${esc_cat}')">` +
-              `<span>${cat}</span><span class="topic-count">${count}</span></div>`;
+              `<div class="topic-item${active}"${dimmed} onclick="selectCat('${esc_subj}','${esc_cat}')">` +
+              `<span>${cat}</span><span class="topic-count">${displayCount}</span></div>`;
           });
 
           html += `</div></div>`;

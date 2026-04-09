@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>重複考題統計</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --nb-bg:   #f8f7f0;
+  --nb-gc:   rgba(160,155,130,0.18);
+  --nb-gs:   22px;
+  --nb-text: #2d2a22;
+  --nb-sub:  #7a7060;
+  --nb-bd:   #e4e0d4;
+  --nb-bdk:  #c8c3b0;
+  --ya3: #0e7490;
+  --ya4: #7c3aed;
+  --ya5: #3730a3;
+  --ya6: #166534;
+  --green: #16a34a;
+  --orange: #d97706;
+  --red: #dc2626;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background-color: var(--nb-bg);
+  background-image:
+    linear-gradient(var(--nb-gc) 1px, transparent 1px),
+    linear-gradient(90deg, var(--nb-gc) 1px, transparent 1px);
+  background-size: var(--nb-gs) var(--nb-gs);
+  background-attachment: fixed;
+  color: var(--nb-text);
+  min-height: 100vh;
+}
+
+.top-bar {
+  background: #fff;
+  border-bottom: 1.5px solid var(--nb-bd);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.top-bar a {
+  color: var(--nb-sub);
+  text-decoration: none;
+  font-size: 13px;
+}
+.top-bar a:hover { color: var(--nb-text); }
+.top-bar h1 {
+  font-size: 16px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+.summary-card {
+  background: #fff;
+  border: 1.5px solid var(--nb-bd);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+.summary-card h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.summary-card p {
+  font-size: 13px;
+  color: var(--nb-sub);
+  line-height: 1.7;
+}
+.stat-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.stat-box {
+  background: var(--nb-bg);
+  border: 1px solid var(--nb-bd);
+  border-radius: 8px;
+  padding: 10px 16px;
+  text-align: center;
+  min-width: 90px;
+}
+.stat-box .num { font-size: 22px; font-weight: 700; }
+.stat-box .lbl { font-size: 11px; color: var(--nb-sub); margin-top: 2px; }
+
+.group-card {
+  background: #fff;
+  border: 1.5px solid var(--nb-bd);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.group-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--nb-bd);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.group-header .stem {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 200px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.badge-ya3 { background: #cffafe; color: var(--ya3); }
+.badge-ya4 { background: #ede9fe; color: var(--ya4); }
+.badge-ya5 { background: #e0e7ff; color: var(--ya5); }
+.badge-ya6 { background: #dcfce7; color: var(--ya6); }
+.badge-same { background: #dcfce7; color: var(--green); }
+.badge-diff { background: #fef3c7; color: var(--orange); }
+
+.instances {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+@media (max-width: 600px) {
+  .instances { grid-template-columns: 1fr; }
+}
+
+.instance {
+  padding: 14px 18px;
+  border-right: 1px solid var(--nb-bd);
+}
+.instance:last-child { border-right: none; }
+@media (max-width: 600px) {
+  .instance { border-right: none; border-bottom: 1px solid var(--nb-bd); }
+  .instance:last-child { border-bottom: none; }
+}
+
+.instance-meta {
+  font-size: 12px;
+  color: var(--nb-sub);
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.q-num {
+  font-size: 11px;
+  background: var(--nb-bg);
+  border: 1px solid var(--nb-bd);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: monospace;
+}
+
+.option-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.option-list li {
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--nb-bd);
+  line-height: 1.5;
+}
+.option-list li.correct {
+  background: #f0fdf4;
+  border-color: #86efac;
+  font-weight: 600;
+  color: #15803d;
+}
+.option-list li.correct::after {
+  content: ' ✓';
+  color: var(--green);
+}
+
+.yamol-section {
+  padding: 12px 18px;
+  border-top: 1px solid var(--nb-bd);
+  background: var(--nb-bg);
+}
+.yamol-section .yamol-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nb-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.yamol-entry {
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--nb-bdk);
+  background: #fff;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+.yamol-year {
+  font-weight: 700;
+  color: #9a3412;
+  margin-right: 6px;
+}
+.yamol-none {
+  font-size: 12px;
+  color: var(--nb-sub);
+  font-style: italic;
+}
+.yamol-link {
+  color: var(--ya4);
+  text-decoration: none;
+  font-size: 11px;
+}
+.yamol-link:hover { text-decoration: underline; }
+
+.note {
+  font-size: 12px;
+  color: var(--nb-sub);
+  padding: 8px 18px;
+  border-top: 1px solid var(--nb-bd);
+  background: var(--nb-bg);
+}
+
+/* image question notice */
+.img-note {
+  padding: 10px 18px;
+  font-size: 12px;
+  color: var(--nb-sub);
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html">← 考古題練習</a>
+  <h1>重複考題統計</h1>
+</div>
+
+<div class="container">
+
+  <div class="summary-card">
+    <h2>📊 重複題幹分析</h2>
+    <p>在 111–115 年（共 2880 題）中，找到 <strong>7 組</strong>題幹完全相同的考題。這些題目使用相同的問法，但選項內容不同、出題年份不同。這是高效備考的重點：<strong>同一個知識點，出題者會從不同角度考你</strong>。</p>
+    <p style="margin-top:6px;">欄位說明：「答案相同」表示兩年考出的正確選項位置相同（A/B/C/D），但選項文字仍可能不同。</p>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="num">7</div>
+        <div class="lbl">重複題組</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">14</div>
+        <div class="lbl">涉及題目</div>
+      </div>
+      <div class="stat-box" style="--num-color:var(--green)">
+        <div class="num" style="color:var(--green)">3</div>
+        <div class="lbl">答案相同</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" style="color:var(--orange)">4</div>
+        <div class="lbl">答案不同</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUP 1 -->
+  <div class="group-card">
+    <div class="group-header">
+      <span class="badge badge-ya3">牙三</span>
+      <span class="stem">關於植體探測深度的敘述，下列何者錯誤？</span>
+      <span class="badge badge-same">答案相同 (D)</span>
+    </div>
+    <div class="instances">
+      <div class="instance">
+        <div class="instance-meta">
+          111年第1次第79題
+          <span class="q-num">ya3-111-1-79</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 植體周圍之探測深度較自然牙的變異較大</li>
+          <li>(B) 植體探測深度加深，臨床上不一定代表有較多的附連喪失</li>
+          <li>(C) 在發炎情況時，植體周圍的探測位置較自然牙更貼近於齒槽骨</li>
+          <li class="correct">(D) 探測深度在3 mm時，即視為植體周圍黏膜炎（peri-mucositis）</li>
+        </ul>
+      </div>
+      <div class="instance">
+        <div class="instance-meta">
+          115年第1次第79題
+          <span class="q-num">ya3-115-1-79</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 以傳統不鏽鋼探針施以 0.25N 的力道探測植體，不會對植體周圍黏膜造成不良反應</li>
+          <li>(B) 植體周圍不像自然牙有垂直牙根走向的結締組織膠原纖維</li>
+          <li>(C) 在發炎的植體周圍探測時，探針常會穿入結締組織到靠近齒槽骨的位置</li>
+          <li class="correct">(D) 自然牙周圍之探測深度變異程度比植體來得大</li>
+        </ul>
+      </div>
+    </div>
+    <div class="yamol-section">
+      <div class="yamol-title">阿摩歷年 (111年以前)</div>
+      <div class="yamol-none">未找到相同題幹的歷年紀錄</div>
+    </div>
+    <div class="note">111→115 同年位（第79題）；考點：植體探測 vs. 自然牙，兩題各考「不正確」的陷阱不同</div>
+  </div>
+
+  <!-- GROUP 2 -->
+  <div class="group-card">
+    <div class="group-header">
+      <span class="badge badge-ya3">牙三</span>
+      <span class="stem">使用樹脂黏合劑黏著陶瓷嵌體的敘述，下列何者錯誤？</span>
+      <span class="badge badge-diff">答案不同 (C / A)</span>
+    </div>
+    <div class="instances">
+      <div class="instance">
+        <div class="instance-meta">
+          113年第1次第48題
+          <span class="q-num">ya3-113-1-48</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 酸蝕後的牙本質可以 chlorhexidine 再濕潤</li>
+          <li>(B) 陶瓷嵌體內面應以氫氟酸（hydrofluoric acid）處理</li>
+          <li class="correct">(C) 應使用光聚合，三步驟酸蝕及沖洗（light-cured, three-step etch-and-rinse）黏合劑系統</li>
+          <li>(D) 牙本質酸蝕15秒，牙釉質酸蝕30秒</li>
+        </ul>
+      </div>
+      <div class="instance">
+        <div class="instance-meta">
+          115年第1次第49題
+          <span class="q-num">ya3-115-1-49</span>
+        </div>
+        <ul class="option-list">
+          <li class="correct">(A) 臨床使用雙重聚合（dual cure）樹脂黏合劑，可減少光照時間</li>
+          <li>(B) 樹脂黏合劑可與牙釉質、牙本質以及陶瓷嵌體黏結</li>
+          <li>(C) 陶瓷嵌體經樹脂黏合劑黏結後可被強化</li>
+          <li>(D) 樹脂黏合劑可降低微滲漏</li>
+        </ul>
+      </div>
+    </div>
+    <div class="yamol-section">
+      <div class="yamol-title">阿摩歷年 (111年以前) — 相關題（選項不同）</div>
+      <div class="yamol-entry">
+        <span class="yamol-year">107年</span>107-1 牙三 第33題 — 陶瓷嵌體黏著操作步驟排列順序（氫氟酸→矽烷→bonding agent）
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=樹脂黏合劑黏著陶瓷嵌體" target="_blank">→ 阿摩 #67632</a>
+      </div>
+      <div class="yamol-entry">
+        <span class="yamol-year">94年</span>94-1 牙三 第48題 — 陶瓷嵌體黏著面酸蝕後應以何種製劑增加接合強度
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=樹脂黏合劑黏著陶瓷嵌體" target="_blank">→ 阿摩 #99795</a>
+      </div>
+    </div>
+    <div class="note">考點：陶瓷嵌體黏著系統（dual cure, HF acid, silane, CHX, 酸蝕時間）；113考「不能用哪種」、115考「哪個說法錯」</div>
+  </div>
+
+  <!-- GROUP 3 -->
+  <div class="group-card">
+    <div class="group-header">
+      <span class="badge badge-ya3">牙三</span>
+      <span class="stem">關於汞齊（amalgam）的敘述，下列何者錯誤？</span>
+      <span class="badge badge-diff">答案不同 (A / C)</span>
+    </div>
+    <div class="instances">
+      <div class="instance">
+        <div class="instance-meta">
+          114年第1次第45題
+          <span class="q-num">ya3-114-1-45</span>
+        </div>
+        <ul class="option-list">
+          <li class="correct">(A) 高銅汞齊是指含有重量 40% 的銅</li>
+          <li>(B) 高銅汞齊與低銅汞齊相比，消除了比較弱的 gamma 2 相</li>
+          <li>(C) 含鋅汞齊較不含鋅的汞齊機械性質高</li>
+          <li>(D) 含鋅高銅汞齊受水分污染時，較含鋅銅汞齊不會產生延遲膨脹（delayed expansion）</li>
+        </ul>
+      </div>
+      <div class="instance">
+        <div class="instance-meta">
+          114年第2次第45題
+          <span class="q-num">ya3-114-2-45</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 以粉末的種類分成切削型（lathe-cut）、混合型（admixed）、球型（spheres）</li>
+          <li>(B) 可經由腐蝕產物（corrosion product）來降低邊緣滲漏</li>
+          <li class="correct">(C) 汞齊中的金屬鍵（metallic bonds）很容易斷裂</li>
+          <li>(D) 成分中含有約 50% 的汞</li>
+        </ul>
+      </div>
+    </div>
+    <div class="yamol-section">
+      <div class="yamol-title">阿摩歷年 (111年以前)</div>
+      <div class="yamol-none">未找到相同題幹的歷年紀錄（高銅汞齊相關問法首見於111年後）</div>
+    </div>
+    <div class="note">同年（114）上下半年各考一次；考點廣泛，高銅汞齊 γ2 相、含鋅汞齊機械性質、金屬鍵、汞含量等</div>
+  </div>
+
+  <!-- GROUP 4 -->
+  <div class="group-card">
+    <div class="group-header">
+      <span class="badge badge-ya4">牙四</span>
+      <span class="stem">圖中黑色箭頭所指的解剖位置為何？</span>
+      <span class="badge badge-diff">答案不同（選項對調）</span>
+    </div>
+    <div class="img-note">此為放射線圖片題，兩年出的圖像相同但選項順序對調（left/right maxilla/mandible）</div>
+    <div class="instances">
+      <div class="instance">
+        <div class="instance-meta">
+          111年第1次第77題
+          <span class="q-num">ya4-111-1-77</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) right maxilla</li>
+          <li>(B) left maxilla</li>
+          <li>(C) right mandible</li>
+          <li class="correct">(D) left mandible</li>
+        </ul>
+      </div>
+      <div class="instance">
+        <div class="instance-meta">
+          112年第1次第77題
+          <span class="q-num">ya4-112-1-77</span>
+        </div>
+        <ul class="option-list">
+          <li class="correct">(A) left maxilla</li>
+          <li>(B) right maxilla</li>
+          <li>(C) left mandible</li>
+          <li>(D) right mandible</li>
+        </ul>
+      </div>
+    </div>
+    <div class="yamol-section">
+      <div class="yamol-title">阿摩歷年 (111年以前)</div>
+      <div class="yamol-none">圖片題無法有效搜尋（題目文字過短）</div>
+    </div>
+    <div class="note">注意：111年答案為 left mandible (D)，112年答案為 left maxilla (A) — 兩年圖片不同！考的是不同解剖部位</div>
+  </div>
+
+  <!-- GROUP 5 -->
+  <div class="group-card">
+    <div class="group-header">
+      <span class="badge badge-ya4">牙四</span>
+      <span class="stem">關於下顎枝垂直截骨術（vertical ramus osteotomy）的敘述，下列何者錯誤？</span>
+      <span class="badge badge-same">答案相同 (C)</span>
+    </div>
+    <div class="instances">
+      <div class="instance">
+        <div class="instance-meta">
+          113年第2次第32題
+          <span class="q-num">ya4-113-2-32</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 骨切線是自乙狀切迹（sigmoid notch）至下顎緣（mandibular border）</li>
+          <li>(B) 為了維持近端骨塊血液循環，骨塊上的骨膜及肌肉組織應儘量不要剝離</li>
+          <li class="correct">(C) 截骨路徑應在下顎小舌（lingula of mandible）之前</li>
+          <li>(D) 可用於下顎前突（mandibular prognathism）或顏面不對稱之病人</li>
+        </ul>
+      </div>
+      <div class="instance">
+        <div class="instance-meta">
+          114年第2次第32題
+          <span class="q-num">ya4-114-2-32</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 可以從顎下（submandibular）切線暴露出下顎枝</li>
+          <li>(B) 可以從口內切線暴露出下顎枝</li>
+          <li class="correct">(C) 遠心段（distal segment）是指包含髁（condyle）的骨段</li>
+          <li>(D) 可以使用顎間固定（IMF），也可以用鋼線、骨板或骨釘作內固定</li>
+        </ul>
+      </div>
+    </div>
+    <div class="yamol-section">
+      <div class="yamol-title">阿摩歷年 (111年以前) — 相關題（不同措辭）</div>
+      <div class="yamol-entry">
+        <span class="yamol-year">105年</span>105-2 牙四 第33題 — 關於垂直下顎枝截開術（vertical ramus osteotomy），何者錯誤？答案 D
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=下顎枝垂直截骨術" target="_blank">→ 阿摩 #54709</a>
+      </div>
+    </div>
+    <div class="note">同年位（第32題）連續兩年；VRO 是正顎手術高頻考點，近心段/遠心段定義、骨切線位置是常見陷阱</div>
+  </div>
+
+  <!-- GROUP 6 -->
+  <div class="group-card">
+    <div class="group-header">
+      <span class="badge badge-ya5">牙五</span>
+      <span class="stem">關於義齒性口炎（denture stomatitis）的敘述，下列何者正確？</span>
+      <span class="badge badge-same">答案相同 (C)</span>
+    </div>
+    <div class="instances">
+      <div class="instance">
+        <div class="instance-meta">
+          113年第2次第1題
+          <span class="q-num">ya5-113-2-1</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 出現在下顎的比例比上顎高</li>
+          <li>(B) 根據1962年Newton的分類，第二型狀況是硬腭有出現發炎性的增生</li>
+          <li class="correct">(C) 口角炎（angular cheilitis）常與念珠菌義齒性口炎相關</li>
+          <li>(D) 口乾症（xerostomia）並非可能的肇因</li>
+        </ul>
+      </div>
+      <div class="instance">
+        <div class="instance-meta">
+          114年第1次第41題
+          <span class="q-num">ya5-114-1-41</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) 多半發生在樹脂基底（resin base）下，不常發生在金屬基底（metal base）下</li>
+          <li>(B) 患者經常會抱怨疼痛</li>
+          <li class="correct">(C) 受影響之黏膜多會紅腫，但表面平滑</li>
+          <li>(D) 只需局部投與抗黴菌藥物即可治癒</li>
+        </ul>
+      </div>
+    </div>
+    <div class="yamol-section">
+      <div class="yamol-title">阿摩歷年 (111年以前) — 此題型出現頻率極高</div>
+      <div class="yamol-entry">
+        <span class="yamol-year">103年</span>103-1 牙五 第1題 — 有關義齒性口炎的敘述，何者正確？答案 C
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩 #35901</a>
+      </div>
+      <div class="yamol-entry">
+        <span class="yamol-year">102年</span>102-1 牙五 第2題 — Newton's分類第二型（diffuse erythema）
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩 #35981</a>
+      </div>
+      <div class="yamol-entry">
+        <span class="yamol-year">101年</span>101-2 牙五 — 義齒性口炎相關考題 ×2
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩</a>
+      </div>
+      <div class="yamol-entry">
+        <span class="yamol-year">99–98年</span>99-2、98-1 牙五 — 義齒性口炎相關考題
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩</a>
+      </div>
+    </div>
+    <div class="note">超高頻考題，近20年幾乎每年必考；核心考點：上顎 &gt; 下顎、Candida albicans、口角炎相關、Newton分類、金屬基底較少發生</div>
+  </div>
+
+  <!-- GROUP 7 -->
+  <div class="group-card">
+    <div class="group-header">
+      <span class="badge badge-ya6">牙六</span>
+      <span class="stem">關於功能性矯正裝置的敘述，下列何者錯誤？</span>
+      <span class="badge badge-diff">答案不同 (A / D)</span>
+    </div>
+    <div class="instances">
+      <div class="instance">
+        <div class="instance-meta">
+          113年第1次第9題
+          <span class="q-num">ya6-113-1-9</span>
+        </div>
+        <ul class="option-list">
+          <li class="correct">(A) Activator 之主要構造用於調整牙齒位置（tooth-moving parts）</li>
+          <li>(B) Bionator 具有頰側弧線可排開臉頰肌肉（screen off muscle forces）</li>
+          <li>(C) Frankel appliance 強調須整天配戴（full-time wear）</li>
+          <li>(D) Twin block 可配合 jackscrew 擴張牙弓</li>
+        </ul>
+      </div>
+      <div class="instance">
+        <div class="instance-meta">
+          114年第2次第9題
+          <span class="q-num">ya6-114-2-9</span>
+        </div>
+        <ul class="option-list">
+          <li>(A) Herbst appliance 屬於 passive tooth-borne</li>
+          <li>(B) Bionator with expansion screws 屬於 active tooth-borne</li>
+          <li>(C) Frankel appliance 屬於 tissue-borne</li>
+          <li class="correct">(D) Hybrid functional appliance 多用於治療成年人顎骨不對稱的病人</li>
+        </ul>
+      </div>
+    </div>
+    <div class="yamol-section">
+      <div class="yamol-title">阿摩歷年 (111年以前) — 相關題（不同問法）</div>
+      <div class="yamol-entry">
+        <span class="yamol-year">100年</span>100-2 牙六 第21題 — 下列何者屬於固定式功能性裝置？答案 D（Herbst）
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=功能性矯正裝置Activator" target="_blank">→ 阿摩 #36027</a>
+      </div>
+      <div class="yamol-entry">
+        <span class="yamol-year">100年</span>100-1 牙六 第12題 — 哪些功能性矯正裝置屬於固定式？答案 B（Herbst+Jasper）
+        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=功能性矯正裝置Activator" target="_blank">→ 阿摩 #36050</a>
+      </div>
+    </div>
+    <div class="note">同年位（第9題）連續兩年；113考各裝置特性、114考分類（tooth-borne vs tissue-borne）；Activator 是 tissue-borne（非 tooth-moving）為常見易錯點</div>
+  </div>
+
+</div>
+
+</body>
+</html>

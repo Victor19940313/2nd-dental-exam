@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude auth:*)",
+      "Bash(claude --version)",
+      "Bash(git -C \"/c/Users/USER/Desktop/2nd-dental-exam-sync\" status)"
+    ]
+  }
+}

@@ -1,0 +1,4822 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>🦷 牙醫國考練習本</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --purple: #7c3aed;
+        --purple-light: #ede9fe;
+        --purple-dark: #5b21b6;
+        --ya3: #3b82f6;
+        --ya4: #7c3aed;
+        --ya5: #0d9488;
+        --ya6: #d97706;
+        --red: #ef4444;
+        --amber: #f59e0b;
+        --green: #22c55e;
+        --gray: #64748b;
+        --bg: #f1f5f9;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Noto Sans TC", sans-serif;
+        background: var(--bg);
+        min-height: 100vh;
+      }
+
+      /* ════ HEADER ════ */
+      .header {
+        background: linear-gradient(135deg, #4c1d95, var(--purple));
+        color: white;
+        padding: 0.8rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+      .header h1 {
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .btn-mode {
+        padding: 0.3rem 0.7rem;
+        border-radius: 20px;
+        border: 1.5px solid rgba(255, 255, 255, 0.5);
+        background: transparent;
+        color: white;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-mode.active {
+        background: white;
+        color: var(--purple-dark);
+        border-color: white;
+        font-weight: 600;
+      }
+
+      /* ════ HOME SCREEN ════ */
+      #screen-home {
+        padding: 1rem;
+      }
+      .home-layout {
+        display: flex;
+        gap: 1rem;
+        max-width: 980px;
+        margin: 0 auto;
+        align-items: flex-start;
+      }
+      .home-main {
+        flex: 1;
+        min-width: 0;
+        max-width: 600px;
+      }
+
+      .topic-sidebar {
+        width: 210px;
+        flex-shrink: 0;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 58px;
+        max-height: calc(100vh - 70px);
+        overflow-y: auto;
+      }
+      .topic-sidebar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .topic-sidebar::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 4px;
+      }
+      .topic-sidebar-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--gray);
+        letter-spacing: 0.05em;
+        padding: 0.65rem 0.85rem 0.45rem;
+        border-bottom: 1px solid #f1f5f9;
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 1;
+        text-transform: uppercase;
+      }
+      /* Daily log section */
+      .daily-log-section {
+        padding: 0.55rem 0.85rem 0.45rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .daily-log-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--gray);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+      }
+      .daily-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 36px;
+      }
+      .daily-bar-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+      }
+      .daily-bar {
+        width: 100%;
+        background: var(--purple-light);
+        border-radius: 3px 3px 0 0;
+        min-height: 2px;
+        transition: height 0.2s;
+      }
+      .daily-bar.today {
+        background: var(--purple);
+      }
+      .daily-bar-label {
+        font-size: 0.56rem;
+        color: var(--gray);
+        margin-top: 2px;
+      }
+      .daily-today-count {
+        font-size: 0.75rem;
+        color: var(--purple-dark);
+        font-weight: 700;
+        margin-top: 0.3rem;
+      }
+
+      /* Status chips at top of sidebar */
+      .ts-status-bar {
+        display: flex;
+        gap: 0.3rem;
+        flex-wrap: wrap;
+        padding: 0.45rem 0.6rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .ts-chip {
+        padding: 0.2rem 0.45rem;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        border: 1.5px solid #cbd5e0;
+        background: white;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.12s;
+        color: #475569;
+      }
+      .ts-chip.sel {
+        background: var(--purple);
+        color: white;
+        border-color: var(--purple);
+        font-weight: 600;
+      }
+
+      /* GO button */
+      .ts-go-wrap {
+        padding: 0.6rem 0.7rem;
+        border-top: 1px solid #f1f5f9;
+        position: sticky;
+        bottom: 0;
+        background: white;
+      }
+      .ts-go-btn {
+        width: 100%;
+        padding: 0.55rem;
+        background: var(--purple);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: opacity 0.15s;
+      }
+      .ts-go-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .ts-go-btn:not(:disabled):active {
+        opacity: 0.85;
+      }
+
+      /* Subject group (level 1) */
+      .ts-subj-hdr {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #1e293b;
+        user-select: none;
+        border-bottom: 1px solid #f1f5f9;
+        background: #f8fafc;
+      }
+      .ts-subj-hdr:hover {
+        background: #eef2ff;
+      }
+      .ts-subj-grp.collapsed .ts-subj-body {
+        display: none;
+      }
+      .ts-arrow {
+        font-size: 0.6rem;
+        color: var(--gray);
+        transition: transform 0.15s;
+      }
+      .ts-subj-grp.collapsed .ts-arrow {
+        transform: rotate(-90deg);
+      }
+
+      /* Category items (level 2 — clickable) */
+      .topic-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.42rem 0.8rem 0.42rem 1.5rem;
+        font-size: 0.81rem;
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: all 0.1s;
+        color: #334155;
+        border-bottom: 1px solid #f8fafc;
+      }
+      .topic-item:hover {
+        background: #f5f3ff;
+        border-left-color: #ddd6fe;
+      }
+      .topic-item.active {
+        background: #ede9fe;
+        color: var(--purple);
+        font-weight: 700;
+        border-left-color: var(--purple);
+      }
+
+      .topic-count {
+        font-size: 0.68rem;
+        color: #94a3b8;
+        background: #f1f5f9;
+        border-radius: 10px;
+        padding: 0.05rem 0.35rem;
+        flex-shrink: 0;
+        margin-left: 0.3rem;
+      }
+      .topic-item.active .topic-count {
+        background: #ddd6fe;
+        color: var(--purple);
+      }
+      .ts-subj-badge {
+        font-size: 0.68rem;
+        font-weight: 400;
+        color: var(--gray);
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 0.03rem 0.35rem;
+      }
+
+      @media (max-width: 720px) {
+        .home-layout {
+          flex-direction: column;
+        }
+        .topic-sidebar {
+          width: 100%;
+          max-height: 220px;
+          position: static;
+        }
+      }
+
+      .stats-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1.1rem 1.2rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        margin-bottom: 0.9rem;
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+      }
+      .stat-item .num {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--purple);
+      }
+      .stat-item .lbl {
+        font-size: 0.72rem;
+        color: var(--gray);
+        margin-top: 0.1rem;
+      }
+
+      .section-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--gray);
+        margin: 1rem 0 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .filter-card {
+        background: white;
+        border-radius: 14px;
+        padding: 1rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        margin-bottom: 0.9rem;
+      }
+      .filter-label {
+        font-size: 0.8rem;
+        color: var(--gray);
+        margin-bottom: 0.45rem;
+        font-weight: 500;
+      }
+      .chip-row {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+      .chip {
+        padding: 0.28rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        border: 1.5px solid #cbd5e0;
+        background: white;
+        cursor: pointer;
+        transition: all 0.12s;
+      }
+      .chip.sel {
+        font-weight: 600;
+      }
+      .chip-ya3.sel {
+        background: #dbeafe;
+        border-color: var(--ya3);
+        color: #1d4ed8;
+      }
+      .chip-ya4.sel {
+        background: #ede9fe;
+        border-color: var(--ya4);
+        color: var(--purple-dark);
+      }
+      .chip-ya5.sel {
+        background: #ccfbf1;
+        border-color: var(--ya5);
+        color: #0f766e;
+      }
+      .chip-ya6.sel {
+        background: #fef3c7;
+        border-color: var(--ya6);
+        color: #92400e;
+      }
+      .chip-year.sel {
+        background: #f3e8ff;
+        border-color: var(--purple);
+        color: var(--purple-dark);
+      }
+      .chip-status.sel {
+        border-color: var(--purple);
+        background: var(--purple-light);
+        color: var(--purple-dark);
+      }
+
+      .start-btn {
+        width: 100%;
+        padding: 0.85rem;
+        background: var(--purple);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+        margin-top: 0.3rem;
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+      }
+      .start-btn:active {
+        transform: scale(0.98);
+      }
+      .start-btn.secondary {
+        background: white;
+        color: var(--purple);
+        border: 2px solid var(--purple);
+        box-shadow: none;
+        margin-top: 0.5rem;
+      }
+
+      /* ════ PRACTICE SCREEN ════ */
+      #screen-practice {
+        display: none;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+
+      .practice-progress {
+        background: white;
+        padding: 0.6rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        border-bottom: 1px solid #e2e8f0;
+        position: sticky;
+        top: 52px;
+        z-index: 90;
+      }
+      .progress-text {
+        font-size: 0.78rem;
+        color: var(--gray);
+        white-space: nowrap;
+      }
+      .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--purple);
+        border-radius: 3px;
+        transition: width 0.3s;
+      }
+      .btn-exit {
+        padding: 0.25rem 0.7rem;
+        border-radius: 8px;
+        border: 1.5px solid #c4b5fd;
+        background: #f5f3ff;
+        font-size: 0.8rem;
+        color: var(--purple);
+        cursor: pointer;
+        white-space: nowrap;
+        font-weight: 600;
+      }
+
+      .question-area {
+        padding: 0.9rem 1rem;
+      }
+
+      .q-badges {
+        display: flex;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+      }
+      .badge {
+        padding: 0.14rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+      .badge-ya3 {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+      .badge-ya4 {
+        background: #ede9fe;
+        color: var(--purple-dark);
+      }
+      .badge-ya5 {
+        background: #ccfbf1;
+        color: #0f766e;
+      }
+      .badge-ya6 {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge-meta {
+        background: #f1f5f9;
+        color: var(--gray);
+      }
+
+      .q-text {
+        font-size: 0.95rem;
+        line-height: 1.75;
+        color: #1e293b;
+        margin-bottom: 1rem;
+      }
+
+      /* Options */
+      .options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        margin-bottom: 1rem;
+      }
+      .opt-btn {
+        width: 100%;
+        text-align: left;
+        padding: 0.7rem 0.9rem;
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        font-size: 0.88rem;
+        line-height: 1.55;
+        cursor: pointer;
+        transition: all 0.15s;
+        color: #1e293b;
+      }
+      .opt-btn:active {
+        transform: scale(0.99);
+      }
+      .opt-btn.selected-wrong {
+        border-color: var(--red);
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .opt-btn.selected-right {
+        border-color: var(--green);
+        background: #dcfce7;
+        color: #166534;
+      }
+      .opt-btn.show-correct {
+        border-color: var(--green);
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 600;
+      }
+      .opt-btn.dim {
+        opacity: 0.45;
+      }
+      .opt-btn:disabled {
+        cursor: default;
+      }
+      .opt-letter {
+        font-weight: 700;
+        margin-right: 0.4rem;
+      }
+
+      /* Result area */
+      .result-area {
+        display: none;
+        padding: 0 1rem 0.5rem;
+      }
+      .result-banner {
+        padding: 0.65rem 0.9rem;
+        border-radius: 10px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .result-correct {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .result-wrong {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      /* Explanation */
+      .expl-box {
+        background: #f8fafc;
+        border-left: 3px solid var(--purple);
+        padding: 0.65rem 0.85rem;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.83rem;
+        line-height: 1.7;
+        color: #334155;
+        margin-bottom: 0.85rem;
+        display: none;
+      }
+      .expl-box.visible {
+        display: block;
+      }
+      .expl-source {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 0.35rem;
+      }
+      .expl-key {
+        color: #7c3aed;
+        font-weight: 700;
+      }
+      .expl-opt {
+        color: #0369a1;
+        font-weight: 700;
+      }
+      .expl-body p {
+        margin: 0 0 0.6em 0;
+      }
+      .expl-body p:last-child {
+        margin-bottom: 0;
+      }
+      .expl-body p.expl-li {
+        padding-left: 1.6em;
+        text-indent: -1.6em;
+        margin: 0 0 0.5em 0;
+        line-height: 1.7;
+      }
+      .cross-links, .similar-qs {
+        margin-top: 0.6em;
+        padding: 0.5em 0.7em;
+        background: #f0fdf4;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        line-height: 1.8;
+      }
+      .similar-qs { background: #eff6ff; }
+      .cross-label {
+        font-weight: 600;
+        color: #374151;
+        margin-right: 0.3em;
+      }
+      .cross-tag {
+        display: inline-block;
+        background: #dcfce7;
+        color: #166534;
+        padding: 0.15em 0.5em;
+        border-radius: 4px;
+        margin: 0.15em 0.2em;
+        font-size: 0.78rem;
+      }
+      .sim-link {
+        display: inline-block;
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.15em 0.5em;
+        border-radius: 4px;
+        margin: 0.15em 0.2em;
+        font-size: 0.78rem;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .sim-link:hover { background: #bfdbfe; }
+      .expl-box img {
+        max-width: 100%;
+        border-radius: 6px;
+        margin-top: 0.4rem;
+      }
+      .expl-section {
+        font-weight: 700;
+        color: #1d4ed8;
+        background: #eff6ff;
+        border-radius: 4px;
+        padding: 0.05rem 0.35rem;
+        font-size: 0.78rem;
+        display: inline;
+        margin-right: 0.2rem;
+      }
+      .expl-details {
+        margin: 0.3rem 0;
+      }
+      .expl-details summary {
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+      }
+      .expl-details summary::-webkit-details-marker {
+        display: none;
+      }
+      .expl-details summary::marker {
+        display: none;
+      }
+      .expl-details-body {
+        padding: 0.3rem 0 0 0.4rem;
+        border-left: 2px solid #bfdbfe;
+        margin-top: 0.3rem;
+      }
+      .expl-correct-k {
+        color: #16a34a;
+      }
+      .expl-wrong-k {
+        color: #dc2626;
+      }
+      .kw-ok {
+        color: #16a34a;
+        font-weight: 600;
+      }
+      .kw-wrong {
+        color: #dc2626;
+        font-weight: 600;
+      }
+      .kw-num {
+        color: #0891b2;
+        font-weight: 600;
+      }
+      .kw-warn {
+        color: #d97706;
+        font-weight: 700;
+      }
+      .btn-show-expl {
+        background: none;
+        border: 1.5px solid var(--purple);
+        color: var(--purple);
+        padding: 0.35rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-bottom: 0.8rem;
+      }
+
+      /* Mark row */
+      .mark-row {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 0.8rem;
+      }
+      .mark-label {
+        font-size: 0.78rem;
+        color: var(--gray);
+      }
+      .btn-mark {
+        padding: 0.32rem 0.72rem;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-mark-give_up {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+      .btn-mark-learning {
+        background: #fef3c7;
+        color: #b45309;
+      }
+      .btn-mark-understood {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .btn-mark.active {
+        box-shadow: 0 0 0 2px currentColor;
+      }
+      .btn-count {
+        padding: 0.32rem 0.7rem;
+        border-radius: 8px;
+        border: 1.5px solid #e2e8f0;
+        background: white;
+        font-size: 0.78rem;
+        color: var(--gray);
+        cursor: pointer;
+      }
+      .btn-count:hover {
+        border-color: var(--purple);
+        color: var(--purple);
+      }
+
+      /* Navigation */
+      .nav-row {
+        display: flex;
+        gap: 0.6rem;
+        padding: 0.8rem 1rem 1.5rem;
+        position: sticky;
+        bottom: 0;
+        background: var(--bg);
+        border-top: 1px solid #e2e8f0;
+      }
+      .btn-next {
+        flex: 1;
+        padding: 0.8rem;
+        background: var(--purple);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: none;
+      }
+      .btn-next:active {
+        transform: scale(0.98);
+      }
+      .btn-skip {
+        padding: 0.8rem 1.1rem;
+        background: white;
+        color: var(--gray);
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+      .btn-edit-q {
+        padding: 0.8rem 0.9rem;
+        background: white;
+        color: var(--gray);
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+      .btn-prev {
+        padding: 0.8rem 0.9rem;
+        background: white;
+        color: var(--gray);
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+      .btn-edit-expl {
+        background: none;
+        border: 1.5px solid #94a3b8;
+        color: #64748b;
+        padding: 0.35rem 0.85rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-bottom: 0.8rem;
+      }
+
+      /* ════ BROWSE SCREEN ════ */
+      #screen-browse {
+        display: none;
+      }
+
+      .browse-filter {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.55rem 0.9rem;
+        display: flex;
+        gap: 0.4rem;
+        overflow-x: auto;
+        position: sticky;
+        top: 52px;
+        z-index: 90;
+      }
+      .browse-filter::-webkit-scrollbar {
+        display: none;
+      }
+      .bf-chip {
+        flex-shrink: 0;
+        padding: 0.28rem 0.65rem;
+        border-radius: 20px;
+        border: 1.5px solid #cbd5e0;
+        background: white;
+        font-size: 0.77rem;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .bf-chip.sel {
+        background: var(--purple);
+        color: white;
+        border-color: var(--purple);
+      }
+      .bf-divider {
+        width: 1px;
+        background: #e2e8f0;
+        flex-shrink: 0;
+      }
+
+      .search-wrap {
+        padding: 0.5rem 0.9rem;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .search-input {
+        width: 100%;
+        padding: 0.42rem 0.8rem;
+        border: 1.5px solid #cbd5e0;
+        border-radius: 8px;
+        font-size: 0.87rem;
+        outline: none;
+      }
+      .search-input:focus {
+        border-color: var(--purple);
+      }
+
+      .q-list {
+        padding: 0.7rem;
+        max-width: 820px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+      .q-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+      }
+      .q-card-hdr {
+        padding: 0.75rem 0.95rem;
+        cursor: pointer;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+      }
+      .q-card-hdr:active {
+        background: #fafafa;
+      }
+      .q-hdr-main {
+        flex: 1;
+      }
+      .q-hdr-right {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+      }
+      .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+      }
+      .dot-none {
+        background: #cbd5e0;
+      }
+      .dot-give_up {
+        background: var(--red);
+      }
+      .dot-learning {
+        background: var(--amber);
+      }
+      .dot-understood {
+        background: var(--green);
+      }
+      .chevron {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        transition: transform 0.2s;
+      }
+      .q-card.open .chevron {
+        transform: rotate(180deg);
+      }
+      .q-body {
+        display: none;
+        border-top: 1px solid #f1f5f9;
+        padding: 0.75rem 0.95rem;
+      }
+      .q-card.open .q-body {
+        display: block;
+      }
+      .q-opt-list {
+        margin-bottom: 0.75rem;
+      }
+      .q-opt {
+        padding: 0.3rem 0.55rem;
+        border-radius: 6px;
+        font-size: 0.83rem;
+        margin-bottom: 0.25rem;
+        line-height: 1.5;
+      }
+      .q-opt.correct {
+        background: #dcfce7;
+        color: #15803d;
+        font-weight: 600;
+      }
+      .q-opt.wrong {
+        color: var(--gray);
+      }
+      .q-expl {
+        background: #f8fafc;
+        border-left: 3px solid var(--purple);
+        padding: 0.6rem 0.8rem;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.82rem;
+        line-height: 1.7;
+        color: #334155;
+        margin-bottom: 0.75rem;
+      }
+      .q-expl img {
+        max-width: 100%;
+        border-radius: 6px;
+        margin-top: 0.4rem;
+      }
+      .q-expl .expl-source {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 0.3rem;
+      }
+      .no-expl {
+        color: #94a3b8;
+        font-size: 0.8rem;
+        font-style: italic;
+        margin-bottom: 0.75rem;
+      }
+      .q-actions {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .a-mark {
+        padding: 0.3rem 0.68rem;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.77rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .a-none {
+        background: #f1f5f9;
+        color: var(--gray);
+      }
+      .a-give_up {
+        background: #fee2e2;
+        color: #dc2626;
+      }
+      .a-learning {
+        background: #fef3c7;
+        color: #b45309;
+      }
+      .a-understood {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .a-count {
+        padding: 0.3rem 0.68rem;
+        border-radius: 8px;
+        border: 1.5px solid #e2e8f0;
+        background: white;
+        font-size: 0.77rem;
+        color: var(--gray);
+        cursor: pointer;
+      }
+      .a-edit {
+        margin-left: auto;
+        padding: 0.3rem 0.62rem;
+        border-radius: 8px;
+        border: 1.5px solid #e2e8f0;
+        background: white;
+        font-size: 0.77rem;
+        color: var(--gray);
+        cursor: pointer;
+      }
+
+      /* ════ EMPTY / LOADING ════ */
+      .empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #94a3b8;
+      }
+      .empty .icon {
+        font-size: 2.6rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* ════ EDIT MODAL ════ */
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 200;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: white;
+        border-radius: 18px 18px 0 0;
+        padding: 1.2rem 1rem;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.8rem;
+      }
+      .modal label {
+        font-size: 0.78rem;
+        color: var(--gray);
+        display: block;
+        margin-bottom: 0.28rem;
+      }
+      .modal textarea {
+        width: 100%;
+        min-height: 120px;
+        border: 1.5px solid #cbd5e0;
+        border-radius: 8px;
+        padding: 0.55rem 0.7rem;
+        font-size: 0.84rem;
+        line-height: 1.65;
+        resize: vertical;
+        outline: none;
+        font-family: inherit;
+      }
+      .modal textarea:focus {
+        border-color: var(--purple);
+      }
+      .modal input[type="text"] {
+        width: 100%;
+        padding: 0.42rem 0.7rem;
+        border: 1.5px solid #cbd5e0;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        outline: none;
+        font-family: inherit;
+      }
+      .modal input:focus {
+        border-color: var(--purple);
+      }
+      .modal-gap {
+        margin-top: 0.55rem;
+      }
+      .modal-btns {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.85rem;
+      }
+      .btn-save {
+        flex: 1;
+        padding: 0.6rem;
+        background: var(--purple);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-cancel {
+        flex: 1;
+        padding: 0.6rem;
+        background: #f1f5f9;
+        color: var(--gray);
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      /* ════ TOAST ════ */
+      .toast {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: white;
+        padding: 0.46rem 1.1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+        z-index: 300;
+        white-space: nowrap;
+      }
+      .toast.show {
+        opacity: 1;
+      }
+
+
+      /* ════ DATABASE SCREEN ════ */
+      #screen-db {
+        display: none;
+      }
+      .db-filter {
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.55rem 0.9rem;
+        display: flex;
+        gap: 0.4rem;
+        overflow-x: auto;
+        position: sticky;
+        top: 52px;
+        z-index: 90;
+      }
+      .db-filter::-webkit-scrollbar {
+        display: none;
+      }
+      .db-chip {
+        flex-shrink: 0;
+        padding: 0.28rem 0.65rem;
+        border-radius: 20px;
+        border: 1.5px solid #cbd5e0;
+        background: white;
+        font-size: 0.77rem;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .db-chip.sel {
+        background: var(--purple);
+        color: white;
+        border-color: var(--purple);
+      }
+      .db-search-wrap {
+        padding: 0.5rem 0.9rem;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .db-list {
+        padding: 0.7rem;
+        max-width: 820px;
+        margin: 0 auto;
+      }
+      .db-group-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--gray);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 0.6rem 0.3rem 0.3rem;
+        margin-top: 0.5rem;
+      }
+      .db-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+      }
+      .db-card-hdr {
+        padding: 0.7rem 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+      }
+      .db-card-hdr:active {
+        background: #fafafa;
+      }
+      .db-hdr-main {
+        flex: 1;
+      }
+      .db-hdr-right {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        flex-shrink: 0;
+      }
+      .db-card.open .db-chevron {
+        transform: rotate(180deg);
+      }
+      .db-chevron {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        transition: transform 0.2s;
+      }
+      .db-body {
+        display: none;
+        border-top: 1px solid #f1f5f9;
+        padding: 0.75rem 0.9rem;
+      }
+      .db-card.open .db-body {
+        display: block;
+      }
+      /* ════ DAILY LOG HISTORY ════ */
+      .daily-hist-wrap {
+        margin-top: 0.35rem;
+      }
+      .daily-hist-toggle {
+        font-size: 0.69rem;
+        color: var(--purple);
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        text-decoration: underline dotted;
+      }
+      .daily-hist-list {
+        margin-top: 0.3rem;
+      }
+      .daily-hist-item {
+        font-size: 0.69rem;
+        color: var(--gray);
+        padding: 0.18rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        line-height: 1.4;
+      }
+      .daily-hist-item:last-child {
+        border-bottom: none;
+      }
+
+      /* ════ EXAM MODE ════ */
+      .opt-btn.exam-sel {
+        background: #e0e7ff;
+        border-color: #6366f1;
+        color: #3730a3;
+        font-weight: 600;
+      }
+      .start-btn-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .start-btn-row .start-btn {
+        flex: 1;
+        margin-bottom: 0;
+      }
+      .start-btn.exam-btn {
+        background: #0d9488;
+      }
+
+      /* ════ EXAM RESULTS SCREEN ════ */
+      #screen-exam-results {
+        display: none;
+        padding: 1rem;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .exam-res-header {
+        background: white;
+        border-radius: 14px;
+        padding: 1.2rem;
+        text-align: center;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1rem;
+      }
+      .exam-res-score {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--purple);
+      }
+      .exam-res-sub {
+        font-size: 0.85rem;
+        color: var(--gray);
+        margin-top: 0.3rem;
+      }
+      .exam-res-section {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--gray);
+        margin: 0.8rem 0 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .exam-res-card {
+        background: white;
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        border-left: 4px solid var(--red);
+      }
+      .exam-res-qtext {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+      }
+      .exam-res-opts {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .exam-res-opt {
+        font-size: 0.82rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .exam-res-opt.wrong-sel {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .exam-res-opt.correct-ans {
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 600;
+      }
+      .exam-res-opt.dim {
+        color: #94a3b8;
+      }
+      .exam-res-actions {
+        display: flex;
+        gap: 0.6rem;
+        margin-top: 1rem;
+      }
+      .exam-res-actions .start-btn {
+        flex: 1;
+        margin-bottom: 0;
+      }
+
+      .topic-tag {
+        display: inline-block;
+        padding: 0.12rem 0.45rem;
+        border-radius: 6px;
+        background: #ede9fe;
+        color: #5b21b6;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 0.4rem;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .topic-tag:hover {
+        background: #ddd6fe;
+      }
+      .db-topic-bar {
+        background: #f5f3ff;
+        border-bottom: 1px solid #ddd6fe;
+        padding: 0.4rem 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: #5b21b6;
+        font-weight: 600;
+      }
+      .db-topic-bar-clear {
+        margin-left: auto;
+        background: none;
+        border: 1px solid #c4b5fd;
+        color: #5b21b6;
+        border-radius: 6px;
+        padding: 0.1rem 0.5rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+      .db-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #94a3b8;
+      }
+      .db-empty .icon {
+        font-size: 2.4rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* ════ EXAM TIMER ════ */
+      .exam-timer {
+        background: rgba(220, 38, 38, 0.85);
+        border: 2px solid rgba(255, 100, 100, 0.9);
+        padding: 0.3rem 0.9rem;
+        border-radius: 20px;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: white;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.05em;
+        display: none;
+        cursor: default;
+      }
+      .exam-timer.warning {
+        background: rgba(239, 68, 68, 0.35);
+        border-color: rgba(239, 68, 68, 0.7);
+        animation: pulse-warn 0.8s infinite alternate;
+      }
+      @keyframes pulse-warn {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0.65;
+        }
+      }
+
+      /* ════ SCROLL EXAM ════ */
+      #screen-scroll-exam {
+        display: none;
+        padding: 0.8rem 0.9rem 2rem;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      .scroll-exam-topbar {
+        background: white;
+        border-radius: 12px;
+        padding: 0.7rem 1rem;
+        margin-bottom: 0.9rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        position: sticky;
+        top: 52px;
+        z-index: 50;
+      }
+      .scroll-exam-count {
+        font-size: 0.82rem;
+        color: var(--gray);
+        flex: 1;
+      }
+      .scroll-exam-submit {
+        padding: 0.4rem 0.9rem;
+        background: var(--purple);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .scroll-q-card {
+        background: white;
+        border-radius: 12px;
+        padding: 0.9rem 1rem 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.07);
+      }
+      .scroll-q-meta {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--gray);
+        margin-bottom: 0.35rem;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .scroll-q-text {
+        font-size: 0.9rem;
+        line-height: 1.65;
+        margin-bottom: 0.7rem;
+      }
+      .scroll-q-img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin-bottom: 0.7rem;
+        display: block;
+      }
+      .scroll-opts {
+        display: flex;
+        flex-direction: column;
+        gap: 0.28rem;
+      }
+      .scroll-opt {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1.5px solid #e2e8f0;
+        font-size: 0.87rem;
+        background: white;
+        transition:
+          border-color 0.12s,
+          background 0.12s;
+      }
+      .scroll-opt:hover:not(.locked) {
+        border-color: var(--purple);
+      }
+      .scroll-opt.sel {
+        background: var(--purple-light);
+        border-color: var(--purple);
+        color: var(--purple-dark);
+        font-weight: 600;
+      }
+      .scroll-opt.locked {
+        cursor: default;
+      }
+      .scroll-opt.show-correct {
+        background: #dcfce7;
+        border-color: #22c55e;
+        color: #15803d;
+        font-weight: 600;
+      }
+      .scroll-opt.show-wrong {
+        background: #fee2e2;
+        border-color: #ef4444;
+        color: #991b1b;
+        font-weight: 600;
+      }
+      .scroll-opt-letter {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+      .scroll-opt.sel .scroll-opt-letter {
+        background: var(--purple);
+        color: white;
+      }
+      .scroll-opt.show-correct .scroll-opt-letter {
+        background: #22c55e;
+        color: white;
+      }
+      .scroll-opt.show-wrong .scroll-opt-letter {
+        background: #ef4444;
+        color: white;
+      }
+      .scroll-result-badge {
+        margin-top: 0.6rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.3rem 0.65rem;
+        border-radius: 6px;
+        display: inline-block;
+      }
+      .scroll-result-badge.ok {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .scroll-result-badge.err {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .scroll-result-badge.skip {
+        background: #f1f5f9;
+        color: #64748b;
+      }
+      .scroll-exam-done-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        margin-bottom: 0.9rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      }
+      .scroll-exam-done-score {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--purple);
+      }
+
+      /* Timer option toggle */
+      .timer-toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.35rem 0.2rem;
+        font-size: 0.82rem;
+        color: var(--gray);
+        cursor: pointer;
+        user-select: none;
+      }
+      .timer-toggle-row input {
+        cursor: pointer;
+        accent-color: var(--purple);
+        width: 15px;
+        height: 15px;
+      }
+
+      /* ════ SETTINGS MODAL ════ */
+
+
+      @media (min-width: 640px) {
+        .overlay {
+          align-items: center;
+        }
+        .modal {
+          border-radius: 16px;
+          max-width: 640px;
+          max-height: 82vh;
+        }
+      }
+
+      /* ════════════════════════════════════════════
+   NOTEBOOK STYLE OVERRIDE v2
+════════════════════════════════════════════ */
+      body {
+        background-color: #f8f7f0 !important;
+        background-image:
+          linear-gradient(rgba(160, 155, 130, 0.18) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(160, 155, 130, 0.18) 1px, transparent 1px) !important;
+        background-size: 22px 22px !important;
+        background-attachment: fixed !important;
+        font-family:
+          "Noto Sans TC",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif !important;
+      }
+      .header {
+        background: #ffffff !important;
+        border-bottom: 1.5px solid #e4e0d4 !important;
+        box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07) !important;
+        color: #2d2a22 !important;
+      }
+      .header h1 {
+        color: #2d2a22 !important;
+      }
+      .btn-mode {
+        border-color: #c8c3b0 !important;
+        color: #2d2a22 !important;
+        background: #f0ede4 !important;
+      }
+      .btn-mode.active {
+        background: #3730a3 !important;
+        color: #ffffff !important;
+        border-color: #3730a3 !important;
+      }
+      /* Sidebar */
+      .topic-sidebar {
+        background: #fefdf8 !important;
+        border: 1.5px solid #e4e0d4 !important;
+      }
+      .topic-sidebar-title {
+        background: #fefdf8 !important;
+        color: #7a7060 !important;
+      }
+      /* Cards */
+      .question-card {
+        background: #ffffff !important;
+        border: 1.5px solid #e4e0d4 !important;
+      }
+      .question-card:hover {
+        border-color: #c8c3b0 !important;
+      }
+      /* Screens */
+      #screen-home,
+      #screen-quiz,
+      #screen-review {
+        background: transparent !important;
+      }
+      /* ════ Header user badge ════ */
+      .header-user{
+        display:inline-flex;align-items:center;justify-content:center;
+        width:24px;height:24px;border-radius:50%;
+        font-size:.72rem;font-weight:700;color:#fff;
+        margin-right:.2rem;flex-shrink:0;
+      }
+
+      /* ════ Flag button ════ */
+      .btn-flag{
+        padding:.35rem .8rem;border-radius:20px;
+        border:2px solid #ef4444;background:#fff5f5;
+        color:#ef4444;font-size:.78rem;font-weight:700;
+        cursor:pointer;transition:all .15s;
+      }
+      .btn-flag:hover{background:#fecaca;}
+      .btn-flag.flagged{
+        background:#ef4444;color:white;border-color:#ef4444;
+      }
+
+      /* ════ Wrongbook screen ════ */
+      #screen-wrongbook{padding:1rem;max-width:700px;margin:0 auto;}
+      .wb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+      .wb-title{font-size:1.15rem;font-weight:800;}
+      .wb-stats{font-size:.82rem;color:var(--gray);}
+      .wb-filters{display:flex;gap:.4rem;margin-bottom:.8rem;flex-wrap:wrap;}
+      .wb-chip{
+        padding:.3rem .7rem;border-radius:20px;border:1.5px solid #e2e8f0;
+        background:white;font-size:.78rem;font-weight:600;
+        color:#64748b;cursor:pointer;transition:all .15s;
+      }
+      .wb-chip.sel{background:var(--purple);color:white;border-color:var(--purple);}
+      .wb-actions{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+      .wb-list{display:flex;flex-direction:column;gap:.5rem;}
+      .wb-group{margin-top:.5rem;}
+      .wb-group-title{
+        font-size:.88rem;font-weight:700;color:var(--purple-dark);
+        padding:.5rem .8rem;background:#ede9fe;border-radius:8px;
+        cursor:pointer;list-style:none;display:flex;align-items:center;gap:.4rem;
+      }
+      .wb-group-title::-webkit-details-marker{display:none;}
+      .wb-group-title::before{content:'▶';font-size:.65rem;transition:transform .2s;}
+      .wb-group[open]>.wb-group-title::before{transform:rotate(90deg);}
+      .wb-group[open]>.wb-group-title{margin-bottom:.4rem;border-radius:8px 8px 0 0;}
+      .wb-card{
+        background:white;border:1.5px solid #e2e8f0;border-radius:12px;
+        padding:.8rem 1rem;cursor:pointer;transition:all .15s;
+      }
+      .wb-card:hover{border-color:#c8c3b0;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+      .wb-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;}
+      .wb-card-id{font-size:.72rem;color:var(--gray);font-weight:600;}
+      .wb-card-topic{font-size:.68rem;padding:.15rem .5rem;border-radius:10px;background:#f1f5f9;color:#475569;font-weight:600;}
+      .wb-card-q{font-size:.85rem;color:#1e293b;line-height:1.5;}
+      .wb-card-remove{
+        background:none;border:none;font-size:.82rem;cursor:pointer;
+        color:#94a3b8;padding:.2rem;margin-left:.5rem;
+      }
+      .wb-card-remove:hover{color:#ef4444;}
+      .wb-empty{text-align:center;padding:3rem 1rem;color:var(--gray);font-size:.92rem;}
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- HEADER -->
+    <div class="header">
+      <h1>🦷 牙醫國考練習本</h1>
+      <div class="header-right">
+        <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
+        <span class="header-user" id="header-user" title="目前使用者"></span>
+        <button class="btn-mode" id="btn-notes" onclick="location.href='../index.html'" title="回到互動筆記首頁">
+          回到筆記頁
+        </button>
+        <button class="btn-mode active" id="btn-home" onclick="showHome()">
+          考試首頁
+        </button>
+        <button class="btn-mode" id="btn-wrongbook" onclick="showWrongbook()">錯題本</button>
+        <button class="btn-mode" id="btn-db" onclick="showDB()">資料庫</button>
+        <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
+          瀏覽
+        </button>
+        <button
+          style="padding:0.25rem 0.5rem;border-radius:8px;border:1.5px solid rgba(255,255,255,0.4);background:transparent;color:white;font-size:0.85rem;cursor:pointer"
+          title="重置所有標記"
+          onclick="resetAllMarks()"
+        >
+          🗑️
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ HOME SCREEN ═══════════════ -->
+    <div id="screen-home">
+      <div class="home-layout">
+        <!-- Topic sidebar -->
+        <div class="topic-sidebar" id="topic-sidebar">
+          <div class="daily-log-section">
+            <div class="daily-log-title">📅 每日練習</div>
+            <div class="daily-bars" id="daily-bars"></div>
+            <div class="daily-today-count" id="daily-today-count"></div>
+            <div
+              class="daily-hist-wrap"
+              id="daily-hist-wrap"
+              style="display: none"
+            >
+              <button class="daily-hist-toggle" onclick="toggleDailyHist()">
+                ▶ 過去紀錄
+              </button>
+              <div
+                class="daily-hist-list"
+                id="daily-hist-list"
+                style="display: none"
+              ></div>
+            </div>
+          </div>
+          <div class="topic-sidebar-title">🏷 考點分類</div>
+          <div class="ts-status-bar">
+            <div
+              class="ts-chip sel"
+              data-sts="all"
+              onclick="setSidebarStatus(this, 'all')"
+            >
+              全部
+            </div>
+            <div
+              class="ts-chip"
+              data-sts="unmarked"
+              onclick="setSidebarStatus(this, 'unmarked')"
+            >
+              未標記
+            </div>
+            <div
+              class="ts-chip"
+              data-sts="understood"
+              onclick="setSidebarStatus(this, 'understood')"
+            >
+              🟢 簡單
+            </div>
+            <div
+              class="ts-chip"
+              data-sts="learning"
+              onclick="setSidebarStatus(this, 'learning')"
+            >
+              🟡 再努力!
+            </div>
+            <div
+              class="ts-chip"
+              data-sts="give_up"
+              onclick="setSidebarStatus(this, 'give_up')"
+            >
+              🔴 送他吧
+            </div>
+          </div>
+          <div id="topic-list"></div>
+          <div class="ts-go-wrap">
+            <button class="ts-go-btn" id="ts-go-btn" onclick="goFromSidebar()">
+              ▶ 開始練習
+            </button>
+          </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="home-main">
+          <div class="stats-card" id="stats-card">
+            <div class="stat-item">
+              <div class="num" id="st-total">-</div>
+              <div class="lbl">題目總數</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: var(--green)" id="st-understood">
+                -
+              </div>
+              <div class="lbl">🟢 簡單</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: var(--amber)" id="st-learning">
+                -
+              </div>
+              <div class="lbl">🟡 再努力!</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: var(--red)" id="st-giveup">-</div>
+              <div class="lbl">🔴 送他吧</div>
+            </div>
+          </div>
+
+          <div class="filter-card">
+            <div class="filter-label">科目</div>
+            <div class="chip-row" id="chips-subj">
+              <div
+                class="chip chip-ya3 sel"
+                data-subj="ya3"
+                onclick="toggleChip(this, 'subj')"
+              >
+                牙三
+              </div>
+              <div
+                class="chip chip-ya4"
+                data-subj="ya4"
+                onclick="toggleChip(this, 'subj')"
+              >
+                牙四
+              </div>
+              <div
+                class="chip chip-ya5"
+                data-subj="ya5"
+                onclick="toggleChip(this, 'subj')"
+              >
+                牙五
+              </div>
+              <div
+                class="chip chip-ya6"
+                data-subj="ya6"
+                onclick="toggleChip(this, 'subj')"
+              >
+                牙六
+              </div>
+            </div>
+
+            <div class="filter-label" style="margin-top: 0.7rem">年份</div>
+            <div class="chip-row" id="chips-year">
+              <div
+                class="chip chip-year sel"
+                data-ys="111-1"
+                onclick="toggleChip(this, 'year')"
+              >
+                111上
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="111-2"
+                onclick="toggleChip(this, 'year')"
+              >
+                111下
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="112-1"
+                onclick="toggleChip(this, 'year')"
+              >
+                112上
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="112-2"
+                onclick="toggleChip(this, 'year')"
+              >
+                112下
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="113-1"
+                onclick="toggleChip(this, 'year')"
+              >
+                113上
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="113-2"
+                onclick="toggleChip(this, 'year')"
+              >
+                113下
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="114-1"
+                onclick="toggleChip(this, 'year')"
+              >
+                114上
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="114-2"
+                onclick="toggleChip(this, 'year')"
+              >
+                114下
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="115-1"
+                onclick="toggleChip(this, 'year')"
+              >
+                115上
+              </div>
+              <div
+                class="chip chip-year"
+                data-ys="115-2"
+                onclick="toggleChip(this, 'year')"
+              >
+                115下
+              </div>
+            </div>
+
+            <div class="filter-label" style="margin-top: 0.7rem">篩選標記</div>
+            <div class="chip-row">
+              <div
+                class="chip chip-status sel"
+                data-status="all"
+                onclick="setStatusMode(this)"
+              >
+                全部
+              </div>
+              <div
+                class="chip chip-status"
+                data-status="unmarked"
+                onclick="setStatusMode(this)"
+              >
+                未標記
+              </div>
+              <div
+                class="chip chip-status"
+                data-status="understood"
+                onclick="setStatusMode(this)"
+              >
+                🟢 簡單
+              </div>
+              <div
+                class="chip chip-status"
+                data-status="learning"
+                onclick="setStatusMode(this)"
+              >
+                🟡 再努力!
+              </div>
+              <div
+                class="chip chip-status"
+                data-status="give_up"
+                onclick="setStatusMode(this)"
+              >
+                🔴 送他吧
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="match-count"
+            style="
+              font-size: 0.82rem;
+              color: var(--gray);
+              margin-bottom: 0.5rem;
+              text-align: center;
+            "
+          ></div>
+
+          <button
+            class="start-btn resume-btn"
+            id="btn-resume"
+            onclick="resumePractice()"
+            style="display: none; background: #0d9488"
+          >
+            ⏎ 繼續上次
+          </button>
+          <div
+            id="resume-info"
+            style="
+              font-size: 0.78rem;
+              color: #0d9488;
+              text-align: center;
+              margin-top: 0.3rem;
+              margin-bottom: 0.2rem;
+              display: none;
+            "
+          ></div>
+          <div class="start-btn-row">
+            <button class="start-btn" onclick="startPractice(false)">
+              ▶ 逐題模式
+            </button>
+            <button class="start-btn secondary" onclick="startPractice(true)">
+              🔀 隨機
+            </button>
+          </div>
+          <label class="timer-toggle-row">
+            <input type="checkbox" id="timer-enable" /> ⏱ 開始試卷時計時 60 分鐘
+          </label>
+          <div class="start-btn-row" style="margin-top: 0.3rem">
+            <button class="start-btn exam-btn" onclick="startExam(false)">
+              📋 逐題試卷
+            </button>
+            <button
+              class="start-btn exam-btn"
+              style="background: #0d9488"
+              onclick="startExam(true)"
+            >
+              📃 整卷捲動
+            </button>
+          </div>
+        <div style="margin-top:1.2rem">
+          <h3 style="font-size:.95rem;color:#78716c;margin-bottom:.6rem">📚 學習工具</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
+            <a href="compare.html" class="start-btn secondary" style="text-decoration:none;text-align:center;font-size:.82rem;padding:.55rem">📊 比較表速查</a>
+            <a href="numbers.html" class="start-btn secondary" style="text-decoration:none;text-align:center;font-size:.82rem;padding:.55rem">🔢 數字速查表</a>
+            <a href="flashcards.html" class="start-btn secondary" style="text-decoration:none;text-align:center;font-size:.82rem;padding:.55rem">🃏 圖片記憶卡</a>
+            <span class="start-btn secondary" style="text-align:center;font-size:.82rem;padding:.55rem;opacity:.5;cursor:default">🖼️ 圖片庫（構思中）</span>
+          </div>
+        </div>
+        </div>
+        <!-- end .home-main -->
+      </div>
+      <!-- end .home-layout -->
+    </div>
+    <!-- end #screen-home -->
+
+    <!-- ═══════════════ PRACTICE SCREEN ═══════════════ -->
+    <div id="screen-practice">
+      <div class="practice-progress">
+        <span class="progress-text" id="prog-text">0 / 0</span>
+        <div class="progress-bar">
+          <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
+        </div>
+        <button class="btn-exit" onclick="showHome()">← 返回</button>
+      </div>
+
+      <div class="question-area">
+        <div class="q-badges" id="pq-badges"></div>
+        <div class="q-text" id="pq-text"></div>
+        <div class="options" id="pq-options"></div>
+      </div>
+
+      <div class="result-area" id="result-area">
+        <div class="result-banner" id="result-banner"></div>
+        <div class="expl-box" id="pq-expl"></div>
+        <button
+          class="btn-edit-expl"
+          id="btn-edit-expl"
+          onclick="openEditCurrent()"
+          style="display: none"
+        >
+          ✏️ 編輯詳解
+        </button>
+        <div class="mark-row">
+          <button class="btn-flag" id="mk-flag" onclick="toggleFlag()" title="加入錯題本">🚩 錯題本</button>
+          <span class="mark-label">標記：</span>
+          <button
+            class="btn-mark btn-mark-understood"
+            id="mk-understood"
+            onclick="markQ('understood')"
+          >
+            🟢 簡單
+          </button>
+          <button
+            class="btn-mark btn-mark-learning"
+            id="mk-learning"
+            onclick="markQ('learning')"
+          >
+            🟡 再努力!
+          </button>
+          <button
+            class="btn-mark btn-mark-give_up"
+            id="mk-give_up"
+            onclick="markQ('give_up')"
+          >
+            🔴 送他吧
+          </button>
+          <button class="btn-count" id="mk-count" onclick="incCountPractice()">
+            已寫過 0 次
+          </button>
+        </div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-skip" onclick="showHome()" style="font-size:0.82rem">← 考試首頁</button>
+        <button
+          class="btn-prev"
+          id="btn-prev"
+          onclick="prevQ()"
+          style="display: none"
+        >
+          ←
+        </button>
+        <button class="btn-skip" id="btn-skip" onclick="skipQ()">跳過 →</button>
+        <button class="btn-next" id="btn-next" onclick="nextQ()">
+          下一題 →
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ EXAM RESULTS SCREEN ═══════════════ -->
+    <div id="screen-exam-results">
+      <div class="exam-res-header">
+        <div class="exam-res-score" id="exam-res-score"></div>
+        <div class="exam-res-sub" id="exam-res-sub"></div>
+      </div>
+      <div id="exam-res-wrong-list"></div>
+      <div class="exam-res-actions">
+        <button class="start-btn secondary" onclick="showHome()">
+          ← 返回考試首頁
+        </button>
+        <button class="start-btn" id="exam-res-retry" onclick="retryWrong()">
+          🔁 只練錯題
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SCROLL EXAM SCREEN ═══════════════ -->
+    <div id="screen-scroll-exam">
+      <div class="scroll-exam-topbar">
+        <span class="scroll-exam-count" id="scroll-exam-count"
+          >0 / 0 題已作答</span
+        >
+        <button class="scroll-exam-submit" onclick="submitScrollExam()">
+          交卷
+        </button>
+        <button
+          class="start-btn secondary"
+          style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 0"
+          onclick="showHome()"
+        >
+          ← 返回
+        </button>
+      </div>
+      <div id="scroll-exam-list"></div>
+    </div>
+
+    <!-- ═══════════════ BROWSE SCREEN ═══════════════ -->
+    <div id="screen-browse">
+      <div class="browse-filter" id="bf-row">
+        <div
+          class="bf-chip sel"
+          data-bf="all"
+          onclick="setBF(this, 'status', 'all')"
+        >
+          全部
+        </div>
+        <div
+          class="bf-chip"
+          data-bf="understood"
+          onclick="setBF(this, 'status', 'understood')"
+        >
+          🟢 簡單
+        </div>
+        <div
+          class="bf-chip"
+          data-bf="learning"
+          onclick="setBF(this, 'status', 'learning')"
+        >
+          🟡 再努力!
+        </div>
+        <div
+          class="bf-chip"
+          data-bf="give_up"
+          onclick="setBF(this, 'status', 'give_up')"
+        >
+          🔴 送他吧
+        </div>
+        <div class="bf-divider"></div>
+        <div
+          class="bf-chip sel"
+          data-bf="ya3"
+          onclick="setBF(this, 'subj', 'ya3')"
+        >
+          牙三
+        </div>
+        <div
+          class="bf-chip sel"
+          data-bf="ya4"
+          onclick="setBF(this, 'subj', 'ya4')"
+        >
+          牙四
+        </div>
+        <div
+          class="bf-chip sel"
+          data-bf="ya5"
+          onclick="setBF(this, 'subj', 'ya5')"
+        >
+          牙五
+        </div>
+        <div
+          class="bf-chip sel"
+          data-bf="ya6"
+          onclick="setBF(this, 'subj', 'ya6')"
+        >
+          牙六
+        </div>
+      </div>
+      <div class="search-wrap">
+        <input
+          class="search-input"
+          type="search"
+          placeholder="🔍 搜尋題目..."
+          oninput="browseSearch(this.value)"
+        />
+      </div>
+      <div class="q-list" id="q-list"></div>
+    </div>
+
+    <!-- ═══════════════ DATABASE SCREEN ═══════════════ -->
+    <div id="screen-db">
+      <div class="db-filter" id="db-filter-row">
+        <div class="db-chip sel" data-dbsubj="ya3" onclick="toggleDBSubj(this)">
+          牙三
+        </div>
+        <div class="db-chip sel" data-dbsubj="ya4" onclick="toggleDBSubj(this)">
+          牙四
+        </div>
+        <div class="db-chip sel" data-dbsubj="ya5" onclick="toggleDBSubj(this)">
+          牙五
+        </div>
+        <div class="db-chip sel" data-dbsubj="ya6" onclick="toggleDBSubj(this)">
+          牙六
+        </div>
+      </div>
+      <div class="db-topic-bar" id="db-topic-bar" style="display: none">
+        🏷 考點篩選：<span id="db-topic-label"></span>
+        <button class="db-topic-bar-clear" onclick="clearTopicFilter()">
+          ✕ 清除
+        </button>
+      </div>
+      <div class="db-search-wrap">
+        <input
+          class="search-input"
+          type="search"
+          placeholder="🔍 搜尋題目或詳解..."
+          oninput="dbSearch(this.value)"
+        />
+      </div>
+      <div class="db-list" id="db-list"></div>
+    </div>
+
+    <!-- ═══════════════ WRONGBOOK SCREEN ═══════════════ -->
+    <div id="screen-wrongbook" style="display:none">
+      <div class="wb-header">
+        <h2 class="wb-title">🚩 錯題本</h2>
+        <div class="wb-stats" id="wb-stats"></div>
+      </div>
+      <div class="wb-filters" id="wb-filters">
+        <button class="wb-chip sel" data-wbs="all" onclick="setWBFilter(this,'all')">全部</button>
+        <button class="wb-chip" data-wbs="ya3" onclick="setWBFilter(this,'ya3')">牙三</button>
+        <button class="wb-chip" data-wbs="ya4" onclick="setWBFilter(this,'ya4')">牙四</button>
+        <button class="wb-chip" data-wbs="ya5" onclick="setWBFilter(this,'ya5')">牙五</button>
+        <button class="wb-chip" data-wbs="ya6" onclick="setWBFilter(this,'ya6')">牙六</button>
+      </div>
+      <div class="wb-actions">
+        <button class="start-btn" onclick="practiceWrongbook()" style="font-size:.85rem;padding:.5rem 1.2rem">開始練習錯題</button>
+        <button class="start-btn secondary" onclick="exportWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯出</button>
+        <button class="start-btn secondary" onclick="importWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯入</button>
+        <input type="file" id="wb-import-file" accept=".json" style="display:none" onchange="handleWBImport(event)">
+      </div>
+      <div class="wb-list" id="wb-list"></div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div class="overlay" id="modal-overlay" onclick="maybeClose(event)">
+      <div class="modal">
+        <h3>✏️ 編輯詳解</h3>
+        <label>詳解內容（支援 HTML）</label>
+        <textarea id="edit-expl" placeholder="輸入詳解..."></textarea>
+        <div class="modal-gap">
+          <label>來源說明</label>
+          <input
+            type="text"
+            id="edit-src"
+            placeholder="例：阿摩詳解 / NotebookLM / 教科書"
+          />
+        </div>
+        <div class="modal-btns">
+          <button class="btn-cancel" onclick="closeModal()">取消</button>
+          <button class="btn-save" onclick="saveEdit()">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASK EXPL MODAL -->
+    <div class="overlay" id="ask-expl-overlay" onclick="maybeCloseAsk(event)">
+      <div class="modal">
+        <h3>🤖 詢問詳解</h3>
+        <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 0.7rem">
+          複製以下提問，貼到 Claude 取得詳解
+        </p>
+        <textarea
+          id="ask-expl-prompt"
+          readonly
+          style="min-height: 180px; background: #f8fafc; font-size: 0.82rem"
+        ></textarea>
+        <div class="modal-btns">
+          <button class="btn-cancel" onclick="closeAskModal()">關閉</button>
+          <button class="btn-save" onclick="copyAskPrompt()">
+            📋 複製提問
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+
+    <div class="toast" id="toast"></div>
+
+    <script src="questions-data.js"></script>
+    <script src="cross-links-data.js"></script>
+    <script src="similar-questions-data.js"></script>
+    <script>
+      let CROSS_LINKS = typeof CROSS_LINKS_DATA !== 'undefined' ? CROSS_LINKS_DATA : {};
+      let SIMILAR_QS = typeof SIMILAR_QS_DATA !== 'undefined' ? SIMILAR_QS_DATA : {};
+      if (!Object.keys(CROSS_LINKS).length) fetch('cross-links.json').then(r=>r.json()).then(d=>{CROSS_LINKS=d||{}}).catch(()=>{});
+      if (!Object.keys(SIMILAR_QS).length) fetch('similar-questions.json').then(r=>r.json()).then(d=>{SIMILAR_QS=d||{}}).catch(()=>{});
+    </script>
+    <script>
+      // ════════════════════════════════════════════
+      //  Per-user localStorage
+      // ════════════════════════════════════════════
+      const _curUserId = localStorage.getItem('dental_cur_user') || 'default';
+      function uKey(key){ return _curUserId + '_' + key; }
+
+      // ════════════════════════════════════════════
+      //  Supabase config
+      // ════════════════════════════════════════════
+      const SUPABASE_URL = "YOUR_SUPABASE_URL";
+      const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+      const USE_SUPABASE = SUPABASE_URL !== "YOUR_SUPABASE_URL";
+      const sb = USE_SUPABASE
+        ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        : null;
+
+      // ════════════════════════════════════════════
+      //  App State
+      // ════════════════════════════════════════════
+      let qState = {}; // { [id]: { status, count, expl_override, src_override } }
+      const QS = typeof QUESTIONS !== "undefined" ? QUESTIONS : [];
+
+      // Practice state
+      let practiceList = [];
+      let practiceIdx = 0;
+      let answered = false;
+      let editingId = null;
+      let examMode = false;
+      let examAnswers = {}; // { [qId]: userAnswerIdx }
+      let scrollExamList = [];
+      let scrollExamAnswers = {}; // { [qId]: idx }
+      let scrollExamSubmitted = false;
+
+      // Timer state
+      let timerInterval = null;
+      let timerSeconds = 0;
+
+      // Browse state
+      let bfStatus = "all";
+      let bfSubjs = new Set(["ya3", "ya4", "ya5", "ya6"]);
+      let browseQ = "";
+
+      // Home filter state
+      let homeSubjs = new Set(["ya3"]);
+      let homeYears = new Set(["111-1"]);
+      let homeStatus = "all";
+
+      // ════════════════════════════════════════════
+      //  Load / Save (migrate old non-prefixed data)
+      // ════════════════════════════════════════════
+      (function migrateOldData(){
+        // If user has old unprefixed data and no new prefixed data, copy it over
+        const old = localStorage.getItem("wrongbook_state");
+        const cur = localStorage.getItem(uKey("wrongbook_state"));
+        if(old && !cur){
+          localStorage.setItem(uKey("wrongbook_state"), old);
+        }
+        const oldLog = localStorage.getItem("daily_log");
+        const curLog = localStorage.getItem(uKey("daily_log"));
+        if(oldLog && !curLog){
+          localStorage.setItem(uKey("daily_log"), oldLog);
+        }
+      })();
+
+      async function loadState() {
+        try {
+          if (USE_SUPABASE) {
+            const { data } = await sb.from("question_state").select("*");
+            (data || []).forEach((r) => {
+              qState[r.question_id] = {
+                status: r.status || "none",
+                count: r.practice_count || 0,
+                expl_override: r.expl_override || null,
+                src_override: r.src_override || null,
+              };
+            });
+          } else {
+            const s = localStorage.getItem(uKey("wrongbook_state"));
+            if (s) qState = JSON.parse(s);
+          }
+        } catch (e) {
+          const s = localStorage.getItem(uKey("wrongbook_state"));
+          if (s) qState = JSON.parse(s);
+        }
+        updateHomeStats();
+        updateMatchCount();
+        checkLastPos();
+        renderTopicSidebar();
+        renderDailyLog();
+      }
+
+      // ════════════════════════════════════════════
+      //  Topic Sidebar
+      // ════════════════════════════════════════════
+      let activeTopic = null;
+
+      const SUBJ_NAMES = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+      const SUBJ_ORDER = ["ya3", "ya4", "ya5", "ya6"];
+
+      // Keyword → category mapping (check in order; first match wins)
+      const TOPIC_CATS_DEFS = [
+        // ── 根管 / 牙髓 ──
+        {
+          cat: "根管治療",
+          kw: [
+            "根管修形",
+            "根管沖洗",
+            "根管用藥",
+            "根管充填",
+            "根管封填",
+            "根管再治療",
+            "根管感染",
+            "根管外感染",
+            "根管後復形",
+            "根管治療",
+            "根管意外",
+            "根管穿孔",
+            "根管形態",
+            "根管解剖",
+            "根管定位",
+            "根管X光",
+            "根管微生物",
+            "根尖構造",
+            "根管",
+          ],
+        },
+        {
+          cat: "根尖手術",
+          kw: [
+            "根尖手術",
+            "根尖周圍炎",
+            "根尖發炎",
+            "根尖成形",
+            "根尖骨吸收",
+            "根尖囊腫",
+            "根尖逆充填",
+            "根尖翻瓣",
+            "根尖手術癒合",
+            "根尖手術用藥",
+            "根尖手術麻醉",
+            "MTA",
+            "根尖診斷",
+            "根尖炎",
+            "根尖",
+          ],
+        },
+        {
+          cat: "牙髓診療",
+          kw: [
+            "牙髓神經",
+            "牙髓病診斷",
+            "牙髓診斷",
+            "牙髓組織",
+            "牙髓保護",
+            "牙髓牙周",
+            "牙髓免疫",
+            "牙髓鈣化",
+            "牙髓防禦",
+            "牙髓檢查",
+            "活髓",
+            "覆髓",
+            "神經胜肽",
+            "牙髓",
+          ],
+        },
+        {
+          cat: "根管器械",
+          kw: [
+            "手動器械",
+            "鎳鈦",
+            "器械分離",
+            "器械斷",
+            "超音波器械",
+            "通暢銼",
+            "橡皮障",
+            "電子根尖定位",
+            "髓腔",
+            "根叉",
+            "SLOB",
+            "糞腸球菌",
+            "器械編號",
+            "根管器械",
+            "掃雪機",
+          ],
+        },
+
+        // ── 牙周病 ──
+        {
+          cat: "牙周基礎",
+          kw: [
+            "牙周致病菌",
+            "牙周免疫",
+            "牙周韌帶",
+            "牙周解剖",
+            "牙周指數",
+            "牙周病分期",
+            "牙周病分級",
+            "牙周診斷",
+            "牙周風險評估",
+            "牙周神經",
+            "牙周微生物",
+            "牙菌斑",
+            "2017牙周",
+            "CPITN",
+            "Miller",
+            "牙周病菌",
+            "侵襲性牙周",
+            "壞死牙周",
+            "壞死性牙",
+            "探測出血",
+            "牙周病理",
+            "牙周炎",
+            "牙周病新",
+            "齒槽骨吸收",
+          ],
+        },
+        {
+          cat: "牙周治療",
+          kw: [
+            "牙周清創",
+            "牙周維護",
+            "牙周刮刀",
+            "牙周器械",
+            "牙根整平",
+            "牙間刷",
+            "牙周醫學",
+            "糖尿病與牙周",
+            "抽菸與牙周",
+            "懷孕期牙周",
+            "孕婦牙周",
+            "牙周治療",
+            "牙周與全身",
+            "牙周系統",
+            "口腔衛生",
+            "刷牙",
+            "漱口水",
+            "雷射治療",
+            "牙周維護治療",
+          ],
+        },
+        {
+          cat: "牙周手術",
+          kw: [
+            "牙周翻瓣",
+            "牙周再生",
+            "牙周手術",
+            "骨移植",
+            "引導組織再生",
+            "再生膜",
+            "牙釉基質",
+            "牙周縫合",
+            "改良式魏德曼",
+            "雙側乳突翻瓣",
+            "垂直切線",
+            "翻瓣切線",
+            "翻瓣手術",
+            "翻瓣設計",
+            "自體骨移植",
+          ],
+        },
+        {
+          cat: "牙周整形",
+          kw: [
+            "牙齦切除",
+            "牙根覆蓋",
+            "游離牙齦移植",
+            "軟組織移植",
+            "黏膜牙齦",
+            "牙冠增長",
+            "牙周整形",
+            "強逼萌出",
+            "牙齦萎縮",
+            "黏膜齒齦",
+          ],
+        },
+        {
+          cat: "牙齦病變",
+          kw: [
+            "牙齦上皮",
+            "牙齦疾病",
+            "牙齦炎",
+            "妊娠牙齦",
+            "壞死性牙齦",
+            "連接上皮",
+            "角質細胞",
+            "上皮組織",
+            "上皮角質化",
+            "牙齦",
+          ],
+        },
+
+        // ── 植牙 ──
+        { cat: "植牙", kw: ["植體", "植牙", "鼻竇增高", "延遲植", "人工植"] },
+
+        // ── 牙體復形 ──
+        {
+          cat: "複合樹脂",
+          kw: [
+            "複合樹脂",
+            "光起始",
+            "成型環帶",
+            "斜面製備",
+            "分層填補",
+            "樹脂聚合",
+            "樹脂比色",
+            "樹脂加熱",
+            "樹脂禁忌",
+            "樹脂物性",
+            "樹脂成分",
+            "樹脂拋光",
+            "樹脂修形",
+            "樹脂黏合",
+            "樹脂術後",
+            "樹脂鍵結",
+            "樹脂",
+          ],
+        },
+        { cat: "汞齊", kw: ["汞齊"] },
+        {
+          cat: "窩洞製備",
+          kw: [
+            "窩洞",
+            "溝隙封填",
+            "牙體復形",
+            "齲齒",
+            "齲齒管理",
+            "齲齒風險",
+            "齲齒診斷",
+            "齲齒治療",
+            "齲齒細菌",
+            "靜止性齲",
+            "初期齲齒",
+            "鑽針",
+            "底墊材料",
+            "RMGI",
+            "玻璃離子",
+            "牙本質齲",
+          ],
+        },
+
+        // ── 補綴 / 美學 ──
+        {
+          cat: "嵌體補綴",
+          kw: [
+            "嵌體",
+            "冠蓋體",
+            "裙狀",
+            "裙邊",
+            "暫時黏著",
+            "邊緣終接",
+            "根柱贋",
+            "根柱",
+            "圍箍效應",
+            "固位釘",
+          ],
+        },
+        {
+          cat: "美學修復",
+          kw: [
+            "前牙美學",
+            "比色",
+            "黃金比例",
+            "陶瓷貼片",
+            "瓷鑲面",
+            "牙齒色彩",
+            "牙齒光學",
+            "牙科美學",
+            "漂白",
+            "牙齒比色",
+            "牙齒變色",
+            "色彩光學",
+          ],
+        },
+        {
+          cat: "黏著材料",
+          kw: [
+            "黏著",
+            "黏合劑",
+            "酸蝕系統",
+            "10-MDP",
+            "自酸蝕",
+            "全酸蝕",
+            "塗抹層",
+            "牙釉基質衍生",
+            "牙科黏著",
+            "牙釉質黏著",
+          ],
+        },
+
+        // ── 外傷 ──
+        {
+          cat: "牙齒外傷",
+          kw: ["外傷", "脫位", "再植", "牙齒移植", "取代性根", "根吸收"],
+        },
+
+        // ── 基礎醫學 ──
+        {
+          cat: "牙體組織",
+          kw: [
+            "牙本質",
+            "牙骨質",
+            "牙釉質",
+            "牙齒發育",
+            "牙齒老化",
+            "牙齒萌出",
+            "牙齒形態",
+            "牙體組織",
+            "管周牙本質",
+          ],
+        },
+        {
+          cat: "免疫微生物",
+          kw: [
+            "免疫",
+            "細菌",
+            "微生物",
+            "發炎",
+            "生物膜",
+            "抗原",
+            "T細胞",
+            "漿細胞",
+            "白血球",
+            "類鐸受體",
+            "先天性免疫",
+            "補體",
+          ],
+        },
+        {
+          cat: "臨床基礎",
+          kw: [
+            "系統性",
+            "系統疾病",
+            "糖尿病",
+            "醫學倫理",
+            "知情同意",
+            "心內膜炎",
+            "局部麻醉",
+            "止痛藥",
+            "抗生素",
+            "傷口癒合",
+            "危險因子",
+            "醫病溝通",
+            "唾液",
+            "骨質",
+            "X光診斷",
+            "影像診斷",
+            "CBCT",
+            "流行病",
+            "牙科人體工學",
+            "電子病歷",
+            "預防性抗生素",
+            "孕婦牙科",
+            "子癇",
+          ],
+        },
+      ];
+
+      function getTopicCat(topic) {
+        if (!topic || !topic.trim()) return "其他";
+        // First try exact match with topic value (new Gemini-classified topics)
+        const t = topic.trim();
+        // Check if topic itself is already a clean category name
+        if (t.length <= 12 && !t.includes(",") && !t.includes("、")) return t;
+        // Fallback: keyword match for old-style topics
+        for (const { cat, kw } of TOPIC_CATS_DEFS) {
+          if (kw.some((k) => topic.includes(k))) return cat;
+        }
+        return t.length <= 20 ? t : "其他";
+      }
+
+      // Expand state (subject groups)
+      const expandedSubjs = new Set(["ya3"]);
+
+      function toggleSbjGrp(subj) {
+        if (expandedSubjs.has(subj)) expandedSubjs.delete(subj);
+        else expandedSubjs.add(subj);
+        const el = document.getElementById("tsg-" + subj);
+        if (!el) return;
+        el.classList.toggle("collapsed");
+      }
+
+      // activeKey = 'subj|cat' or null
+      let activeKey = null;
+      let sidebarStatus = "all";
+
+      function setSidebarStatus(el, status) {
+        sidebarStatus = status;
+        document
+          .querySelectorAll(".ts-chip")
+          .forEach((c) => c.classList.remove("sel"));
+        el.classList.add("sel");
+        updateGoBtn();
+      }
+
+      function updateGoBtn() {
+        const btn = document.getElementById("ts-go-btn");
+        if (!btn) return;
+        btn.disabled = !activeKey;
+      }
+
+      function goFromSidebar() {
+        if (!activeKey) {
+          showToast("請先選擇一個考點分類");
+          return;
+        }
+        const [subj, cat] = activeKey.split("|");
+        startCatPractice(subj, cat);
+      }
+
+      function renderTopicSidebar() {
+        const list = document.getElementById("topic-list");
+        if (!list) return;
+
+        // Aggregate: subj → cat → total count
+        const data = {}; // {subj: {cat: count}}
+        QS.forEach((q) => {
+          if (!q.topic) return;
+          const s = q.subject;
+          const c = getTopicCat(q.topic);
+          if (!data[s]) data[s] = {};
+          data[s][c] = (data[s][c] || 0) + 1;
+        });
+
+        let html = "";
+        SUBJ_ORDER.forEach((subj) => {
+          if (!data[subj]) return;
+          const subjTotal = Object.values(data[subj]).reduce(
+            (a, b) => a + b,
+            0,
+          );
+          const isCollapsed = !expandedSubjs.has(subj) ? " collapsed" : "";
+          html += `<div class="ts-subj-grp${isCollapsed}" id="tsg-${subj}">`;
+          html += `<div class="ts-subj-hdr" onclick="toggleSbjGrp('${subj}')">`;
+          html += `<span class="ts-arrow">▼</span>`;
+          html += `<span>${SUBJ_NAMES[subj] || subj}</span>`;
+          html += `<span class="ts-subj-badge">${subjTotal}</span>`;
+          html += `</div><div class="ts-subj-body">`;
+
+          // Sort cats by count desc
+          const cats = Object.entries(data[subj]).sort((a, b) => b[1] - a[1]);
+          cats.forEach(([cat, count]) => {
+            const key = subj + "|" + cat;
+            const esc_subj = subj.replace(/'/g, "\\'");
+            const esc_cat = cat.replace(/'/g, "\\'");
+            const active = key === activeKey ? " active" : "";
+            html +=
+              `<div class="topic-item${active}" onclick="selectCat('${esc_subj}','${esc_cat}')">` +
+              `<span>${cat}</span><span class="topic-count">${count}</span></div>`;
+          });
+
+          html += `</div></div>`;
+        });
+
+        list.innerHTML =
+          html ||
+          '<div style="padding:.6rem .85rem;font-size:.78rem;color:#94a3b8">（無考點資料）</div>';
+        updateGoBtn();
+      }
+
+      function filterTopicList(val) {
+        renderTopicSidebar();
+      }
+
+      function selectCat(subj, cat) {
+        activeKey = subj + "|" + cat;
+        expandedSubjs.add(subj);
+        renderTopicSidebar();
+        updateGoBtn();
+      }
+
+      function startCatPractice(subj, cat) {
+        let list = QS.filter(
+          (q) => q.subject === subj && getTopicCat(q.topic) === cat,
+        );
+        if (sidebarStatus === "unmarked")
+          list = list.filter((q) => getS(q.id).status === "none");
+        else if (sidebarStatus !== "all")
+          list = list.filter((q) => getS(q.id).status === sidebarStatus);
+        if (!list.length) {
+          showToast("此篩選條件無符合題目");
+          return;
+        }
+        activeTopic = null;
+        practiceList = list;
+        practiceIdx = 0;
+        clearLastPos();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      function startTopicPractice(topic) {
+        // Still used by topic-tag clicks in practice/DB views
+        activeTopic = topic;
+        activeKey = null;
+        renderTopicSidebar();
+        const list = QS.filter((q) => q.topic === topic);
+        if (!list.length) {
+          showToast("此考點暫無題目");
+          return;
+        }
+        practiceList = list;
+        practiceIdx = 0;
+        clearLastPos();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      async function persist(id) {
+        const s = qState[id] || { status: "none", count: 0 };
+        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+        if (!USE_SUPABASE) return;
+        try {
+          await sb
+            .from("question_state")
+            .upsert({
+              question_id: id,
+              status: s.status,
+              practice_count: s.count,
+              expl_override: s.expl_override || null,
+              src_override: s.src_override || null,
+              topic: s.topic || null,
+              updated_at: new Date().toISOString(),
+            });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function getS(id) {
+        return (
+          qState[id] || {
+            status: "none",
+            count: 0,
+            expl_override: null,
+            src_override: null,
+          }
+        );
+      }
+
+      function renderCrossLinks(qid) {
+        let html = '';
+        const links = CROSS_LINKS[qid];
+        if (links && links.length) {
+          html += '<div class="cross-links"><span class="cross-label">📘 相關筆記：</span>';
+          html += links.map(l => `<span class="cross-tag">${l}</span>`).join('');
+          html += '</div>';
+        }
+        const sims = SIMILAR_QS[qid];
+        if (sims && sims.length) {
+          html += '<div class="similar-qs"><span class="cross-label">🔗 相似題：</span>';
+          html += sims.map(sid => {
+            const sq = QS.find(q => q.id === sid);
+            const label = sq ? sq.meta : sid;
+            return `<a class="sim-link" href="#" onclick="event.preventDefault();jumpToQ('${sid}')">${label}</a>`;
+          }).join('');
+          html += '</div>';
+        }
+        return html;
+      }
+
+      function formatExpl(text) {
+        if (!text) return "";
+        // Remove answer-confirmation preamble sentences
+        text = text.replace(
+          /^[^\n。！]*(?:你的答案|太棒了|完全正確|也是正確)[^\n。！]*[。！！]\s*/g,
+          "",
+        );
+        text = text.replace(
+          /^[^\n。！]*(?:你的答案|太棒了|完全正確|也是正確)[^\n。！]*[。！！]\s*/g,
+          "",
+        );
+        // Remove "同學，" opener
+        text = text.replace(/^同學[，,]\s*/g, "");
+        // Remove （原始題號N）
+        text = text.replace(/（原始題號\d+）/g, "");
+        // Remove citation numbers [1] [2] [1, 2] etc.
+        text = text.replace(/\[[\d,\s]+\]/g, "");
+        // Remove Conversation: UUID (turn N)
+        text = text.replace(/\n?Conversation:\s*[\w-]+[^\n]*/gi, "");
+        text = text.trim();
+        // Escape HTML
+        text = text
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        // **bold** → colored highlight (正確=green, 錯誤=red, else purple)
+        text = text.replace(/\*\*(.+?)\*\*/g, (_, c) => {
+          const cls =
+            c.includes("錯誤") || c.includes("不正確") || c.includes("有誤")
+              ? "expl-key expl-wrong-k"
+              : c.includes("正確")
+                ? "expl-key expl-correct-k"
+                : "expl-key";
+          return `<strong class="${cls}">${c}</strong>`;
+        });
+        // Option letters (A)-(E)
+        text = text.replace(
+          /\(([A-E])\)/g,
+          '<span class="expl-opt">($1)</span>',
+        );
+        // Keyword coloring for 正確/錯誤
+        text = text.replace(/(不?正確|錯誤|有誤)/g, (m) =>
+          m === "正確"
+            ? `<span class="kw-ok">${m}</span>`
+            : `<span class="kw-wrong">${m}</span>`,
+        );
+        // Numbers + clinical units → teal (measurements are always key info)
+        text = text.replace(
+          /(\d+(?:[.,]\d+)?(?:\s*[~～\-–]\s*\d+(?:[.,]\d+)?)?)\s*(mm|cm|μm|mL|mg|μg|%|°|天|週|周|個月|月|年|次|公釐|公分)/g,
+          '<span class="kw-num">$1&nbsp;$2</span>',
+        );
+        // Clinical importance markers
+        text = text.replace(
+          /(注意[：:]?|關鍵[：:]?|重要[：:]?|禁忌[：:]?)/g,
+          '<span class="kw-warn">$1</span>',
+        );
+        // Break numbered lists that are crammed on one line: "1. xxx 2. xxx" → separate lines
+        text = text.replace(/([。；！」）\)：:])\s*(\d+)[.．、]\s/g, '$1\n$2. ');
+        text = text.replace(/^(\d+)[.．、]\s/gm, '$1. ');
+        // Also break dash/bullet lists on same line
+        text = text.replace(/([。；！」）\)：:])\s*[-–—•]\s/g, '$1\n- ');
+        // Section-aware rendering: split by 【...】 headers
+        const lines = text.split("\n");
+        const sections = [];
+        let cur = { header: null, content: "", lines: [] };
+        for (const rawLine of lines) {
+          const m = rawLine.match(/^【([^】]+)】(.*)/);
+          if (m) {
+            sections.push(cur);
+            cur = { header: m[1], content: m[2].trim(), lines: [] };
+          } else if (rawLine.trim() === "") {
+            cur.lines.push("");
+          } else {
+            cur.lines.push(rawLine);
+          }
+        }
+        sections.push(cur);
+
+        function formatOptBlock(html) {
+          const tag = (L) => `<span style="color:#1e40af;font-weight:700">【${L}】</span>`;
+          // ── Normalize: turn various option patterns into 【A】 format ──
+          // Pattern: * A. or * (A) at line start (Gemini format)
+          html = html.replace(/\*\s*\(([A-E])\)\s*/g, (_, L) => `<br>${tag(L)} `);
+          html = html.replace(/\*\s*([A-E])[.．]\s*/g, (_, L) => `<br>${tag(L)} `);
+          // Pattern: (A) with expl-opt span
+          html = html.replace(/<span class="expl-opt">\(([A-E])\)<\/span>/g, (_, L) => `<br>${tag(L)} `);
+          // Pattern: <p>(A) or <p>A.
+          html = html.replace(/<p>\(([A-E])\)\s*/g, (_, L) => `<p>${tag(L)} `);
+          html = html.replace(/<p>([A-E])[.．]\s*/g, (_, L) => `<p>${tag(L)} `);
+          html = html.replace(/<p>選項([A-E])/g, (_, L) => `<p>${tag(L)} `);
+          html = html.replace(/<p>([A-E])選項/g, (_, L) => `<p>${tag(L)} `);
+          html = html.replace(/<p>([A-E])(?=(正確|錯誤|不正確|有誤))/g, (_, L) => `<p>${tag(L)} `);
+          // Pattern: mid-paragraph (A) or A.
+          html = html.replace(/([。；；、\s])\(([A-E])\)\s*/g, (_, pre, L) => `${pre}<br>${tag(L)} `);
+          html = html.replace(/([。；；、\s])([A-E])[.．]\s*/g, (_, pre, L) => `${pre}<br>${tag(L)} `);
+          html = html.replace(/([。；；、\s])選項([A-E])/g, (_, pre, L) => `${pre}<br>${tag(L)} `);
+          html = html.replace(/([。；；、\s])([A-E])選項/g, (_, pre, L) => `${pre}<br>${tag(L)} `);
+          html = html.replace(/([。；；、\s])([A-E])(?=(正確|錯誤|不正確|有誤))/g, (_, pre, L) => `${pre}<br>${tag(L)} `);
+          return html;
+        }
+
+        function buildParaHtml(content, lines) {
+          const all = content ? [content, ...lines] : lines;
+          const isList = (l) => /^\s*\d+[.、．)\）]\s/.test(l) || /^\s*[\*\-–—•‧·]\s/.test(l);
+          const hasAnyList = all.some(l => isList(l));
+          if (hasAnyList) {
+            // Section contains list items → render every non-empty line as its own <p>
+            return all.filter(l => l.trim()).map(l => {
+              if (isList(l)) return `<p class="expl-li">${l.trim()}</p>`;
+              return `<p>${l}</p>`;
+            }).join('');
+          }
+          // Normal prose: group consecutive non-empty lines into paragraphs
+          const paras = all.reduce((acc, l) => {
+            if (l === '') acc.push([]);
+            else acc[acc.length - 1].push(l);
+            return acc;
+          }, [[]]).filter(p => p.length > 0);
+          return paras.map(p => `<p>${p.join(' ')}</p>`).join('');
+        }
+
+        let out = '<div class="expl-body">';
+        for (const sec of sections) {
+          const paraHtml = buildParaHtml(sec.content, sec.lines);
+          if (!paraHtml && !sec.header) continue;
+          if (!sec.header) {
+            out += paraHtml;
+          } else if (sec.header.includes("其他選項")) {
+            out += `<details class="expl-details"><summary><span class="expl-section">【其他選項】</span></summary><div class="expl-details-body">${formatOptBlock(paraHtml)}</div></details>`;
+          } else if (sec.header.includes("核心理論") || sec.header.match(/為何選/)) {
+            // 核心理論 and 為何選X: collapsible, header on its own line
+            out += `<details class="expl-details" open><summary><span class="expl-section">【${sec.header}】</span></summary><div class="expl-details-body">${paraHtml}</div></details>`;
+          } else if (sec.header.includes("出題者想考什麼")) {
+            // 出題者想考什麼: always visible, header on its own line
+            out += `<p><span class="expl-section">【${sec.header}】</span></p>${paraHtml}`;
+          } else {
+            out += paraHtml
+              ? paraHtml.replace(
+                  /^<p[^>]*>/,
+                  `$&<span class="expl-section">【${sec.header}】</span> `,
+                )
+              : `<p><span class="expl-section">【${sec.header}】</span></p>`;
+          }
+        }
+        // Final pass: break any remaining inline numbered items (e.g. "...句號。 2. xxx")
+        out = out.replace(/([。；！」）\)：])\s*(\d+)\.\s\s*/g, '$1</p><p class="expl-li">$2. ');
+        out += "</div>";
+        return out;
+      }
+
+      // ════════════════════════════════════════════
+      //  Screen switching
+      // ════════════════════════════════════════════
+      function showHome() {
+        document.getElementById("screen-home").style.display = "block";
+        document.getElementById("screen-practice").style.display = "none";
+        document.getElementById("screen-browse").style.display = "none";
+        document.getElementById("screen-scroll-exam").style.display = "none";
+        document.getElementById("screen-wrongbook").style.display = "none";
+        document.getElementById("btn-home").classList.add("active");
+        document.getElementById("btn-db").classList.remove("active");
+        document.getElementById("btn-browse").classList.remove("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
+        examMode = false;
+        examAnswers = {};
+        stopTimer();
+        updateHomeStats();
+        updateMatchCount();
+        checkLastPos();
+        renderDailyLog();
+      }
+
+      function showBrowse() {
+        document.getElementById("screen-home").style.display = "none";
+        document.getElementById("screen-practice").style.display = "none";
+        document.getElementById("screen-scroll-exam").style.display = "none";
+        document.getElementById("screen-browse").style.display = "block";
+        document.getElementById("screen-wrongbook").style.display = "none";
+        document.getElementById("btn-home").classList.remove("active");
+        document.getElementById("btn-db").classList.remove("active");
+        document.getElementById("btn-browse").classList.add("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
+        renderBrowse();
+      }
+
+      function jumpToQ(qid) {
+        const idx = filteredQs.findIndex(q => q.id === qid);
+        if (idx >= 0) {
+          currentIdx = idx;
+          showQuestion();
+          showPractice();
+        } else {
+          const q = QS.find(q => q.id === qid);
+          if (q) {
+            document.getElementById('filter-subj').value = q.subject;
+            applyFilters();
+            const idx2 = filteredQs.findIndex(qq => qq.id === qid);
+            if (idx2 >= 0) { currentIdx = idx2; showQuestion(); showPractice(); }
+          }
+        }
+      }
+
+      function showPractice() {
+        document.getElementById("screen-home").style.display = "none";
+        document.getElementById("screen-practice").style.display = "block";
+        document.getElementById("screen-browse").style.display = "none";
+        document.getElementById("screen-scroll-exam").style.display = "none";
+        document.getElementById("screen-wrongbook").style.display = "none";
+        const er = document.getElementById("screen-exam-results");
+        if (er) er.style.display = "none";
+        document.getElementById("btn-home").classList.remove("active");
+        document.getElementById("btn-db").classList.remove("active");
+        document.getElementById("btn-browse").classList.remove("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
+      }
+
+      // ════════════════════════════════════════════
+      //  Home chips
+      // ════════════════════════════════════════════
+      function toggleChip(el, type) {
+        if (type === "subj") {
+          document
+            .querySelectorAll("#chips-subj .chip")
+            .forEach((c) => c.classList.remove("sel"));
+          el.classList.add("sel");
+          homeSubjs = new Set([el.dataset.subj]);
+        } else {
+          document
+            .querySelectorAll("#chips-year .chip")
+            .forEach((c) => c.classList.remove("sel"));
+          el.classList.add("sel");
+          homeYears = new Set([el.dataset.ys]);
+        }
+        updateMatchCount();
+      }
+
+      function setStatusMode(el) {
+        document
+          .querySelectorAll("[data-status]")
+          .forEach((c) => c.classList.remove("sel"));
+        el.classList.add("sel");
+        homeStatus = el.dataset.status;
+        updateMatchCount();
+      }
+
+      function getHomeFiltered() {
+        return QS.filter((q) => {
+          if (!homeSubjs.has(q.subject)) return false;
+          if (!homeYears.has(q.year + "-" + q.session)) return false;
+          const st = getS(q.id).status;
+          if (homeStatus === "unmarked") return st === "none";
+          if (homeStatus !== "all") return st === homeStatus;
+          return true;
+        });
+      }
+
+      function updateMatchCount() {
+        const n = getHomeFiltered().length;
+        document.getElementById("match-count").textContent =
+          `符合條件：${n} 題`;
+      }
+
+      function updateHomeStats() {
+        const c = { give_up: 0, learning: 0, understood: 0 };
+        QS.forEach((q) => {
+          const s = getS(q.id).status;
+          if (c[s] !== undefined) c[s]++;
+        });
+        document.getElementById("st-total").textContent = QS.length;
+        document.getElementById("st-giveup").textContent = c.give_up;
+        document.getElementById("st-learning").textContent = c.learning;
+        document.getElementById("st-understood").textContent = c.understood;
+      }
+
+      // ════════════════════════════════════════════
+      //  Practice mode
+      // ════════════════════════════════════════════
+      // ════════════════════════════════════════════
+      //  Last position (resume)
+      // ════════════════════════════════════════════
+      const LASTPOS_KEY = uKey("wrongbook_lastpos");
+
+      function saveLastPos() {
+        if (!practiceList.length) return;
+        const q = practiceList[practiceIdx];
+        localStorage.setItem(
+          LASTPOS_KEY,
+          JSON.stringify({
+            ids: practiceList.map((q) => q.id),
+            idx: practiceIdx,
+            meta: q
+              ? `第 ${practiceIdx + 1} / ${practiceList.length} 題・${q.meta || ""}`
+              : "",
+          }),
+        );
+      }
+
+      function clearLastPos() {
+        localStorage.removeItem(LASTPOS_KEY);
+        document.getElementById("btn-resume").style.display = "none";
+        document.getElementById("resume-info").style.display = "none";
+      }
+
+      function checkLastPos() {
+        try {
+          const raw = localStorage.getItem(LASTPOS_KEY);
+          if (!raw) return;
+          const pos = JSON.parse(raw);
+          if (!pos.ids || !pos.ids.length) return;
+          document.getElementById("btn-resume").style.display = "block";
+          document.getElementById("resume-info").style.display = "block";
+          document.getElementById("resume-info").textContent =
+            pos.meta || `第 ${pos.idx + 1} / ${pos.ids.length} 題`;
+        } catch (e) {}
+      }
+
+      function resumePractice() {
+        try {
+          const raw = localStorage.getItem(LASTPOS_KEY);
+          if (!raw) return;
+          const pos = JSON.parse(raw);
+          const idSet = new Set(pos.ids);
+          const idOrder = Object.fromEntries(pos.ids.map((id, i) => [id, i]));
+          const list = QS.filter((q) => idSet.has(q.id)).sort(
+            (a, b) => idOrder[a.id] - idOrder[b.id],
+          );
+          if (!list.length) {
+            clearLastPos();
+            showToast("找不到上次的題目");
+            return;
+          }
+          examMode = false;
+          examAnswers = {};
+          practiceList = list;
+          practiceIdx = Math.min(pos.idx, list.length - 1);
+          showPractice();
+          loadPracticeQ();
+        } catch (e) {
+          clearLastPos();
+        }
+      }
+
+      function startPractice(shuffle) {
+        let list = getHomeFiltered();
+        if (!list.length) {
+          showToast("沒有符合條件的題目");
+          return;
+        }
+        if (shuffle) list = list.slice().sort(() => Math.random() - 0.5);
+        examMode = false;
+        examAnswers = {};
+        activeTopic = null;
+        practiceList = list;
+        practiceIdx = 0;
+        clearLastPos();
+        showPractice();
+        document.getElementById("btn-skip").style.display = "";
+        loadPracticeQ();
+        if (document.getElementById("timer-enable").checked) startTimer(3600);
+      }
+
+      function loadPracticeQ() {
+        if (practiceIdx >= practiceList.length) {
+          showFinish();
+          return;
+        }
+        const q = practiceList[practiceIdx];
+        answered = false;
+
+        // Progress
+        const pct = Math.round((practiceIdx / practiceList.length) * 100);
+        document.getElementById("prog-text").textContent =
+          `${practiceIdx + 1} / ${practiceList.length}`;
+        document.getElementById("prog-fill").style.width = pct + "%";
+
+        // Badges
+        const SMAP = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+        document.getElementById("pq-badges").innerHTML =
+          `<span class="badge badge-${q.subject}">${SMAP[q.subject] || q.subject}</span>` +
+          `<span class="badge badge-meta">${q.meta || ""}</span>`;
+
+        // Question
+        document.getElementById("pq-text").textContent = q.question;
+
+        // Image (if present)
+        let imgEl = document.getElementById("pq-img");
+        if (!imgEl) {
+          imgEl = document.createElement("img");
+          imgEl.id = "pq-img";
+          imgEl.style.cssText =
+            "max-width:100%;border-radius:8px;margin:.5rem 0;display:block";
+          document.getElementById("pq-text").after(imgEl);
+        }
+        if (q.image) {
+          imgEl.src = "images/" + q.image;
+          imgEl.style.display = "block";
+        } else {
+          imgEl.style.display = "none";
+        }
+
+        // Options
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const isMulti = Array.isArray(q.answer);
+        document.getElementById("pq-options").innerHTML = (q.options || [])
+          .map(
+            (opt, i) =>
+              `<button class="opt-btn" onclick="answerQ(${i})" id="opt-${i}">
+      <span class="opt-letter">${LETTERS[i]}.</span>${opt.replace(/^\([A-E]\)\s*/, "")}
+    </button>`,
+          )
+          .join("");
+
+        // Result area
+        document.getElementById("result-area").style.display = "none";
+        document.getElementById("pq-expl").classList.remove("visible");
+        document.getElementById("btn-next").style.display = "none";
+
+        // Mark buttons
+        updateMarkButtons(q.id);
+
+        // Scroll top
+        window.scrollTo(0, 0);
+
+        // Prev button: show if not at first question
+        document.getElementById("btn-prev").style.display =
+          practiceIdx > 0 ? "" : "none";
+
+        // Hide edit expl button until answered
+        document.getElementById("btn-edit-expl").style.display = "none";
+
+
+        // Exam mode: restore previously selected answer if going back
+        if (examMode) {
+          const prev = examAnswers[q.id];
+          if (prev !== undefined) {
+            answered = true;
+            document.querySelectorAll(".opt-btn").forEach((b, i) => {
+              b.disabled = true;
+              b.classList.add(i === prev ? "exam-sel" : "dim");
+            });
+            document.getElementById("btn-next").style.display = "block";
+          }
+        }
+
+        // Save position so user can resume next time
+        saveLastPos();
+      }
+
+      function answerQ(idx) {
+        if (answered) return;
+        answered = true;
+        const q = practiceList[practiceIdx];
+
+        // ── Exam mode: record answer and jump to next immediately ──
+        if (examMode) {
+          examAnswers[q.id] = idx;
+          nextQ();
+          return;
+        }
+        const correct = q.answer; // 0-based index
+
+        // Style options
+        const correctArr = Array.isArray(correct) ? correct : [correct];
+        const isCorrect = Array.isArray(correct)
+          ? correct.includes(idx)
+          : idx === correct;
+
+        const opts = document.querySelectorAll(".opt-btn");
+        opts.forEach((b, i) => {
+          b.disabled = true;
+          if (correctArr.includes(i)) b.classList.add("show-correct");
+          else if (i === idx && !isCorrect) b.classList.add("selected-wrong");
+          else b.classList.add("dim");
+        });
+        if (isCorrect) {
+          document.querySelectorAll(".opt-btn")[idx].classList.remove("dim");
+          document
+            .querySelectorAll(".opt-btn")
+            [idx].classList.add("selected-right");
+        }
+
+        // Result banner
+        const banner = document.getElementById("result-banner");
+        banner.className =
+          "result-banner " + (isCorrect ? "result-correct" : "result-wrong");
+        const correctLabel = Array.isArray(correct)
+          ? correct.map((i) => ["A", "B", "C", "D", "E"][i]).join("、")
+          : ["A", "B", "C", "D", "E"][correct];
+        banner.textContent = isCorrect
+          ? "✓ 答對了！"
+          : `✗ 答錯了，正確答案是 ${correctLabel}`;
+
+        document.getElementById("result-area").style.display = "block";
+        document.getElementById("btn-next").style.display = "block";
+        document.getElementById("btn-edit-expl").style.display = "block";
+
+        // Show expl immediately if exists, or show request button
+        const st2 = getS(q.id);
+        const expl2 = st2.expl_override ?? q.explanation ?? "";
+        const src2 = st2.src_override ?? q.explanation_source ?? "";
+        const explBox2 = document.getElementById("pq-expl");
+        const topic2 = st2.topic || q.topic || "";
+        if (expl2) {
+          const topicTag2 = topic2
+            ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block" onclick="filterByTopic('${topic2.replace(/'/g, "\\'")}')">🏷 ${topic2}</span>`
+            : "";
+          explBox2.innerHTML =
+            formatExpl(expl2) +
+            topicTag2 +
+            (src2 ? `<div class="expl-source">📖 ${src2}</div>` : "") +
+            renderCrossLinks(q.id);
+          explBox2.classList.add("visible");
+        } else {
+          explBox2.classList.remove("visible");
+        }
+
+        // Auto-increment count
+        if (!examMode) {
+          if (!qState[q.id]) qState[q.id] = { status: "none", count: 0 };
+          qState[q.id].count = (qState[q.id].count || 0) + 1;
+          trackDailyCount(q);
+        }
+        persist(q.id);
+        updateMarkButtons(q.id);
+      }
+
+      function toggleExpl() {
+        const box = document.getElementById("pq-expl");
+        box.classList.toggle("visible");
+      }
+
+      function updateMarkButtons(id) {
+        const st = getS(id).status;
+        ["give_up", "learning", "understood"].forEach((s) => {
+          const b = document.getElementById("mk-" + s);
+          if (b) b.classList.toggle("active", st === s);
+        });
+        const cb = document.getElementById("mk-count");
+        if (cb) cb.textContent = `已寫過 ${getS(id).count} 次`;
+        updateFlagBtn(id);
+      }
+
+      async function markQ(status) {
+        const q = practiceList[practiceIdx];
+        if (!qState[q.id]) qState[q.id] = { status: "none", count: 0 };
+        qState[q.id].status = qState[q.id].status === status ? "none" : status;
+        await persist(q.id);
+        updateMarkButtons(q.id);
+        updateHomeStats();
+        showToast(
+          {
+            give_up: "🔴 送他吧",
+            learning: "🟡 再努力!",
+            understood: "🟢 簡單",
+            none: "標記取消",
+          }[qState[q.id].status],
+        );
+      }
+
+      async function incCountPractice() {
+        const q = practiceList[practiceIdx];
+        if (!qState[q.id]) qState[q.id] = { status: "none", count: 0 };
+        qState[q.id].count = (qState[q.id].count || 0) + 1;
+        await persist(q.id);
+        updateMarkButtons(q.id);
+      }
+
+      function nextQ() {
+        practiceIdx++;
+        loadPracticeQ();
+      }
+      function skipQ() {
+        practiceIdx++;
+        loadPracticeQ();
+      }
+      function prevQ() {
+        if (practiceIdx > 0) {
+          practiceIdx--;
+          loadPracticeQ();
+        }
+      }
+
+      function askExpl() {
+        const q = practiceList[practiceIdx];
+        if (!q) return;
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const correctLabel = Array.isArray(q.answer)
+          ? q.answer.map((i) => LETTERS[i]).join("、")
+          : LETTERS[q.answer] || "?";
+        const optText = (q.options || [])
+          .map(
+            (opt, i) => `(${LETTERS[i]}) ${opt.replace(/^\([A-E]\)\s*/, "")}`,
+          )
+          .join("\n");
+        const prompt = `以下是一道牙醫國考題目，請提供詳細解說：\n\n科目：${{ ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" }[q.subject] || q.subject}\n${q.meta || ""}\n\n題目：${q.question}\n\n${optText}\n\n正確答案：${correctLabel}`;
+        document.getElementById("ask-expl-prompt").value = prompt;
+        document.getElementById("ask-expl-overlay").classList.add("open");
+      }
+
+      function copyAskPrompt() {
+        const ta = document.getElementById("ask-expl-prompt");
+        navigator.clipboard
+          .writeText(ta.value)
+          .then(() => {
+            showToast("提問已複製 ✓");
+            closeAskModal();
+          })
+          .catch(() => {
+            ta.select();
+            document.execCommand("copy");
+            showToast("提問已複製 ✓");
+            closeAskModal();
+          });
+      }
+
+      function closeAskModal() {
+        document.getElementById("ask-expl-overlay").classList.remove("open");
+      }
+      function maybeCloseAsk(e) {
+        if (e.target === document.getElementById("ask-expl-overlay"))
+          closeAskModal();
+      }
+
+      function showFinish() {
+        if (examMode) {
+          showExamResults();
+          return;
+        }
+        document.getElementById("pq-badges").innerHTML = "";
+        document.getElementById("pq-text").innerHTML =
+          '<div style="text-align:center;padding:2rem 0"><div style="font-size:2.5rem">🎉</div><div style="font-size:1.1rem;font-weight:700;margin-top:.6rem">本輪練習完成！</div><div style="font-size:.85rem;color:var(--gray);margin-top:.4rem">共 ' +
+          practiceList.length +
+          " 題</div></div>";
+        document.getElementById("pq-options").innerHTML = "";
+        document.getElementById("result-area").style.display = "none";
+        document.getElementById("btn-next").style.display = "none";
+        document.getElementById("prog-fill").style.width = "100%";
+        document.getElementById("prog-text").textContent =
+          `${practiceList.length} / ${practiceList.length}`;
+        clearLastPos();
+      }
+
+      // ════════════════════════════════════════════
+      //  Timer
+      // ════════════════════════════════════════════
+      function startTimer(seconds) {
+        stopTimer();
+        timerSeconds = seconds;
+        const el = document.getElementById("exam-timer");
+        el.style.display = "inline-block";
+        el.classList.remove("warning");
+        updateTimerEl(el);
+        timerInterval = setInterval(() => {
+          timerSeconds--;
+          updateTimerEl(el);
+          if (timerSeconds <= 0) {
+            stopTimer();
+            showToast("⏱ 時間到！自動交卷");
+            if (examMode) showExamResults();
+            else if (
+              document.getElementById("screen-scroll-exam").style.display !==
+              "none"
+            )
+              submitScrollExam();
+          }
+        }, 1000);
+      }
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+        const el = document.getElementById("exam-timer");
+        if (el) el.style.display = "none";
+      }
+      function updateTimerEl(el) {
+        const m = Math.floor(Math.max(0, timerSeconds) / 60);
+        const s = Math.max(0, timerSeconds) % 60;
+        el.textContent = `⏱ ${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        el.classList.toggle("warning", timerSeconds <= 300);
+      }
+
+      // ════════════════════════════════════════════
+      //  Exam Mode (Step-by-step)
+      // ════════════════════════════════════════════
+      function startExam(scrollMode) {
+        let list = getHomeFiltered();
+        if (!list.length) {
+          showToast("沒有符合條件的題目");
+          return;
+        }
+        const useTimer = document.getElementById("timer-enable").checked;
+        if (scrollMode) {
+          scrollExamList = list;
+          scrollExamAnswers = {};
+          scrollExamSubmitted = false;
+          renderScrollExam();
+          document.getElementById("screen-home").style.display = "none";
+          document.getElementById("screen-practice").style.display = "none";
+          document.getElementById("screen-browse").style.display = "none";
+          document.getElementById("screen-scroll-exam").style.display = "block";
+          const er = document.getElementById("screen-exam-results");
+          if (er) er.style.display = "none";
+          window.scrollTo(0, 0);
+          if (useTimer) startTimer(3600);
+          return;
+        }
+        examMode = true;
+        examAnswers = {};
+        practiceList = list;
+        practiceIdx = 0;
+        clearLastPos();
+        showPractice();
+        // Exam mode: keep skip button visible
+        document.getElementById("btn-skip").style.display = "";
+        loadPracticeQ();
+        if (useTimer) startTimer(3600);
+      }
+
+      // ════════════════════════════════════════════
+      //  Scroll Exam Mode
+      // ════════════════════════════════════════════
+      function renderScrollExam() {
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const SMAP = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+        const list = scrollExamList;
+        document.getElementById("scroll-exam-count").textContent =
+          `0 / ${list.length} 題已作答`;
+        document.getElementById("scroll-exam-list").innerHTML = list
+          .map((q, qi) => {
+            const imgHtml = q.image
+              ? `<img class="scroll-q-img" src="images/${q.image}" alt="題目圖片">`
+              : "";
+            const opts = (q.options || [])
+              .map(
+                (opt, i) =>
+                  `<div class="scroll-opt" id="se-opt-${q.id}-${i}" onclick="scrollExamAnswer('${q.id}',${i})">
+        <span class="scroll-opt-letter">${LETTERS[i]}</span>
+        <span>${opt.replace(/^\([A-E]\)\s*/, "")}</span>
+      </div>`,
+              )
+              .join("");
+            return `<div class="scroll-q-card" id="se-card-${q.id}">
+      <div class="scroll-q-meta">
+        <span class="badge badge-${q.subject}" style="font-size:.7rem;padding:.1rem .4rem">${SMAP[q.subject] || q.subject}</span>
+        <span>${q.meta || ""}</span>
+        <span style="margin-left:auto;font-weight:400">第 ${qi + 1} 題</span>
+      </div>
+      <div class="scroll-q-text">${q.question}</div>
+      ${imgHtml}
+      <div class="scroll-opts" id="se-opts-${q.id}">${opts}</div>
+      <div id="se-result-${q.id}"></div>
+    </div>`;
+          })
+          .join("");
+      }
+
+      function scrollExamAnswer(qid, idx) {
+        if (scrollExamSubmitted) return;
+        scrollExamAnswers[qid] = idx;
+        // Highlight selected
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const q = scrollExamList.find((q) => q.id === qid);
+        if (!q) return;
+        (q.options || []).forEach((_, i) => {
+          const el = document.getElementById(`se-opt-${qid}-${i}`);
+          if (el) el.classList.toggle("sel", i === idx);
+        });
+        // Update count
+        const done = Object.keys(scrollExamAnswers).length;
+        document.getElementById("scroll-exam-count").textContent =
+          `${done} / ${scrollExamList.length} 題已作答`;
+      }
+
+      function submitScrollExam() {
+        if (scrollExamSubmitted) return;
+        scrollExamSubmitted = true;
+        stopTimer();
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        let correct = 0,
+          total = 0;
+        scrollExamList.forEach((q) => {
+          const userIdx = scrollExamAnswers[q.id];
+          const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+          // Lock all options
+          (q.options || []).forEach((_, i) => {
+            const el = document.getElementById(`se-opt-${q.id}-${i}`);
+            if (!el) return;
+            el.classList.add("locked");
+            if (correctArr.includes(i)) el.classList.add("show-correct");
+            else if (i === userIdx && !correctArr.includes(i))
+              el.classList.add("show-wrong");
+          });
+          const resultEl = document.getElementById(`se-result-${q.id}`);
+          if (userIdx === undefined) {
+            if (resultEl)
+              resultEl.innerHTML =
+                '<span class="scroll-result-badge skip">跳過</span>';
+          } else {
+            total++;
+            const ok = correctArr.includes(userIdx);
+            if (ok) correct++;
+            if (resultEl)
+              resultEl.innerHTML = ok
+                ? '<span class="scroll-result-badge ok">✓ 答對</span>'
+                : `<span class="scroll-result-badge err">✗ 答錯，正確：${correctArr.map((i) => LETTERS[i]).join("/")}</span>`;
+            trackDailyCount(q);
+          }
+        });
+        // Show score at top
+        const topbar = document.querySelector(".scroll-exam-topbar");
+        topbar.innerHTML = `<div class="scroll-exam-done-score">${correct} / ${total}</div>
+    <span style="font-size:.82rem;color:var(--gray);flex:1">${total - correct === 0 ? "全對！" : "答錯 " + (total - correct) + " 題"}</span>
+    <button class="start-btn secondary" style="padding:.4rem .8rem;font-size:.8rem;margin:0" onclick="showHome()">← 返回</button>`;
+        window.scrollTo(0, 0);
+      }
+
+      function showExamResults() {
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const total = practiceList.length;
+        let correct = 0;
+        const wrongQs = [];
+
+        practiceList.forEach((q) => {
+          const userIdx = examAnswers[q.id];
+          if (userIdx === undefined) return; // skipped
+          const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+          const isOk = correctArr.includes(userIdx);
+          if (isOk) correct++;
+          else wrongQs.push({ q, userIdx, correctArr });
+          // Track daily count for exam mode here
+          trackDailyCount(q);
+        });
+
+        // Show results screen
+        stopTimer();
+        [
+          "screen-home",
+          "screen-practice",
+          "screen-db",
+          "screen-browse",
+          "screen-scroll-exam",
+        ].forEach((s) => {
+          const el = document.getElementById(s);
+          if (el) el.style.display = "none";
+        });
+        document.getElementById("screen-exam-results").style.display = "block";
+
+        const wrong = total - correct;
+        document.getElementById("exam-res-score").textContent =
+          `${correct} / ${total}`;
+        document.getElementById("exam-res-sub").textContent =
+          wrong === 0 ? "🎉 全對！太厲害了！" : `答錯 ${wrong} 題，繼續加油！`;
+
+        // Wrong question list
+        const listEl = document.getElementById("exam-res-wrong-list");
+        if (!wrongQs.length) {
+          listEl.innerHTML = "";
+          document.getElementById("exam-res-retry").style.display = "none";
+        } else {
+          document.getElementById("exam-res-retry").style.display = "";
+          listEl.innerHTML =
+            `<div class="exam-res-section">❌ 答錯的題目（${wrongQs.length} 題）</div>` +
+            wrongQs
+              .map(({ q, userIdx, correctArr }) => {
+                const opts = (q.options || [])
+                  .map((opt, i) => {
+                    const txt = `${LETTERS[i]}. ${opt.replace(/^\([A-E]\)\s*/, "")}`;
+                    let cls = "dim";
+                    if (correctArr.includes(i)) cls = "correct-ans";
+                    else if (i === userIdx) cls = "wrong-sel";
+                    return `<div class="exam-res-opt ${cls}">${cls === "correct-ans" ? "✓ " : cls === "wrong-sel" ? "✗ " : ""}${txt}</div>`;
+                  })
+                  .join("");
+                return `<div class="exam-res-card">
+          <div class="exam-res-qtext">${q.meta || ""} ${q.question}</div>
+          <div class="exam-res-opts">${opts}</div>
+        </div>`;
+              })
+              .join("");
+        }
+
+        examMode = false;
+        window.scrollTo(0, 0);
+      }
+
+      function retryWrong() {
+        stopTimer();
+        // Collect wrong question IDs and start practice with them
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const wrongList = practiceList.filter((q) => {
+          const userIdx = examAnswers[q.id];
+          if (userIdx === undefined) return false;
+          const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+          return !correctArr.includes(userIdx);
+        });
+        if (!wrongList.length) {
+          showToast("沒有錯題");
+          return;
+        }
+        document.getElementById("screen-exam-results").style.display = "none";
+        examMode = false;
+        examAnswers = {};
+        practiceList = wrongList;
+        practiceIdx = 0;
+        clearLastPos();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      function openEditCurrent() {
+        if (practiceIdx < practiceList.length)
+          openEditModal(practiceList[practiceIdx].id);
+      }
+
+      // ════════════════════════════════════════════
+      //  Browse mode
+      // ════════════════════════════════════════════
+      function setBF(el, type, val) {
+        if (type === "status") {
+          document
+            .querySelectorAll(
+              '.bf-chip[data-bf="all"],[data-bf="give_up"],[data-bf="learning"],[data-bf="understood"]',
+            )
+            .forEach((c) => c.classList.remove("sel"));
+          el.classList.add("sel");
+          bfStatus = val;
+        } else {
+          el.classList.toggle("sel");
+          bfSubjs.has(val) ? bfSubjs.delete(val) : bfSubjs.add(val);
+        }
+        renderBrowse();
+      }
+
+      function browseSearch(q) {
+        browseQ = q.trim().toLowerCase();
+        renderBrowse();
+      }
+
+      function getBrowseFiltered() {
+        return QS.filter((q) => {
+          if (!bfSubjs.has(q.subject)) return false;
+          const st = getS(q.id).status;
+          if (bfStatus !== "all" && st !== bfStatus) return false;
+          if (browseQ) {
+            const hay = [q.question, q.meta, q.explanation || ""]
+              .join(" ")
+              .toLowerCase();
+            if (!hay.includes(browseQ)) return false;
+          }
+          return true;
+        });
+      }
+
+      function renderBrowse() {
+        const list = document.getElementById("q-list");
+        const filtered = getBrowseFiltered();
+        if (!filtered.length) {
+          list.innerHTML =
+            '<div class="empty"><div class="icon">🔍</div><p>沒有符合的題目</p></div>';
+          return;
+        }
+        list.innerHTML = filtered.map(renderBrowseCard).join("");
+      }
+
+      const SMAP2 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+      const SLABELS = {
+        none: "─ 未標記",
+        give_up: "🔴 送他吧",
+        learning: "🟡 再努力!",
+        understood: "🟢 簡單",
+      };
+      const SCLS = {
+        none: "a-none",
+        give_up: "a-give_up",
+        learning: "a-learning",
+        understood: "a-understood",
+      };
+      const DOTCLS = {
+        none: "dot-none",
+        give_up: "dot-give_up",
+        learning: "dot-learning",
+        understood: "dot-understood",
+      };
+
+      function renderBrowseCard(q) {
+        const st = getS(q.id);
+        const expl = st.expl_override ?? q.explanation ?? "";
+        const src = st.src_override ?? q.explanation_source ?? "";
+        const LETTERS = ["A", "B", "C", "D"];
+
+        const correctArr2 = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const optHtml = (q.options || [])
+          .map((opt, i) => {
+            const isC = correctArr2.includes(i);
+            return `<div class="q-opt ${isC ? "correct" : "wrong"}">${isC ? "✓ " : ""}${opt}</div>`;
+          })
+          .join("");
+
+        const explHtml = expl
+          ? `<div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>`
+          : `<p class="no-expl">尚無詳解</p>`;
+
+        return `
+<div class="q-card" id="bc-${q.id}">
+  <div class="q-card-hdr" onclick="document.getElementById('bc-${q.id}').classList.toggle('open')">
+    <div class="q-hdr-main">
+      <div class="q-badges" style="margin-bottom:.3rem">
+        <span class="badge badge-${q.subject}">${SMAP2[q.subject] || q.subject}</span>
+        <span class="badge badge-meta">${q.meta || ""}</span>
+      </div>
+      <div style="font-size:.86rem;line-height:1.6;color:#1e293b">${q.question}</div>
+    </div>
+    <div class="q-hdr-right">
+      <div class="status-dot ${DOTCLS[st.status]}"></div>
+      <span class="chevron">▼</span>
+    </div>
+  </div>
+  <div class="q-body">
+    <div class="q-opt-list">${optHtml}</div>
+    ${explHtml}
+    <div class="q-actions">
+      <button class="a-mark ${SCLS[st.status]}" onclick="browseToggleStatus('${q.id}',event)">${SLABELS[st.status]}</button>
+      <button class="a-count" onclick="browseIncCount('${q.id}',event)">已寫過 ${st.count} 次</button>
+      <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️</button>
+    </div>
+  </div>
+</div>`;
+      }
+
+      const STATUS_CYCLE = ["none", "give_up", "learning", "understood"];
+
+      async function browseToggleStatus(id, e) {
+        e?.stopPropagation();
+        if (!qState[id]) qState[id] = { status: "none", count: 0 };
+        const cur = qState[id].status;
+        qState[id].status =
+          STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur) + 1) % STATUS_CYCLE.length];
+        await persist(id);
+        updateHomeStats();
+        renderBrowse();
+        setTimeout(
+          () => document.getElementById("bc-" + id)?.classList.add("open"),
+          20,
+        );
+      }
+
+      async function browseIncCount(id, e) {
+        e?.stopPropagation();
+        if (!qState[id]) qState[id] = { status: "none", count: 0 };
+        qState[id].count = (qState[id].count || 0) + 1;
+        await persist(id);
+        showToast(`已寫過 ${qState[id].count} 次`);
+        renderBrowse();
+        setTimeout(
+          () => document.getElementById("bc-" + id)?.classList.add("open"),
+          20,
+        );
+      }
+
+      // ════════════════════════════════════════════
+      //  Edit modal
+      // ════════════════════════════════════════════
+      function openEditModal(id, e) {
+        e?.stopPropagation();
+        editingId = id;
+        const q = QS.find((q) => q.id === id);
+        const st = getS(id);
+        document.getElementById("edit-expl").value =
+          st.expl_override ?? q?.explanation ?? "";
+        document.getElementById("edit-src").value =
+          st.src_override ?? q?.explanation_source ?? "";
+        document.getElementById("modal-overlay").classList.add("open");
+      }
+
+      function maybeClose(e) {
+        if (e.target === document.getElementById("modal-overlay")) closeModal();
+      }
+      function closeModal() {
+        document.getElementById("modal-overlay").classList.remove("open");
+        editingId = null;
+      }
+
+      async function saveEdit() {
+        if (!editingId) return;
+        if (!qState[editingId])
+          qState[editingId] = { status: "none", count: 0 };
+        qState[editingId].expl_override =
+          document.getElementById("edit-expl").value.trim() || null;
+        qState[editingId].src_override =
+          document.getElementById("edit-src").value.trim() || null;
+        const saved = editingId;
+        await persist(saved);
+        closeModal();
+        showToast("詳解已儲存 ✓");
+        // Refresh explanation in practice view if current question
+        if (practiceList[practiceIdx]?.id === saved && answered) {
+          const st = getS(saved);
+          const q = practiceList[practiceIdx];
+          const expl = st.expl_override ?? q.explanation ?? "";
+          const src = st.src_override ?? q.explanation_source ?? "";
+          const box = document.getElementById("pq-expl");
+          if (expl) {
+            const t = st.topic || q.topic || "";
+            const tt = t
+              ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block" onclick="filterByTopic('${t.replace(/'/g, "\\'")}')">🏷 ${t}</span>`
+              : "";
+            box.innerHTML =
+              formatExpl(expl) +
+              tt +
+              (src ? `<div class="expl-source">📖 ${src}</div>` : "");
+            box.classList.add("visible");
+          }
+        }
+      }
+
+      // ════════════════════════════════════════════
+      //  Toast
+      // ════════════════════════════════════════════
+      let _tt;
+      function showToast(msg) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(_tt);
+        _tt = setTimeout(() => t.classList.remove("show"), 2200);
+      }
+
+      // ════════════════════════════════════════════
+      //  Daily Practice Log
+      // ════════════════════════════════════════════
+      function getDailyLog() {
+        try {
+          return JSON.parse(localStorage.getItem(uKey("daily_log")) || "{}");
+        } catch {
+          return {};
+        }
+      }
+      function trackDailyCount(q) {
+        const log = getDailyLog();
+        const today = new Date().toISOString().slice(0, 10);
+        // Migrate old plain-number format
+        if (!log[today] || typeof log[today] === "number") {
+          log[today] = {
+            count: typeof log[today] === "number" ? log[today] : 0,
+            exams: {},
+          };
+        }
+        log[today].count = (log[today].count || 0) + 1;
+        if (q) {
+          const key = `${q.subject}-${q.year}-${q.session}`;
+          const ex = log[today].exams;
+          if (!ex[key]) ex[key] = { min: q.number, max: q.number };
+          else {
+            ex[key].min = Math.min(ex[key].min, q.number);
+            ex[key].max = Math.max(ex[key].max, q.number);
+          }
+        }
+        localStorage.setItem(uKey("daily_log"), JSON.stringify(log));
+        renderDailyLog();
+      }
+
+      let dailyHistOpen = false;
+      function toggleDailyHist() {
+        dailyHistOpen = !dailyHistOpen;
+        const list = document.getElementById("daily-hist-list");
+        const btn = document.querySelector(".daily-hist-toggle");
+        list.style.display = dailyHistOpen ? "block" : "none";
+        btn.textContent = (dailyHistOpen ? "▼" : "▶") + " 過去紀錄";
+      }
+
+      function renderDailyLog() {
+        const barsEl = document.getElementById("daily-bars");
+        const countEl = document.getElementById("daily-today-count");
+        if (!barsEl) return;
+        const log = getDailyLog();
+        const today = new Date().toISOString().slice(0, 10);
+        const SUBJ_N = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+
+        // Build last 14 days
+        const days = [];
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const key = d.toISOString().slice(0, 10);
+          const entry = log[key];
+          const n = !entry
+            ? 0
+            : typeof entry === "number"
+              ? entry
+              : entry.count || 0;
+          days.push({ key, n, label: d.getMonth() + 1 + "/" + d.getDate() });
+        }
+        const max = Math.max(...days.map((d) => d.n), 1);
+        barsEl.innerHTML = days
+          .map((d) => {
+            const h = Math.round((d.n / max) * 32) + 2;
+            const isToday = d.key === today;
+            return `<div class="daily-bar-wrap" title="${d.label}: ${d.n}題">
+      <div class="daily-bar${isToday ? " today" : ""}" style="height:${h}px"></div>
+      <div class="daily-bar-label">${isToday ? "今" : ""}</div>
+    </div>`;
+          })
+          .join("");
+
+        // Today count (direct display)
+        const todayEntry = log[today];
+        const todayN = !todayEntry
+          ? 0
+          : typeof todayEntry === "number"
+            ? todayEntry
+            : todayEntry.count || 0;
+        countEl.textContent = todayN
+          ? `今天做了 ${todayN} 題`
+          : "今天還沒做題 💪";
+
+        // Past days (collapsible)
+        const pastDays = Object.entries(log)
+          .filter(([k]) => k < today)
+          .sort(([a], [b]) => b.localeCompare(a))
+          .slice(0, 14);
+
+        const histWrap = document.getElementById("daily-hist-wrap");
+        const histList = document.getElementById("daily-hist-list");
+        if (!histWrap) return;
+
+        if (!pastDays.length) {
+          histWrap.style.display = "none";
+          return;
+        }
+        histWrap.style.display = "";
+
+        histList.innerHTML = pastDays
+          .map(([date, entry]) => {
+            const n = !entry
+              ? 0
+              : typeof entry === "number"
+                ? entry
+                : entry.count || 0;
+            const daysAgo = Math.round(
+              (new Date(today) - new Date(date)) / 86400000,
+            );
+            const exams =
+              typeof entry === "object" && entry?.exams ? entry.exams : {};
+            const examStr =
+              Object.entries(exams)
+                .map(([k, r]) => {
+                  const [subj, year, sess] = k.split("-");
+                  return `${SUBJ_N[subj] || subj}${year}年${sess === "1" ? "上" : "下"} 第${r.min}-${r.max}題`;
+                })
+                .join("、") || "(未記錄)";
+            return `<div class="daily-hist-item">${daysAgo}天前 · ${n}題<br><span style="color:#94a3b8">${examStr}</span></div>`;
+          })
+          .join("");
+      }
+
+      // ════════════════════════════════════════════
+      //  Reset All Marks
+      // ════════════════════════════════════════════
+      async function resetAllMarks() {
+        if (
+          !confirm(
+            "確定要重置所有標記嗎？\n\n🟢 簡單、🟡 再努力!、🔴 送他吧 的標記與練習次數\n都將被清除。",
+          )
+        )
+          return;
+        if (
+          !confirm(
+            "⚠️ 最後確認！\n\n所有標記與練習次數將被清除，此操作無法復原。\n\n確定繼續嗎？",
+          )
+        )
+          return;
+
+        for (const id in qState) {
+          qState[id].status = "none";
+          qState[id].count = 0;
+        }
+        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+
+        if (USE_SUPABASE) {
+          try {
+            await sb
+              .from("question_state")
+              .update({ status: "none", practice_count: 0 })
+              .neq("question_id", "");
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        showToast("✅ 所有標記已重置");
+        // Refresh current view
+        const homeVisible =
+          document.getElementById("screen-home").style.display !== "none";
+        const dbVisible =
+          document.getElementById("screen-db")?.style.display !== "none";
+        if (homeVisible || (!homeVisible && !dbVisible)) {
+          updateHomeStats();
+          updateMatchCount();
+          renderTopicSidebar();
+        } else if (dbVisible) showDB();
+      }
+
+
+      // ════════════════════════════════════════════
+      //  Database screen
+      // ════════════════════════════════════════════
+      let dbSubjs = new Set(["ya3", "ya4", "ya5", "ya6"]);
+      let dbSearchQ = "";
+      let dbTopicFilter = null;
+
+      function filterByTopic(topic) {
+        dbTopicFilter = topic;
+        const bar = document.getElementById("db-topic-bar");
+        if (topic) {
+          document.getElementById("db-topic-label").textContent = topic;
+          bar.style.display = "";
+        } else {
+          bar.style.display = "none";
+        }
+        showDB();
+      }
+
+      function clearTopicFilter() {
+        filterByTopic(null);
+      }
+
+      function showDB() {
+        document.getElementById("screen-home").style.display = "none";
+        document.getElementById("screen-practice").style.display = "none";
+        document.getElementById("screen-browse").style.display = "none";
+        document.getElementById("screen-scroll-exam").style.display = "none";
+        document.getElementById("screen-wrongbook").style.display = "none";
+        document.getElementById("screen-db").style.display = "block";
+        document.getElementById("btn-home").classList.remove("active");
+        document.getElementById("btn-db").classList.add("active");
+        document.getElementById("btn-browse").classList.remove("active");
+        document.getElementById("btn-wrongbook").classList.remove("active");
+        renderDB();
+      }
+
+      function toggleDBSubj(el) {
+        const s = el.dataset.dbsubj;
+        el.classList.toggle("sel");
+        dbSubjs.has(s) ? dbSubjs.delete(s) : dbSubjs.add(s);
+        renderDB();
+      }
+
+      function dbSearch(q) {
+        dbSearchQ = q.trim().toLowerCase();
+        renderDB();
+      }
+
+      function renderDB() {
+        const list = document.getElementById("db-list");
+
+        // Get questions with explanations
+        const withExpl = QS.filter((q) => {
+          if (!dbSubjs.has(q.subject)) return false;
+          const st = getS(q.id);
+          const expl = st.expl_override ?? q.explanation ?? "";
+          if (!expl) return false;
+          const topic = st.topic || q.topic || "";
+          if (dbTopicFilter && topic !== dbTopicFilter) return false;
+          if (dbSearchQ) {
+            const hay = [q.question, q.meta, expl, topic]
+              .join(" ")
+              .toLowerCase();
+            if (!hay.includes(dbSearchQ)) return false;
+          }
+          return true;
+        });
+
+        if (!withExpl.length) {
+          const emptyMsg = dbTopicFilter
+            ? `考點「${dbTopicFilter}」沒有符合的題目`
+            : dbSearchQ
+              ? "沒有符合的題目"
+              : "還沒有詳解\n答題後點「✨ 要詳解」開始累積";
+          list.innerHTML = `<div class="db-empty"><div class="icon">📚</div><p>${emptyMsg}</p></div>`;
+          return;
+        }
+
+        // Group by subject → year-session
+        const SMAP3 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+        const groups = {};
+        withExpl.forEach((q) => {
+          const key = `${q.subject}||${q.year}-${q.session}`;
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(q);
+        });
+
+        const SESSION_LABEL = { 1: "上", 2: "下" };
+        let html = "";
+        // Sort groups by subject order then year-session
+        const SUBJ_ORDER = ["ya3", "ya4", "ya5", "ya6"];
+        const sortedKeys = Object.keys(groups).sort((a, b) => {
+          const [sa, ysa] = a.split("||");
+          const [sb, ysb] = b.split("||");
+          const si = SUBJ_ORDER.indexOf(sa) - SUBJ_ORDER.indexOf(sb);
+          if (si !== 0) return si;
+          return ysa.localeCompare(ysb);
+        });
+
+        sortedKeys.forEach((key) => {
+          const [subj, ys] = key.split("||");
+          const [year, sess] = ys.split("-");
+          const qs = groups[key].sort((a, b) => a.number - b.number);
+          html += `<div class="db-group-title">${SMAP3[subj] || subj} · ${year}年${SESSION_LABEL[sess] || sess}（${qs.length} 題）</div>`;
+          qs.forEach((q) => {
+            html += renderDBCard(q);
+          });
+        });
+
+        list.innerHTML = html;
+      }
+
+      function renderDBCard(q) {
+        const st = getS(q.id);
+        const expl = st.expl_override ?? q.explanation ?? "";
+        const src = st.src_override ?? q.explanation_source ?? "";
+        const topic = st.topic || q.topic || "";
+        const SMAP3 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const correctArr3 = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const optHtml = (q.options || [])
+          .map((opt, i) => {
+            const isC = correctArr3.includes(i);
+            return `<div class="q-opt ${isC ? "correct" : "wrong"}">${isC ? "✓ " : ""}${opt}</div>`;
+          })
+          .join("");
+        const topicEsc = topic.replace(/'/g, "\\'");
+
+        return `
+<div class="db-card" id="dbc-${q.id}">
+  <div class="db-card-hdr" onclick="document.getElementById('dbc-${q.id}').classList.toggle('open')">
+    <div class="db-hdr-main">
+      <div class="q-badges" style="margin-bottom:.3rem">
+        <span class="badge badge-meta">${q.meta || ""}</span>
+        ${topic ? `<span class="topic-tag" onclick="event.stopPropagation();filterByTopic('${topicEsc}')">🏷 ${topic}</span>` : ""}
+      </div>
+      <div style="font-size:.85rem;line-height:1.55;color:#1e293b">${q.question}</div>
+    </div>
+    <div class="db-hdr-right">
+      <span class="status-dot ${DOTCLS[st.status]}"></span>
+      <span class="db-chevron">▼</span>
+    </div>
+  </div>
+  <div class="db-body">
+    <div class="q-opt-list">${optHtml}</div>
+    <div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>
+    <div class="q-actions">
+      <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️ 編輯</button>
+    </div>
+  </div>
+</div>`;
+      }
+
+      // ════════════════════════════════════════════
+      //  User badge in header
+      // ════════════════════════════════════════════
+      (function initUserBadge(){
+        const uid = localStorage.getItem('dental_cur_user');
+        const users = JSON.parse(localStorage.getItem('dental_users')||'[]');
+        const u = users.find(x=>x.id===uid);
+        const el = document.getElementById('header-user');
+        if(u && el){
+          el.style.background = u.color;
+          el.textContent = u.name[0];
+          el.title = '使用者：' + u.name;
+        } else if(el){
+          el.style.display='none';
+        }
+      })();
+
+      // ════════════════════════════════════════════
+      //  Flag (wrongbook) toggle
+      // ════════════════════════════════════════════
+      function toggleFlag(){
+        const q = practiceList[practiceIdx];
+        if(!q) return;
+        if(!qState[q.id]) qState[q.id] = {status:'none',count:0};
+        qState[q.id].flagged = !qState[q.id].flagged;
+        persist(q.id);
+        updateFlagBtn(q.id);
+        showToast(qState[q.id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
+      }
+
+      function updateFlagBtn(id){
+        const btn = document.getElementById('mk-flag');
+        if(!btn) return;
+        const s = getS(id);
+        if(s.flagged){
+          btn.classList.add('flagged');
+          btn.textContent = '🚩 已收錄';
+        } else {
+          btn.classList.remove('flagged');
+          btn.textContent = '🚩 錯題本';
+        }
+      }
+
+      // ════════════════════════════════════════════
+      //  Wrongbook screen
+      // ════════════════════════════════════════════
+      let wbFilter = 'all';
+
+      function setWBFilter(el, val){
+        document.querySelectorAll('.wb-chip').forEach(c=>c.classList.remove('sel'));
+        el.classList.add('sel');
+        wbFilter = val;
+        renderWrongbook();
+      }
+
+      function showWrongbook(){
+        document.getElementById('screen-home').style.display='none';
+        document.getElementById('screen-practice').style.display='none';
+        document.getElementById('screen-db').style.display='none';
+        const er = document.getElementById('screen-exam-results');
+        if(er) er.style.display='none';
+        document.getElementById('screen-wrongbook').style.display='block';
+        // Update header buttons
+        document.querySelectorAll('.btn-mode').forEach(b=>b.classList.remove('active'));
+        document.getElementById('btn-wrongbook').classList.add('active');
+        renderWrongbook();
+      }
+
+      function renderWrongbook(){
+        const flagged = QS.filter(q=>{
+          const s = getS(q.id);
+          if(!s.flagged) return false;
+          if(wbFilter!=='all' && q.subject!==wbFilter) return false;
+          return true;
+        });
+
+        const statsEl = document.getElementById('wb-stats');
+        statsEl.textContent = flagged.length + ' 題';
+
+        const listEl = document.getElementById('wb-list');
+        if(!flagged.length){
+          listEl.innerHTML = '<div class="wb-empty">錯題本是空的<br>做題時按 🚩 加入題目</div>';
+          return;
+        }
+
+        // Group by subject → topic
+        const SMAP = {ya3:'牙三',ya4:'牙四',ya5:'牙五',ya6:'牙六'};
+        const groups = {};
+        flagged.forEach(q=>{
+          const topic = (getS(q.id).topic || q.topic || '未分類');
+          const key = q.subject + '||' + topic;
+          if(!groups[key]) groups[key] = {subj:q.subject, topic, items:[]};
+          groups[key].items.push(q);
+        });
+
+        // Sort groups: by subject order then topic name
+        const sorted = Object.values(groups).sort((a,b)=>{
+          const si = ['ya3','ya4','ya5','ya6'];
+          return (si.indexOf(a.subj)-si.indexOf(b.subj)) || a.topic.localeCompare(b.topic);
+        });
+
+        let html = '';
+        sorted.forEach(g=>{
+          let inner = '';
+          g.items.forEach(q=>{
+            const qText = q.question.length>80 ? q.question.slice(0,80)+'…' : q.question;
+            inner += `<div class="wb-card" onclick="startFromWrongbook('${q.id}')">
+              <div class="wb-card-top">
+                <span class="wb-card-id">${q.meta||q.id}</span>
+                <div>
+                  <span class="wb-card-topic">${getS(q.id).topic||q.topic||''}</span>
+                  <button class="wb-card-remove" onclick="event.stopPropagation();removeFromWB('${q.id}')" title="移除">✕</button>
+                </div>
+              </div>
+              <div class="wb-card-q">${qText}</div>
+            </div>`;
+          });
+          html += `<details class="wb-group"><summary class="wb-group-title">${SMAP[g.subj]||g.subj} — ${g.topic} (${g.items.length})</summary>${inner}</details>`;
+        });
+        listEl.innerHTML = html;
+      }
+
+      function removeFromWB(id){
+        if(!qState[id]) return;
+        qState[id].flagged = false;
+        persist(id);
+        renderWrongbook();
+        showToast('已從錯題本移除');
+      }
+
+      function startFromWrongbook(id){
+        // Find the question and start practice from it
+        const flagged = QS.filter(q=>getS(q.id).flagged);
+        if(!flagged.length) return;
+        const idx = flagged.findIndex(q=>q.id===id);
+        examMode = false;
+        examAnswers = {};
+        practiceList = flagged;
+        practiceIdx = idx >= 0 ? idx : 0;
+        clearLastPos();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      function practiceWrongbook(){
+        const flagged = QS.filter(q=>{
+          const s = getS(q.id);
+          if(!s.flagged) return false;
+          if(wbFilter!=='all' && q.subject!==wbFilter) return false;
+          return true;
+        });
+        if(!flagged.length){ showToast('錯題本是空的'); return; }
+        examMode = false;
+        examAnswers = {};
+        practiceList = flagged;
+        practiceIdx = 0;
+        clearLastPos();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      // ════════════════════════════════════════════
+      //  Export / Import wrongbook
+      // ════════════════════════════════════════════
+      function exportWrongbook(){
+        const flagged = QS.filter(q=>getS(q.id).flagged).map(q=>({
+          id:q.id, subject:q.subject, topic:q.topic,
+          question:q.question, meta:q.meta,
+          status:getS(q.id).status, count:getS(q.id).count
+        }));
+        const blob = new Blob([JSON.stringify(flagged,null,2)],{type:'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const uid = localStorage.getItem('dental_cur_user')||'default';
+        const users = JSON.parse(localStorage.getItem('dental_users')||'[]');
+        const u = users.find(x=>x.id===uid);
+        a.download = (u?u.name:'wrongbook') + '_錯題本_' + new Date().toISOString().slice(0,10) + '.json';
+        a.click();
+        showToast('已匯出 ' + flagged.length + ' 題');
+      }
+
+      function importWrongbook(){
+        document.getElementById('wb-import-file').click();
+      }
+
+      function handleWBImport(e){
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev){
+          try{
+            const arr = JSON.parse(ev.target.result);
+            let count = 0;
+            arr.forEach(item=>{
+              if(item.id){
+                if(!qState[item.id]) qState[item.id] = {status:'none',count:0};
+                qState[item.id].flagged = true;
+                count++;
+              }
+            });
+            localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+            renderWrongbook();
+            showToast('已匯入 ' + count + ' 題');
+          }catch(err){
+            showToast('匯入失敗：格式錯誤');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      }
+
+      // ════════════════════════════════════════════
+      //  Init
+      // ════════════════════════════════════════════
+      loadState();
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="../sync.js"></script>
+    <script>
+      if(typeof DentalSync !== 'undefined'){
+        DentalSync.init().then(()=>{
+          // Reload state after sync pulls data
+          const s = localStorage.getItem(uKey("wrongbook_state"));
+          if(s){ try{ qState = JSON.parse(s); }catch(e){} }
+          updateHomeStats();
+          updateMatchCount();
+          renderDailyLog();
+        });
+      }
+      // Live reload when Firebase pushes new data
+      window.addEventListener('storage', function(e){
+        if(e.key === uKey('wrongbook_state') && e.newValue){
+          try{ qState = JSON.parse(e.newValue); }catch(ex){}
+          updateHomeStats();
+          updateMatchCount();
+          renderDailyLog();
+          // If wrongbook screen is visible, refresh it
+          if(document.getElementById('screen-wrongbook').style.display !== 'none'){
+            renderWrongbook();
+          }
+        }
+        if(e.key === uKey('daily_log')){
+          renderDailyLog();
+        }
+      });
+      // Also listen for same-tab changes from Firebase listener
+      (function(){
+        const _origQState = uKey('wrongbook_state');
+        let _lastVal = localStorage.getItem(_origQState);
+        setInterval(function(){
+          const cur = localStorage.getItem(_origQState);
+          if(cur !== _lastVal){
+            _lastVal = cur;
+            try{ if(cur) qState = JSON.parse(cur); }catch(ex){}
+            updateHomeStats();
+            updateMatchCount();
+            renderDailyLog();
+            if(document.getElementById('screen-wrongbook').style.display !== 'none'){
+              renderWrongbook();
+            }
+          }
+        }, 2000);
+      })();
+    </script>
+  </body>
+</html>

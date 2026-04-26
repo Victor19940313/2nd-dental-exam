@@ -1,0 +1,216 @@
+{
+  "meta": {
+    "generated": "2026-04-10T01:05:33.710Z",
+    "totalPDFs": 133,
+    "totalOldQuestions": 7352,
+    "totalMatches": 20,
+    "uniqueNewQuestions": 19,
+    "oldYearRange": "90-110",
+    "newYearRange": "111-115"
+  },
+  "matches": [
+    {
+      "new_id": "ya5-113-1-78",
+      "new_q": "下列有關密西根咬合板之敘述，何者正確？",
+      "new_answer": 3,
+      "old_year": 100,
+      "old_exam_num": 20,
+      "old_s": "55",
+      "old_q_num": 68,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya6-111-1-73",
+      "new_q": "「汞中毒」是牙科醫療院所應注意防範的職業傷害之一。下列相關敘述何者錯誤？",
+      "new_answer": 1,
+      "old_year": 100,
+      "old_exam_num": 130,
+      "old_s": "66",
+      "old_q_num": 76,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya3-112-2-6",
+      "new_q": "關於牙髓病檢查，下列敘述何者錯誤？",
+      "new_answer": 2,
+      "old_year": 101,
+      "old_exam_num": 10,
+      "old_s": "33",
+      "old_q_num": 1,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya5-113-2-1",
+      "new_q": "關於義齒性口炎（denture stomatitis）的敘述，下列何者正確？",
+      "new_answer": 2,
+      "old_year": 101,
+      "old_exam_num": 100,
+      "old_s": "55",
+      "old_q_num": 12,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya5-114-1-41",
+      "new_q": "關於義齒性口炎（denture stomatitis）的敘述，下列何者正確？",
+      "new_answer": 2,
+      "old_year": 101,
+      "old_exam_num": 100,
+      "old_s": "55",
+      "old_q_num": 12,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya4-111-1-40",
+      "new_q": "關於前庭區腫裂齦瘤（epulis fissuratum）的敘述，下列何者錯誤？",
+      "new_answer": 3,
+      "old_year": 103,
+      "old_exam_num": 20,
+      "old_s": "44",
+      "old_q_num": 21,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya4-111-1-69",
+      "new_q": "X 光片影像無法幫助評估下列何種牙周狀況？",
+      "new_answer": 3,
+      "old_year": 103,
+      "old_exam_num": 90,
+      "old_s": "44",
+      "old_q_num": 70,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya5-113-1-38",
+      "new_q": "有關可撤式局部義齒之敘述，下列何者錯誤？",
+      "new_answer": 1,
+      "old_year": 103,
+      "old_exam_num": 90,
+      "old_s": "55",
+      "old_q_num": 40,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya5-113-1-38",
+      "new_q": "有關可撤式局部義齒之敘述，下列何者錯誤？",
+      "new_answer": 1,
+      "old_year": 104,
+      "old_exam_num": 90,
+      "old_s": "55",
+      "old_q_num": 41,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya3-114-1-71",
+      "new_q": "在牙周維護性治療（supportive periodontal therapy）檢查中，何種檢測較能反應目前牙周發炎狀況？",
+      "new_answer": 1,
+      "old_year": 105,
+      "old_exam_num": 20,
+      "old_s": "33",
+      "old_q_num": 73,
+      "match_type": "fuzzy",
+      "similarity": 0.895
+    },
+    {
+      "new_id": "ya5-115-1-41",
+      "new_q": "關於可撤式局部義齒印模材的敘述，下列何者錯誤？",
+      "new_answer": 1,
+      "old_year": 106,
+      "old_exam_num": 100,
+      "old_s": "55",
+      "old_q_num": 36,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya4-112-2-23",
+      "new_q": "有關齒源性角化囊腫（odontogenic keratocyst）的敘述，下列何者正確？",
+      "new_answer": 0,
+      "old_year": 107,
+      "old_exam_num": 20,
+      "old_s": "44",
+      "old_q_num": 23,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya6-111-1-63",
+      "new_q": "美國醫學研究所（Institute of Medicine）指出，公共衛生的核心功能包含：評估（assessment）、發展政策（policy development）及保證（assurance）",
+      "new_answer": 0,
+      "old_year": 108,
+      "old_exam_num": 100,
+      "old_s": "66",
+      "old_q_num": 63,
+      "match_type": "fuzzy",
+      "similarity": 0.977
+    },
+    {
+      "new_id": "ya6-111-2-66",
+      "new_q": "美國醫學研究所（Institute of Medicine）指出，公共衛生的核心功能包含：評估（assessment）、發展政策（policy development）及保證（assurance）",
+      "new_answer": 3,
+      "old_year": 108,
+      "old_exam_num": 100,
+      "old_s": "66",
+      "old_q_num": 63,
+      "match_type": "fuzzy",
+      "similarity": 0.948
+    },
+    {
+      "new_id": "ya3-111-2-22",
+      "new_q": "關於圍箍效應（ferrule effect）的敘述，下列何者錯誤？",
+      "new_answer": 3,
+      "old_year": 109,
+      "old_exam_num": 20,
+      "old_s": "55",
+      "old_q_num": 50,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya3-113-1-24",
+      "new_q": "下列何者不是牙根切除術（root resection）的適應症？",
+      "new_answer": 0,
+      "old_year": 109,
+      "old_exam_num": 20,
+      "old_s": "55",
+      "old_q_num": 51,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya4-114-1-30",
+      "new_q": "關於鈣化齒源性囊腫（calcifying odontogenic cyst）的敘述，下列何者正確？",
+      "new_answer": 1,
+      "old_year": 110,
+      "old_exam_num": 20,
+      "old_s": "44",
+      "old_q_num": 30,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya4-111-1-49",
+      "new_q": "關於根尖囊腫（radicular cyst）的敘述，下列何者錯誤？",
+      "new_answer": 1,
+      "old_year": 110,
+      "old_exam_num": 100,
+      "old_s": "44",
+      "old_q_num": 29,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya4-115-1-65",
+      "new_q": "附圖中白色箭頭所指部位為下列何者之影像？",
+      "new_answer": 1,
+      "old_year": 110,
+      "old_exam_num": 100,
+      "old_s": "44",
+      "old_q_num": 64,
+      "match_type": "exact"
+    },
+    {
+      "new_id": "ya4-112-2-66",
+      "new_q": "附圖根尖X光片中，白色箭頭所指為何種構造？",
+      "new_answer": 1,
+      "old_year": 110,
+      "old_exam_num": 100,
+      "old_s": "44",
+      "old_q_num": 65,
+      "match_type": "exact"
+    }
+  ]
+}

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦷 筆記風格預覽 — 選你喜歡的</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif; background: #0f172a; color: #e2e8f0; }
+
+/* ── 導覽列 ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(15,23,42,.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1.5rem; overflow-x: auto;
+}
+nav span { color: rgba(255,255,255,.5); font-size: .85rem; white-space: nowrap; margin-right: .5rem; }
+nav a {
+  white-space: nowrap; text-decoration: none;
+  font-size: .82rem; font-weight: 600;
+  padding: .4rem .9rem; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.7);
+  transition: all .2s;
+}
+nav a:hover { background: rgba(255,255,255,.15); color: white; }
+nav a.active { background: #3b82f6; border-color: #3b82f6; color: white; }
+
+/* ── 區塊包裝 ── */
+.section { padding: 3rem 1.5rem; max-width: 960px; margin: 0 auto; }
+.section-header { text-align: center; margin-bottom: 2.5rem; }
+.section-header h2 { font-size: 1.5rem; color: white; margin-bottom: .4rem; }
+.section-header p { font-size: .88rem; color: rgba(255,255,255,.5); }
+.tag { display: inline-block; font-size: .72rem; padding: .2rem .6rem; border-radius: 999px; margin-left: .5rem; font-weight: 600; vertical-align: middle; }
+.tag-current { background: #1e3a5f; color: #60a5fa; }
+.tag-new { background: #14532d; color: #4ade80; }
+
+/* ═══════════════════════════════════════════
+   風格 A — 現行版本（參考基準）
+═══════════════════════════════════════════ */
+.style-a {
+  background: #f0f4ff;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+}
+.style-a .topbar {
+  background: #1a2c5e; color: white;
+  padding: .7rem 1.2rem; font-weight: 700; font-size: .9rem;
+  display: flex; align-items: center; gap: .8rem;
+}
+.style-a .back { background: rgba(255,255,255,.15); border-radius: 6px; padding: .25rem .65rem; font-size: .78rem; }
+.style-a .body { display: flex; min-height: 420px; }
+.style-a .sidebar { width: 220px; background: white; border-right: 1px solid #e2e8f0; padding: .5rem 0; font-size: .82rem; }
+.style-a .s-group { border-bottom: 1px solid #e2e8f0; }
+.style-a .s-parent { display: flex; align-items: center; gap: .5rem; padding: .65rem 1rem; font-weight: 600; color: #1a2c5e; cursor: pointer; }
+.style-a .s-child { padding: .5rem 1rem .5rem 2rem; color: #4a5568; border-left: 3px solid transparent; }
+.style-a .s-child.act { border-left-color: #3b6cc9; background: #ebf4ff; color: #3b6cc9; font-weight: 600; }
+.style-a .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.style-a .dot.r { background: #c53030; }
+.style-a .dot.o { background: #c05621; }
+.style-a .dot.y { background: #b7791f; }
+.style-a .content { flex: 1; padding: 1.5rem; color: #2d3748; background: #f0f4ff; overflow: auto; }
+.style-a .content h3 { color: #1a2c5e; font-size: .88rem; border-left: 4px solid #3b6cc9; padding-left: .6rem; margin: 1rem 0 .4rem; }
+.style-a table { width: 100%; border-collapse: collapse; font-size: .8rem; margin: .8rem 0; }
+.style-a td { border: 1px solid #e2e8f0; padding: .45rem .6rem; }
+.style-a td:first-child { background: #ebf4ff; font-weight: 600; color: #1a2c5e; white-space: nowrap; }
+.style-a .badge { display: inline-block; font-size: .68rem; padding: .1rem .45rem; border-radius: 999px; font-weight: 700; background: #fff5f5; color: #c53030; border: 1px solid #fc8181; }
+
+/* ═══════════════════════════════════════════
+   風格 B — Dark Premium（深色精緻版）
+═══════════════════════════════════════════ */
+.style-b {
+  background: #0d1117;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 4px 40px rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.style-b .topbar {
+  background: linear-gradient(90deg, #1a1f2e, #0d1117);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  color: white; padding: .8rem 1.2rem;
+  font-weight: 700; font-size: .9rem;
+  display: flex; align-items: center; gap: .8rem;
+}
+.style-b .topbar .title-chip { background: rgba(99,102,241,.25); border: 1px solid rgba(99,102,241,.4); color: #a5b4fc; font-size: .72rem; padding: .2rem .6rem; border-radius: 999px; }
+.style-b .search { margin-left: auto; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.6); padding: .3rem .8rem; border-radius: 20px; font-size: .8rem; width: 160px; }
+.style-b .body { display: flex; min-height: 420px; }
+.style-b .sidebar { width: 220px; background: #161b27; border-right: 1px solid rgba(255,255,255,.07); padding: .5rem 0; font-size: .82rem; }
+.style-b .s-group { border-bottom: 1px solid rgba(255,255,255,.05); }
+.style-b .s-parent { display: flex; align-items: center; gap: .5rem; padding: .65rem 1rem; font-weight: 600; color: #e2e8f0; }
+.style-b .s-child { padding: .5rem 1rem .5rem 2rem; color: #94a3b8; border-left: 3px solid transparent; font-size: .8rem; }
+.style-b .s-child.act { border-left-color: #6366f1; background: rgba(99,102,241,.12); color: #a5b4fc; font-weight: 600; }
+.style-b .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.style-b .dot.r { background: #f87171; box-shadow: 0 0 6px #f87171; }
+.style-b .dot.o { background: #fb923c; box-shadow: 0 0 6px #fb923c; }
+.style-b .dot.y { background: #fbbf24; box-shadow: 0 0 6px #fbbf24; }
+.style-b .content { flex: 1; padding: 1.5rem; color: #cbd5e1; overflow: auto; }
+.style-b .content h3 { color: #e2e8f0; font-size: .88rem; border-left: 3px solid #6366f1; padding-left: .7rem; margin: 1rem 0 .45rem; }
+.style-b table { width: 100%; border-collapse: collapse; font-size: .8rem; margin: .8rem 0; }
+.style-b td { border: 1px solid rgba(255,255,255,.08); padding: .45rem .6rem; }
+.style-b td:first-child { background: rgba(99,102,241,.1); font-weight: 600; color: #a5b4fc; white-space: nowrap; }
+.style-b .badge { display: inline-block; font-size: .68rem; padding: .1rem .45rem; border-radius: 999px; font-weight: 700; background: rgba(248,113,113,.15); color: #f87171; border: 1px solid rgba(248,113,113,.3); }
+.style-b .glow-text { color: #a5b4fc; font-weight: 700; }
+
+/* ═══════════════════════════════════════════
+   風格 C — Notion Clean（白底極簡）
+═══════════════════════════════════════════ */
+.style-c {
+  background: white;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 2px 20px rgba(0,0,0,.2);
+}
+.style-c .topbar {
+  background: white; border-bottom: 1px solid #e5e7eb;
+  padding: .8rem 1.4rem; display: flex; align-items: center; gap: .8rem;
+}
+.style-c .topbar .logo { font-size: 1.1rem; }
+.style-c .topbar .title { font-size: .9rem; font-weight: 700; color: #111827; }
+.style-c .topbar .breadcrumb { font-size: .78rem; color: #9ca3af; margin-left: .3rem; }
+.style-c .body { display: flex; min-height: 420px; }
+.style-c .sidebar { width: 220px; background: #f9fafb; border-right: 1px solid #e5e7eb; padding: .8rem 0; font-size: .82rem; }
+.style-c .s-section { padding: .3rem 1rem; font-size: .7rem; font-weight: 700; color: #9ca3af; letter-spacing: .08em; text-transform: uppercase; margin-top: .8rem; }
+.style-c .s-child { display: flex; align-items: center; gap: .5rem; padding: .45rem 1rem; color: #374151; border-radius: 6px; margin: 0 .4rem; }
+.style-c .s-child.act { background: #eff6ff; color: #1d4ed8; font-weight: 600; }
+.style-c .s-child:hover { background: #f3f4f6; }
+.style-c .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.style-c .dot.r { background: #ef4444; }
+.style-c .dot.o { background: #f97316; }
+.style-c .dot.y { background: #eab308; }
+.style-c .content { flex: 1; padding: 2rem 2.5rem; color: #1f2937; overflow: auto; }
+.style-c .content h2 { font-size: 1.15rem; font-weight: 800; color: #111827; margin-bottom: 1.2rem; }
+.style-c .content h3 { font-size: .9rem; font-weight: 700; color: #111827; margin: 1.2rem 0 .4rem; display: flex; align-items: center; gap: .4rem; }
+.style-c .content h3::before { content: ''; display: inline-block; width: 4px; height: 1em; background: #3b82f6; border-radius: 2px; }
+.style-c table { width: 100%; border-collapse: collapse; font-size: .8rem; margin: .8rem 0; }
+.style-c th { background: #f1f5f9; font-weight: 700; color: #374151; text-align: left; padding: .5rem .7rem; border: 1px solid #e5e7eb; }
+.style-c td { border: 1px solid #e5e7eb; padding: .45rem .7rem; color: #374151; }
+.style-c td:first-child { font-weight: 600; color: #111827; background: #f8fafc; }
+.style-c .callout { background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: .7rem 1rem; margin: .8rem 0; font-size: .82rem; color: #1e40af; }
+.style-c .badge { display: inline-block; font-size: .68rem; padding: .1rem .45rem; border-radius: 4px; font-weight: 700; background: #fef2f2; color: #dc2626; }
+
+/* ═══════════════════════════════════════════
+   風格 D — Medical Pro（醫學教科書風）
+═══════════════════════════════════════════ */
+.style-d {
+  background: #fafafa;
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 2px 20px rgba(0,0,0,.15);
+  border: 1px solid #e5e7eb;
+}
+.style-d .topbar {
+  background: linear-gradient(135deg, #0f4c75, #1b6ca8);
+  color: white; padding: .8rem 1.4rem;
+  display: flex; align-items: center; gap: .8rem;
+}
+.style-d .topbar .title { font-size: .9rem; font-weight: 700; }
+.style-d .topbar .sub { font-size: .75rem; opacity: .7; margin-left: auto; }
+.style-d .body { display: flex; min-height: 460px; }
+.style-d .sidebar { width: 230px; background: white; border-right: 2px solid #e5e7eb; overflow: auto; }
+.style-d .s-header { background: #0f4c75; color: white; font-size: .75rem; font-weight: 700; padding: .5rem 1rem; letter-spacing: .06em; }
+.style-d .s-item { display: flex; align-items: center; gap: .5rem; padding: .55rem 1rem; font-size: .81rem; color: #374151; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+.style-d .s-item.act { background: #e0f2fe; color: #0369a1; font-weight: 700; border-left: 4px solid #0369a1; }
+.style-d .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.style-d .dot.r { background: #dc2626; }
+.style-d .dot.o { background: #ea580c; }
+.style-d .dot.y { background: #ca8a04; }
+.style-d .content { flex: 1; padding: 1.5rem 2rem; overflow: auto; }
+.style-d .content h2 { font-size: 1rem; font-weight: 800; color: #0f4c75; border-bottom: 2px solid #0f4c75; padding-bottom: .4rem; margin-bottom: 1rem; }
+.style-d .content h3 { font-size: .87rem; font-weight: 700; color: #1b6ca8; background: #e0f2fe; padding: .35rem .7rem; border-radius: 4px; margin: 1rem 0 .4rem; }
+.style-d table { width: 100%; border-collapse: collapse; font-size: .79rem; margin: .6rem 0; }
+.style-d thead th { background: #0f4c75; color: white; padding: .4rem .6rem; text-align: left; font-weight: 600; }
+.style-d tbody tr:nth-child(even) { background: #f0f9ff; }
+.style-d tbody tr:hover { background: #e0f2fe; }
+.style-d td { border: 1px solid #cbd5e1; padding: .4rem .6rem; }
+.style-d td:first-child { font-weight: 700; color: #0f4c75; background: #f8fafc; }
+.style-d .alert { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: .6rem .9rem; margin: .7rem 0; font-size: .8rem; color: #92400e; display: flex; gap: .5rem; align-items: flex-start; }
+.style-d .alert::before { content: '⚠️'; flex-shrink: 0; }
+.style-d .exam-box { background: #fdf4ff; border: 1px solid #e879f9; border-radius: 8px; padding: .8rem 1rem; margin: .7rem 0; font-size: .8rem; }
+.style-d .exam-box .etitle { color: #a21caf; font-weight: 700; font-size: .75rem; margin-bottom: .4rem; }
+
+/* ═══════════════════════════════════════════
+   風格 E — Flashcard 閃卡
+═══════════════════════════════════════════ */
+.style-e-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.flashcard {
+  perspective: 1000px; height: 180px; cursor: pointer;
+}
+.fc-inner {
+  position: relative; width: 100%; height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.4,0,.2,1);
+  border-radius: 14px;
+}
+.flashcard:hover .fc-inner,
+.flashcard.flipped .fc-inner { transform: rotateY(180deg); }
+.fc-front, .fc-back {
+  position: absolute; width: 100%; height: 100%;
+  backface-visibility: hidden; border-radius: 14px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: 1.2rem; text-align: center;
+}
+.fc-front { background: linear-gradient(135deg, #1e3a5f, #1d4ed8); color: white; }
+.fc-front .tag-chip { font-size: .7rem; background: rgba(255,255,255,.2); border-radius: 999px; padding: .2rem .6rem; margin-bottom: .6rem; }
+.fc-front .q { font-size: .88rem; font-weight: 700; line-height: 1.5; }
+.fc-front .hint { font-size: .7rem; opacity: .6; margin-top: .7rem; }
+.fc-back { background: white; color: #1f2937; border: 2px solid #dbeafe; transform: rotateY(180deg); }
+.fc-back .answer { font-size: .85rem; line-height: 1.6; }
+.fc-back .answer strong { color: #1d4ed8; }
+.fc-back .note { font-size: .72rem; color: #6b7280; margin-top: .5rem; }
+
+/* fc 顏色變體 */
+.fc-front.green { background: linear-gradient(135deg, #14532d, #16a34a); }
+.fc-front.purple { background: linear-gradient(135deg, #3b0764, #7c3aed); }
+.fc-front.red { background: linear-gradient(135deg, #7f1d1d, #dc2626); }
+.fc-front.teal { background: linear-gradient(135deg, #134e4a, #0d9488); }
+
+/* ── 共用樣本內容輔助 ── */
+.demo-caption { text-align: center; margin-top: 1rem; font-size: .78rem; color: rgba(255,255,255,.35); }
+</style>
+</head>
+<body>
+
+<nav>
+  <span>風格預覽 →</span>
+  <a href="#a" class="active">A 現行版</a>
+  <a href="#b">B 深色精緻</a>
+  <a href="#c">C Notion 極簡</a>
+  <a href="#d">D 醫學教科書</a>
+  <a href="#e">E 閃卡</a>
+</nav>
+
+<!-- ══ A 現行版 ══ -->
+<div class="section" id="a">
+  <div class="section-header">
+    <h2>風格 A — 現行版本 <span class="tag tag-current">目前樣式</span></h2>
+    <p>藍色系 · 側邊欄樹狀 · 白底內容區</p>
+  </div>
+  <div class="style-a">
+    <div class="topbar">
+      <span class="back">← 返回</span>
+      🦷 牙三 — 牙髓病科
+      <input style="margin-left:auto;background:rgba(255,255,255,.15);border:none;color:white;padding:.3rem .8rem;border-radius:20px;font-size:.8rem;outline:none;width:150px;" placeholder="搜尋...">
+    </div>
+    <div class="body">
+      <div class="sidebar">
+        <div class="s-group">
+          <div class="s-parent"><span class="dot r"></span>🦷 根管解剖 ▾</div>
+          <div class="s-child act"><span class="dot r"></span><span>Vertucci 分類系統</span></div>
+          <div class="s-child"><span class="dot r"></span><span>各齒根管數量記憶法</span></div>
+          <div class="s-child"><span class="dot o"></span><span>工作長度測量</span></div>
+        </div>
+        <div class="s-group">
+          <div class="s-parent"><span class="dot o"></span>🔬 根管清創 ▾</div>
+          <div class="s-child"><span class="dot o"></span><span>NaOCl 沖洗濃度</span></div>
+          <div class="s-child"><span class="dot y"></span><span>根管器械選用</span></div>
+        </div>
+      </div>
+      <div class="content">
+        <h3>Vertucci 根管分類系統（Type I–VIII）</h3>
+        <span class="badge">必考</span>
+        <table>
+          <tr><td>Type I (1-1)</td><td>單一根管直達根尖。常見：上顎前牙、下顎小臼齒</td></tr>
+          <tr><td>Type II (2-1)</td><td>兩管匯合成單管出根尖。常見：下顎前牙、下顎第一大臼齒近心根</td></tr>
+          <tr><td>Type IV (2-2)</td><td>兩個獨立根管各自出根尖。<strong>最常見：上顎第一小臼齒</strong></td></tr>
+        </table>
+        <h3>C 型根管重要考點</h3>
+        <p style="font-size:.82rem;color:#4a5568;margin-top:.3rem;">亞洲人種發生率遠高於白人，最常發生在<strong>下顎第二大臼齒</strong>（可達 44.5%）。</p>
+      </div>
+    </div>
+  </div>
+  <p class="demo-caption">✦ 現在的 ya3 筆記就是這個樣子</p>
+</div>
+
+<!-- ══ B 深色精緻 ══ -->
+<div class="section" id="b">
+  <div class="section-header">
+    <h2>風格 B — 深色精緻版 <span class="tag tag-new">新風格</span></h2>
+    <p>深色底 · 霓虹點綴 · 現代感強 · 適合夜間讀書</p>
+  </div>
+  <div class="style-b">
+    <div class="topbar">
+      <span style="background:rgba(255,255,255,.12);border-radius:6px;padding:.25rem .65rem;font-size:.78rem;">← 返回</span>
+      🦷 牙三 — 牙髓病科
+      <span class="title-chip">Endodontics</span>
+      <input class="search" placeholder="🔍 搜尋...">
+    </div>
+    <div class="body">
+      <div class="sidebar">
+        <div class="s-group">
+          <div class="s-parent"><span class="dot r"></span>🦷 根管解剖 ▾</div>
+          <div class="s-child act"><span class="dot r"></span>Vertucci 分類系統</div>
+          <div class="s-child"><span class="dot r"></span>各齒根管數量</div>
+          <div class="s-child"><span class="dot o"></span>工作長度測量</div>
+        </div>
+        <div class="s-group">
+          <div class="s-parent"><span class="dot o"></span>🔬 根管清創 ▾</div>
+          <div class="s-child"><span class="dot o"></span>NaOCl 沖洗</div>
+          <div class="s-child"><span class="dot y"></span>器械選用</div>
+        </div>
+      </div>
+      <div class="content">
+        <h3>Vertucci 根管分類系統（Type I–VIII）</h3>
+        <span class="badge">必考</span>
+        <table>
+          <tr><td>Type I (1-1)</td><td>單一根管直達根尖。常見：上顎前牙、下顎小臼齒</td></tr>
+          <tr><td>Type II (2-1)</td><td>兩管匯合成單管出根尖。常見：下顎前牙、近心根</td></tr>
+          <tr><td style="color:#f87171;font-weight:700;">Type IV (2-2)</td><td>兩個獨立根管各自出根尖。<span class="glow-text">最常見：上顎第一小臼齒</span></td></tr>
+        </table>
+        <h3>C 型根管重要考點</h3>
+        <p style="font-size:.81rem;color:#94a3b8;margin-top:.3rem;">亞洲人種發生率遠高於白人，最常發生在 <span class="glow-text">下顎第二大臼齒</span>（可達 44.5%）。</p>
+      </div>
+    </div>
+  </div>
+  <p class="demo-caption">✦ 深色底 + 亮色點綴，夜間閱讀護眼</p>
+</div>
+
+<!-- ══ C Notion 極簡 ══ -->
+<div class="section" id="c">
+  <div class="section-header">
+    <h2>風格 C — Notion 極簡 <span class="tag tag-new">新風格</span></h2>
+    <p>白底 · 乾淨 · 高對比文字 · Callout 區塊</p>
+  </div>
+  <div class="style-c">
+    <div class="topbar">
+      <span class="logo">🦷</span>
+      <span class="title">牙三 — 牙髓病科</span>
+      <span class="breadcrumb">/ 根管解剖 / Vertucci 分類</span>
+    </div>
+    <div class="body">
+      <div class="sidebar">
+        <div class="s-section">根管解剖</div>
+        <div class="s-child"><span class="dot r"></span>Vertucci 分類</div>
+        <div class="s-child act"><span class="dot r"></span>各齒根管數量</div>
+        <div class="s-child"><span class="dot o"></span>工作長度測量</div>
+        <div class="s-section">根管清創</div>
+        <div class="s-child"><span class="dot o"></span>NaOCl 沖洗</div>
+        <div class="s-child"><span class="dot y"></span>器械選用</div>
+      </div>
+      <div class="content">
+        <h2>Vertucci 根管分類系統</h2>
+        <h3>分類總覽</h3>
+        <table>
+          <thead><tr><th>Type</th><th>構型</th><th>常見牙位</th></tr></thead>
+          <tbody>
+            <tr><td>Type I</td><td>1→1</td><td>上顎前牙、下顎小臼齒</td></tr>
+            <tr><td>Type II</td><td>2→1</td><td>下顎前牙、下顎第一大臼齒近心根</td></tr>
+            <tr><td>Type IV</td><td>2→2</td><td><strong>上顎第一小臼齒（最常見）</strong></td></tr>
+          </tbody>
+        </table>
+        <div class="callout">💡 <strong>記憶法：</strong>上顎第一小臼齒 = Type IV (2-2)，臨床凹陷易穿孔</div>
+        <h3>C 型根管</h3>
+        <p style="font-size:.82rem;color:#374151;margin-top:.3rem;line-height:1.7;">亞洲人種發生率遠高於白人，最常發生在 <strong>下顎第二大臼齒</strong>（可達 44.5%）。</p>
+        <span class="badge">必考高頻</span>
+      </div>
+    </div>
+  </div>
+  <p class="demo-caption">✦ 乾淨白底，適合白天閱讀</p>
+</div>
+
+<!-- ══ D 醫學教科書 ══ -->
+<div class="section" id="d">
+  <div class="section-header">
+    <h2>風格 D — 醫學教科書風 <span class="tag tag-new">新風格</span></h2>
+    <p>深藍表頭 · 斑馬紋表格 · 警示框 · 考古題區塊</p>
+  </div>
+  <div class="style-d">
+    <div class="topbar">
+      <span class="title">🦷 牙三 — 牙髓病科</span>
+      <span class="sub">Endodontics · 根管解剖</span>
+    </div>
+    <div class="body">
+      <div class="sidebar">
+        <div class="s-header">📚 根管解剖</div>
+        <div class="s-item"><span class="dot r"></span>Vertucci 分類</div>
+        <div class="s-item act"><span class="dot r"></span>各齒根管數量</div>
+        <div class="s-item"><span class="dot o"></span>工作長度測量</div>
+        <div class="s-header">🔬 根管清創</div>
+        <div class="s-item"><span class="dot o"></span>NaOCl 沖洗</div>
+        <div class="s-item"><span class="dot y"></span>器械選用</div>
+      </div>
+      <div class="content">
+        <h2>Vertucci 根管分類系統（Type I–VIII）</h2>
+        <table>
+          <thead><tr><th>Type</th><th>根管構型</th><th>最常見牙位</th></tr></thead>
+          <tbody>
+            <tr><td>Type I (1-1)</td><td>單一根管直達根尖</td><td>上顎前牙、下顎小臼齒</td></tr>
+            <tr><td>Type II (2-1)</td><td>兩管在根尖前匯合</td><td>下顎前牙、近心根</td></tr>
+            <tr><td>Type IV (2-2)</td><td>兩個獨立根管出根尖</td><td><strong>上顎第一小臼齒</strong></td></tr>
+          </tbody>
+        </table>
+        <div class="alert">上顎第一小臼齒（#4）齒頸部近心側凹陷，根管治療時極易發生<strong>側向穿孔（Lateral perforation）</strong></div>
+        <div class="exam-box">
+          <div class="etitle">📝 考古題高頻考點</div>
+          C 型根管最常見牙位：<strong>下顎第二大臼齒</strong>（亞洲人 44.5%）<br>
+          臨床特徵：髓室底呈 C 型開口，舌側管壁極薄易穿孔
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="demo-caption">✦ 教科書感強，表格易讀，適合衝刺期</p>
+</div>
+
+<!-- ══ E 閃卡 ══ -->
+<div class="section" id="e">
+  <div class="section-header">
+    <h2>風格 E — 閃卡模式 <span class="tag tag-new">新功能</span></h2>
+    <p>滑鼠移過去翻牌 · 正面考點 · 背面答案 · 可配合現有筆記並用</p>
+  </div>
+  <div class="style-e-wrap">
+
+    <div class="flashcard">
+      <div class="fc-inner">
+        <div class="fc-front">
+          <span class="tag-chip">根管解剖 · 必考</span>
+          <div class="q">上顎第一小臼齒<br>最常見的根管型態是？</div>
+          <div class="hint">移過來翻牌 →</div>
+        </div>
+        <div class="fc-back">
+          <div class="answer"><strong>Type IV (2-2)</strong><br>兩個獨立根管，各自出根尖孔<br>佔 50.1%</div>
+          <div class="note">⚠️ 近心凹陷→易側向穿孔</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flashcard">
+      <div class="fc-inner">
+        <div class="fc-front green">
+          <span class="tag-chip">C 型根管 · 必考</span>
+          <div class="q">C 型根管發生率<br>最高的牙位？</div>
+          <div class="hint">移過來翻牌 →</div>
+        </div>
+        <div class="fc-back">
+          <div class="answer"><strong>下顎第二大臼齒</strong><br>亞洲人可達 <strong>44.5%</strong></div>
+          <div class="note">💡 舌側管壁薄→穿孔高風險</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flashcard">
+      <div class="fc-inner">
+        <div class="fc-front purple">
+          <span class="tag-chip">根尖解剖 · 高頻</span>
+          <div class="q">根管治療的<br>理想終點在哪裡？</div>
+          <div class="hint">移過來翻牌 →</div>
+        </div>
+        <div class="fc-back">
+          <div class="answer"><strong>Apical Constriction</strong><br>（根尖狹窄區）<br>= CDJ（牙骨質牙本質交界）</div>
+          <div class="note">距解剖根尖約 0.5–1.0 mm</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flashcard">
+      <div class="fc-inner">
+        <div class="fc-front red">
+          <span class="tag-chip">電髓測試 · 必考</span>
+          <div class="q">電髓測試假陽性<br>最常見原因？</div>
+          <div class="hint">移過來翻牌 →</div>
+        </div>
+        <div class="fc-back">
+          <div class="answer"><strong>局部壞死</strong><br>（Partial pulp necrosis）<br>部分根管仍有活性神經</div>
+          <div class="note">vs 鈣化/外傷 → 假陰性</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flashcard">
+      <div class="fc-inner">
+        <div class="fc-front teal">
+          <span class="tag-chip">根管清創 · 高頻</span>
+          <div class="q">側根管（Lateral canal）<br>最常分布在哪個部位？</div>
+          <div class="hint">移過來翻牌 →</div>
+        </div>
+        <div class="fc-back">
+          <div class="answer"><strong>根尖 1/3</strong><br>超過 73% 分布於此<br>→ 器械無法清創</div>
+          <div class="note">只能靠 NaOCl 化學清創</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flashcard">
+      <div class="fc-inner">
+        <div class="fc-front">
+          <span class="tag-chip">牙位解剖 · 必考</span>
+          <div class="q">下顎前牙出現<br>「雙根管」的機率？</div>
+          <div class="hint">移過來翻牌 →</div>
+        </div>
+        <div class="fc-back">
+          <div class="answer"><strong>14.4%–40%</strong><br>常見構型：<br>Type I > III > II</div>
+          <div class="note">⚠️ 臨床易漏根管</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <p class="demo-caption">✦ 可與現有筆記並用，適合考前快速複習</p>
+</div>
+
+<div style="text-align:center;padding:3rem 1rem;color:rgba(255,255,255,.3);font-size:.82rem;">
+  選好喜歡的風格後，告訴我「我要 B 風格」或「混用 C + E」，我就幫你套用到整個 app。
+</div>
+
+<script>
+// 導覽列 active 狀態
+const sections = document.querySelectorAll('.section');
+const navLinks = document.querySelectorAll('nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+    }
+  });
+}, { threshold: 0.4 });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

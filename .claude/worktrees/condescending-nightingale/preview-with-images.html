@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦷 筆記風格預覽（含圖片）</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif; background: #0f172a; color: #e2e8f0; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(15,23,42,.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1.5rem; overflow-x: auto;
+}
+nav span { color: rgba(255,255,255,.4); font-size: .82rem; white-space: nowrap; }
+nav a {
+  white-space: nowrap; text-decoration: none; font-size: .82rem; font-weight: 600;
+  padding: .35rem .85rem; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.6);
+  transition: all .2s;
+}
+nav a:hover { background: rgba(255,255,255,.12); color: white; }
+nav a.on { background: #6366f1; border-color: #6366f1; color: white; }
+
+.wrap { padding: 3rem 1.5rem; max-width: 1000px; margin: 0 auto; }
+.hd { text-align: center; margin-bottom: 2.5rem; }
+.hd h2 { font-size: 1.45rem; color: white; margin-bottom: .35rem; }
+.hd p { font-size: .87rem; color: rgba(255,255,255,.45); }
+.cap { text-align:center; margin-top:.9rem; font-size:.76rem; color:rgba(255,255,255,.28); }
+
+/* ── 共用圖片樣式 ── */
+.img-block { border-radius: 8px; overflow: hidden; margin: .8rem 0; }
+.img-block img { width: 100%; display: block; }
+.img-caption { font-size: .72rem; text-align: center; padding: .35rem; background: rgba(0,0,0,.3); color: rgba(255,255,255,.6); }
+
+/* ══════════════════════════════
+   風格 B — Dark Premium（含圖）
+══════════════════════════════ */
+.b {
+  background: #0d1117; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 4px 40px rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.b .topbar {
+  background: linear-gradient(90deg,#1a1f2e,#0d1117);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  color: white; padding: .8rem 1.2rem; font-weight: 700; font-size: .9rem;
+  display: flex; align-items: center; gap: .8rem;
+}
+.b .chip { background: rgba(99,102,241,.25); border: 1px solid rgba(99,102,241,.4); color: #a5b4fc; font-size: .72rem; padding: .2rem .6rem; border-radius: 999px; }
+.b .body { display: flex; min-height: 500px; }
+.b .side { width: 220px; background: #161b27; border-right: 1px solid rgba(255,255,255,.07); padding: .5rem 0; font-size: .82rem; overflow-y: auto; }
+.b .sg { font-size: .68rem; color: rgba(255,255,255,.3); padding: .5rem 1rem .15rem; font-weight: 700; letter-spacing:.06em; }
+.b .si { padding: .42rem 1rem .42rem 2rem; color: #94a3b8; border-left: 3px solid transparent; font-size: .8rem; cursor: pointer; }
+.b .si.on { border-left-color: #6366f1; background: rgba(99,102,241,.12); color: #a5b4fc; font-weight: 600; }
+.b .dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:.4rem; vertical-align:middle; }
+.b .dot.r { background:#f87171; box-shadow:0 0 5px #f87171; }
+.b .dot.o { background:#fb923c; }
+.b .dot.y { background:#fbbf24; }
+.b .con { flex:1; padding:1.5rem; color:#cbd5e1; overflow-y:auto; }
+.b .con h2 { font-size:.95rem; font-weight:700; color:#e2e8f0; border-bottom:1px solid rgba(255,255,255,.08); padding-bottom:.5rem; margin-bottom:1rem; }
+.b .con h3 { font-size:.85rem; color:#e2e8f0; border-left:3px solid #6366f1; padding-left:.65rem; margin:1rem 0 .4rem; }
+.b table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.6rem 0; }
+.b td { border:1px solid rgba(255,255,255,.08); padding:.4rem .6rem; }
+.b td:first-child { background:rgba(99,102,241,.1); font-weight:600; color:#a5b4fc; }
+.b .badge { display:inline-block; font-size:.68rem; padding:.1rem .45rem; border-radius:999px; font-weight:700; background:rgba(248,113,113,.15); color:#f87171; border:1px solid rgba(248,113,113,.3); }
+.b .img-block .img-caption { background:rgba(99,102,241,.15); color:#a5b4fc; }
+.b .img-block img { border:1px solid rgba(255,255,255,.08); }
+.b .img-label { font-size:.73rem; color:#94a3b8; margin:.3rem 0 .6rem; }
+.b .two-col { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:.8rem 0; }
+
+/* ══════════════════════════════
+   風格 D — 醫學教科書（含圖）
+══════════════════════════════ */
+.d {
+  background: #fafafa; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 2px 20px rgba(0,0,0,.2);
+  border: 1px solid #e5e7eb;
+}
+.d .topbar {
+  background: linear-gradient(135deg,#0f4c75,#1b6ca8); color: white;
+  padding: .8rem 1.4rem; display: flex; align-items: center; gap: .8rem;
+}
+.d .topbar .title { font-size: .9rem; font-weight: 700; }
+.d .topbar .sub { font-size: .75rem; opacity: .7; margin-left: auto; }
+.d .body { display: flex; min-height: 520px; }
+.d .side { width: 230px; background: white; border-right: 2px solid #e5e7eb; overflow-y:auto; }
+.d .sh { background: #0f4c75; color: white; font-size: .73rem; font-weight: 700; padding: .5rem 1rem; letter-spacing:.05em; }
+.d .si { display:flex; align-items:center; gap:.5rem; padding:.5rem 1rem; font-size:.81rem; color:#374151; border-bottom:1px solid #f3f4f6; cursor:pointer; }
+.d .si.on { background:#e0f2fe; color:#0369a1; font-weight:700; border-left:4px solid #0369a1; }
+.d .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.d .dot.r { background:#dc2626; }
+.d .dot.o { background:#ea580c; }
+.d .dot.y { background:#ca8a04; }
+.d .con { flex:1; padding:1.5rem 2rem; overflow-y:auto; }
+.d .con h2 { font-size:1rem; font-weight:800; color:#0f4c75; border-bottom:2px solid #0f4c75; padding-bottom:.4rem; margin-bottom:1rem; }
+.d .con h3 { font-size:.87rem; font-weight:700; color:#1b6ca8; background:#e0f2fe; padding:.35rem .7rem; border-radius:4px; margin:1rem 0 .4rem; }
+.d table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.6rem 0; }
+.d thead th { background:#0f4c75; color:white; padding:.4rem .6rem; text-align:left; font-weight:600; }
+.d tbody tr:nth-child(even) { background:#f0f9ff; }
+.d tbody tr:hover { background:#e0f2fe; }
+.d td { border:1px solid #cbd5e1; padding:.4rem .6rem; }
+.d td:first-child { font-weight:700; color:#0f4c75; background:#f8fafc; }
+.d .alert { background:#fef3c7; border:1px solid #fcd34d; border-radius:6px; padding:.6rem .9rem; margin:.7rem 0; font-size:.8rem; color:#92400e; }
+.d .alert::before { content:'⚠️ '; }
+.d .exam-box { background:#fdf4ff; border:1px solid #e879f9; border-radius:8px; padding:.8rem 1rem; margin:.7rem 0; font-size:.8rem; }
+.d .exam-box .et { color:#a21caf; font-weight:700; font-size:.73rem; margin-bottom:.35rem; }
+.d .img-row { display:flex; gap:.8rem; margin:.8rem 0; }
+.d .img-row .img-block { flex:1; }
+.d .img-block img { border:1px solid #e2e8f0; border-radius:6px; }
+.d .img-block .img-caption { background:#f1f5f9; color:#475569; font-size:.7rem; }
+
+/* ══════════════════════════════
+   風格 G — 雜誌（含圖）
+══════════════════════════════ */
+.g {
+  background: white; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 4px 30px rgba(0,0,0,.3);
+}
+.g .topbar {
+  background: #0f172a; color: white; padding: .9rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.g .logo { background: #f59e0b; color: #000; font-weight: 900; font-size: .78rem; padding: .25rem .65rem; border-radius: 4px; }
+.g .title { font-size: .9rem; font-weight: 700; }
+.g .sub { margin-left: auto; font-size: .72rem; opacity: .55; }
+.g .body { display: flex; min-height: 520px; }
+.g .side { width: 200px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: .5rem 0; overflow-y:auto; }
+.g .sc { font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #94a3b8; padding: .6rem 1rem .2rem; }
+.g .si { padding: .45rem 1rem; font-size: .8rem; color: #334155; border-left: 3px solid transparent; cursor: pointer; }
+.g .si:hover { background: #f1f5f9; }
+.g .si.on { border-left-color: #f59e0b; background: #fffbeb; color: #92400e; font-weight: 700; }
+.g .con { flex: 1; padding: 0; overflow-y: auto; }
+.g .hero { background: linear-gradient(135deg,#0f172a,#1e3a5f); color: white; padding: 1.5rem 2rem; }
+.g .hero h2 { font-size: 1.15rem; font-weight: 900; margin-bottom: .3rem; }
+.g .hero p { font-size: .78rem; opacity: .65; }
+.g .chips { display: flex; gap: .4rem; margin-top: .6rem; flex-wrap: wrap; }
+.g .chip { font-size: .68rem; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: .2rem .55rem; }
+.g .body2 { padding: 1.4rem 2rem; color: #0f172a; }
+.g .body2 h3 { font-size: .85rem; font-weight: 800; color: #0f172a; margin: 1rem 0 .35rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 2px solid #f59e0b; padding-bottom: .2rem; display: inline-block; }
+.g table { width: 100%; border-collapse: collapse; font-size: .78rem; margin: .7rem 0; }
+.g thead th { background: #0f172a; color: white; padding: .4rem .65rem; text-align: left; font-weight: 700; font-size: .73rem; text-transform: uppercase; letter-spacing: .04em; }
+.g tbody tr:nth-child(even) { background: #f8fafc; }
+.g td { border-bottom: 1px solid #e2e8f0; padding: .4rem .65rem; color: #1e293b; }
+.g td:first-child { font-weight: 700; color: #0f172a; }
+.g .pull { background: #fffbeb; border-left: 4px solid #f59e0b; padding: .65rem 1rem; margin: .8rem 0; font-size: .83rem; color: #78350f; font-style: italic; font-weight: 600; }
+.g .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin: .8rem 0; }
+.g .img-block img { border-radius: 6px; border: 1px solid #e2e8f0; }
+.g .img-block .img-caption { background: #f8fafc; color: #64748b; border-radius: 0 0 6px 6px; }
+
+/* ══════════════════════════════
+   風格 I — iOS（含圖）
+══════════════════════════════ */
+.ios {
+  background: #f2f2f7; border-radius: 20px; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,.25);
+}
+.ios .bar {
+  background: rgba(242,242,247,.85); backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0,0,0,.08);
+  padding: .8rem 1.3rem; display: flex; align-items: center; gap: .7rem;
+}
+.ios .bar-title { font-size: .92rem; font-weight: 700; color: #000; }
+.ios .bar-sub { margin-left: auto; font-size: .75rem; color: #8e8e93; }
+.ios .body { display: flex; min-height: 520px; }
+.ios .side { width: 210px; background: white; border-right: 1px solid rgba(0,0,0,.06); padding: .6rem 0; overflow-y:auto; }
+.ios .sg { font-size: .68rem; font-weight: 700; color: #8e8e93; letter-spacing: .06em; text-transform: uppercase; padding: .6rem 1rem .2rem; }
+.ios .si { display: flex; align-items: center; gap: .55rem; padding: .48rem 1rem; font-size: .82rem; color: #000; border-radius: 10px; margin: 0 .4rem; cursor:pointer; }
+.ios .si.on { background: #007aff; color: white; }
+.ios .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ios .dot.r { background: #ff3b30; }
+.ios .dot.o { background: #ff9500; }
+.ios .dot.y { background: #ffcc00; }
+.ios .si.on .dot { background: rgba(255,255,255,.7) !important; }
+.ios .con { flex: 1; padding: 1rem; background: #f2f2f7; overflow-y: auto; }
+.ios .seg { display: flex; background: #e5e5ea; border-radius: 8px; padding: 2px; margin-bottom: .8rem; }
+.ios .sb { flex: 1; text-align: center; font-size: .78rem; padding: .3rem; border-radius: 6px; cursor: pointer; color: #8e8e93; font-weight: 600; }
+.ios .sb.on { background: white; color: #000; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.ios .card { background: white; border-radius: 14px; padding: 1rem 1.1rem; margin-bottom: .8rem; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.ios .card h3 { font-size: .87rem; font-weight: 700; color: #000; margin-bottom: .5rem; }
+.ios table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.ios td { padding: .38rem .5rem; border-bottom: 1px solid #e5e5ea; color: #1c1c1e; }
+.ios td:first-child { font-weight: 600; color: #007aff; width: 30%; }
+.ios .tag-r { display:inline-block; background:#ff3b30; color:white; font-size:.65rem; padding:.1rem .4rem; border-radius:999px; font-weight:700; margin-left:.3rem; }
+.ios .tag-o { background:#ff9500; }
+.ios .img-block img { border-radius: 10px; }
+.ios .img-block .img-caption { background: #f2f2f7; color: #8e8e93; border-radius: 0 0 10px 10px; font-size:.7rem; }
+.ios .img-2col { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span>含圖預覽 →</span>
+  <a href="#b" class="on">B 深色精緻</a>
+  <a href="#d">D 醫學教科書</a>
+  <a href="#g">G 雜誌風</a>
+  <a href="#i">I iOS 風格</a>
+</nav>
+
+<!-- B 深色精緻 含圖 -->
+<div class="wrap" id="b">
+  <div class="hd">
+    <h2>風格 B — 深色精緻（含圖片）</h2>
+    <p>X 光圖直接嵌入筆記 · 深色底圖片對比強 · 最適合放射線科</p>
+  </div>
+  <div class="b">
+    <div class="topbar">
+      <span style="background:rgba(255,255,255,.12);border-radius:6px;padding:.25rem .65rem;font-size:.78rem;">← 返回</span>
+      🦷 牙三 — 牙髓病科
+      <span class="chip">Root Canal Anatomy</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sg">根管解剖</div>
+        <div class="si on"><span class="dot r"></span>Vertucci 分類</div>
+        <div class="si"><span class="dot r"></span>各齒根管數量</div>
+        <div class="si"><span class="dot o"></span>工作長度測量</div>
+        <div class="sg">根管診斷</div>
+        <div class="si"><span class="dot o"></span>電髓測試</div>
+        <div class="si"><span class="dot y"></span>冷熱診斷</div>
+        <div class="sg">根管清創</div>
+        <div class="si"><span class="dot o"></span>NaOCl 沖洗</div>
+        <div class="si"><span class="dot y"></span>器械選用</div>
+      </div>
+      <div class="con">
+        <h2>根管診斷臨床案例</h2>
+        <span class="badge">必考</span>
+        <h3>📷 臨床放射線影像判讀</h3>
+        <p class="img-label">以下為歷屆國考實際出題影像：</p>
+        <div class="two-col">
+          <div class="img-block">
+            <img src="exam/images/ya3-111-1-4.jpeg" alt="ya3-111-1-4">
+            <div class="img-caption">111-1 第4題 · 牙髓壞死合併根尖病灶</div>
+          </div>
+          <div class="img-block">
+            <img src="exam/images/ya3-113-1-24.jpeg" alt="ya3-113-1-24">
+            <div class="img-caption">113-1 第24題 · 根尖周圍診斷</div>
+          </div>
+        </div>
+        <h3>X 光判讀要點</h3>
+        <table>
+          <tr><td>正常根尖</td><td>根尖周韌帶空間均勻，無透射病灶</td></tr>
+          <tr><td>根尖周圍炎</td><td>根尖出現放射線透射區（Radiolucency）</td></tr>
+          <tr><td>慢性膿腫</td><td>透射區邊緣清楚，有 Sinus tract</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 深色底讓X光片對比更清楚，適合夜間讀書</p>
+</div>
+
+<!-- D 醫學教科書 含圖 -->
+<div class="wrap" id="d">
+  <div class="hd">
+    <h2>風格 D — 醫學教科書（含圖片）</h2>
+    <p>雙欄圖片排版 · 圖說清楚 · 最像真實教科書</p>
+  </div>
+  <div class="d">
+    <div class="topbar">
+      <span class="title">🏥 牙四 — 口腔外科 · 放射科</span>
+      <span class="sub">Oral Surgery · Radiology</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sh">📚 放射線判讀</div>
+        <div class="si on"><span class="dot r"></span>根尖病灶判讀</div>
+        <div class="si"><span class="dot r"></span>骨質變化分類</div>
+        <div class="si"><span class="dot o"></span>囊腫vs腫瘤</div>
+        <div class="sh">🔬 口腔外科</div>
+        <div class="si"><span class="dot o"></span>拔牙適應症</div>
+        <div class="si"><span class="dot y"></span>術後照護</div>
+      </div>
+      <div class="con">
+        <h2>放射線影像判讀 — 臨床案例</h2>
+        <h3>歷屆考題影像</h3>
+        <div class="img-row">
+          <div class="img-block">
+            <img src="exam/images/ya4-112-1-43.png" alt="ya4-112-1-43">
+            <div class="img-caption">112-1 第43題 · 放射線病灶</div>
+          </div>
+          <div class="img-block">
+            <img src="exam/images/ya4-113-1-36.jpeg" alt="ya4-113-1-36">
+            <div class="img-caption">113-1 第36題 · 骨質破壞</div>
+          </div>
+          <div class="img-block">
+            <img src="exam/images/ya4-113-2-64.jpeg" alt="ya4-113-2-64">
+            <div class="img-caption">113-2 第64題 · 臨床判讀</div>
+          </div>
+        </div>
+        <h3>判讀要點整理</h3>
+        <table>
+          <thead><tr><th>病灶類型</th><th>放射線特徵</th><th>臨床意義</th></tr></thead>
+          <tbody>
+            <tr><td>囊腫</td><td>邊緣清楚，皮質骨線完整</td><td>通常為良性</td></tr>
+            <tr><td>惡性腫瘤</td><td>邊緣不規則，蟲蝕狀破壞</td><td>需組織切片確診</td></tr>
+            <tr><td>炎症</td><td>邊緣模糊，瀰漫性透射</td><td>急性感染常見</td></tr>
+          </tbody>
+        </table>
+        <div class="alert">邊緣不清楚的放射線透射區務必排除惡性病變</div>
+        <div class="exam-box">
+          <div class="et">📝 考古題高頻考點</div>
+          含牙囊腫（Dentigerous cyst）最常見於：<strong>下顎第三大臼齒</strong>，X 光特徵為濾泡圍繞齒冠
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 三欄圖片排版，圖說詳細，最像醫學教科書</p>
+</div>
+
+<!-- G 雜誌風 含圖 -->
+<div class="wrap" id="g">
+  <div class="hd">
+    <h2>風格 G — 雜誌風（含圖片）</h2>
+    <p>圖片以雜誌排版展示 · 視覺最精緻</p>
+  </div>
+  <div class="g">
+    <div class="topbar">
+      <span class="logo">YA5</span>
+      <span class="title">假牙科 · 咬合學</span>
+      <span class="sub">Prosthodontics · Occlusion</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sc">假牙製作</div>
+        <div class="si on">咬合臨床案例</div>
+        <div class="si">全口假牙</div>
+        <div class="si">固定假牙</div>
+        <div class="sc">咬合學</div>
+        <div class="si">垂直距離</div>
+        <div class="si">正中咬合</div>
+      </div>
+      <div class="con">
+        <div class="hero">
+          <h2>假牙臨床案例影像</h2>
+          <p>Prosthodontics · Clinical Case Images · 歷屆考題</p>
+          <div class="chips">
+            <span class="chip">咬合分析</span>
+            <span class="chip">假牙適應症</span>
+            <span class="chip">必考影像題</span>
+          </div>
+        </div>
+        <div class="body2">
+          <h3>考題影像</h3>
+          <div class="img-grid">
+            <div class="img-block">
+              <img src="exam/images/ya5-111-1-18.jpeg" alt="ya5-111-1-18">
+              <div class="img-caption">111-1 第18題</div>
+            </div>
+            <div class="img-block">
+              <img src="exam/images/ya5-112-1-51.jpeg" alt="ya5-112-1-51">
+              <div class="img-caption">112-1 第51題</div>
+            </div>
+            <div class="img-block">
+              <img src="exam/images/ya5-113-2-25.jpeg" alt="ya5-113-2-25">
+              <div class="img-caption">113-2 第25題</div>
+            </div>
+            <div class="img-block">
+              <img src="exam/images/ya5-114-2-22.jpeg" alt="ya5-114-2-22">
+              <div class="img-caption">114-2 第22題</div>
+            </div>
+          </div>
+          <div class="pull">"影像題佔假牙科出題比例高，建議配合X光片系統性複習"</div>
+          <h3>臨床判讀重點</h3>
+          <table>
+            <thead><tr><th>項目</th><th>判讀要點</th></tr></thead>
+            <tbody>
+              <tr><td>垂直距離</td><td>息止頜位（Rest position）-2~4mm = 咬合垂直距離</td></tr>
+              <tr><td>正中關係</td><td>髁狀突位於關節窩最後上方位置</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 四格圖片網格，雜誌感強，圖片一眼看清</p>
+</div>
+
+<!-- iOS 含圖 -->
+<div class="wrap" id="i">
+  <div class="hd">
+    <h2>風格 I — iOS 風格（含圖片）</h2>
+    <p>圓角卡片包住圖片 · 手機閱讀最舒適</p>
+  </div>
+  <div class="ios">
+    <div class="bar">
+      <span style="font-size:1.2rem;">🌿</span>
+      <span class="bar-title">牙六 — 矯正・兒牙・公衛</span>
+      <span class="bar-sub">Ya6</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sg">矯正科</div>
+        <div class="si on"><span class="dot r"></span>影像判讀</div>
+        <div class="si"><span class="dot r"></span>矯正力學</div>
+        <div class="si"><span class="dot o"></span>錯咬合分類</div>
+        <div class="sg">兒童牙科</div>
+        <div class="si"><span class="dot o"></span>乳牙根管</div>
+        <div class="si"><span class="dot y"></span>空間維持器</div>
+        <div class="sg">公共衛生</div>
+        <div class="si"><span class="dot y"></span>流行病學</div>
+      </div>
+      <div class="con">
+        <div class="seg">
+          <div class="sb on">筆記</div>
+          <div class="sb">考古題</div>
+          <div class="sb">閃卡</div>
+        </div>
+        <div class="card">
+          <h3>矯正影像判讀 <span class="tag-r">必考</span></h3>
+          <div class="img-2col">
+            <div class="img-block">
+              <img src="exam/images/ya6-112-1-12.jpeg" alt="ya6-112-1-12">
+              <div class="img-caption">112-1 第12題</div>
+            </div>
+            <div class="img-block">
+              <img src="exam/images/ya6-113-1-62.jpeg" alt="ya6-113-1-62">
+              <div class="img-caption">113-1 第62題</div>
+            </div>
+          </div>
+          <table style="margin-top:.6rem;">
+            <tr><td>Angle Class I</td><td>上顎第一大臼齒近心頰尖咬在下顎第一大臼齒頰側溝</td></tr>
+            <tr><td>Angle Class II</td><td>下顎後縮，上顎前突</td></tr>
+            <tr><td>Angle Class III</td><td>下顎前突，反咬合</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>兒牙影像 <span class="tag-r tag-o">高頻</span></h3>
+          <div class="img-2col">
+            <div class="img-block">
+              <img src="exam/images/ya6-114-1-37.jpeg" alt="ya6-114-1-37">
+              <div class="img-caption">114-1 第37題</div>
+            </div>
+            <div class="img-block">
+              <img src="exam/images/ya6-114-1-40.jpeg" alt="ya6-114-1-40">
+              <div class="img-caption">114-1 第40題</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 卡片包住圖片，手機滑起來最舒服</p>
+</div>
+
+<div style="text-align:center;padding:3rem 1rem 4rem;color:rgba(255,255,255,.25);font-size:.8rem;">
+  圖片直接來自你的歷屆考題資料夾 exam/images/<br>
+  選好風格後告訴我，我幫你套用到整個 app
+</div>
+
+<script>
+const navLinks = document.querySelectorAll('nav a');
+const sections = document.querySelectorAll('.wrap');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navLinks.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

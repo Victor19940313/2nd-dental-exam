@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦷 筆記風格預覽 Vol.2</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif; background: #111; color: #e2e8f0; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10,10,10,.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1.5rem; overflow-x: auto;
+}
+nav span { color: rgba(255,255,255,.4); font-size: .82rem; white-space: nowrap; margin-right: .3rem; }
+nav a {
+  white-space: nowrap; text-decoration: none; font-size: .82rem; font-weight: 600;
+  padding: .35rem .85rem; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.6);
+  transition: all .2s;
+}
+nav a:hover { background: rgba(255,255,255,.12); color: white; }
+nav a.on { background: #f59e0b; border-color: #f59e0b; color: #000; }
+
+.wrap { padding: 3rem 1.5rem; max-width: 980px; margin: 0 auto; }
+.hd { text-align: center; margin-bottom: 2.5rem; }
+.hd h2 { font-size: 1.45rem; color: white; margin-bottom: .35rem; }
+.hd p { font-size: .87rem; color: rgba(255,255,255,.45); }
+.tag { display:inline-block; font-size:.7rem; padding:.15rem .55rem; border-radius:999px; margin-left:.5rem; font-weight:700; }
+.tn { background:#1a3a1a; color:#4ade80; }
+.cap { text-align:center; margin-top:.9rem; font-size:.76rem; color:rgba(255,255,255,.28); }
+
+/* ══════════════════════════════
+   F — 螢光手寫筆記
+══════════════════════════════ */
+.f {
+  background: #fefce8;
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 4px 30px rgba(0,0,0,.35);
+  border: 1px solid #fde047;
+}
+.f .bar {
+  background: #1c1917; color: white;
+  padding: .7rem 1.2rem; font-size: .88rem; font-weight: 700;
+  display: flex; align-items: center; gap: .7rem;
+}
+.f .body { display: flex; min-height: 420px; }
+.f .side {
+  width: 210px; background: #fffbeb;
+  border-right: 2px dashed #fde047; padding: .6rem 0;
+}
+.f .sg { font-size: .7rem; font-weight: 800; color: #92400e; letter-spacing: .08em; padding: .5rem 1rem .25rem; text-transform: uppercase; }
+.f .si { display:flex; align-items:center; gap:.4rem; padding:.4rem 1rem; font-size:.81rem; color:#44403c; cursor:pointer; }
+.f .si.on { background: #fef08a; font-weight:700; color:#78350f; border-left:3px solid #f59e0b; }
+.f .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.f .dot.r { background:#ef4444; }
+.f .dot.o { background:#f97316; }
+.f .dot.y { background:#eab308; }
+.f .con { flex:1; padding:1.4rem 1.8rem; background:#fefce8; color:#1c1917; overflow:auto; }
+.f .con h2 { font-size:1rem; font-weight:900; color:#1c1917; margin-bottom:1rem;
+  background: linear-gradient(120deg,#fef08a 0%,#fef08a 100%); background-repeat:no-repeat;
+  background-size:100% 45%; background-position:0 70%; display:inline; }
+.f .con h3 { font-size:.87rem; font-weight:800; color:#92400e; margin:1rem 0 .4rem; display:flex; align-items:center; gap:.4rem; }
+.f .con h3::before { content:'✏️'; font-size:.8rem; }
+.f table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.7rem 0; }
+.f td { border:1.5px solid #fde047; padding:.4rem .6rem; color:#1c1917; }
+.f td:first-child { background:#fef9c3; font-weight:700; color:#78350f; }
+.f .hl { background:#fef08a; padding:.1rem .3rem; border-radius:3px; font-weight:700; color:#78350f; }
+.f .hl2 { background:#bbf7d0; padding:.1rem .3rem; border-radius:3px; font-weight:700; color:#14532d; }
+.f .hl3 { background:#fecaca; padding:.1rem .3rem; border-radius:3px; font-weight:700; color:#7f1d1d; }
+.f .note { background:white; border:1.5px dashed #fbbf24; border-radius:8px; padding:.6rem .9rem; margin:.7rem 0; font-size:.8rem; color:#451a03; }
+.f .note::before { content:'📌 '; }
+
+/* ══════════════════════════════
+   G — 雜誌／Editorial
+══════════════════════════════ */
+.g {
+  background: white; border-radius:12px; overflow:hidden;
+  box-shadow:0 4px 30px rgba(0,0,0,.3);
+}
+.g .bar {
+  background: #0f172a; color:white; padding:.9rem 1.5rem;
+  display:flex; align-items:center; gap:1rem;
+}
+.g .logo-chip { background:#f59e0b; color:#000; font-weight:900; font-size:.78rem; padding:.25rem .65rem; border-radius:4px; letter-spacing:.04em; }
+.g .bar-title { font-size:.9rem; font-weight:700; }
+.g .bar-sub { margin-left:auto; font-size:.72rem; opacity:.55; }
+.g .body { display:flex; min-height:440px; }
+.g .side { width:200px; background:#f8fafc; border-right:1px solid #e2e8f0; padding:.5rem 0; }
+.g .sc { font-size:.68rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:#94a3b8; padding:.6rem 1rem .2rem; }
+.g .si { padding:.45rem 1rem; font-size:.8rem; color:#334155; cursor:pointer; border-left:3px solid transparent; }
+.g .si:hover { background:#f1f5f9; }
+.g .si.on { border-left-color:#f59e0b; background:#fffbeb; color:#92400e; font-weight:700; }
+.g .si-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:.4rem; vertical-align:middle; }
+.g .con { flex:1; padding:0; overflow:auto; }
+.g .con-hero { background:linear-gradient(135deg,#0f172a,#1e3a5f); color:white; padding:1.5rem 2rem; }
+.g .con-hero h2 { font-size:1.2rem; font-weight:900; margin-bottom:.3rem; }
+.g .con-hero p { font-size:.78rem; opacity:.65; }
+.g .con-hero .chips { display:flex; gap:.4rem; margin-top:.6rem; flex-wrap:wrap; }
+.g .chip { font-size:.68rem; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:.2rem .55rem; }
+.g .con-body { padding:1.4rem 2rem; color:#0f172a; }
+.g .con-body h3 { font-size:.85rem; font-weight:800; color:#0f172a; margin:1rem 0 .35rem; text-transform:uppercase; letter-spacing:.05em; border-bottom:2px solid #f59e0b; padding-bottom:.2rem; display:inline-block; }
+.g table { width:100%; border-collapse:collapse; font-size:.78rem; margin:.7rem 0; }
+.g thead th { background:#0f172a; color:white; padding:.4rem .65rem; text-align:left; font-weight:700; font-size:.73rem; letter-spacing:.04em; text-transform:uppercase; }
+.g tbody tr:nth-child(even) { background:#f8fafc; }
+.g td { border-bottom:1px solid #e2e8f0; padding:.4rem .65rem; color:#1e293b; }
+.g td:first-child { font-weight:700; color:#0f172a; }
+.g .pull { background:#fffbeb; border-left:4px solid #f59e0b; padding:.65rem 1rem; margin:.8rem 0; font-size:.83rem; color:#78350f; font-style:italic; font-weight:600; }
+
+/* ══════════════════════════════
+   H — Terminal / Hacker
+══════════════════════════════ */
+.h {
+  background:#0d0d0d; border-radius:12px; overflow:hidden;
+  box-shadow:0 4px 40px rgba(0,255,100,.08);
+  border:1px solid rgba(0,255,100,.15);
+  font-family:'Courier New', 'Consolas', monospace;
+}
+.h .bar {
+  background:#111; border-bottom:1px solid rgba(0,255,100,.15);
+  padding:.65rem 1.2rem; display:flex; align-items:center; gap:.5rem;
+}
+.h .dots { display:flex; gap:.4rem; }
+.h .dot-r { width:11px; height:11px; border-radius:50%; background:#ff5f57; }
+.h .dot-y { width:11px; height:11px; border-radius:50%; background:#febc2e; }
+.h .dot-g { width:11px; height:11px; border-radius:50%; background:#28c840; }
+.h .title-t { color:rgba(0,255,100,.6); font-size:.8rem; margin-left:.5rem; }
+.h .body { display:flex; min-height:420px; }
+.h .side { width:210px; background:#0a0a0a; border-right:1px solid rgba(0,255,100,.1); padding:.5rem 0; overflow:auto; }
+.h .sg { font-size:.68rem; color:rgba(0,255,100,.4); padding:.5rem 1rem .15rem; font-weight:700; }
+.h .si { padding:.35rem 1rem; font-size:.78rem; color:rgba(0,255,100,.55); cursor:pointer; }
+.h .si::before { content:'> '; }
+.h .si.on { color:#00ff64; background:rgba(0,255,100,.07); }
+.h .si.on::before { content:'▶ '; }
+.h .con { flex:1; padding:1.2rem 1.5rem; overflow:auto; color:#00ff64; }
+.h .prompt { color:rgba(0,255,100,.4); font-size:.75rem; margin-bottom:.3rem; }
+.h .con h2 { font-size:.95rem; color:#00ff64; margin-bottom:.8rem; }
+.h .con h2::before { content:'## '; color:rgba(0,255,100,.4); }
+.h .con h3 { font-size:.82rem; color:#39d353; margin:.9rem 0 .35rem; }
+.h .con h3::before { content:'### '; color:rgba(0,255,100,.3); }
+.h table { width:100%; border-collapse:collapse; font-size:.76rem; margin:.6rem 0; }
+.h td { border:1px solid rgba(0,255,100,.15); padding:.35rem .55rem; color:#00ff64; }
+.h td:first-child { color:#39d353; font-weight:700; border-right:1px solid rgba(0,255,100,.3); }
+.h .badge-h { display:inline-block; background:rgba(0,255,100,.12); border:1px solid rgba(0,255,100,.3); color:#00ff64; font-size:.68rem; padding:.1rem .45rem; border-radius:3px; }
+.h .warn { color:#febc2e; font-size:.8rem; margin:.6rem 0; }
+.h .warn::before { content:'⚠ WARNING: '; }
+
+/* ══════════════════════════════
+   I — iOS / Apple 風格
+══════════════════════════════ */
+.i {
+  background:#f2f2f7; border-radius:20px; overflow:hidden;
+  box-shadow:0 8px 40px rgba(0,0,0,.25);
+}
+.i .bar {
+  background:rgba(242,242,247,.85); backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,0,0,.08);
+  padding:.8rem 1.3rem; display:flex; align-items:center; gap:.7rem;
+}
+.i .bar-icon { font-size:1.2rem; }
+.i .bar-title { font-size:.92rem; font-weight:700; color:#000; }
+.i .bar-sub { margin-left:auto; font-size:.75rem; color:#8e8e93; }
+.i .body { display:flex; min-height:430px; }
+.i .side { width:210px; background:white; border-right:1px solid rgba(0,0,0,.06); padding:.6rem 0; }
+.i .sg { font-size:.68rem; font-weight:700; color:#8e8e93; letter-spacing:.06em; text-transform:uppercase; padding:.6rem 1rem .2rem; }
+.i .si { display:flex; align-items:center; gap:.55rem; padding:.5rem 1rem; font-size:.82rem; color:#000; border-radius:10px; margin:0 .4rem; }
+.i .si.on { background:#007aff; color:white; }
+.i .si.on .dot { background:white !important; }
+.i .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.i .dot.r { background:#ff3b30; }
+.i .dot.o { background:#ff9500; }
+.i .dot.y { background:#ffcc00; }
+.i .con { flex:1; padding:1.5rem; background:#f2f2f7; overflow:auto; }
+.i .card { background:white; border-radius:14px; padding:1rem 1.2rem; margin-bottom:.9rem; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.i .card h3 { font-size:.87rem; font-weight:700; color:#000; margin-bottom:.5rem; }
+.i table { width:100%; border-collapse:collapse; font-size:.78rem; }
+.i td { padding:.38rem .5rem; border-bottom:1px solid #e5e5ea; color:#1c1c1e; }
+.i td:first-child { font-weight:600; color:#007aff; }
+.i .tag-i { display:inline-block; background:#ff3b30; color:white; font-size:.65rem; padding:.1rem .4rem; border-radius:999px; font-weight:700; margin-left:.3rem; }
+.i .tag-io { background:#ff9500; }
+.i .seg { display:flex; background:#e5e5ea; border-radius:8px; padding:2px; margin-bottom:1rem; }
+.i .seg-btn { flex:1; text-align:center; font-size:.78rem; padding:.3rem; border-radius:6px; cursor:pointer; color:#8e8e93; font-weight:600; }
+.i .seg-btn.on { background:white; color:#000; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+
+/* ══════════════════════════════
+   J — 復古教科書
+══════════════════════════════ */
+.j {
+  background:#fdf6e3; border-radius:4px; overflow:hidden;
+  box-shadow:0 4px 30px rgba(0,0,0,.4);
+  border:2px solid #8b7355;
+  font-family:Georgia, 'Times New Roman', serif;
+}
+.j .bar {
+  background:#2c1810; color:#f5deb3; padding:.8rem 1.5rem;
+  font-size:.95rem; font-weight:700; letter-spacing:.03em;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.j .bar-sub { font-size:.75rem; opacity:.6; font-style:italic; }
+.j .body { display:flex; min-height:430px; }
+.j .side { width:200px; background:#f5eed6; border-right:2px solid #8b7355; padding:.5rem 0; }
+.j .sg { font-size:.68rem; font-weight:700; color:#5c4033; letter-spacing:.1em; text-transform:uppercase; padding:.6rem 1rem .25rem; border-bottom:1px solid #c9b99a; margin-bottom:.2rem; }
+.j .si { padding:.45rem 1rem; font-size:.81rem; color:#3e2723; cursor:pointer; }
+.j .si.on { background:#e8d5b0; font-weight:700; color:#1a0a00; border-left:4px solid #8b4513; }
+.j .con { flex:1; padding:1.5rem 2rem; background:#fdf6e3; color:#2c1810; overflow:auto; }
+.j .con h2 { font-size:1.05rem; font-weight:700; color:#2c1810; text-align:center; border-bottom:2px solid #8b7355; padding-bottom:.5rem; margin-bottom:1rem; letter-spacing:.05em; text-transform:uppercase; }
+.j .con h3 { font-size:.9rem; font-weight:700; color:#5c4033; margin:1rem 0 .4rem; }
+.j table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.7rem 0; }
+.j thead th { background:#2c1810; color:#f5deb3; padding:.4rem .7rem; text-align:left; font-weight:700; }
+.j tbody tr:nth-child(even) { background:#f5eed6; }
+.j td { border:1px solid #c9b99a; padding:.4rem .7rem; }
+.j td:first-child { font-weight:700; color:#3e2723; }
+.j .quote { border-left:4px solid #8b4513; padding:.5rem .8rem; margin:.8rem 0; font-style:italic; color:#5c4033; font-size:.83rem; background:#f5eed6; }
+.j .fn { font-size:.7rem; color:#8d6e63; border-top:1px solid #c9b99a; margin-top:.8rem; padding-top:.4rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span>Vol.2 →</span>
+  <a href="#f" class="on">F 螢光手寫</a>
+  <a href="#g">G 雜誌風</a>
+  <a href="#h">H Terminal</a>
+  <a href="#i">I iOS 風格</a>
+  <a href="#j">J 復古教科書</a>
+</nav>
+
+<!-- F 螢光手寫 -->
+<div class="wrap" id="f">
+  <div class="hd">
+    <h2>風格 F — 螢光手寫筆記 <span class="tag tn">新風格</span></h2>
+    <p>米黃紙底 · 螢光標記重點 · 手寫感 · 讀書感最強</p>
+  </div>
+  <div class="f">
+    <div class="bar">📒 牙三 — 牙髓病科 <span style="font-size:.75rem;opacity:.5;margin-left:auto;">Endodontics Notes</span></div>
+    <div class="body">
+      <div class="side">
+        <div class="sg">根管解剖</div>
+        <div class="si on"><span class="dot r"></span>Vertucci 分類</div>
+        <div class="si"><span class="dot r"></span>各齒根管數量</div>
+        <div class="si"><span class="dot o"></span>工作長度測量</div>
+        <div class="sg">根管清創</div>
+        <div class="si"><span class="dot o"></span>NaOCl 沖洗</div>
+        <div class="si"><span class="dot y"></span>器械選用</div>
+      </div>
+      <div class="con">
+        <h2>Vertucci 根管分類系統</h2>
+        <h3>分類總覽</h3>
+        <table>
+          <tr><td>Type I (1-1)</td><td>單管直達根尖。常見：<span class="hl2">上顎前牙</span>、下顎小臼齒</td></tr>
+          <tr><td>Type II (2-1)</td><td>兩管匯合出根尖。常見：<span class="hl2">下顎前牙</span></td></tr>
+          <tr><td>Type IV (2-2)</td><td>兩管各自出根尖。<span class="hl">最常見：上顎第一小臼齒</span></td></tr>
+        </table>
+        <h3>C 型根管</h3>
+        <div class="note">亞洲人發生率遠高於白人，最常見：<span class="hl3">下顎第二大臼齒（44.5%）</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 讀書感最強，螢光筆標重點，適合喜歡「紙本感」的人</p>
+</div>
+
+<!-- G 雜誌風 -->
+<div class="wrap" id="g">
+  <div class="hd">
+    <h2>風格 G — 雜誌 / Editorial <span class="tag tn">新風格</span></h2>
+    <p>白底 · 深色 Hero 區 · 金色強調 · 高質感版面</p>
+  </div>
+  <div class="g">
+    <div class="bar">
+      <span class="logo-chip">YA3</span>
+      <span class="bar-title">牙髓病科</span>
+      <span class="bar-sub">Endodontics · Root Canal Anatomy</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sc">根管解剖</div>
+        <div class="si on"><span class="si-dot" style="background:#f59e0b;"></span>Vertucci 分類</div>
+        <div class="si"><span class="si-dot" style="background:#ef4444;"></span>各齒根管數量</div>
+        <div class="si"><span class="si-dot" style="background:#f97316;"></span>工作長度</div>
+        <div class="sc">根管清創</div>
+        <div class="si"><span class="si-dot" style="background:#f97316;"></span>NaOCl 沖洗</div>
+        <div class="si"><span class="si-dot" style="background:#eab308;"></span>器械選用</div>
+      </div>
+      <div class="con">
+        <div class="con-hero">
+          <h2>Vertucci 根管分類系統</h2>
+          <p>Type I–VIII · 國考必考 · 2880題核心考點</p>
+          <div class="chips">
+            <span class="chip">根管解剖</span>
+            <span class="chip">Type IV 最常考</span>
+            <span class="chip">C型根管</span>
+          </div>
+        </div>
+        <div class="con-body">
+          <h3>分類總覽</h3>
+          <table>
+            <thead><tr><th>Type</th><th>構型</th><th>最常見牙位</th></tr></thead>
+            <tbody>
+              <tr><td>Type I</td><td>1→1</td><td>上顎前牙、下顎小臼齒</td></tr>
+              <tr><td>Type II</td><td>2→1</td><td>下顎前牙、近心根</td></tr>
+              <tr><td>Type IV</td><td>2→2</td><td><strong>上顎第一小臼齒</strong></td></tr>
+            </tbody>
+          </table>
+          <div class="pull">"C 型根管在亞洲人的發生率極高，下顎第二大臼齒可達 44.5%"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 高質感雜誌風，金色點綴，適合追求視覺精緻感的人</p>
+</div>
+
+<!-- H Terminal -->
+<div class="wrap" id="h">
+  <div class="hd">
+    <h2>風格 H — Terminal / Hacker <span class="tag tn">新風格</span></h2>
+    <p>全黑底 · 綠色字 · 程式碼感 · 最護眼 · 夜間讀書神器</p>
+  </div>
+  <div class="h">
+    <div class="bar">
+      <div class="dots"><div class="dot-r"></div><div class="dot-y"></div><div class="dot-g"></div></div>
+      <span class="title-t">dental-notes — ya3/endodontics.md</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sg"># 根管解剖</div>
+        <div class="si on">vertucci-classification</div>
+        <div class="si">root-canal-anatomy</div>
+        <div class="si">working-length</div>
+        <div class="sg"># 根管清創</div>
+        <div class="si">naocl-irrigation</div>
+        <div class="si">instrument-selection</div>
+      </div>
+      <div class="con">
+        <div class="prompt">~/dental-notes/ya3 $ cat vertucci-classification.md</div>
+        <h2>Vertucci 根管分類系統</h2>
+        <h3>Type I–VIII 分類總覽</h3>
+        <table>
+          <tr><td>Type_I</td><td>1→1 · 單管直達</td><td>上顎前牙</td></tr>
+          <tr><td>Type_II</td><td>2→1 · 匯合</td><td>下顎前牙</td></tr>
+          <tr><td style="color:#39d353;font-weight:700;">Type_IV</td><td>2→2 · 各自出根尖</td><td style="color:#39d353;">上顎第一小臼齒 ★</td></tr>
+        </table>
+        <div class="warn">C型根管在下顎第二大臼齒發生率 44.5%（亞洲人）</div>
+        <span class="badge-h">必考</span>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 最護眼，適合深夜讀書，喜歡簡潔的人</p>
+</div>
+
+<!-- I iOS -->
+<div class="wrap" id="i">
+  <div class="hd">
+    <h2>風格 I — iOS / Apple <span class="tag tn">新風格</span></h2>
+    <p>圓角卡片 · 蘋果系統感 · 手機體驗最佳 · 乾淨俐落</p>
+  </div>
+  <div class="i">
+    <div class="bar">
+      <span class="bar-icon">🦷</span>
+      <span class="bar-title">牙三 — 牙髓病科</span>
+      <span class="bar-sub">根管解剖</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sg">根管解剖</div>
+        <div class="si on"><span class="dot r"></span>Vertucci 分類</div>
+        <div class="si"><span class="dot r"></span>各齒根管數量</div>
+        <div class="si"><span class="dot o"></span>工作長度</div>
+        <div class="sg">根管清創</div>
+        <div class="si"><span class="dot o"></span>NaOCl 沖洗</div>
+        <div class="si"><span class="dot y"></span>器械選用</div>
+      </div>
+      <div class="con">
+        <div class="seg">
+          <div class="seg-btn on">筆記</div>
+          <div class="seg-btn">考古題</div>
+          <div class="seg-btn">閃卡</div>
+        </div>
+        <div class="card">
+          <h3>Vertucci 根管分類 <span class="tag-i">必考</span></h3>
+          <table>
+            <tr><td>Type I</td><td>1→1 單管直達。上顎前牙、下顎小臼齒</td></tr>
+            <tr><td>Type II</td><td>2→1 兩管匯合。下顎前牙</td></tr>
+            <tr><td>Type IV</td><td>2→2 各自出根尖。<strong>上顎第一小臼齒</strong></td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <h3>C 型根管 <span class="tag-i tag-io">高頻</span></h3>
+          <p style="font-size:.8rem;color:#3a3a3c;line-height:1.6;">亞洲人發生率遠高於白人，最常見牙位：<strong style="color:#007aff;">下顎第二大臼齒（44.5%）</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 手機體驗最好，分頁清楚，適合用 iPhone 讀書的人</p>
+</div>
+
+<!-- J 復古教科書 -->
+<div class="wrap" id="j">
+  <div class="hd">
+    <h2>風格 J — 復古教科書 <span class="tag tn">新風格</span></h2>
+    <p>米黃書頁 · 深棕色系 · serif 字體 · 真實教科書感</p>
+  </div>
+  <div class="j">
+    <div class="bar">
+      牙醫師國考互動筆記 · 牙醫學（三）
+      <span class="bar-sub">Dental Licensure Examination Notes</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="sg">根管解剖</div>
+        <div class="si on">Vertucci 分類系統</div>
+        <div class="si">各齒根管數量</div>
+        <div class="si">工作長度測量</div>
+        <div class="sg">根管清創</div>
+        <div class="si">NaOCl 沖洗</div>
+        <div class="si">器械選用</div>
+      </div>
+      <div class="con">
+        <h2>第一節 · Vertucci 根管分類系統</h2>
+        <h3>一、分類總覽（Type I–VIII）</h3>
+        <table>
+          <thead><tr><th>分型</th><th>根管構型</th><th>最常見牙位</th></tr></thead>
+          <tbody>
+            <tr><td>Type I (1-1)</td><td>單管直達根尖孔</td><td>上顎前牙、下顎小臼齒</td></tr>
+            <tr><td>Type II (2-1)</td><td>兩管匯合成單管</td><td>下顎前牙、近心根</td></tr>
+            <tr><td>Type IV (2-2)</td><td>兩獨立管各出根尖</td><td><strong>上顎第一小臼齒</strong></td></tr>
+          </tbody>
+        </table>
+        <div class="quote">「C 型根管在亞洲人種中發生率極高，以下顎第二大臼齒最為常見，可達 44.5%。」</div>
+        <div class="fn">參考資料：Vertucci FJ. Root canal anatomy of the human permanent teeth. Oral Surg 1984.</div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 真實教科書感，serif 字體，適合喜歡傳統閱讀感的人</p>
+</div>
+
+<div style="text-align:center;padding:3rem 1rem 4rem;color:rgba(255,255,255,.25);font-size:.8rem;">
+  還有 Vol.1 的 A–E 風格可以參考（preview-styles.html）<br>
+  選好後告訴我「我要 G 風格」，或「混用 I + E 閃卡」，我就幫你套用
+</div>
+
+<script>
+const navLinks = document.querySelectorAll('nav a');
+const sections = document.querySelectorAll('.wrap');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navLinks.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
+    }
+  });
+}, { threshold: 0.35 });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦷 筆記風格 Vol.3 — 乾淨整齊</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif; background: #1e2028; color: #e2e8f0; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(30,32,40,.97); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; gap: .5rem;
+  padding: .7rem 1.5rem; overflow-x: auto;
+}
+nav span { color: rgba(255,255,255,.35); font-size: .8rem; white-space: nowrap; }
+nav a {
+  white-space: nowrap; text-decoration: none; font-size: .8rem; font-weight: 600;
+  padding: .32rem .8rem; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.55);
+  transition: all .18s;
+}
+nav a:hover { background: rgba(255,255,255,.08); color: white; }
+nav a.on { background: #3b82f6; border-color: #3b82f6; color: white; }
+
+.wrap { padding: 3rem 1.5rem; max-width: 980px; margin: 0 auto; }
+.hd { text-align: center; margin-bottom: 2.2rem; }
+.hd h2 { font-size: 1.35rem; color: white; margin-bottom: .3rem; }
+.hd p { font-size: .85rem; color: rgba(255,255,255,.4); }
+.cap { text-align:center; margin-top:.8rem; font-size:.74rem; color:rgba(255,255,255,.25); }
+
+/* ── 收合動畫 ── */
+.collapsible-body { overflow: hidden; transition: max-height .3s ease, opacity .3s ease; max-height: 2000px; opacity: 1; }
+.collapsible-body.closed { max-height: 0; opacity: 0; }
+.toggle-icon { transition: transform .25s ease; display: inline-block; margin-left: auto; }
+.collapsed .toggle-icon { transform: rotate(-90deg); }
+
+/* ══════════════════════
+   K — Slate 乾淨版
+══════════════════════ */
+.k { background:#f8fafc; border-radius:12px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,.18); border:1px solid #e2e8f0; }
+.k .bar { background:#1e293b; color:white; padding:.75rem 1.2rem; display:flex; align-items:center; gap:.7rem; font-size:.88rem; font-weight:700; }
+.k .bar input { margin-left:auto; background:rgba(255,255,255,.1); border:none; color:white; padding:.28rem .75rem; border-radius:6px; font-size:.78rem; outline:none; width:140px; }
+.k .bar input::placeholder { color:rgba(255,255,255,.4); }
+.k .body { display:flex; min-height:480px; }
+.k .side { width:230px; background:#f1f5f9; border-right:1px solid #e2e8f0; overflow-y:auto; padding:.5rem 0; }
+.k .s-head { font-size:.68rem; font-weight:800; color:#94a3b8; letter-spacing:.08em; text-transform:uppercase; padding:.55rem 1rem .2rem; }
+.k .s-item { display:flex; align-items:center; gap:.45rem; padding:.42rem 1rem; font-size:.81rem; color:#475569; cursor:pointer; border-left:3px solid transparent; transition:all .15s; }
+.k .s-item:hover { background:#e2e8f0; color:#1e293b; }
+.k .s-item.on { border-left-color:#3b82f6; background:#eff6ff; color:#1d4ed8; font-weight:600; }
+.k .freq { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.k .fr { background:#ef4444; } .k .fo { background:#f97316; } .k .fy { background:#eab308; }
+.k .con { flex:1; padding:1.4rem 1.8rem; overflow-y:auto; color:#1e293b; }
+
+/* 收合區塊 K */
+.k .section { border:1px solid #e2e8f0; border-radius:8px; margin-bottom:.7rem; overflow:hidden; }
+.k .sec-head { display:flex; align-items:center; gap:.55rem; padding:.65rem .9rem; background:#f8fafc; cursor:pointer; font-size:.85rem; font-weight:700; color:#1e293b; user-select:none; }
+.k .sec-head:hover { background:#f1f5f9; }
+.k .sec-head .lv { font-size:.68rem; padding:.12rem .45rem; border-radius:4px; font-weight:700; }
+.k .lv-r { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.k .lv-o { background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; }
+.k .lv-y { background:#fefce8; color:#ca8a04; border:1px solid #fde68a; }
+.k .sec-body { padding:.8rem .9rem; border-top:1px solid #e2e8f0; background:white; }
+.k table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.5rem 0; }
+.k th { background:#f1f5f9; padding:.38rem .6rem; text-align:left; font-weight:700; color:#374151; border:1px solid #e2e8f0; font-size:.75rem; }
+.k td { border:1px solid #e2e8f0; padding:.38rem .6rem; color:#374151; }
+.k td:first-child { font-weight:600; color:#1e293b; background:#f8fafc; }
+.k .note-box { background:#eff6ff; border-left:3px solid #3b82f6; padding:.5rem .75rem; margin:.5rem 0; font-size:.79rem; color:#1e40af; border-radius:0 6px 6px 0; }
+.k .img-row { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; margin:.6rem 0; }
+.k .img-item img { width:100%; border-radius:6px; border:1px solid #e2e8f0; display:block; }
+.k .img-item .cap2 { font-size:.68rem; color:#94a3b8; text-align:center; padding:.25rem 0; }
+
+/* ══════════════════════
+   L — Teal 清新版
+══════════════════════ */
+.l { background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 20px rgba(0,0,0,.15); }
+.l .bar { background:linear-gradient(90deg,#0f766e,#0d9488); color:white; padding:.75rem 1.2rem; display:flex; align-items:center; gap:.7rem; font-size:.88rem; font-weight:700; }
+.l .bar .back { background:rgba(255,255,255,.18); border-radius:5px; padding:.22rem .6rem; font-size:.75rem; }
+.l .bar input { margin-left:auto; background:rgba(255,255,255,.15); border:none; color:white; padding:.28rem .75rem; border-radius:20px; font-size:.78rem; outline:none; width:130px; }
+.l .bar input::placeholder { color:rgba(255,255,255,.5); }
+.l .body { display:flex; min-height:480px; }
+.l .side { width:225px; background:#f0fdfa; border-right:1px solid #ccfbf1; overflow-y:auto; padding:.5rem 0; }
+.l .s-head { font-size:.68rem; font-weight:800; color:#5eead4; letter-spacing:.08em; text-transform:uppercase; padding:.55rem 1rem .2rem; }
+.l .s-item { display:flex; align-items:center; gap:.45rem; padding:.42rem 1rem; font-size:.81rem; color:#134e4a; cursor:pointer; border-left:3px solid transparent; }
+.l .s-item:hover { background:#ccfbf1; }
+.l .s-item.on { border-left-color:#0d9488; background:#ccfbf1; color:#0f766e; font-weight:600; }
+.l .freq { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.l .fr { background:#f43f5e; } .l .fo { background:#fb923c; } .l .fy { background:#fbbf24; }
+.l .con { flex:1; padding:1.4rem 1.8rem; overflow-y:auto; color:#134e4a; }
+
+.l .section { border:1px solid #ccfbf1; border-radius:8px; margin-bottom:.7rem; overflow:hidden; }
+.l .sec-head { display:flex; align-items:center; gap:.5rem; padding:.62rem .9rem; background:#f0fdfa; cursor:pointer; font-size:.85rem; font-weight:700; color:#134e4a; user-select:none; }
+.l .sec-head:hover { background:#ccfbf1; }
+.l .lv { font-size:.68rem; padding:.12rem .45rem; border-radius:4px; font-weight:700; }
+.l .lv-r { background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; }
+.l .lv-o { background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; }
+.l .lv-y { background:#fefce8; color:#b45309; border:1px solid #fde68a; }
+.l .sec-body { padding:.8rem .9rem; border-top:1px solid #ccfbf1; }
+.l table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.5rem 0; }
+.l th { background:#0d9488; color:white; padding:.38rem .6rem; text-align:left; font-weight:600; font-size:.75rem; }
+.l tbody tr:nth-child(even) { background:#f0fdfa; }
+.l td { border:1px solid #ccfbf1; padding:.38rem .6rem; color:#134e4a; }
+.l td:first-child { font-weight:600; color:#0f766e; }
+.l .note-box { background:#f0fdfa; border-left:3px solid #0d9488; padding:.5rem .75rem; margin:.5rem 0; font-size:.79rem; color:#0f766e; border-radius:0 6px 6px 0; }
+.l .img-row { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; margin:.6rem 0; }
+.l .img-item img { width:100%; border-radius:6px; border:1px solid #ccfbf1; display:block; }
+.l .img-item .cap2 { font-size:.68rem; color:#5eead4; text-align:center; padding:.25rem 0; }
+
+/* ══════════════════════
+   M — Stone 米灰版
+══════════════════════ */
+.m { background:#fafaf9; border-radius:12px; overflow:hidden; box-shadow:0 2px 20px rgba(0,0,0,.12); border:1px solid #e7e5e4; }
+.m .bar { background:#292524; color:#fafaf9; padding:.75rem 1.2rem; display:flex; align-items:center; gap:.7rem; font-size:.88rem; font-weight:700; }
+.m .bar .tag { background:#78716c; color:#fafaf9; font-size:.7rem; padding:.15rem .5rem; border-radius:4px; }
+.m .body { display:flex; min-height:480px; }
+.m .side { width:225px; background:#f5f5f4; border-right:1px solid #e7e5e4; overflow-y:auto; padding:.5rem 0; }
+.m .s-head { font-size:.67rem; font-weight:800; color:#a8a29e; letter-spacing:.08em; text-transform:uppercase; padding:.55rem 1rem .2rem; }
+.m .s-item { display:flex; align-items:center; gap:.45rem; padding:.42rem 1rem; font-size:.81rem; color:#44403c; cursor:pointer; border-left:3px solid transparent; }
+.m .s-item:hover { background:#e7e5e4; }
+.m .s-item.on { border-left-color:#292524; background:#e7e5e4; color:#1c1917; font-weight:600; }
+.m .freq { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.m .fr { background:#dc2626; } .m .fo { background:#ea580c; } .m .fy { background:#d97706; }
+.m .con { flex:1; padding:1.4rem 1.8rem; overflow-y:auto; color:#1c1917; }
+
+.m .section { border:1px solid #e7e5e4; border-radius:8px; margin-bottom:.7rem; overflow:hidden; }
+.m .sec-head { display:flex; align-items:center; gap:.5rem; padding:.62rem .9rem; background:#f5f5f4; cursor:pointer; font-size:.85rem; font-weight:700; color:#1c1917; user-select:none; }
+.m .sec-head:hover { background:#e7e5e4; }
+.m .lv { font-size:.68rem; padding:.12rem .45rem; border-radius:4px; font-weight:700; }
+.m .lv-r { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.m .lv-o { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+.m .lv-y { background:#fefce8; color:#a16207; border:1px solid #fde68a; }
+.m .sec-body { padding:.8rem .9rem; border-top:1px solid #e7e5e4; background:white; }
+.m table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.5rem 0; }
+.m th { background:#292524; color:#fafaf9; padding:.38rem .6rem; text-align:left; font-weight:600; font-size:.75rem; }
+.m tbody tr:nth-child(even) { background:#f5f5f4; }
+.m td { border:1px solid #e7e5e4; padding:.38rem .6rem; color:#292524; }
+.m td:first-child { font-weight:600; color:#292524; }
+.m .note-box { background:#fafaf9; border-left:3px solid #78716c; padding:.5rem .75rem; margin:.5rem 0; font-size:.79rem; color:#44403c; border-radius:0 6px 6px 0; }
+.m .img-row { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; margin:.6rem 0; }
+.m .img-item img { width:100%; border-radius:6px; border:1px solid #e7e5e4; display:block; }
+.m .img-item .cap2 { font-size:.68rem; color:#a8a29e; text-align:center; padding:.25rem 0; }
+
+/* ══════════════════════
+   N — Indigo 深藍版
+══════════════════════ */
+.n { background:#eef2ff; border-radius:12px; overflow:hidden; box-shadow:0 2px 20px rgba(0,0,0,.15); }
+.n .bar { background:#3730a3; color:white; padding:.75rem 1.2rem; display:flex; align-items:center; gap:.7rem; font-size:.88rem; font-weight:700; }
+.n .bar .chip { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.2); font-size:.7rem; padding:.15rem .5rem; border-radius:4px; }
+.n .body { display:flex; min-height:480px; }
+.n .side { width:225px; background:#e0e7ff; border-right:1px solid #c7d2fe; overflow-y:auto; padding:.5rem 0; }
+.n .s-head { font-size:.67rem; font-weight:800; color:#818cf8; letter-spacing:.08em; text-transform:uppercase; padding:.55rem 1rem .2rem; }
+.n .s-item { display:flex; align-items:center; gap:.45rem; padding:.42rem 1rem; font-size:.81rem; color:#312e81; cursor:pointer; border-left:3px solid transparent; }
+.n .s-item:hover { background:#c7d2fe; }
+.n .s-item.on { border-left-color:#4f46e5; background:#c7d2fe; color:#3730a3; font-weight:600; }
+.n .freq { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.n .fr { background:#f43f5e; } .n .fo { background:#f97316; } .n .fy { background:#eab308; }
+.n .con { flex:1; padding:1.4rem 1.8rem; overflow-y:auto; color:#1e1b4b; }
+
+.n .section { border:1px solid #c7d2fe; border-radius:8px; margin-bottom:.7rem; overflow:hidden; }
+.n .sec-head { display:flex; align-items:center; gap:.5rem; padding:.62rem .9rem; background:#e0e7ff; cursor:pointer; font-size:.85rem; font-weight:700; color:#1e1b4b; user-select:none; }
+.n .sec-head:hover { background:#c7d2fe; }
+.n .lv { font-size:.68rem; padding:.12rem .45rem; border-radius:4px; font-weight:700; }
+.n .lv-r { background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; }
+.n .lv-o { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+.n .lv-y { background:#fefce8; color:#a16207; border:1px solid #fde68a; }
+.n .sec-body { padding:.8rem .9rem; border-top:1px solid #c7d2fe; background:white; }
+.n table { width:100%; border-collapse:collapse; font-size:.79rem; margin:.5rem 0; }
+.n th { background:#3730a3; color:white; padding:.38rem .6rem; text-align:left; font-weight:600; font-size:.75rem; }
+.n tbody tr:nth-child(even) { background:#eef2ff; }
+.n td { border:1px solid #c7d2fe; padding:.38rem .6rem; color:#1e1b4b; }
+.n td:first-child { font-weight:600; color:#3730a3; }
+.n .note-box { background:#eef2ff; border-left:3px solid #4f46e5; padding:.5rem .75rem; margin:.5rem 0; font-size:.79rem; color:#3730a3; border-radius:0 6px 6px 0; }
+.n .img-row { display:grid; grid-template-columns:repeat(2,1fr); gap:.6rem; margin:.6rem 0; }
+.n .img-item img { width:100%; border-radius:6px; border:1px solid #c7d2fe; display:block; }
+.n .img-item .cap2 { font-size:.68rem; color:#818cf8; text-align:center; padding:.25rem 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span>Vol.3 →</span>
+  <a href="#k" class="on">K Slate 灰藍</a>
+  <a href="#l">L Teal 清新</a>
+  <a href="#m">M Stone 米灰</a>
+  <a href="#n">N Indigo 深藍</a>
+</nav>
+
+<!-- ══ K Slate 灰藍 ══ -->
+<div class="wrap" id="k">
+  <div class="hd">
+    <h2>風格 K — Slate 灰藍</h2>
+    <p>白底 · 藍灰色系 · 有收合功能 · 乾淨不刺眼</p>
+  </div>
+  <div class="k">
+    <div class="bar">
+      🦷 牙三 — 牙髓病科
+      <input placeholder="🔍 搜尋...">
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="s-head">根管解剖</div>
+        <div class="s-item on"><span class="freq fr"></span>Vertucci 分類</div>
+        <div class="s-item"><span class="freq fr"></span>各齒根管數量</div>
+        <div class="s-item"><span class="freq fo"></span>工作長度測量</div>
+        <div class="s-head">根管診斷</div>
+        <div class="s-item"><span class="freq fo"></span>電髓測試</div>
+        <div class="s-item"><span class="freq fy"></span>冷熱診斷</div>
+        <div class="s-head">根管清創</div>
+        <div class="s-item"><span class="freq fo"></span>NaOCl 沖洗</div>
+        <div class="s-item"><span class="freq fy"></span>器械選用</div>
+      </div>
+      <div class="con">
+
+        <div class="section">
+          <div class="sec-head" onclick="toggle(this)">
+            <span class="freq fr" style="width:9px;height:9px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>
+            Vertucci 根管分類系統（Type I–VIII）
+            <span class="lv lv-r">必考</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body sec-body">
+            <table>
+              <tr><th>Type</th><th>構型</th><th>最常見牙位</th></tr>
+              <tr><td>Type I (1-1)</td><td>單管直達根尖</td><td>上顎前牙、下顎小臼齒</td></tr>
+              <tr><td>Type II (2-1)</td><td>兩管匯合成單管</td><td>下顎前牙</td></tr>
+              <tr><td>Type IV (2-2)</td><td>兩管各自出根尖</td><td><strong>上顎第一小臼齒 ★</strong></td></tr>
+            </table>
+            <div class="note-box">💡 上顎第一小臼齒 Type IV 佔 50.1%，近心凹陷易側向穿孔</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sec-head" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>
+            C 型根管系統
+            <span class="lv lv-r">必考</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body sec-body">
+            <table>
+              <tr><th>項目</th><th>內容</th></tr>
+              <tr><td>最常見牙位</td><td><strong>下顎第二大臼齒</strong>（亞洲人 44.5%）</td></tr>
+              <tr><td>臨床風險</td><td>舌側管壁極薄，易發生 Stripping perforation</td></tr>
+              <tr><td>亞洲特色</td><td>亞洲人發生率遠高於歐美</td></tr>
+            </table>
+            <div class="img-row">
+              <div class="img-item">
+                <img src="exam/images/ya3-111-1-4.jpeg" alt="">
+                <div class="cap2">111-1 第4題 · 根尖診斷</div>
+              </div>
+              <div class="img-item">
+                <img src="exam/images/ya3-113-1-44.jpeg" alt="">
+                <div class="cap2">113-1 第44題 · 根管形態</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sec-head collapsed" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>
+            工作長度測量
+            <span class="lv lv-o">高頻</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body closed sec-body">
+            <table>
+              <tr><th>方法</th><th>說明</th><th>優缺點</th></tr>
+              <tr><td>電子根尖定位器 (EAL)</td><td>第三代雙頻率，測阻抗差異</td><td>不受 NaOCl 電解質干擾</td></tr>
+              <tr><td>X 光法</td><td>根尖孔在影像尖端退回 0.5–1mm</td><td>無法精確判讀</td></tr>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 點標題可收合展開 · 白底藍灰 · 最清爽</p>
+</div>
+
+<!-- ══ L Teal 清新 ══ -->
+<div class="wrap" id="l">
+  <div class="hd">
+    <h2>風格 L — Teal 清新綠</h2>
+    <p>白底 · 青綠色系 · 清新不刺激 · 有收合功能</p>
+  </div>
+  <div class="l">
+    <div class="bar">
+      <span class="back">← 返回</span>
+      🏥 牙四 — 口外・放射
+      <input placeholder="🔍 搜尋...">
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="s-head">放射線判讀</div>
+        <div class="s-item on"><span class="freq fr"></span>根尖病灶判讀</div>
+        <div class="s-item"><span class="freq fr"></span>囊腫 vs 腫瘤</div>
+        <div class="s-item"><span class="freq fo"></span>骨質變化</div>
+        <div class="s-head">口腔外科</div>
+        <div class="s-item"><span class="freq fo"></span>拔牙適應症</div>
+        <div class="s-item"><span class="freq fy"></span>術後照護</div>
+      </div>
+      <div class="con">
+
+        <div class="section">
+          <div class="sec-head" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#f43f5e;flex-shrink:0;"></span>
+            放射線病灶判讀原則
+            <span class="lv lv-r">必考</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body sec-body">
+            <table>
+              <tr><th>特徵</th><th>可能診斷</th></tr>
+              <tr><td>邊緣清楚、皮質骨完整</td><td>良性囊腫（如 Dentigerous cyst）</td></tr>
+              <tr><td>邊緣不規則、蟲蝕狀</td><td>惡性腫瘤（需切片確診）</td></tr>
+              <tr><td>瀰漫性透射、邊緣模糊</td><td>急性炎症</td></tr>
+            </table>
+            <div class="img-row">
+              <div class="img-item">
+                <img src="exam/images/ya4-112-1-43.png" alt="">
+                <div class="cap2">112-1 第43題</div>
+              </div>
+              <div class="img-item">
+                <img src="exam/images/ya4-113-1-36.jpeg" alt="">
+                <div class="cap2">113-1 第36題</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sec-head" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#f43f5e;flex-shrink:0;"></span>
+            含牙囊腫（Dentigerous Cyst）
+            <span class="lv lv-r">必考</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body sec-body">
+            <table>
+              <tr><th>項目</th><th>內容</th></tr>
+              <tr><td>最常見牙位</td><td><strong>下顎第三大臼齒</strong></td></tr>
+              <tr><td>X 光特徵</td><td>濾泡圍繞未萌出齒冠，邊緣清楚</td></tr>
+              <tr><td>病理</td><td>牙胚濾泡液體積聚</td></tr>
+            </table>
+            <div class="note-box">💡 含牙囊腫 = Follicular cyst，圍繞齒冠的是特徵</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sec-head collapsed" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#fb923c;flex-shrink:0;"></span>
+            拔牙禁忌症
+            <span class="lv lv-o">高頻</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body closed sec-body">
+            <table>
+              <tr><th>類型</th><th>說明</th></tr>
+              <tr><td>絕對禁忌</td><td>未控制的血液病、急性感染期、放射治療後骨壞死區</td></tr>
+              <tr><td>相對禁忌</td><td>糖尿病未控制、抗凝血藥物、妊娠初三個月</td></tr>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 青綠系清新感 · 最不傷眼 · 適合長時間閱讀</p>
+</div>
+
+<!-- ══ M Stone 米灰 ══ -->
+<div class="wrap" id="m">
+  <div class="hd">
+    <h2>風格 M — Stone 米灰</h2>
+    <p>米灰色系 · 低飽和度 · 最沉穩 · 適合長時間備考</p>
+  </div>
+  <div class="m">
+    <div class="bar">
+      👑 牙五 — 假牙・咬合
+      <span class="tag">Prosthodontics</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="s-head">假牙製作</div>
+        <div class="s-item on"><span class="freq fr"></span>固定假牙支柱齒</div>
+        <div class="s-item"><span class="freq fr"></span>印模材料</div>
+        <div class="s-item"><span class="freq fo"></span>暫時假牙</div>
+        <div class="s-head">咬合學</div>
+        <div class="s-item"><span class="freq fo"></span>垂直距離</div>
+        <div class="s-item"><span class="freq fy"></span>正中關係</div>
+      </div>
+      <div class="con">
+
+        <div class="section">
+          <div class="sec-head" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>
+            固定假牙支柱齒設計原則
+            <span class="lv lv-r">必考</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body sec-body">
+            <table>
+              <tr><th>原則</th><th>說明</th></tr>
+              <tr><td>Ante's Law</td><td>支柱齒牙周韌帶面積 ≥ 缺牙牙周韌帶面積</td></tr>
+              <tr><td>支柱齒數量</td><td>缺牙數 ≤ 支柱齒數（一般原則）</td></tr>
+              <tr><td>連接器設計</td><td>Rigid connector 為主，彈性連接用於特殊情況</td></tr>
+            </table>
+            <div class="img-row">
+              <div class="img-item">
+                <img src="exam/images/ya5-112-1-51.jpeg" alt="">
+                <div class="cap2">112-1 第51題</div>
+              </div>
+              <div class="img-item">
+                <img src="exam/images/ya5-113-2-25.jpeg" alt="">
+                <div class="cap2">113-2 第25題</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sec-head collapsed" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#ea580c;flex-shrink:0;"></span>
+            垂直距離（Vertical Dimension）
+            <span class="lv lv-o">高頻</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body closed sec-body">
+            <table>
+              <tr><th>名詞</th><th>定義</th></tr>
+              <tr><td>OVD（咬合垂直距離）</td><td>牙齒咬合時上下頷間距離</td></tr>
+              <tr><td>RVD（息止垂直距離）</td><td>肌肉放鬆時上下頷間距離</td></tr>
+              <tr><td>Freeway Space</td><td>RVD − OVD ≈ 2–4mm</td></tr>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 米灰低飽和度 · 最沉穩耐看 · 不疲勞</p>
+</div>
+
+<!-- ══ N Indigo 深藍 ══ -->
+<div class="wrap" id="n">
+  <div class="hd">
+    <h2>風格 N — Indigo 深藍</h2>
+    <p>藍紫色系 · 淺藍底 · 深藍強調 · 顏色最分明</p>
+  </div>
+  <div class="n">
+    <div class="bar">
+      🌿 牙六 — 矯正・兒牙・公衛
+      <span class="chip">Ya6</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="s-head">矯正科</div>
+        <div class="s-item on"><span class="freq fr"></span>Angle 分類</div>
+        <div class="s-item"><span class="freq fr"></span>頭顱測量</div>
+        <div class="s-item"><span class="freq fo"></span>矯正力學</div>
+        <div class="s-head">兒童牙科</div>
+        <div class="s-item"><span class="freq fo"></span>乳牙根管治療</div>
+        <div class="s-item"><span class="freq fy"></span>空間維持器</div>
+        <div class="s-head">公共衛生</div>
+        <div class="s-item"><span class="freq fy"></span>流行病學指標</div>
+      </div>
+      <div class="con">
+
+        <div class="section">
+          <div class="sec-head" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#f43f5e;flex-shrink:0;"></span>
+            Angle 錯咬合分類
+            <span class="lv lv-r">必考</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body sec-body">
+            <table>
+              <tr><th>分類</th><th>特徵</th><th>臨床表現</th></tr>
+              <tr><td>Class I</td><td>上顎第一大臼齒近心頰尖咬在下顎頰側溝</td><td>正常咬合關係</td></tr>
+              <tr><td>Class II Div 1</td><td>下顎後縮，上前牙唇傾</td><td>上暴牙</td></tr>
+              <tr><td>Class II Div 2</td><td>下顎後縮，上前牙舌傾</td><td>深咬</td></tr>
+              <tr><td>Class III</td><td>下顎前突</td><td>反咬合（地包天）</td></tr>
+            </table>
+            <div class="img-row">
+              <div class="img-item">
+                <img src="exam/images/ya6-112-1-12.jpeg" alt="">
+                <div class="cap2">112-1 第12題</div>
+              </div>
+              <div class="img-item">
+                <img src="exam/images/ya6-114-1-37.jpeg" alt="">
+                <div class="cap2">114-1 第37題</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sec-head" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#f43f5e;flex-shrink:0;"></span>
+            乳牙根管治療（Pulpotomy vs Pulpectomy）
+            <span class="lv lv-r">必考</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body sec-body">
+            <table>
+              <tr><th>術式</th><th>適應症</th><th>充填材料</th></tr>
+              <tr><td>Pulpotomy</td><td>僅冠部牙髓受累，根部牙髓健康</td><td>Formocresol / MTA</td></tr>
+              <tr><td>Pulpectomy</td><td>牙髓全部壞死或根尖病灶</td><td>ZOE（可吸收）</td></tr>
+            </table>
+            <div class="note-box">💡 乳牙充填材料必須可被吸收，不可妨礙繼承齒萌出</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="sec-head collapsed" onclick="toggle(this)">
+            <span style="width:9px;height:9px;border-radius:50%;background:#f97316;flex-shrink:0;"></span>
+            DMFT 齲齒指數
+            <span class="lv lv-o">高頻</span>
+            <span class="toggle-icon">▾</span>
+          </div>
+          <div class="collapsible-body closed sec-body">
+            <table>
+              <tr><th>字母</th><th>代表</th><th>計算方式</th></tr>
+              <tr><td>D</td><td>Decayed（齲壞）</td><td>有齲洞的牙齒數</td></tr>
+              <tr><td>M</td><td>Missing（缺失）</td><td>因齲拔除的牙齒數</td></tr>
+              <tr><td>F</td><td>Filled（充填）</td><td>已充填治療的牙齒數</td></tr>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <p class="cap">✦ 藍紫色系 · 顏色最分明 · 視覺層次清楚</p>
+</div>
+
+<div style="text-align:center;padding:3rem 1rem 4rem;color:rgba(255,255,255,.22);font-size:.78rem;line-height:1.8;">
+  以上 4 種風格都有收合功能（點標題展開/收起）<br>
+  Vol.1 有 A–E · Vol.2 有 F–J · Vol.3 有 K–N<br>
+  選好後告訴我「我要 K 風格」，我幫你套用到整個 app
+</div>
+
+<script>
+function toggle(head) {
+  head.classList.toggle('collapsed');
+  const body = head.nextElementSibling;
+  body.classList.toggle('closed');
+}
+
+const navLinks = document.querySelectorAll('nav a');
+const sections = document.querySelectorAll('.wrap');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navLinks.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

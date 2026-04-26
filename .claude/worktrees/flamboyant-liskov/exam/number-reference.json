@@ -1,0 +1,3002 @@
+[
+  {
+    "value": "2007",
+    "meaning": "AHA/ADA 準則發布年份",
+    "subject": "ya3",
+    "source": "牙髓病學/藥理學"
+  },
+  {
+    "value": "AHA",
+    "meaning": "美國心臟學會",
+    "subject": "ya3",
+    "source": "牙髓病學/感染控制"
+  },
+  {
+    "value": "ADA",
+    "meaning": "美國牙醫學會",
+    "subject": "ya3",
+    "source": "牙髓病學/感染控制/標準"
+  },
+  {
+    "value": "ISO 30",
+    "meaning": "根管銼尺寸（亦指其對應的藍色銼柄顏色）",
+    "subject": "ya3",
+    "source": "牙髓病學/器械學"
+  },
+  {
+    "value": "ISO",
+    "meaning": "國際標準組織",
+    "subject": "ya3",
+    "source": "牙科材料/標準"
+  },
+  {
+    "value": "ANSI",
+    "meaning": "美國國家標準協會",
+    "subject": "ya3",
+    "source": "牙科材料/標準"
+  },
+  {
+    "value": "建議齲齒風險成人回診頻率",
+    "meaning": "低風險成人：12個月回診一次；高風險成人：3-6個月回診一次",
+    "subject": "ya3",
+    "source": "預防牙醫/口腔醫學"
+  },
+  {
+    "value": "10",
+    "meaning": "牙科器械4碼標示的第一碼：刀刃寬度（毫米）",
+    "subject": "ya3",
+    "source": "牙科器械學/修復牙醫"
+  },
+  {
+    "value": "1-2毫米",
+    "meaning": "傳統光照樹脂填補後牙鄰接面齒齦壁上第一層樹脂的建議厚度",
+    "subject": "ya3",
+    "source": "修復牙醫/材料學"
+  },
+  {
+    "value": "13-85-10-14",
+    "meaning": "齦緣修整器（gingival margin trimmer）器械標示，其中「85」代表刀刃與器械長軸形成的窩緣角度（85度）",
+    "subject": "ya3",
+    "source": "牙科器械學/修復牙醫"
+  },
+  {
+    "value": "Red complex species",
+    "meaning": "Socransky等學者1998年分類的牙周病原菌群（主要包括P. gingivalis, T. forsythia, T. denticola）",
+    "subject": "ya3",
+    "source": "牙周病學/微生物學"
+  },
+  {
+    "value": "200/mm3",
+    "meaning": "T-helper cells 低於此值是HIV/AIDS的診斷標準之一",
+    "subject": "ya3",
+    "source": "牙周病學/口腔醫學"
+  },
+  {
+    "value": ">3mm",
+    "meaning": "骨內缺損深度（Cortellini & Tonetti建議最佳牙周再生效果）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "<25度",
+    "meaning": "骨內缺損角度（Cortellini & Tonetti建議最佳牙周再生效果）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "45度",
+    "meaning": "Simplified papilla preservation flap斜切牙齦乳突時刀片與牙齒長軸夾角",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "3個月",
+    "meaning": "牙周病維持期回診間隔（高風險或複雜情況）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "10天",
+    "meaning": "外傷牙齒根管治療建議時機",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "牙根尖手術切除根尖長度",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "8歲",
+    "meaning": "兒童牙科患者（牙外傷、牙根發育等考量）",
+    "subject": "ya3",
+    "source": "兒童牙科/牙髓病學"
+  },
+  {
+    "value": "10 (於器械標示10-8.5-8-14)",
+    "meaning": "牙科切削器械刃緣寬度 (毫米 x 10)",
+    "subject": "ya3",
+    "source": "牙科材料學/操作學"
+  },
+  {
+    "value": "8.5 (於器械標示10-8.5-8-14)",
+    "meaning": "牙科切削器械刃緣角度 (百分度)",
+    "subject": "ya3",
+    "source": "牙科材料學/操作學"
+  },
+  {
+    "value": "8 (於器械標示10-8.5-8-14)",
+    "meaning": "牙科切削器械刀刃長度 (毫米)",
+    "subject": "ya3",
+    "source": "牙科材料學/操作學"
+  },
+  {
+    "value": "14 (於器械標示10-8.5-8-14)",
+    "meaning": "牙科切削器械刀柄角度 (百分度)",
+    "subject": "ya3",
+    "source": "牙科材料學/操作學"
+  },
+  {
+    "value": "468 nm",
+    "meaning": "Camphoroquinon主要吸收波長（光起始劑）",
+    "subject": "ya3",
+    "source": "牙科材料學"
+  },
+  {
+    "value": "60%",
+    "meaning": "牙齦病轉牙周炎時組織內T細胞佔比",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "15%",
+    "meaning": "牙周病治療後牙齦探測流血（BoP）的指標或閾值",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "4個≧5 mm",
+    "meaning": "牙周病治療後殘存牙周囊袋數量的指標或閾值",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "0.25",
+    "meaning": "齒槽骨喪失與年紀的關係（BL%/age）的指標或閾值",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "Lang & Tonetti",
+    "meaning": "牙周病預後（prognosis）或分級的分類系統",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "感染性心內膜炎預防指引",
+    "meaning": "牙科治療相關的感染性心內膜炎預防指引",
+    "subject": "ya3",
+    "source": "口腔內科 / 藥理學"
+  },
+  {
+    "value": "Nobuhara 等人",
+    "meaning": "無症狀根尖周圍炎的病理組織學分類或出現機率研究",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "24小時",
+    "meaning": "複雜性牙冠斷裂後保留健康牙髓機會大大降低的時間閾值",
+    "subject": "ya3",
+    "source": "牙髓病學 / 牙外傷"
+  },
+  {
+    "value": "SLOB法則 (Same Lingual, Opposite Buccal)",
+    "meaning": "放射線學中用於定位物體相對位置的法則",
+    "subject": "ya3",
+    "source": "牙髓病學 / 口腔放射線學"
+  },
+  {
+    "value": "Vertucci, F. J. (1984)",
+    "meaning": "牙根及根管解剖分類系統（特別是根管型態）",
+    "subject": "ya3",
+    "source": "牙髓病學 / 解剖學"
+  },
+  {
+    "value": "知情同意",
+    "meaning": "患者有權利在充分了解後決定治療",
+    "subject": "ya3",
+    "source": "牙科倫理/法律"
+  },
+  {
+    "value": "3碼方式",
+    "meaning": "牙科手動器械標示方法，依序代表刃寬、刃長、刃角",
+    "subject": "ya3",
+    "source": "牙科器械學"
+  },
+  {
+    "value": "Black分類 Class I",
+    "meaning": "上顎門齒舌面窩洞的分類",
+    "subject": "ya3",
+    "source": "牙體復形學/齲齒學"
+  },
+  {
+    "value": "C-factor (結構因子)",
+    "meaning": "複合樹脂窩洞中，黏著表面與非黏著表面的比值，Class I 窩洞約為5",
+    "subject": "ya3",
+    "source": "牙體復形學/牙科材料學"
+  },
+  {
+    "value": "0.2-0.4 mm",
+    "meaning": "剩餘牙本質厚度，建議使用樹脂強化玻璃離子體底墊保護",
+    "subject": "ya3",
+    "source": "牙體復形學/牙科材料學"
+  },
+  {
+    "value": "30-45度",
+    "meaning": "金合金嵌體邊緣斜角 (bevel) 的理想角度",
+    "subject": "ya3",
+    "source": "牙體復形學/牙科材料學"
+  },
+  {
+    "value": "數字/公式",
+    "meaning": "意義",
+    "subject": "ya3",
+    "source": "科目"
+  },
+  {
+    "value": "CPITN",
+    "meaning": "社區牙周治療需求指數",
+    "subject": "ya3",
+    "source": "牙周病學/診斷"
+  },
+  {
+    "value": "Page和Schröeder (1976年)",
+    "meaning": "牙齦炎／牙周炎組織病理病灶分類",
+    "subject": "ya3",
+    "source": "牙周病學/病理學"
+  },
+  {
+    "value": "Gracey curettes系列",
+    "meaning": "牙周刮治器械編號，用於特定牙齒表面",
+    "subject": "ya3",
+    "source": "牙周治療器械學"
+  },
+  {
+    "value": "Glickman的根叉侵犯分類",
+    "meaning": "根叉侵犯分類系統",
+    "subject": "ya3",
+    "source": "牙周病學/診斷"
+  },
+  {
+    "value": "第14天",
+    "meaning": "游離軟組織移植手術傷口癒合的時間點（例如：再血管化、上皮化等階段）",
+    "subject": "ya3",
+    "source": "口腔外科/牙周病學/傷口癒合"
+  },
+  {
+    "value": "第16週",
+    "meaning": "懷孕週期，第二孕期被認為牙科治療相對安全",
+    "subject": "ya3",
+    "source": "牙周治療/特殊患者考量"
+  },
+  {
+    "value": "0.5 N",
+    "meaning": "探測植體牙齦溝時施加的力道",
+    "subject": "ya3",
+    "source": "植體學/牙周探測"
+  },
+  {
+    "value": "0.5 mm",
+    "meaning": "牙周探測具前端直徑",
+    "subject": "ya3",
+    "source": "植體學/牙周探測"
+  },
+  {
+    "value": "ANSI No. 28",
+    "meaning": "K-type files的標準號",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "活髓治療止血評估時間 (NaOCl處理)",
+    "meaning": "判斷是否移除全部冠部牙髓組織的時限 (具體時間數值在答案中)",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "附連牙齦寬度 (邊緣下切線)",
+    "meaning": "進行邊緣下切線手術的考量因素 (具體寬度數值在答案中)",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "PAI (Periapical Index)",
+    "meaning": "根管治療預後評估的指數，使用數字評分",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "醫學倫理原則 (如：自主原則、知情同意)",
+    "meaning": "醫療決策中病人知情同意與偏好的原則",
+    "subject": "ya3",
+    "source": "醫學倫理"
+  },
+  {
+    "value": "45,000-65,000/mm² (牙髓端牙本質小管數量)",
+    "meaning": "牙本質小管在牙髓端的單位面積數量",
+    "subject": "ya3",
+    "source": "牙髓學/組織學/牙體形態學"
+  },
+  {
+    "value": "15,000-20,000/mm² (牙本質—牙釉質交接處牙本質小管數量)",
+    "meaning": "牙本質小管在牙本質—牙釉質交接處的單位面積數量",
+    "subject": "ya3",
+    "source": "牙髓學/組織學/牙體形態學"
+  },
+  {
+    "value": "C-factor = (黏著表面積) / (非黏著表面積)",
+    "meaning": "複合樹脂聚合收縮應力的結構因子計算",
+    "subject": "ya3",
+    "source": "牙科材料/牙體復形學"
+  },
+  {
+    "value": "15-40% H₂O₂",
+    "meaning": "診間活齒漂白常用藥劑（過氧化氫）濃度",
+    "subject": "ya3",
+    "source": "牙體美學/牙科藥理學"
+  },
+  {
+    "value": "10-22% Carbamide peroxide 或 3-10% H₂O₂",
+    "meaning": "居家漂白常用藥劑（過氧化脲或過氧化氫）濃度",
+    "subject": "ya3",
+    "source": "牙體美學/牙科藥理學"
+  },
+  {
+    "value": "Stage I, II, III, IV (牙周炎分期)",
+    "meaning": "牙周炎嚴重程度與治療複雜性的分期（2017 World Workshop牙周病新分類）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2017 World Workshop (牙周病新分類)",
+    "meaning": "國際牙周病學會和歐洲牙周病學聯合會公布的牙周病分類系統",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2017",
+    "meaning": "World Workshop 牙周病新分類公布年份",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "牙周病新分類",
+    "meaning": "2017 World Workshop 公布的牙周病分類系統",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "改良式魏德曼翻瓣術中外斜面切開由牙齦邊緣以下的建議距離",
+    "subject": "ya3",
+    "source": "牙周病學/牙周手術"
+  },
+  {
+    "value": "3.4 mm",
+    "meaning": "Tarnow (2003)研究中相鄰植牙間的平均乳頭高度",
+    "subject": "ya3",
+    "source": "牙周病學/植牙學"
+  },
+  {
+    "value": "3",
+    "meaning": "牙骨質（cementum）的分類數量",
+    "subject": "ya3",
+    "source": "牙髓病學/組織學"
+  },
+  {
+    "value": "Weine分類",
+    "meaning": "根管形態分類系統",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "No. 212",
+    "meaning": "蝴蝶形橡皮障夾的型號",
+    "subject": "ya3",
+    "source": "牙髓病學/牙科器械"
+  },
+  {
+    "value": "4",
+    "meaning": "上顎恆牙第一大臼齒的牙髓角數量",
+    "subject": "ya3",
+    "source": "牙體形態學/牙髓病學"
+  },
+  {
+    "value": "知情同意 (informed consent)",
+    "meaning": "醫療行為前需獲得病患充分理解與同意的法規/倫理原則",
+    "subject": "ya3",
+    "source": "醫療法規/牙科倫理"
+  },
+  {
+    "value": "1-2 週",
+    "meaning": "Walking bleaching後樹脂填補的等待時間",
+    "subject": "ya3",
+    "source": "牙髓病學/修復學"
+  },
+  {
+    "value": "2017 World Workshop",
+    "meaning": "牙周病新分類 (區分Stage II與Stage III的複雜性因子)",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2017 World Workshop",
+    "meaning": "牙周病新分類 (評估級別Grade的危險因子)",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "21%",
+    "meaning": "牙齦探測流血比例 (BoP%)",
+    "subject": "ya3",
+    "source": "牙周病科"
+  },
+  {
+    "value": "7",
+    "meaning": "超過5 mm的牙周囊袋數",
+    "subject": "ya3",
+    "source": "牙周病科"
+  },
+  {
+    "value": "3",
+    "meaning": "缺失牙齒數",
+    "subject": "ya3",
+    "source": "牙周病科"
+  },
+  {
+    "value": "0.9",
+    "meaning": "齒槽骨喪失百分比與年紀的比例關係 (BL%/Age)",
+    "subject": "ya3",
+    "source": "牙周病科"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "相鄰植體之間最小距離（為避免傷害水平生物性寬度，通常指植體平台之間距離）",
+    "subject": "ya3",
+    "source": "植牙科"
+  },
+  {
+    "value": "5個月",
+    "meaning": "懷孕治療的合適時機",
+    "subject": "ya3",
+    "source": "口腔醫學/牙科總論"
+  },
+  {
+    "value": "pH 7",
+    "meaning": "生物膜的酸鹼值接近中性",
+    "subject": "ya3",
+    "source": "口腔微生物學/齲齒學"
+  },
+  {
+    "value": "診斷測試相關公式（敏感度, 特異度, 陽性預測值, 陰性預測值）",
+    "meaning": "臨床流行病學診斷測試",
+    "subject": "ya3",
+    "source": "臨床流行病學"
+  },
+  {
+    "value": "熱膨脹係數",
+    "meaning": "牙科材料的物理性質，影響微滲漏",
+    "subject": "ya3",
+    "source": "牙科材料學"
+  },
+  {
+    "value": "A2 Dentin",
+    "meaning": "複合樹脂顏色分類標準",
+    "subject": "ya3",
+    "source": "牙科材料學/美學牙科"
+  },
+  {
+    "value": "55°C (或60°C)",
+    "meaning": "汞齊拋光時的最高溫度限制，以避免牙髓傷害",
+    "subject": "ya3",
+    "source": "牙科材料學/操作學/牙髓學"
+  },
+  {
+    "value": "---",
+    "meaning": "---",
+    "subject": "ya3",
+    "source": "---"
+  },
+  {
+    "value": "VITA Toothguide 3D-Master 2M3",
+    "meaning": "比色板中特定顏色代碼，代表牙齒的亮度（Value）、彩度（Chroma）和色調（Hue）",
+    "subject": "ya3",
+    "source": "牙科美學/修復學"
+  },
+  {
+    "value": "1.618：1：0.816",
+    "meaning": "前牙美學的黃金比例（正中門齒：側門齒：犬齒的正面觀寬度比例）",
+    "subject": "ya3",
+    "source": "牙科美學"
+  },
+  {
+    "value": "Page & Schröeder (1976)",
+    "meaning": "建立實驗性牙齦炎模型的年份與學者",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2～4天",
+    "meaning": "牙菌斑堆積後產生起始病灶（initial lesion）的時間範圍",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2017 World Workshop",
+    "meaning": "牙周病新分類公布的會議與年份",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "Stage III",
+    "meaning": "2017牙周病分類中的牙周炎分期（中度至重度）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "Stage IV",
+    "meaning": "2017牙周病分類中的牙周炎分期（重度且有廣泛功能性缺損）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "Class I furcation involvement",
+    "meaning": "牙根叉侵犯的分類，表示輕度（通常探針可水平進入少於3mm）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "---------",
+    "meaning": "-----",
+    "subject": "ya3",
+    "source": "-----"
+  },
+  {
+    "value": "2012",
+    "meaning": "美國牙髓病學會診斷分類年份",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "2-3 天",
+    "meaning": "Penicillin類抗生素治療顏面部腫脹後評估療效的建議時間",
+    "subject": "ya3",
+    "source": "牙髓病學/藥理學"
+  },
+  {
+    "value": "CBCT建議體素大小範圍",
+    "meaning": "錐狀射束電腦斷層掃描於牙髓病診斷建議採用的體素大小範圍",
+    "subject": "ya3",
+    "source": "牙髓病學/放射線學"
+  },
+  {
+    "value": "0.5 mm",
+    "meaning": "退展法（step-back technique）根管修形由根尖開口往牙冠方向每退後增加的長度",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "Modified Keyes-Jordan diagram",
+    "meaning": "齲齒風險率評估模型/法規",
+    "subject": "ya3",
+    "source": "牙體復形學/預防牙醫學"
+  },
+  {
+    "value": "24-36 個月",
+    "meaning": "低齲齒風險成人 X 光放射線檢查建議頻率",
+    "subject": "ya3",
+    "source": "放射線學/預防牙醫學"
+  },
+  {
+    "value": "6-18 個月",
+    "meaning": "高齲齒風險成人 X 光放射線檢查建議頻率",
+    "subject": "ya3",
+    "source": "放射線學/預防牙醫學"
+  },
+  {
+    "value": "2/3 區",
+    "meaning": "後牙頰舌側窩洞屬於Black氏第一類修形的位置描述",
+    "subject": "ya3",
+    "source": "牙體復形學"
+  },
+  {
+    "value": "1/2 到 2/3 (intercuspal distance)",
+    "meaning": "建議咬頭覆蓋的齒質缺損範圍標準",
+    "subject": "ya3",
+    "source": "牙體復形學"
+  },
+  {
+    "value": "30% 過氧化氫",
+    "meaning": "內漂白時增加牙根外吸收風險的過氧化氫濃度",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "頰側約 2.5-4 mm，舌側約 0.5 mm",
+    "meaning": "牙齒拔除 12 個月後齒槽骨的平均喪失量",
+    "subject": "ya3",
+    "source": "牙周病學/口腔顎面外科/植牙學"
+  },
+  {
+    "value": "2017 World Workshop",
+    "meaning": "牙周病新分類的年份與來源",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "牙周炎級別 (Grade) 評估原則",
+    "meaning": "2017牙周病新分類中的重要評估法規/標準",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "Class I, II, III",
+    "meaning": "Hamp 分級牙根叉侵犯嚴重度",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "25-50%",
+    "meaning": "游離牙齦移植體收縮比例",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "植牙區頰側角化牙齦寬度閾值",
+    "subject": "ya3",
+    "source": "牙周病學/植牙學"
+  },
+  {
+    "value": "#25 (或 #30)",
+    "meaning": "探測竇管病灶來源的馬來膠針號數",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "上顎正中門齒牙根尖病變大小，可能影響牙根尖手術的考量",
+    "subject": "ya3",
+    "source": "牙髓病學/口腔顎面外科"
+  },
+  {
+    "value": "*   2017",
+    "meaning": "世界牙周病分類標準公布年份",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "*   2.04 mm",
+    "meaning": "生物寬度（biologic width）的平均值",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "*   0.97 mm",
+    "meaning": "連接上皮（junctional epithelium）的平均長度（生物寬度組成之一）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "*   1.07 mm",
+    "meaning": "結締組織附連（connective tissue attachment）的平均長度（生物寬度組成之一）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "2",
+    "meaning": "動脈粥樣化病變（atheroma）為正常飲食的倍數 (罹患牙周炎且高膽固醇飲食13週後)",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "3",
+    "meaning": "牙周骨缺損分類（三壁骨缺損）",
+    "subject": "ya3",
+    "source": "牙周病學"
+  },
+  {
+    "value": "1～1.5 mm",
+    "meaning": "健康人工植牙第一年周圍骨頭吸收量",
+    "subject": "ya3",
+    "source": "植牙學"
+  },
+  {
+    "value": "0.1～0.2 mm",
+    "meaning": "健康人工植牙每年平均周圍骨頭吸收量",
+    "subject": "ya3",
+    "source": "植牙學"
+  },
+  {
+    "value": "6～8 mm (常見為6 mm)",
+    "meaning": "獲取頦自體骨時，取骨厚度不要超過的上限",
+    "subject": "ya3",
+    "source": "植牙學/口腔顎面外科"
+  },
+  {
+    "value": "7 mg/kg (Lidocaine with epinephrine為例)",
+    "meaning": "常用局部麻醉藥物建議最大劑量",
+    "subject": "ya3",
+    "source": "牙髓病學/口腔顎面外科/藥理學"
+  },
+  {
+    "value": "Sjögren et al. 齒內治療成功率排序",
+    "meaning": "活性齒髓 > 壞死且有病變齒髓 > 重新治療且有病變齒髓",
+    "subject": "ya3",
+    "source": "牙髓病學"
+  },
+  {
+    "value": "50-70%",
+    "meaning": "具大型近心－咬合－遠心（M-O-D）二級窩洞之牙齒，其牙冠的堅硬度（stiffness）減少百分比",
+    "subject": "ya3",
+    "source": "復形牙科"
+  },
+  {
+    "value": "齲齒治療計畫階段排序",
+    "meaning": "②檢查致齲危險因素 → ③全口檢查確認齲齒狀況 → ④決定處理病灶方法 → ①擬訂預防與處理齲齒計畫",
+    "subject": "ya3",
+    "source": "復形牙科"
+  },
+  {
+    "value": "前牙樹脂填補步驟順序",
+    "meaning": "②比色 → ③窩洞製備 → ④橡皮障隔濕 → ⑤樹脂充填 → ①完成（finishing） → ⑥拋光",
+    "subject": "ya3",
+    "source": "復形牙科"
+  },
+  {
+    "value": "0.2～0.3 mm",
+    "meaning": "淺層白斑病灶深度",
+    "subject": "ya3",
+    "source": "牙周/牙體復形"
+  },
+  {
+    "value": "1960-1980 年代",
+    "meaning": "美國成年人口腔衛生調查時間",
+    "subject": "ya3",
+    "source": "口腔公共衛生/牙周"
+  },
+  {
+    "value": "48 歲",
+    "meaning": "患者年齡 (用於描述病患狀況的數字)",
+    "subject": "ya3",
+    "source": "牙周"
+  },
+  {
+    "value": "10 根",
+    "meaning": "每日抽菸量 (用於描述病患狀況的數字)",
+    "subject": "ya3",
+    "source": "牙周"
+  },
+  {
+    "value": "2017 World Workshop",
+    "meaning": "牙周病新分類依據",
+    "subject": "ya3",
+    "source": "牙周"
+  },
+  {
+    "value": "18,000 至 45,000 Hz",
+    "meaning": "超音波洗牙機振動頻率範圍",
+    "subject": "ya3",
+    "source": "牙周/器械學"
+  },
+  {
+    "value": "pH值",
+    "meaning": "2% Lidocaine (含 1:100,000 Epinephrine) 的典型pH值",
+    "subject": "ya4",
+    "source": "藥理學/局部麻醉"
+  },
+  {
+    "value": "Mepivacaine最大安全劑量 (mg/kg)",
+    "meaning": "Mepivacaine (無血管收縮劑) 用於成人局部麻醉的最大安全劑量計算",
+    "subject": "ya4",
+    "source": "藥理學/局部麻醉"
+  },
+  {
+    "value": "美國牙醫學會局部麻醉劑顏色標籤規範",
+    "meaning": "紅色環帶代表的麻醉藥成分",
+    "subject": "ya4",
+    "source": "局部麻醉/藥理學"
+  },
+  {
+    "value": "醫療專業倫理/責任",
+    "meaning": "醫師雖無法律或行政裁罰，仍可能違反的專業責任規範",
+    "subject": "ya4",
+    "source": "醫學倫理/法律"
+  },
+  {
+    "value": "Pell & Gregory 分類 (A, B, C)",
+    "meaning": "下顎第三大臼齒阻生分類基準",
+    "subject": "ya4",
+    "source": "口腔顎面外科"
+  },
+  {
+    "value": "30% (或 1.3x)",
+    "meaning": "Panoramic X光片部分區域最大放大率",
+    "subject": "ya4",
+    "source": "牙科放射學"
+  },
+  {
+    "value": "15 mm (1.5 cm)",
+    "meaning": "口腔癌淋巴結尺寸評估參考值",
+    "subject": "ya4",
+    "source": "口腔顎面外科 / 腫瘤學"
+  },
+  {
+    "value": "20 mm (2 cm)",
+    "meaning": "口腔癌淋巴結尺寸評估參考值",
+    "subject": "ya4",
+    "source": "口腔顎面外科 / 腫瘤學"
+  },
+  {
+    "value": "1:1:1",
+    "meaning": "正常顏面輪廓上中下顏面比值",
+    "subject": "ya4",
+    "source": "口腔顎面外科 / 齒顎矯正"
+  },
+  {
+    "value": "1.5Gy",
+    "meaning": "全身輻射劑量達此數值可能產生症狀",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "纖維組織增生期持續時間",
+    "meaning": "口腔軟組織傷口癒合期 (需記住具體時間)",
+    "subject": "ya4",
+    "source": "口腔顎面外科"
+  },
+  {
+    "value": "2% Lidocaine 牙周韌帶注射建議劑量 (mL)",
+    "meaning": "成人大臼齒牙周韌帶注射麻醉每針劑量 (需記住具體數值)",
+    "subject": "ya4",
+    "source": "口腔顎面外科"
+  },
+  {
+    "value": "Pell and Gregory 分類",
+    "meaning": "阻生齒分類系統",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "Gorlin-Goltz syndrome (Nevoid Basal Cell Carcinoma Syndrome)",
+    "meaning": "伴隨角化性囊腫、併指、頭圍過大等症狀的症候群",
+    "subject": "ya4",
+    "source": "口腔病理學/口腔外科"
+  },
+  {
+    "value": "唾液腺結石發生率順序",
+    "meaning": "頷下腺 > 腮腺 > 舌下腺",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "7 天",
+    "meaning": "骨延長術 (distraction osteogenesis) 潛伏期 (latency period)",
+    "subject": "ya4",
+    "source": "口腔顎面外科"
+  },
+  {
+    "value": "Wilkes 分類 Stage IV",
+    "meaning": "關節盤破損穿孔",
+    "subject": "ya4",
+    "source": "口腔顎面外科 / 口腔放射線學"
+  },
+  {
+    "value": "1 mSv/年",
+    "meaning": "ICRP (2007) 一般民眾每年有效劑量限值",
+    "subject": "ya4",
+    "source": "口腔放射線學 / 放射線防護"
+  },
+  {
+    "value": "3",
+    "meaning": "三級癒合 (tertiary intention)",
+    "subject": "ya4",
+    "source": "口腔外科/傷口癒合"
+  },
+  {
+    "value": "1-3 mm/day (或 1 inch/month)",
+    "meaning": "周邊神經修復速度",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "3-0",
+    "meaning": "縫線粗細分類 (如黑絲縫線)",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "90分鐘",
+    "meaning": "齒髓麻醉長效型麻藥作用時間",
+    "subject": "ya4",
+    "source": "口腔外科/麻醉"
+  },
+  {
+    "value": "20週",
+    "meaning": "孕婦進行牙科處置的安全孕期考量",
+    "subject": "ya4",
+    "source": "口腔外科/婦產科相關"
+  },
+  {
+    "value": "10秒",
+    "meaning": "睡眠時呼吸中止症的定義",
+    "subject": "ya4",
+    "source": "口腔顎面外科/睡眠醫學"
+  },
+  {
+    "value": "6週",
+    "meaning": "閉合式骨復位術（顎間固定術）固定下顎骨單純骨折的建議時間",
+    "subject": "ya4",
+    "source": "口腔顎面外科"
+  },
+  {
+    "value": "0.04 mg",
+    "meaning": "心肌梗塞病患局部麻藥中腎上腺素（epinephrine）的安全劑量上限",
+    "subject": "ya4",
+    "source": "藥理學/口腔顎面外科"
+  },
+  {
+    "value": "Effective focal spot size = Actual focal spot size * sin(anode angle)",
+    "meaning": "線聚焦原理",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "1.026 mm",
+    "meaning": "電子束打在3mm寬、傾斜角度20°陽極上之有效焦點大小 (計算結果)",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "氡 (Radon)",
+    "meaning": "自然界背景輻射最大來源",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "+45°~+55° (或取平均值 +50°)",
+    "meaning": "分角線法拍攝上顎門齒建議X光入射角與水平面夾角",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "+8°~+10°",
+    "meaning": "照射臼齒區咬翼片（bitewing）X光cone垂直角度 (補償Monson's curve)",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "6-8個月",
+    "meaning": "牙周附連喪失後，齒槽骨喪失可在X光影像上顯示所需時間",
+    "subject": "ya4",
+    "source": "牙周病學 / 口腔放射學"
+  },
+  {
+    "value": "0 HU",
+    "meaning": "水的Hounsfield Unit (HU) 值",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "-1000 HU",
+    "meaning": "空氣的Hounsfield Unit (HU) 值",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "+1000 HU",
+    "meaning": "骨骼的Hounsfield Unit (HU) 值 (或更高)",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "HU = 1000 * (μ_組織 - μ_水) / μ_水",
+    "meaning": "Hounsfield Unit (HU) 定義公式",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "4天",
+    "meaning": "拔牙後乾性齒槽炎（dry socket）症狀出現的典型時間",
+    "subject": "ya4",
+    "source": "口腔外科/診斷"
+  },
+  {
+    "value": "103°F (39.4℃)",
+    "meaning": "感染時體溫上升的上限，此範圍內可能有益於身體抵抗感染",
+    "subject": "ya4",
+    "source": "口腔病理/感染學"
+  },
+  {
+    "value": "感染性心內膜炎預防性抗生素使用準則",
+    "meaning": "針對高危險病患拔牙前預防感染性心內膜炎的規定",
+    "subject": "ya4",
+    "source": "口腔外科/藥理學/內科疾病在牙科的處理"
+  },
+  {
+    "value": "至少30 Ncm",
+    "meaning": "植體最終鎖入扭力，以達到最佳初期穩定性",
+    "subject": "ya4",
+    "source": "植牙學/口腔外科"
+  },
+  {
+    "value": "至少5 mm",
+    "meaning": "牙科植體與頦孔前緣的最小安全距離",
+    "subject": "ya4",
+    "source": "植牙學/口腔外科"
+  },
+  {
+    "value": "AJCC第六版（2002）TNM系統",
+    "meaning": "口腔癌分期標準",
+    "subject": "ya4",
+    "source": "口腔病理/口腔外科"
+  },
+  {
+    "value": "rule of 10's",
+    "meaning": "唇腭裂修復的治療時機準則，通常指體重至少10磅、血色素至少10 g/dL、年齡至少10週",
+    "subject": "ya4",
+    "source": "口腔顎面外科 / 整形外科"
+  },
+  {
+    "value": "重大手術等待期",
+    "meaning": "心肌梗塞（myocardial infarction）病患接受預先安排的重大手術，一般建議在病發後至少3-6個月",
+    "subject": "ya4",
+    "source": "口腔顎面外科 / 麻醉科 / 內科"
+  },
+  {
+    "value": "ASA III",
+    "meaning": "美國麻醉醫師學會（ASA）生理狀態分級系統的第三級，表示病人患有嚴重全身性疾病，但未危及生命",
+    "subject": "ya4",
+    "source": "麻醉科 / 口腔顎面外科"
+  },
+  {
+    "value": "二級異常咬合 (Angle Class II)",
+    "meaning": "牙齒咬合關係的分類，根據Angle氏分類法，下顎第一大臼齒相對上顎第一大臼齒的位置",
+    "subject": "ya4",
+    "source": "齒顎矯正科 / 口腔顎面外科"
+  },
+  {
+    "value": "知情同意書",
+    "meaning": "醫療行為前必須取得病人簽署的法律文件，保障病人自主權，告知治療風險、益處、替代方案等",
+    "subject": "ya4",
+    "source": "醫療法規 / 倫理"
+  },
+  {
+    "value": "3號片",
+    "meaning": "不建議作為咬翼片檢查鄰接面齲齒（因易造成影像重疊）",
+    "subject": "ya4",
+    "source": "口腔病理影像診斷"
+  },
+  {
+    "value": "2.5 mm (或 3 mm)",
+    "meaning": "濾胞空間診斷含齒囊腫的最小尺寸",
+    "subject": "ya4",
+    "source": "口腔病理學/口腔外科"
+  },
+  {
+    "value": "2-3 天",
+    "meaning": "靜脈抗生素治療齒源性感染後惡化，應重新評估的時間",
+    "subject": "ya4",
+    "source": "口腔外科/感染控制"
+  },
+  {
+    "value": "6 顆 (或 6-8 顆)",
+    "meaning": "支持上顎全顎固定式贋復物所需的最小植體數目",
+    "subject": "ya4",
+    "source": "植牙學/贗復學"
+  },
+  {
+    "value": "TNM 癌症分期系統 (T: 腫瘤大小 (>4cm 為 T4); N: 淋巴結轉移數量和位置 (例如：多顆同側淋巴結為 N2b))",
+    "meaning": "舌癌的癌症分期標準及其數值判斷閾值",
+    "subject": "ya4",
+    "source": "口腔病理學/腫瘤學"
+  },
+  {
+    "value": "1/3",
+    "meaning": "正常人由下唇頂點到下巴最下一點的距離佔側臉總長度的比例 (下臉高度比例)",
+    "subject": "ya4",
+    "source": "矯正學/顏面美學/口腔顎面外科"
+  },
+  {
+    "value": "60-65%",
+    "meaning": "顎下腺分泌的唾液佔所有唾液總量的百分比",
+    "subject": "ya4",
+    "source": "口腔生理學/口腔解剖學"
+  },
+  {
+    "value": "3",
+    "meaning": "唾液腺攝影的影像階段",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "6",
+    "meaning": "兒童下顎前牙區骨折治療的年齡考量",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "65",
+    "meaning": "狹心症病患拔牙的年齡考量",
+    "subject": "ya4",
+    "source": "牙科麻醉/內科醫學"
+  },
+  {
+    "value": "1 mSv/年",
+    "meaning": "非輻射工作人員最高年有效等效劑量",
+    "subject": "ya4",
+    "source": "放射線防護"
+  },
+  {
+    "value": ">6-7 mm",
+    "meaning": "門齒孔懷疑囊腫的直徑標準",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": ">10-20 Gy",
+    "meaning": "幼兒單次輻射劑量造成生長遲滯的閾值",
+    "subject": "ya4",
+    "source": "放射線生物學"
+  },
+  {
+    "value": "21℃",
+    "meaning": "笑氣（N2O）的臨界溫度，在此溫度以上即使加壓也無法液化，低於此溫度在鋼瓶壓力下呈現液態",
+    "subject": "ya4",
+    "source": "藥理學/麻醉學"
+  },
+  {
+    "value": "妊娠前三個月",
+    "meaning": "孕婦不宜使用笑氣鎮靜",
+    "subject": "ya4",
+    "source": "藥理學/麻醉學"
+  },
+  {
+    "value": "2% lidocaine 1.8 mL",
+    "meaning": "含有 36 mg lidocaine 成分 (2% = 20 mg/mL； 20 mg/mL * 1.8 mL = 36 mg)",
+    "subject": "ya4",
+    "source": "藥理學/局部麻醉"
+  },
+  {
+    "value": "美國麻醉醫學會（ASA）分類",
+    "meaning": "病人身體狀況分類系統",
+    "subject": "ya4",
+    "source": "麻醉學"
+  },
+  {
+    "value": "頭頸部放射線治療史",
+    "meaning": "植牙的相對或絕對禁忌症（因失敗率極高）",
+    "subject": "ya4",
+    "source": "植牙學"
+  },
+  {
+    "value": "6個區域",
+    "meaning": "頸部淋巴結分區 (依美國頭頸醫學會2001年標準)",
+    "subject": "ya4",
+    "source": "頭頸外科 / 口腔外科"
+  },
+  {
+    "value": "Le Fort Ⅰ",
+    "meaning": "正顎手術分類/顏面骨折分類",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "2021年",
+    "meaning": "美國心臟學會(AHA)預防性抗生素使用指引年份",
+    "subject": "ya4",
+    "source": "醫學倫理 / 感染控制 / 口腔外科"
+  },
+  {
+    "value": "Gray (Gy)",
+    "meaning": "放射線吸收劑量單位",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "Sievert (Sv)",
+    "meaning": "放射線等效劑量或有效劑量單位",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "p (in kVp)",
+    "meaning": "peak（峰值）",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "5次",
+    "meaning": "每日清潔牙齒次數（病人自述）",
+    "subject": "ya4",
+    "source": "牙周病學/口腔衛生"
+  },
+  {
+    "value": "10分鐘",
+    "meaning": "每次牙線清潔時間（病人自述）",
+    "subject": "ya4",
+    "source": "牙周病學/口腔衛生"
+  },
+  {
+    "value": "T1-weighted",
+    "meaning": "核磁共振造影（MRI）中的影像加權類型",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "T2-weighted",
+    "meaning": "核磁共振造影（MRI）中的影像加權類型",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "Le Fort I",
+    "meaning": "上顎骨骨折分類（水平型骨折）",
+    "subject": "ya4",
+    "source": "口腔顎面外科/創傷學"
+  },
+  {
+    "value": "Le Fort II",
+    "meaning": "上顎骨骨折分類（錐體型骨折）",
+    "subject": "ya4",
+    "source": "口腔顎面外科/創傷學"
+  },
+  {
+    "value": "pixel (picture element)",
+    "meaning": "數位影像最小單元",
+    "subject": "ya4",
+    "source": "放射線學/數位影像"
+  },
+  {
+    "value": "ASA 3級和4級",
+    "meaning": "心血管疾病分級",
+    "subject": "ya4",
+    "source": "口腔外科/麻醉"
+  },
+  {
+    "value": "Pell and Gregory classification",
+    "meaning": "下顎第三大臼齒阻生分類",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "30-50 mm",
+    "meaning": "顴骨植體長度",
+    "subject": "ya4",
+    "source": "植牙/口腔外科"
+  },
+  {
+    "value": "5-7 天",
+    "meaning": "齒槽骨嵴牽引術初始潛伏期",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": ">5 mm",
+    "meaning": "植體周圍炎囊袋深度診斷指標之一",
+    "subject": "ya4",
+    "source": "植牙/牙周病"
+  },
+  {
+    "value": "1.  幾秒鐘至 1 分鐘",
+    "meaning": "三叉神經痛（trigeminal neuralgia）發作持續時間",
+    "subject": "ya4",
+    "source": "口腔外科 / 口腔病理學"
+  },
+  {
+    "value": "2.  下顎第一大臼齒",
+    "meaning": "顎下腺導管可區分前後區的牙齒界線，以判斷結石是否容易經口內手術處理",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "3.  10 磅, 10 週, 10g 血紅素 (Rule of 10s)",
+    "meaning": "唇裂手術的建議時機評估標準",
+    "subject": "ya4",
+    "source": "口腔外科 / 小兒牙科"
+  },
+  {
+    "value": "4.  9-18 個月",
+    "meaning": "腭裂手術的建議時機，以避免影響語言發展",
+    "subject": "ya4",
+    "source": "口腔外科 / 小兒牙科"
+  },
+  {
+    "value": "5.  四個原則",
+    "meaning": "生命倫理學的四大原則：自主（autonomy）、行善（beneficence）、不傷害（non-maleficence）、正義（justice）",
+    "subject": "ya4",
+    "source": "牙醫倫理學"
+  },
+  {
+    "value": "6.  256",
+    "meaning": "牙科數位 X 光攝影中最常見的灰階數 (2^8)",
+    "subject": "ya4",
+    "source": "口腔放射學"
+  },
+  {
+    "value": "5-18 MHz",
+    "meaning": "超音波應用於頭頸部診斷的頻率範圍",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "2",
+    "meaning": "口內皮瓣設計中，皮瓣高度最好是底部寬度的兩倍",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "2/3",
+    "meaning": "舌前部 (舌鱗狀細胞癌同側頸部淋巴轉移機會)",
+    "subject": "ya4",
+    "source": "口腔顎面外科/腫瘤學"
+  },
+  {
+    "value": "VII (7)",
+    "meaning": "顏面神經 (Ramsay Hunt 綜合症主要影響的腦神經)",
+    "subject": "ya4",
+    "source": "神經學/口腔顎面外科"
+  },
+  {
+    "value": "0.25 mm",
+    "meaning": "牙科X光鉛裙的最低鉛當量厚度 (通常指0.25鉛當量)",
+    "subject": "ya4",
+    "source": "口腔放射學/輻射安全"
+  },
+  {
+    "value": "Pell and Gregory",
+    "meaning": "阻生齒分類系統",
+    "subject": "ya4",
+    "source": "口腔外科"
+  },
+  {
+    "value": "AJCC第八版",
+    "meaning": "口腔癌分期定義",
+    "subject": "ya4",
+    "source": "口腔病理/口腔外科"
+  },
+  {
+    "value": "Level Ⅰ, Level Ⅱ, Level Ⅲ",
+    "meaning": "Supraomohyoid neck dissection (SOHND) 清除的淋巴層",
+    "subject": "ya4",
+    "source": "口腔外科/解剖"
+  },
+  {
+    "value": "濾泡囊腫 (follicular cyst), 齒源性角化囊腫 (odontogenic keratocyst)",
+    "meaning": "屬於發育性齒源性囊腫",
+    "subject": "ya4",
+    "source": "口腔病理/口腔外科"
+  },
+  {
+    "value": "2 公尺",
+    "meaning": "放射師拍攝X光片時之安全距離（無理想防護下）",
+    "subject": "ya4",
+    "source": "放射線學/法規"
+  },
+  {
+    "value": "Sensor Plate 2 & 4",
+    "meaning": "牙科放射線感應片尺寸分類",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "齒槽骨流失比例計算",
+    "meaning": "(b-d) / (b-e) 或類似比值 (基於題目中a,b,c,d,e定義點的骨流失測量公式)",
+    "subject": "ya4",
+    "source": "放射線學/牙周病學"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "牙骨質－牙釉質交界往牙根2mm處 (作為齒槽骨流失測量參考點)",
+    "subject": "ya4",
+    "source": "放射線學/牙周病學"
+  },
+  {
+    "value": "DNR",
+    "meaning": "Do Not Resuscitate (不施行心肺復甦術)",
+    "subject": "ya4",
+    "source": "醫療倫理/法規"
+  },
+  {
+    "value": "特定角度",
+    "meaning": "基線眥耳線（canthomeatal line）與X光片拍攝角度（用於特定X光投射法，如Waters view通常為37度或Skull Lateral為90度）",
+    "subject": "ya4",
+    "source": "放射線學"
+  },
+  {
+    "value": "14 歲",
+    "meaning": "病人年齡 (可能為某些疾病（如內生贅骨或硬化性骨炎）鑑別診斷的參考因素)",
+    "subject": "ya4",
+    "source": "放射線學/口腔病理學"
+  },
+  {
+    "value": "28 歲",
+    "meaning": "病人年齡 (可能為某些口腔顎顏面病變（如囊腫或腫瘤）鑑別診斷的參考因素)",
+    "subject": "ya4",
+    "source": "放射線學/口腔病理學"
+  },
+  {
+    "value": "43 歲",
+    "meaning": "病人年齡 (可能為某些口腔顎顏面病變鑑別診斷的參考因素)",
+    "subject": "ya4",
+    "source": "放射線學/口腔病理學"
+  },
+  {
+    "value": "零度牙",
+    "meaning": "義齒牙尖斜度",
+    "subject": "ya5",
+    "source": "全口義齒學"
+  },
+  {
+    "value": "RPI",
+    "meaning": "可撤式局部義齒牙鈎組合（Rest, Proximal plate, I-bar）",
+    "subject": "ya5",
+    "source": "可撤式局部義齒學"
+  },
+  {
+    "value": "1.2 mm",
+    "meaning": "金屬嵌體邊緣與鄰接牙的最小間隙",
+    "subject": "ya5",
+    "source": "補綴學"
+  },
+  {
+    "value": "0.2 mm",
+    "meaning": "人工植牙每年平均邊緣骨垂直喪失（義齒完成1年後，往後每年）",
+    "subject": "ya5",
+    "source": "植牙學"
+  },
+  {
+    "value": "6 mm",
+    "meaning": "蠟型頂端到鑄造環頂端之間的最小距離",
+    "subject": "ya5",
+    "source": "補綴學/牙科材料學"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "根管治療後牙，牙齦以上殘餘齒質高度，可不需根柱",
+    "subject": "ya5",
+    "source": "補綴學"
+  },
+  {
+    "value": "0.3 mm",
+    "meaning": "金屬瓷修復體金屬層的最小厚度",
+    "subject": "ya5",
+    "source": "贋復牙科 / 材料學"
+  },
+  {
+    "value": "15 倍",
+    "meaning": "金屬瓷合金折斷強度約為聚甲基丙烯酸甲脂的倍數",
+    "subject": "ya5",
+    "source": "贋復牙科 / 材料學"
+  },
+  {
+    "value": "40 mm",
+    "meaning": "主動張口小於40 mm是頭頸部肌筋膜痛的症狀之一",
+    "subject": "ya5",
+    "source": "口腔顎面外科學 / 顳顎關節學"
+  },
+  {
+    "value": "25-30 mm",
+    "meaning": "急性不可復性關節盤移位（disc displacement without reduction）的最大開口範圍",
+    "subject": "ya5",
+    "source": "口腔顎面外科學 / 顳顎關節學"
+  },
+  {
+    "value": "1 mm",
+    "meaning": "上顎犬齒和第一小臼齒之間的空隙小於1 mm 時不必調整犬齒的角度",
+    "subject": "ya5",
+    "source": "贋復牙科 / 矯正學"
+  },
+  {
+    "value": "BULL",
+    "meaning": "平衡咬合側方運動工作側調整法則（修磨上顎頰側咬頭與下顎舌側咬頭）",
+    "subject": "ya5",
+    "source": "全口義齒/贗復學"
+  },
+  {
+    "value": "RPI",
+    "meaning": "可撤式局部義齒牙鈎設計（Rest, Proximal plate, I-bar）",
+    "subject": "ya5",
+    "source": "可撤式局部義齒/贗復學"
+  },
+  {
+    "value": "Kennedy Class IV (甘迺迪第四類)",
+    "meaning": "可撤式局部義齒缺牙區分類",
+    "subject": "ya5",
+    "source": "可撤式局部義齒/贗復學"
+  },
+  {
+    "value": "雪鞋原理 (Snowshoe principle)",
+    "meaning": "可撤式局部義齒覆蓋範圍與支持效果關係",
+    "subject": "ya5",
+    "source": "可撤式局部義齒/贗復學"
+  },
+  {
+    "value": "3.5～4.0 mm",
+    "meaning": "舌側鈎座（lingual rest seat）近-遠心長度",
+    "subject": "ya5",
+    "source": "可撤式局部義齒/贗復學"
+  },
+  {
+    "value": "*   **1:1 或 1:1.5-2**",
+    "meaning": "牙冠長度與根柱（post）長度的理想比例",
+    "subject": "ya5",
+    "source": "贋復/牙髓病學 (Prosthodontics/Endodontics)"
+  },
+  {
+    "value": "*   **5 mm (或 6 mm)**",
+    "meaning": "骨嵴（bone crest）與鄰接點（contact point）距離超過此值，乳突（papilla）即可能無法填滿齒間楔隙（interproximal embrasure）",
+    "subject": "ya5",
+    "source": "牙周病學/贋復 (Periodontics/Prosthodontics)"
+  },
+  {
+    "value": "*   **3x3 mm 或 4x4 mm (最小)**",
+    "meaning": "全瓷局部固定義齒（all-ceramic fixed partial dentures）連接體（connector）的建議最小尺寸",
+    "subject": "ya5",
+    "source": "贋復 (Prosthodontics)"
+  },
+  {
+    "value": "*   **1.5 - 2 mm**",
+    "meaning": "金屬瓷修復體（metal-ceramic restorations）的金屬瓷交界應該遠離中心咬合接觸的最小距離",
+    "subject": "ya5",
+    "source": "贋復 (Prosthodontics)"
+  },
+  {
+    "value": "*   **1**",
+    "meaning": "懸臂式牙橋（cantilever bridge）的橋體（pontic）建議不要超過此數量",
+    "subject": "ya5",
+    "source": "贋復 (Prosthodontics)"
+  },
+  {
+    "value": "7-8 mm",
+    "meaning": "舌側槓（lingual bar）所需下顎牙齦緣到口底的最小距離",
+    "subject": "ya5",
+    "source": "可撤式局部義齒"
+  },
+  {
+    "value": "禁忌症",
+    "meaning": "電刀排齦不可用於裝置心律調整器病患",
+    "subject": "ya5",
+    "source": "牙周/修復前處理"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "冠內附連體（intracoronal attachment）距離金屬瓷交界（metal-ceramic junction）的最小距離，以避免瓷裂",
+    "subject": "ya5",
+    "source": "固定與活動義齒 (Prosthodontics)"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "兩支人工植體之間為提供適當清潔通道及骨骼健康，所需的最少距離",
+    "subject": "ya5",
+    "source": "植牙學 (Implantology) / 固定義齒 (Prosthodontics)"
+  },
+  {
+    "value": "8-12 µm (約 10 µm)",
+    "meaning": "咬合高度調整完成時，鄰牙與對咬牙能咬住的咬合箔片（shim stock）最小厚度",
+    "subject": "ya5",
+    "source": "咬合學 (Occlusion) / 固定義齒 (Prosthodontics)"
+  },
+  {
+    "value": "Angle's class III",
+    "meaning": "安格氏骨性第三類咬合",
+    "subject": "ya5",
+    "source": "義齒學/矯正學"
+  },
+  {
+    "value": "零度牙 (zero-degree teeth)",
+    "meaning": "平面咬合設計中使用的無咬頭角度人工牙齒",
+    "subject": "ya5",
+    "source": "義齒學"
+  },
+  {
+    "value": "Kennedy class I",
+    "meaning": "無牙區位於後方且為雙側的游離端缺失",
+    "subject": "ya5",
+    "source": "可撤式局部義齒學"
+  },
+  {
+    "value": "1.5～2 mm",
+    "meaning": "全瓷嵌體修形之髓深",
+    "subject": "ya5",
+    "source": "贋復科"
+  },
+  {
+    "value": "安格氏第一類咬合型",
+    "meaning": "咬合分類",
+    "subject": "ya5",
+    "source": "齒顎矯正/贋復科"
+  },
+  {
+    "value": "25度",
+    "meaning": "固定義齒製作時，基牙長軸角度不宜超過的限制",
+    "subject": "ya5",
+    "source": "贋復牙科 (Fixed Prosthodontics)"
+  },
+  {
+    "value": "Angle's class I, II, III",
+    "meaning": "安格氏咬合分類（基於上顎第一大臼齒近心頰側咬頭與下顎第一大臼齒相對關係）",
+    "subject": "ya5",
+    "source": "矯正/贋復牙科 (Orthodontics/Prosthodontics)"
+  },
+  {
+    "value": "30度",
+    "meaning": "人工牙齒的牙尖斜度，用於全口活動義齒",
+    "subject": "ya5",
+    "source": "全口義齒學 (或 贋復牙科學)"
+  },
+  {
+    "value": "牙醫師為產品代言或廣告的規範",
+    "meaning": "規範牙醫師進行產品代言或廣告的行為",
+    "subject": "ya5",
+    "source": "牙醫倫理與法規 (或 牙醫行政管理)"
+  },
+  {
+    "value": "Kennedy Classification System (Class I, II, III, IV)",
+    "meaning": "可撤式局部義齒（RPD）的缺牙區分類系統",
+    "subject": "ya5",
+    "source": "可撤式局部義齒學 (或 贋復牙科學)"
+  },
+  {
+    "value": "Hanau Quint (5個要素)",
+    "meaning": "影響全口義齒咬合平衡的五個主要因素",
+    "subject": "ya5",
+    "source": "全口義齒學 (或 贋復牙科學)"
+  },
+  {
+    "value": "Type I 至 Type V (共五種)",
+    "meaning": "美國ADA分類牙科用石膏的種類 (高強度dental stone 通常為 Type IV)",
+    "subject": "ya5",
+    "source": "贋復牙科材料"
+  },
+  {
+    "value": "牙根長度的2/3或3/4倍",
+    "meaning": "根柱長度與牙根長度的理想比例 (兼顧固持力與壓力分布)",
+    "subject": "ya5",
+    "source": "根管治療/固定贋復"
+  },
+  {
+    "value": "0.25 mm",
+    "meaning": "牙橋金屬部位焊接時最適合的焊接縫隙寬度",
+    "subject": "ya5",
+    "source": "贋復牙科材料/技工"
+  },
+  {
+    "value": "2-3 mm",
+    "meaning": "牙齒中線與臉部中線之間，臨床上可以接受的平均偏移量 (根據Beyer研究或一般美觀原則)",
+    "subject": "ya5",
+    "source": "美容牙科/固定贋復"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "美觀區人工植體上緣與預計贋復物露出牙齦位置的較理想距離",
+    "subject": "ya5",
+    "source": "植牙學/牙周美容"
+  },
+  {
+    "value": "多個工作側接觸 / 至少一個平衡側接觸",
+    "meaning": "全口義齒平衡咬合的必要條件",
+    "subject": "ya5",
+    "source": "全口義齒學"
+  },
+  {
+    "value": "4至6根",
+    "meaning": "上顎植體支持覆蓋式義齒的建議植體數量",
+    "subject": "ya5",
+    "source": "植體學/全口義齒學"
+  },
+  {
+    "value": "2根",
+    "meaning": "特定情況下（如植體種植方向不同、弧形牙弓）上顎植體支持覆蓋式義齒可能選用的植體數量",
+    "subject": "ya5",
+    "source": "植體學/全口義齒學"
+  },
+  {
+    "value": "牙醫師倫理規範",
+    "meaning": "牙醫師應遵守之行為準則",
+    "subject": "ya5",
+    "source": "牙科倫理/法規"
+  },
+  {
+    "value": "6 mm",
+    "meaning": "可撤式局部義齒舌側槓上緣離牙齦緣（gingival margin）的最小距離",
+    "subject": "ya5",
+    "source": "可撤式局部義齒設計"
+  },
+  {
+    "value": "15分鐘",
+    "meaning": "水凝膠印模材取模後，完成倒模的時限",
+    "subject": "ya5",
+    "source": "牙科材料/印模學"
+  },
+  {
+    "value": "4～5 mm",
+    "meaning": "水凝膠印模材選擇模托時，距離牙齒或組織應有的最小空間",
+    "subject": "ya5",
+    "source": "牙科材料/印模學"
+  },
+  {
+    "value": "1/3",
+    "meaning": "單根牙根柱空間直徑和牙根面直徑的比率，在牙骨質牙釉質交界處，最好不要超過此值",
+    "subject": "ya5",
+    "source": "牙髓/補綴"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "衛生橋體與牙嵴之間的空隙至少需為此值",
+    "subject": "ya5",
+    "source": "補綴"
+  },
+  {
+    "value": "0.020 inch (約0.5 mm)",
+    "meaning": "製作臨時牙冠的熱塑性透明片最適當厚度",
+    "subject": "ya5",
+    "source": "補綴/材料"
+  },
+  {
+    "value": "5 mm",
+    "meaning": "相鄰植體間齒槽骨至鄰間接觸點的距離，可確保齒間乳突存在",
+    "subject": "ya5",
+    "source": "牙周/植體"
+  },
+  {
+    "value": "0.25 mm",
+    "meaning": "金合金修復體的最佳焊接間隙寬度",
+    "subject": "ya5",
+    "source": "補綴/材料"
+  },
+  {
+    "value": "50-60%",
+    "meaning": "上顎小臼齒的咬合台對總頰舌寬度的比例",
+    "subject": "ya5",
+    "source": "補綴/咬合"
+  },
+  {
+    "value": "Angle's Class III",
+    "meaning": "下顎咬合關係分類",
+    "subject": "ya5",
+    "source": "全口義齒/口腔醫學"
+  },
+  {
+    "value": "零度牙",
+    "meaning": "無咬頭斜度之人工牙齒，用於全口義齒",
+    "subject": "ya5",
+    "source": "全口義齒"
+  },
+  {
+    "value": "珠狀緣飾 (beading) 於主模型完成",
+    "meaning": "上顎可撤式局部義齒主連接體的製作步驟",
+    "subject": "ya5",
+    "source": "局部義齒 (RDP)"
+  },
+  {
+    "value": "Kennedy class I",
+    "meaning": "局部義齒分類系統 (雙側遠心端游離)",
+    "subject": "ya5",
+    "source": "局部義齒 (RDP)"
+  },
+  {
+    "value": "1.2 mm",
+    "meaning": "上顎前牙瓷金屬融合牙冠唇側面瓷最小厚度",
+    "subject": "ya5",
+    "source": "牙冠製作"
+  },
+  {
+    "value": "1.5 mm",
+    "meaning": "上顎前牙瓷金屬融合牙冠切緣瓷最小厚度",
+    "subject": "ya5",
+    "source": "牙冠製作"
+  },
+  {
+    "value": "1-2 層",
+    "meaning": "製作客製鑄造根柱時，鑄造環內應放的襯裡層數",
+    "subject": "ya5",
+    "source": "鑄造"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "上顎門齒金屬瓷牙冠切緣瓷最大厚度",
+    "subject": "ya5",
+    "source": "牙冠製作"
+  },
+  {
+    "value": "0.75-0.8",
+    "meaning": "最好看的上顎正中門齒寬度／高度比",
+    "subject": "ya5",
+    "source": "美學"
+  },
+  {
+    "value": "3-4 mm",
+    "meaning": "植體頂端平台與牙冠露出軟組織位置之間的理想距離",
+    "subject": "ya5",
+    "source": "人工植牙"
+  },
+  {
+    "value": "Prosthodontics Diagnostic Index (PDI) Class IV",
+    "meaning": "贋復牙科診斷指數的第四類，代表最複雜或高度受損的病例",
+    "subject": "ya5",
+    "source": "贋復牙科"
+  },
+  {
+    "value": "Kennedy Class III",
+    "meaning": "缺牙分類（牙齒支持式，缺牙區兩端都有牙齒）",
+    "subject": "ya5",
+    "source": "可撤式局部義齒學"
+  },
+  {
+    "value": "知情同意",
+    "meaning": "醫學倫理原則（病人有權利在充分了解後決定是否接受治療）",
+    "subject": "ya5",
+    "source": "醫學倫理"
+  },
+  {
+    "value": "1.5～2.0 mm",
+    "meaning": "上顎前牙瓷金屬融合牙冠 (PFM crown) 下顎前突運動時的切緣修磨量",
+    "subject": "ya5",
+    "source": "固定補綴學"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "根管治療後，剩餘冠部齒質的高度若達此值以上，根柱 (post) 在防止牙齒斷裂方面的重要性會降低（ferrule effect 的最低要求之一）",
+    "subject": "ya5",
+    "source": "贋復牙科/牙髓病學"
+  },
+  {
+    "value": "1:100,000 epinephrine / 2%",
+    "meaning": "局部麻醉劑中腎上腺素與麻醉藥物的濃度",
+    "subject": "ya5",
+    "source": "局部麻醉劑學"
+  },
+  {
+    "value": "2至4 mm",
+    "meaning": "生理靜止位置（physiological rest position）減去此數值以決定咬合垂直距離（occlusal vertical dimension）",
+    "subject": "ya5",
+    "source": "全口義齒學"
+  },
+  {
+    "value": "四",
+    "meaning": "分模式四層包埋法中的層數",
+    "subject": "ya5",
+    "source": "口腔贋復學 / 局部活動義齒"
+  },
+  {
+    "value": "1:1",
+    "meaning": "承受正常咬壓情況下，固定局部義齒支柱牙可接受的最高牙冠／牙根比",
+    "subject": "ya5",
+    "source": "口腔贋復學 / 固定局部義齒"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "咬合鈎靠座與金屬-瓷交界面之間距的最小距離",
+    "subject": "ya5",
+    "source": "固定義齒/修復學"
+  },
+  {
+    "value": "約 300-600 N (或 70-150 磅)",
+    "meaning": "人類咀嚼力於臼齒區的平均範圍",
+    "subject": "ya5",
+    "source": "口腔生理學/咬合學"
+  },
+  {
+    "value": "上顎中心咬頭內側斜面外 1/3",
+    "meaning": "描述下顎臼齒中心咬頭在中心關係(CR)時與上顎牙的接觸點，作為咬合治療的基準或異常描述",
+    "subject": "ya5",
+    "source": "咬合學"
+  },
+  {
+    "value": "Scammon’s growth curves",
+    "meaning": "用於描述不同組織生長模式的圖表，下顎骨生長曲線介於其中兩種模式之間",
+    "subject": "ya6",
+    "source": "顱顏生長發育"
+  },
+  {
+    "value": "一年以上",
+    "meaning": "矯正旋轉牙齒後，牙周韌帶（PDL）的supra-crestal fibers組織再組織所需時間",
+    "subject": "ya6",
+    "source": "矯正後維持/牙周組織學"
+  },
+  {
+    "value": "醫學倫理",
+    "meaning": "指導醫療行為的道德原則和規範",
+    "subject": "ya6",
+    "source": "醫學倫理"
+  },
+  {
+    "value": "pH5.5",
+    "meaning": "口中酸鹼值下降至此值以下易造成蛀牙",
+    "subject": "ya6",
+    "source": "兒童牙科 / 齲齒學"
+  },
+  {
+    "value": "6歲以下幼兒",
+    "meaning": "美國兒童牙科醫學會齲齒風險評估表的適用年齡",
+    "subject": "ya6",
+    "source": "兒童牙科 / 預防牙科"
+  },
+  {
+    "value": "每6個月",
+    "meaning": "高風險齲齒兒童的建議回診及X光頻率 (美國兒童牙科醫學會)",
+    "subject": "ya6",
+    "source": "兒童牙科 / 預防牙科"
+  },
+  {
+    "value": "60～70%",
+    "meaning": "出生時顱顏部位神經組織達成人的比例",
+    "subject": "ya6",
+    "source": "兒童牙科 / 生長發育"
+  },
+  {
+    "value": "3歲8個月",
+    "meaning": "兒童年齡，可能影響乳牙外傷脫落的處置方式 (此為題目中提及的特定年齡，強調年齡對處置的重要性)",
+    "subject": "ya6",
+    "source": "兒童牙科 / 外傷學"
+  },
+  {
+    "value": "公共衛生的核心功能",
+    "meaning": "評估、發展政策、確保 (assessment, policy development, assurance)",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "Institute of Medicine (IOM)",
+    "meaning": "指出公共衛生核心功能的機構",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "三段五級",
+    "meaning": "預防口腔疾病的架構 (初段、二段、三段預防的五個層級)",
+    "subject": "ya6",
+    "source": "公共衛生/預防醫學"
+  },
+  {
+    "value": "WHO Oral Health Surveys, Basic Methods",
+    "meaning": "2013年發行之第五版 (5th ed.) 口腔健康調查基本方法",
+    "subject": "ya6",
+    "source": "公共衛生/流行病學"
+  },
+  {
+    "value": "21",
+    "meaning": "唐氏症 (Down's syndrome) 多一條的染色體編號",
+    "subject": "ya6",
+    "source": "遺傳學/特殊需求者照護"
+  },
+  {
+    "value": "牙醫師執業",
+    "meaning": "需在所在地主管機關核准登記之醫療機構為之",
+    "subject": "ya6",
+    "source": "醫療法規/倫理"
+  },
+  {
+    "value": "Bolton比值",
+    "meaning": "評估上下顎牙齒大小比例，常用於前牙6顆",
+    "subject": "ya6",
+    "source": "齒顎矯正學"
+  },
+  {
+    "value": "知情同意書 (informed consent)",
+    "meaning": "醫療行為前患者權利與義務的書面同意",
+    "subject": "ya6",
+    "source": "醫學倫理/法規"
+  },
+  {
+    "value": "Wright (1975) 分類法",
+    "meaning": "兒童看牙行為的臨床分類",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "50%以上",
+    "meaning": "飲水加氟對恆牙預防蛀牙之效果",
+    "subject": "ya6",
+    "source": "兒童牙科/公衛"
+  },
+  {
+    "value": "3歲",
+    "meaning": "兒童局部麻醉的參考年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "#75",
+    "meaning": "下顎左側第二乳臼齒（國際齒位表示法）",
+    "subject": "ya6",
+    "source": "兒童牙科/口腔解剖"
+  },
+  {
+    "value": "2/3",
+    "meaning": "鄰近正中門齒牙根形成（贅生牙手術拔除的建議時機）",
+    "subject": "ya6",
+    "source": "兒童牙科 / 口腔外科"
+  },
+  {
+    "value": "ASA身體狀況分類系統",
+    "meaning": "美國麻醉學會身體狀況分類系統",
+    "subject": "ya6",
+    "source": "麻醉學 / 臨床醫學"
+  },
+  {
+    "value": "簡化口腔衛生指數 (OHI-S)",
+    "meaning": "評估口腔衛生狀況的指數，需檢查特定牙齒",
+    "subject": "ya6",
+    "source": "口腔衛生學 / 公共衛生"
+  },
+  {
+    "value": "全民健保牙科門診總額支付制度",
+    "meaning": "臺灣全民健康保險牙科支付制度",
+    "subject": "ya6",
+    "source": "醫療法規 / 健保"
+  },
+  {
+    "value": "醫療法第18條",
+    "meaning": "醫療機構負責醫師應接受訓練的法規條文",
+    "subject": "ya6",
+    "source": "醫療法規"
+  },
+  {
+    "value": "Loe and Silness Gingival index (GI)",
+    "meaning": "牙齦指數評估標準",
+    "subject": "ya6",
+    "source": "牙周病學"
+  },
+  {
+    "value": "兒童含氟牙膏使用年齡",
+    "meaning": "實證牙醫學建議兒童開始使用含氟牙膏的年齡或時機",
+    "subject": "ya6",
+    "source": "兒童牙科 / 口腔公共衛生"
+  },
+  {
+    "value": "評估 (assessment), 發展政策 (policy development), 確保 (assurance)",
+    "meaning": "美國醫學研究所 (IOM) 指出公共衛生的3項核心功能",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "民國106年",
+    "meaning": "衛生福利部公告口腔預防保健服務注意事項的年份",
+    "subject": "ya6",
+    "source": "醫療法規 / 口腔公共衛生"
+  },
+  {
+    "value": "專業兒童牙齒塗氟氟濃度 vs 市售含氟牙膏氟濃度",
+    "meaning": "專業塗氟與市售含氟牙膏氟濃度之間倍數關係",
+    "subject": "ya6",
+    "source": "口腔公共衛生"
+  },
+  {
+    "value": "國小一、四年級",
+    "meaning": "教育部國民教育與學前教育署牙科健康檢查的目標年級",
+    "subject": "ya6",
+    "source": "社區牙醫/公共衛生"
+  },
+  {
+    "value": "2013年世界衛生組織口腔健康調查基本方法 (Oral Health Survey - Basic Method, 第五版)",
+    "meaning": "齲齒檢查標準的參考依據",
+    "subject": "ya6",
+    "source": "社區牙醫/口腔病理/診斷"
+  },
+  {
+    "value": "醫療法",
+    "meaning": "規定病歷保存的相關法規",
+    "subject": "ya6",
+    "source": "牙科法規/醫療管理"
+  },
+  {
+    "value": "500 gm",
+    "meaning": "矯正治療中施加於上顎犬齒的後拉力量",
+    "subject": "ya6",
+    "source": "齒顎矯正學"
+  },
+  {
+    "value": "3 mm",
+    "meaning": "上顎二顆正中門牙後退所需的距離",
+    "subject": "ya6",
+    "source": "齒顎矯正學"
+  },
+  {
+    "value": "Tanaka 和 Johnston 預測值方法",
+    "meaning": "混合齒列期恆牙萌出空間的預測方法，上顎單側未萌出恆犬齒及恆第一、二小臼齒大小約為 +11.0 mm",
+    "subject": "ya6",
+    "source": "齒顎矯正學/兒童牙科"
+  },
+  {
+    "value": "2歲",
+    "meaning": "兒童發展特徵 (Gesell 研究)",
+    "subject": "ya6",
+    "source": "兒童牙科/發展學"
+  },
+  {
+    "value": "3",
+    "meaning": "Thomas 與 Chess 兒童氣質分類",
+    "subject": "ya6",
+    "source": "兒童牙科/行為學"
+  },
+  {
+    "value": "2歲以前",
+    "meaning": "AAPD 嚴重早發性齲齒 (SECC) 定義",
+    "subject": "ya6",
+    "source": "兒童牙科/預防"
+  },
+  {
+    "value": "4.4 mg/kg (或 2 mg/lb)",
+    "meaning": "Lidocaine 兒童局部麻醉最高建議劑量",
+    "subject": "ya6",
+    "source": "兒童牙科/麻醉"
+  },
+  {
+    "value": "6歲前",
+    "meaning": "化療/放療對牙齒發育的關鍵影響期",
+    "subject": "ya6",
+    "source": "兒童牙科/特殊照護"
+  },
+  {
+    "value": "6-12個月",
+    "meaning": "化療後完全緩解患者接受牙科治療的安全期",
+    "subject": "ya6",
+    "source": "兒童牙科/特殊照護/口腔醫學"
+  },
+  {
+    "value": "4型",
+    "meaning": "腦性麻痺分類型態數量",
+    "subject": "ya6",
+    "source": "兒牙/特殊需求牙醫學"
+  },
+  {
+    "value": "p值",
+    "meaning": "統計學中的顯著水準指標 (常與0.05閾值相關)",
+    "subject": "ya6",
+    "source": "生物統計/流行病學"
+  },
+  {
+    "value": "三段五級",
+    "meaning": "預防醫學架構 (三階段、五層級)",
+    "subject": "ya6",
+    "source": "預防醫學/公共衛生"
+  },
+  {
+    "value": "2013年",
+    "meaning": "世界衛生組織口腔健康調查基本方法發布年份",
+    "subject": "ya6",
+    "source": "公共衛生/流行病學"
+  },
+  {
+    "value": "第五版",
+    "meaning": "世界衛生組織口腔健康調查基本方法版次",
+    "subject": "ya6",
+    "source": "公共衛生/流行病學"
+  },
+  {
+    "value": "法律責任",
+    "meaning": "牙醫醫療行為相關的法律規範與責任",
+    "subject": "ya6",
+    "source": "醫療法規/倫理"
+  },
+  {
+    "value": "知情同意原則",
+    "meaning": "醫療行為前必須遵循的倫理與法律原則",
+    "subject": "ya6",
+    "source": "醫療法規/倫理"
+  },
+  {
+    "value": "病人資料所有權及使用權",
+    "meaning": "醫學倫理規範，病人有權利向診所索取其檢查資料",
+    "subject": "ya6",
+    "source": "醫學倫理/醫療法規"
+  },
+  {
+    "value": "0.25 mm",
+    "meaning": "單副透明排列器 (clear plastic aligner) 單顆牙有效力量傳導範圍",
+    "subject": "ya6",
+    "source": "齒顎矯正學"
+  },
+  {
+    "value": "虎克定律 (Hooke's law)",
+    "meaning": "描述材料彈性行為的物理定律",
+    "subject": "ya6",
+    "source": "齒顎矯正生物力學"
+  },
+  {
+    "value": "撓度 (deflection) ∝ 長度(L)^3",
+    "meaning": "懸臂樑 (cantilever beam) 的力學性質，撓度與長度三次方成正比",
+    "subject": "ya6",
+    "source": "齒顎矯正生物力學"
+  },
+  {
+    "value": "8歲",
+    "meaning": "早期缺失左上/右上第二乳臼齒的年齡，可能需要空間維持裝置",
+    "subject": "ya6",
+    "source": "兒童牙科/齒顎矯正學"
+  },
+  {
+    "value": "10小時/天",
+    "meaning": "活動式矯正裝置 (如二級矯正器) 每日配戴時間的考量因素，強調配戴時間對治療效果的重要性",
+    "subject": "ya6",
+    "source": "齒顎矯正學"
+  },
+  {
+    "value": "10歲",
+    "meaning": "上顎中線牙間隙 (maxillary midline diastema) 伴隨低位唇繫帶的兒童年齡",
+    "subject": "ya6",
+    "source": "齒顎矯正學/兒童牙科"
+  },
+  {
+    "value": "5歲",
+    "meaning": "哭鬧小孩求診的年齡，兒童行為管理的重要考量",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "2-3年",
+    "meaning": "恆牙萌發後牙根完全形成所需平均時間",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "預防性抗生素使用準則",
+    "meaning": "特定高風險兒童患者（如：先天性心臟病）拔牙前需投予",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "S-ECC定義",
+    "meaning": "美國兒童牙科醫學會（AAPD）對兒童嚴重早發性齲齒的定義標準（涉及齲、缺、補牙數量與年齡）",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "0.25 mg F/天",
+    "meaning": "2歲幼兒，居住地水氟濃度0.2 ppm時建議的每日氟片劑量",
+    "subject": "ya6",
+    "source": "兒童牙科 / 公衛牙醫"
+  },
+  {
+    "value": "< 1%",
+    "meaning": "血友病A型患者第八因子嚴重缺乏的定義（第八因子活性百分比）",
+    "subject": "ya6",
+    "source": "口腔外科 / 血液學"
+  },
+  {
+    "value": "40-60%",
+    "meaning": "唐氏症患者發生先天性心臟缺陷的機率",
+    "subject": "ya6",
+    "source": "兒童牙科 / 特殊需求者牙醫"
+  },
+  {
+    "value": "各年齡層正常心跳次數範圍",
+    "meaning": "評估兒童生理狀況的重要參考值（例如新生兒100-160 bpm, 兒童70-120 bpm, 成人60-100 bpm）",
+    "subject": "ya6",
+    "source": "兒童牙科 / 生理學"
+  },
+  {
+    "value": "DMFT index",
+    "meaning": "齲齒經驗指數（D: decayed, M: missing, F: filled teeth）",
+    "subject": "ya6",
+    "source": "牙科公共衛生/流行病學"
+  },
+  {
+    "value": "Spearman correlation",
+    "meaning": "史匹曼相關係數，用於評估非常態分佈資料的線性關係",
+    "subject": "ya6",
+    "source": "牙科研究方法/統計"
+  },
+  {
+    "value": "敏感度 (Sensitivity)",
+    "meaning": "衡量篩檢工具正確辨識出真陽性的能力",
+    "subject": "ya6",
+    "source": "牙科研究方法/統計"
+  },
+  {
+    "value": "切點值 (Cutoff value)",
+    "meaning": "區分陽性/陰性的閾值",
+    "subject": "ya6",
+    "source": "牙科研究方法/統計"
+  },
+  {
+    "value": "PRECEDE模式",
+    "meaning": "Green & Kreuter提出的衛生教育計畫模式",
+    "subject": "ya6",
+    "source": "牙科公共衛生/衛生教育"
+  },
+  {
+    "value": "增強因素 (Reinforcing Factor)",
+    "meaning": "影響行為的直接或間接獎勵或懲罰",
+    "subject": "ya6",
+    "source": "牙科公共衛生/衛生教育"
+  },
+  {
+    "value": "三段五級預防層級",
+    "meaning": "公共衛生預防策略的分類框架（初段、次段、三段）",
+    "subject": "ya6",
+    "source": "牙科公共衛生"
+  },
+  {
+    "value": "WHO Oral Health Surveys, Basic Methods, 5th ed.",
+    "meaning": "世界衛生組織於2013年發行的口腔健康調查基本方法指南",
+    "subject": "ya6",
+    "source": "牙科公共衛生/流行病學"
+  },
+  {
+    "value": "2013",
+    "meaning": "WHO第五版口腔健康調查基本方法發行年份",
+    "subject": "ya6",
+    "source": "牙科公共衛生/流行病學"
+  },
+  {
+    "value": "CPI (Community Periodontal Index)",
+    "meaning": "社區牙周指數，用於評估人群牙周健康狀況",
+    "subject": "ya6",
+    "source": "牙科公共衛生/流行病學"
+  },
+  {
+    "value": "2004年1月1日",
+    "meaning": "姐姐出生日期，為評估政府口腔預防保健政策實施時間點的基準",
+    "subject": "ya6",
+    "source": "牙科公共衛生 (政策年份)"
+  },
+  {
+    "value": "2010年1月1日",
+    "meaning": "弟弟出生日期，為評估政府口腔預防保健政策實施時間點的基準",
+    "subject": "ya6",
+    "source": "牙科公共衛生 (政策年份)"
+  },
+  {
+    "value": "民國101年7月",
+    "meaning": "台灣身心障礙鑑定制度改為依據ICF系統的實施日期",
+    "subject": "ya6",
+    "source": "牙科公共衛生/特殊需求者牙醫學"
+  },
+  {
+    "value": "ICF (International Classification of Functioning, Disability and Health)",
+    "meaning": "國際健康功能與身心障礙分類系統",
+    "subject": "ya6",
+    "source": "牙科公共衛生/特殊需求者牙醫學"
+  },
+  {
+    "value": "醫師法",
+    "meaning": "規範醫師執業行為與病歷義務的法規",
+    "subject": "ya6",
+    "source": "牙科法規/倫理"
+  },
+  {
+    "value": "3-5週",
+    "meaning": "外傷牙齒固定時間",
+    "subject": "ya6",
+    "source": "齒顎矯正/外傷牙科"
+  },
+  {
+    "value": "3-4個月",
+    "meaning": "外傷牙齒固定後，建議等待開始矯正牙齒的時間",
+    "subject": "ya6",
+    "source": "齒顎矯正/外傷牙科"
+  },
+  {
+    "value": "7歲",
+    "meaning": "評估正中齒隙的兒童年齡（若水平覆蓋正常，2mm正中齒隙可能觀察即可）",
+    "subject": "ya6",
+    "source": "兒童牙科/齒顎矯正"
+  },
+  {
+    "value": "2 mm",
+    "meaning": "7歲兒童正中齒隙大小（若水平覆蓋正常，此值可能建議觀察）",
+    "subject": "ya6",
+    "source": "兒童牙科/齒顎矯正"
+  },
+  {
+    "value": "22 mil",
+    "meaning": "矯正器溝槽尺寸",
+    "subject": "ya6",
+    "source": "齒顎矯正"
+  },
+  {
+    "value": "16 × 22 mil",
+    "meaning": "矯正弓線尺寸",
+    "subject": "ya6",
+    "source": "齒顎矯正"
+  },
+  {
+    "value": "游隙（Play）",
+    "meaning": "矯正弓線在矯正器溝槽中的自由活動角度（以度數表示）",
+    "subject": "ya6",
+    "source": "齒顎矯正"
+  },
+  {
+    "value": "12歲",
+    "meaning": "兒童生理發展的年齡界限",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "5歲",
+    "meaning": "評估牙齒狀況的兒童年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "0.6 ppm",
+    "meaning": "飲用水中氟化物含量，判斷是否需要額外補充氟錠的參考值",
+    "subject": "ya6",
+    "source": "兒童牙科/預防牙醫學"
+  },
+  {
+    "value": "6個月",
+    "meaning": "評估氟錠補充的兒童年齡界限",
+    "subject": "ya6",
+    "source": "兒童牙科/預防牙醫學"
+  },
+  {
+    "value": "0.25 mg",
+    "meaning": "6個月以上兒童，居住於飲水中不含氟或低氟地區時的氟錠建議補充劑量",
+    "subject": "ya6",
+    "source": "兒童牙科/預防牙醫學"
+  },
+  {
+    "value": "*   **齒間角 (Interincisal angle)**",
+    "meaning": "**約 130 度 (正常值)**",
+    "subject": "ya6",
+    "source": "**齒顎矯正學**"
+  },
+  {
+    "value": "*   **Factor Ⅷ 半衰期**",
+    "meaning": "**8-12 小時 (通常為 12 小時)**",
+    "subject": "ya6",
+    "source": "**藥理學**"
+  },
+  {
+    "value": "*   **口腔癌在臺灣十大癌症死因排名 (民國109年)**",
+    "meaning": "**第四位**",
+    "subject": "ya6",
+    "source": "**公共衛生**"
+  },
+  {
+    "value": "*   **8020 運動目標**",
+    "meaning": "**80歲時至少保有20顆自然牙**",
+    "subject": "ya6",
+    "source": "**公共衛生**"
+  },
+  {
+    "value": "WHO 2013年「口腔健康調查基本方法手冊第五版」",
+    "meaning": "國際口腔健康調查標準手冊的年份與版次",
+    "subject": "ya6",
+    "source": "口腔公共衛生"
+  },
+  {
+    "value": "2021年5月31日 世界衛生大會 (WHA) 口腔健康決議文 (WHA74.5 Oral health)",
+    "meaning": "國際口腔健康政策的重要決議日期與編號",
+    "subject": "ya6",
+    "source": "口腔公共衛生"
+  },
+  {
+    "value": "美國家庭醫師學會 1984年 家庭牙醫學的定義",
+    "meaning": "家庭牙醫學定義的年份",
+    "subject": "ya6",
+    "source": "家庭牙醫學"
+  },
+  {
+    "value": "Enlow學者",
+    "meaning": "顱顏生長發育的重要學者及其理論",
+    "subject": "ya6",
+    "source": "顱顏生長發育/矯正學"
+  },
+  {
+    "value": "3歲孩童",
+    "meaning": "特定年齡，常與乳牙創傷或發展相關",
+    "subject": "ya6",
+    "source": "兒童牙醫學"
+  },
+  {
+    "value": "頸椎骨成熟 (cervical vertebral maturation, CVM)",
+    "meaning": "判斷下顎骨生長高峰期的重要生物指標及其分期概念",
+    "subject": "ya6",
+    "source": "矯正學/顱顏生長發育"
+  },
+  {
+    "value": "美國牙醫協會 (American Dental Association) 與 美國公共衛生局 (U.S. Public Health Service) 牙科放射攝影檢查指導方針",
+    "meaning": "牙科放射攝影檢查的權威指南機構",
+    "subject": "ya6",
+    "source": "矯正學/放射學"
+  },
+  {
+    "value": "edgewise裝置",
+    "meaning": "一種經典的矯正裝置類型",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "舌側矯正 (lingual appliances)",
+    "meaning": "一種隱形矯正技術/裝置類型",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "透明維持器 (clear retainer)",
+    "meaning": "一種常見的矯正維持器類型",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "Tanaka和Johnston預測法",
+    "meaning": "混合齒列空間分析中預測未萌發牙齒寬度的常用公式/方法",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "10歲孩童/女童",
+    "meaning": "特定年齡和性別，常與治療時機或發育階段相關",
+    "subject": "ya6",
+    "source": "兒童牙醫學/矯正學"
+  },
+  {
+    "value": "牙根發育超過應有長度的 3/4",
+    "meaning": "牙齒發育成熟度的重要指標，影響治療決策",
+    "subject": "ya6",
+    "source": "兒童牙醫學/矯正學"
+  },
+  {
+    "value": "第二級不正咬合 (class Ⅱ malocclusion)",
+    "meaning": "一種常見的咬合不正分類",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "混合齒列後期",
+    "meaning": "牙齒發育階段，影響矯正治療的時機和方法",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "11歲",
+    "meaning": "孩童上顎擴張治療的年齡參考",
+    "subject": "ya6",
+    "source": "齒顎矯正"
+  },
+  {
+    "value": "知情同意 (informed consent)",
+    "meaning": "醫療行為前的倫理與法規要求",
+    "subject": "ya6",
+    "source": "牙科倫理/法規"
+  },
+  {
+    "value": "美國疾病管理局 (CDC)",
+    "meaning": "幼兒發展與公共衛生研究的參考機構",
+    "subject": "ya6",
+    "source": "兒童牙科/公共衛生"
+  },
+  {
+    "value": "美國兒童牙科醫學會 (AAPD)",
+    "meaning": "兒童牙科專業指引與標準制定機構",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "6歲以下",
+    "meaning": "兒童齲齒風險評估的關鍵年齡範圍",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "2.5歲 (兩歲半)",
+    "meaning": "兒童口腔發育與萌牙時間的參考年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "1分鐘",
+    "meaning": "氟膠 (fluoride gel) 在口內建議停留時間",
+    "subject": "ya6",
+    "source": "兒童牙科/預防牙科"
+  },
+  {
+    "value": "4歲 (四歲)",
+    "meaning": "局部麻醉後兒童自我傷害風險考量的年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "2小時 (兩個小時)",
+    "meaning": "局部麻醉後併發症（如唇部咬傷）可能出現的時間範圍",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "0.3 ppm",
+    "meaning": "飲用水含氟量低於此值應考慮氟補充劑",
+    "subject": "ya6",
+    "source": "兒童牙科/預防牙科"
+  },
+  {
+    "value": "4歲",
+    "meaning": "氟錠劑量評估的參考年齡",
+    "subject": "ya6",
+    "source": "兒童牙科/預防牙科"
+  },
+  {
+    "value": "5.5歲 (5歲半)",
+    "meaning": "前牙過早缺失處理決策的參考年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "Brearly的研究",
+    "meaning": "乳牙沾黏（ankylosis）相關的權威研究",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "4歲",
+    "meaning": "兒童牙齒拔除後空間管理決策的參考年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "18顆乳齒",
+    "meaning": "題目中兒童牙齒數量的描述 (非普遍性常量，但作為案例描述)",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "2-5歲",
+    "meaning": "兒童白血病好發年齡",
+    "subject": "ya6",
+    "source": "兒科"
+  },
+  {
+    "value": "約50%",
+    "meaning": "唐氏症患者先天性心臟病機率",
+    "subject": "ya6",
+    "source": "特殊需求牙科"
+  },
+  {
+    "value": "<10% (理想 <5%)",
+    "meaning": "WHO游離糖最高攝取量佔總熱量百分比",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "<10^5 CFU/mL",
+    "meaning": "致齲鏈球菌（Mutans streptococci）評分0的閾值（Caries Risk and Preventive Needs Assessment）",
+    "subject": "ya6",
+    "source": "預防牙醫學"
+  },
+  {
+    "value": "DMFT index",
+    "meaning": "恆齒齲齒指數/恆齒齲齒經驗指數（D: decayed, M: missing due to caries, F: filled due to caries, T: teeth）",
+    "subject": "ya6",
+    "source": "流行病學"
+  },
+  {
+    "value": "Oral Health Surveys：Basic Methods, 5th ed., WHO, 2013",
+    "meaning": "世界衛生組織口腔健康調查基本方法（第五版，2013年）",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "世界衛生組織2022年口腔健康現況報告",
+    "meaning": "WHO口腔健康現況報告",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "口腔健康法",
+    "meaning": "台灣口腔健康相關法規",
+    "subject": "ya6",
+    "source": "法規政策"
+  },
+  {
+    "value": "全民健康保險牙醫門診總額特殊醫療服務計畫",
+    "meaning": "健保特殊醫療服務計畫",
+    "subject": "ya6",
+    "source": "法規政策"
+  },
+  {
+    "value": "醫師法及其施行細則",
+    "meaning": "醫師執業相關法規",
+    "subject": "ya6",
+    "source": "法規政策"
+  },
+  {
+    "value": "CS3",
+    "meaning": "頸椎成熟度評估法中，下顎骨生長高峰期（peak）對應的階段",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "8 歲",
+    "meaning": "混合齒列期，常為早期矯正治療的參考年齡",
+    "subject": "ya6",
+    "source": "兒童牙科/矯正學"
+  },
+  {
+    "value": "12 歲",
+    "meaning": "患者年齡，通常處於混合齒列晚期或恆齒列早期",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "55 歲",
+    "meaning": "患者年齡，屬於成年人矯正的考量範圍",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "醫學倫理",
+    "meaning": "指導醫療行為的道德規範與原則",
+    "subject": "ya6",
+    "source": "醫學倫理"
+  },
+  {
+    "value": "2019",
+    "meaning": "美國矯正科學會（AAO）關於阻塞性睡眠呼吸中止症（OSA）和牙齒矯正的白皮書發布年份",
+    "subject": "ya6",
+    "source": "兒牙/矯正"
+  },
+  {
+    "value": "2009",
+    "meaning": "英國衛生部門發行《實證口腔保健指引》年份",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "Delivering Better Oral Health",
+    "meaning": "英國衛生部門發行的實證口腔保健指引名稱",
+    "subject": "ya6",
+    "source": "公共衛生"
+  },
+  {
+    "value": "25%～50%",
+    "meaning": "狄恩指數（Dean’s index）中牙齒表面白色斑點分布百分比（對應某特定等級，如中度）",
+    "subject": "ya6",
+    "source": "口腔病理/公共衛生"
+  },
+  {
+    "value": "民國101年7月",
+    "meaning": "我國身心障礙鑑定制度變更為依據ICF之實施日期",
+    "subject": "ya6",
+    "source": "法規/公共衛生"
+  },
+  {
+    "value": "國際健康功能與身心障礙分類系統 (ICF)",
+    "meaning": "我國身心障礙鑑定制度現行依據的分類系統",
+    "subject": "ya6",
+    "source": "法規/公共衛生"
+  },
+  {
+    "value": "醫師法",
+    "meaning": "規範醫師提供醫療服務的法律",
+    "subject": "ya6",
+    "source": "法規"
+  },
+  {
+    "value": "四原則",
+    "meaning": "常見的醫療倫理原則數量（自主、行善、不傷害、正義）",
+    "subject": "ya6",
+    "source": "醫學倫理"
+  },
+  {
+    "value": "18-系統",
+    "meaning": "Edgewise矯正器溝槽尺寸",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "18 mil溝槽、16 × 16 mil弓線",
+    "meaning": "用於計算矯正弓線在矯正器溝槽中的游隙（play）/力矩作用區間",
+    "subject": "ya6",
+    "source": "矯正學"
+  },
+  {
+    "value": "2% Xylocaine (Lidocaine)",
+    "meaning": "局部麻醉藥物濃度（常用於兒童）",
+    "subject": "ya6",
+    "source": "兒童牙科/麻醉學"
+  },
+  {
+    "value": "1：100,000 epinephrine",
+    "meaning": "血管收縮劑濃度（常用於局部麻醉劑，如lidocaine）",
+    "subject": "ya6",
+    "source": "兒童牙科/麻醉學"
+  },
+  {
+    "value": "AAPD (美國兒童牙科醫學會)",
+    "meaning": "提供兒童早發性齲齒（ECC）及嚴重早發性齲齒（S-ECC）的定義與規範來源",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "早發性齲齒 (ECC) / 嚴重早發性齲齒 (S-ECC)",
+    "meaning": "齲齒分類定義（由AAPD提出）",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "100～150µm",
+    "meaning": "齲齒初期去礦化病灶距琺瑯質表面深度",
+    "subject": "ya6",
+    "source": "兒童牙科/口腔病理學"
+  },
+  {
+    "value": "Angle classification",
+    "meaning": "不正咬合分類系統",
+    "subject": "ya6",
+    "source": "齒顎矯正學"
+  },
+  {
+    "value": "智能障礙嚴重度分類",
+    "meaning": "根據他人協助下的生活自理能力",
+    "subject": "ya6",
+    "source": "特殊需求牙醫學"
+  },
+  {
+    "value": "病例對照研究 (case-control study)",
+    "meaning": "最經濟且省時的研究設計",
+    "subject": "ya6",
+    "source": "口腔流行病學/研究方法"
+  },
+  {
+    "value": "雙盲設計 (double-blind design)",
+    "meaning": "臨床試驗設計原則",
+    "subject": "ya6",
+    "source": "口腔流行病學/研究方法"
+  },
+  {
+    "value": "隨時可退出試驗的權利",
+    "meaning": "臨床試驗參與者的權利/倫理規範",
+    "subject": "ya6",
+    "source": "口腔流行病學/研究倫理"
+  },
+  {
+    "value": "勝算比 (odds ratio, OR)",
+    "meaning": "衡量暴露與疾病關聯強度的指標",
+    "subject": "ya6",
+    "source": "口腔流行病學"
+  },
+  {
+    "value": "飲水加氟",
+    "meaning": "適用於所有年齡層 (齲齒預防)",
+    "subject": "ya6",
+    "source": "口腔公共衛生"
+  },
+  {
+    "value": "食鹽加氟",
+    "meaning": "僅適用於65歲以下者 (齲齒預防)",
+    "subject": "ya6",
+    "source": "口腔公共衛生"
+  },
+  {
+    "value": "含氟牙膏",
+    "meaning": "適用於所有年齡層 (齲齒預防)",
+    "subject": "ya6",
+    "source": "口腔公共衛生"
+  },
+  {
+    "value": "初段預防 (primary prevention)",
+    "meaning": "齲齒預防策略分類",
+    "subject": "ya6",
+    "source": "口腔公共衛生"
+  },
+  {
+    "value": "2013",
+    "meaning": "WHO口腔健康檢查基本方法出版年份",
+    "subject": "ya6",
+    "source": "公衛/預防"
+  },
+  {
+    "value": "第五版",
+    "meaning": "WHO口腔健康檢查基本方法版本",
+    "subject": "ya6",
+    "source": "公衛/預防"
+  },
+  {
+    "value": "全民健康保險",
+    "meaning": "臺灣醫療保險制度",
+    "subject": "ya6",
+    "source": "法規/行政"
+  },
+  {
+    "value": "30歲以上",
+    "meaning": "檳榔或吸菸習慣者口腔癌篩檢年齡門檻",
+    "subject": "ya6",
+    "source": "公衛/預防"
+  },
+  {
+    "value": "ASA III",
+    "meaning": "美國麻醉醫學會生理狀態分級系統第三級（多重輕度系統疾病，或中度/嚴重單一系統疾病，會限制日常活動）",
+    "subject": "ya6",
+    "source": "麻醉/藥理"
+  },
+  {
+    "value": "醫師法第12條",
+    "meaning": "醫師製作病歷之法規依據",
+    "subject": "ya6",
+    "source": "法規/行政"
+  },
+  {
+    "value": "民國82年",
+    "meaning": "臺灣進入人口老化社會年份",
+    "subject": "ya6",
+    "source": "公衛/統計"
+  },
+  {
+    "value": "65歲",
+    "meaning": "定義老年人口的年齡門檻",
+    "subject": "ya6",
+    "source": "公衛/統計"
+  },
+  {
+    "value": "7%",
+    "meaning": "臺灣進入人口老化社會時老年人口比例",
+    "subject": "ya6",
+    "source": "公衛/統計"
+  },
+  {
+    "value": "22",
+    "meaning": "患者年齡",
+    "subject": "ya6",
+    "source": "矯正/口腔顎面外科"
+  },
+  {
+    "value": "4",
+    "meaning": "患者年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "2",
+    "meaning": "幼兒刷牙使用含氟牙膏的建議年齡",
+    "subject": "ya6",
+    "source": "兒童牙科"
+  },
+  {
+    "value": "GRADE",
+    "meaning": "證據等級分類 (High, Moderate, Low, Very Low)",
+    "subject": "ya6",
+    "source": "口腔醫學研究方法/實證醫學"
+  },
+  {
+    "value": "一、四、七年級",
+    "meaning": "教育部國教署口腔檢查對象",
+    "subject": "ya6",
+    "source": "公衛/預防醫學"
+  },
+  {
+    "value": "12歲",
+    "meaning": "國際齲齒狀況與疾病趨勢指標年齡層",
+    "subject": "ya6",
+    "source": "公衛/兒童牙科"
+  },
+  {
+    "value": "Kappa值 ≥ 0.81 (或 0.80)",
+    "meaning": "接近完美等級的口腔檢查標準化一致性",
+    "subject": "ya6",
+    "source": "公衛/研究方法"
+  },
+  {
+    "value": "B型肝炎病毒可在工作檯面存活一週以上",
+    "meaning": "病毒存活時間",
+    "subject": "ya6",
+    "source": "感染控制"
+  },
+  {
+    "value": "2.03顆 (或 2.0)",
+    "meaning": "2020年我國12歲學童DMFT平均值",
+    "subject": "ya6",
+    "source": "公衛/兒童牙科"
+  },
+  {
+    "value": "ASA 分級 (I-VI)",
+    "meaning": "美國麻醉學會病人生理狀況風險評估分類",
+    "subject": "ya6",
+    "source": "麻醉/口腔外科"
+  }
+]

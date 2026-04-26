@@ -1,0 +1,2502 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>義齒學故事書 — 從零開始的假牙之旅</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#faf6f0;--card:#fff;--text:#2d2a26;--text2:#5a5550;
+  --warm:#c0956c;--warm2:#a67c52;--warm-bg:#f5ede3;
+  --red:#c0392b;--green:#27ae60;--blue:#2980b9;--orange:#e67e22;--teal:#16a085;--purple:#8e44ad;
+  --ch1:#e74c3c;--ch2:#2980b9;--ch3:#27ae60;--ch4:#8e44ad;
+  --ch5:#e67e22;--ch6:#16a085;--ch7:#c0392b;--ch8:#34495e;--ch9:#d35400;
+}
+body{font-family:'Noto Sans TC','Segoe UI','PingFang TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.75;-webkit-font-smoothing:antialiased}
+
+/* === NAV === */
+.top-bar{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#8B6914,#c0956c);padding:8px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.top-bar .logo{font-size:18px;font-weight:700;color:#fff;white-space:nowrap}
+.top-bar .sub{font-size:11px;color:rgba(255,255,255,.7);margin-left:auto;white-space:nowrap}
+.mode-btn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:11px;padding:4px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:all .2s;margin-left:8px}
+.mode-btn:hover{background:rgba(255,255,255,.35)}
+
+/* === CHAPTER TAB BAR === */
+.ch-tabs{position:sticky;top:42px;z-index:99;background:var(--card);border-bottom:1px solid #e8e0d4;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;white-space:nowrap;padding:0 8px}
+.ch-tabs::-webkit-scrollbar{display:none}
+.ch-tab{display:inline-block;padding:10px 14px;font-size:12px;color:var(--text2);text-decoration:none;border-bottom:3px solid transparent;transition:all .2s;cursor:pointer;font-weight:500}
+.ch-tab:hover{color:var(--warm2)}
+.ch-tab.active{color:var(--warm2);border-bottom-color:var(--warm);font-weight:700}
+.ch-tab .tab-num{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--warm-bg);color:var(--warm2);text-align:center;line-height:18px;font-size:10px;font-weight:700;margin-right:4px}
+.ch-tab.active .tab-num{background:var(--warm);color:#fff}
+
+/* === CHAPTER === */
+.chapter{max-width:720px;margin:0 auto;padding:24px 16px 48px}
+.ch-header{text-align:center;padding:40px 16px 24px;position:relative}
+.ch-header .ch-badge{display:inline-block;padding:6px 18px;border-radius:20px;color:#fff;font-size:13px;font-weight:700;letter-spacing:1px;margin-bottom:12px}
+.ch-header h1{font-size:26px;line-height:1.3;color:var(--text);margin-bottom:8px}
+.ch-header .ch-subtitle{font-size:15px;color:var(--text2)}
+
+/* === STORY CARD === */
+.story{background:var(--card);border-radius:16px;padding:24px 20px;margin:20px 0;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid var(--warm)}
+.story.clinical{border-left-color:var(--blue);background:linear-gradient(135deg,#f8fbff,#fff)}
+.story.exam{border-left-color:var(--red);background:linear-gradient(135deg,#fff8f8,#fff)}
+.story p{margin:12px 0;font-size:15px}
+.story h2{font-size:20px;color:var(--warm2);margin:24px 0 12px;padding-top:16px;border-top:1px dashed #e0d5c8}
+.story h2:first-child{border-top:none;padding-top:0;margin-top:0}
+.story h3{font-size:17px;color:var(--text);margin:20px 0 8px}
+
+/* === DIALOGUE === */
+.dialogue{margin:16px 0;padding:0}
+.line{display:flex;gap:10px;margin:10px 0;align-items:flex-start}
+.line .avatar{flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700}
+.line .avatar.doc{background:linear-gradient(135deg,#2980b9,#3498db)}
+.line .avatar.student{background:linear-gradient(135deg,#e67e22,#f39c12)}
+.line .avatar.patient{background:linear-gradient(135deg,#27ae60,#2ecc71)}
+.line .bubble{background:#f5f5f5;border-radius:12px;padding:10px 14px;font-size:14px;max-width:calc(100% - 50px);line-height:1.6}
+.line .bubble.doc-b{background:#e8f4fd}
+.line .bubble.stu-b{background:#fef5e7}
+.line .bubble.pat-b{background:#eafaf1}
+
+/* === EXAM BOX === */
+.exam-box{background:linear-gradient(135deg,#ffeaea,#fff5f5);border:2px solid #e74c3c;border-radius:12px;padding:16px;margin:20px 0}
+.exam-box .exam-title{font-size:14px;font-weight:700;color:#c0392b;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.exam-box ul{padding-left:20px;font-size:14px}
+.exam-box li{margin:4px 0}
+
+/* === KEY POINT === */
+.key{background:#fffde7;border-left:4px solid #f39c12;border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0;font-size:14px}
+.key strong{color:var(--red)}
+
+/* === TABLE === */
+.story table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+.story th{background:var(--warm);color:#fff;padding:8px 10px;text-align:left;font-weight:600}
+.story td{padding:8px 10px;border-bottom:1px solid #ede6dc}
+.story tr:nth-child(even) td{background:#faf6f0}
+.story .td-r{color:var(--red);font-weight:600}
+.story .td-g{color:var(--green);font-weight:600}
+.story .td-b{color:var(--blue);font-weight:600}
+
+/* === VISUAL CARD === */
+.visual{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:16px 0}
+.v-card{background:var(--warm-bg);border-radius:12px;padding:16px;text-align:center}
+.v-card .big{font-size:28px;font-weight:800;color:var(--warm2)}
+.v-card .label{font-size:12px;color:var(--text2);margin-top:4px}
+.v-card .desc{font-size:13px;margin-top:6px;color:var(--text)}
+
+/* === MNEMONIC === */
+.mnemonic{background:linear-gradient(135deg,#f3e5f5,#fce4ec);border-radius:12px;padding:16px;margin:16px 0;text-align:center}
+.mnemonic .title{font-size:13px;color:var(--purple);font-weight:700;margin-bottom:8px}
+.mnemonic .content{font-size:18px;font-weight:700;color:var(--text);letter-spacing:2px}
+
+/* === PROGRESS === */
+.progress-bar{position:fixed;bottom:0;left:0;right:0;height:4px;background:#e0d5c8;z-index:100}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--warm),var(--warm2));width:0;transition:width .3s}
+
+/* === CHAPTER NAV === */
+.ch-nav{display:flex;justify-content:space-between;padding:24px 16px;max-width:720px;margin:0 auto}
+.ch-nav a{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--card);border-radius:10px;text-decoration:none;color:var(--warm2);font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform .2s}
+.ch-nav a:active{transform:scale(.96)}
+
+/* === STEPS === */
+.steps{counter-reset:step}
+.step{counter-increment:step;position:relative;padding:12px 12px 12px 48px;margin:8px 0;background:#f8f6f2;border-radius:8px;font-size:14px}
+.step::before{content:counter(step);position:absolute;left:12px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--warm);color:#fff;text-align:center;line-height:28px;font-size:13px;font-weight:700}
+
+/* === TRAP === */
+.trap{background:linear-gradient(135deg,#fff3e0,#fff8e1);border:2px dashed var(--orange);border-radius:12px;padding:16px;margin:16px 0}
+.trap .trap-title{font-size:14px;font-weight:700;color:var(--orange);margin-bottom:6px}
+
+/* === ANALOGY === */
+.analogy{background:linear-gradient(135deg,#e8f5e9,#f1f8e9);border-radius:12px;padding:16px;margin:16px 0;border-left:4px solid var(--green)}
+.analogy .analogy-title{font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px}
+
+/* === FOOTER === */
+.footer{text-align:center;padding:40px 16px;color:var(--text2);font-size:13px}
+
+/* === SVG DIAGRAMS === */
+.diagram{margin:20px auto;text-align:center;overflow-x:auto}
+.diagram svg{max-width:100%;height:auto}
+.diagram .caption{font-size:12px;color:var(--text2);margin-top:8px;font-style:italic}
+
+/* === RESPONSIVE === */
+@media(max-width:480px){
+  .ch-header h1{font-size:22px}
+  .story{padding:18px 14px}
+  .story table{font-size:12px}
+  .story th,.story td{padding:6px 8px}
+  .visual{grid-template-columns:repeat(2,1fr)}
+}
+
+/* === SCROLL === */
+html{scroll-behavior:smooth}
+.chapter{scroll-margin-top:60px}
+
+/* === PAGINATION MODE === */
+body.paged .chapter{display:none}
+body.paged .footer{display:none}
+@keyframes fadeSlide{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+/* === SLIDE === */
+.slide-container{max-width:720px;margin:0 auto;padding:16px 16px 80px}
+.slide{display:none;animation:fadeSlide .3s ease}
+.slide.active{display:block}
+.slide .story{border-radius:16px;padding:24px 20px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.slide .ch-header{padding:30px 16px 16px}
+
+/* === PAGE NAV === */
+.page-nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.96);border-radius:16px;padding:6px 14px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:90;backdrop-filter:blur(8px)}
+.page-nav button{width:38px;height:38px;border-radius:50%;border:2px solid var(--warm);background:var(--card);color:var(--warm2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.page-nav button:hover{background:var(--warm);color:#fff}
+.page-nav button:disabled{opacity:.3;cursor:default;background:var(--card);color:var(--warm)}
+.page-nav .page-info{font-size:12px;color:var(--text2);font-weight:600;min-width:90px;text-align:center;line-height:1.3}
+.page-nav .page-info .current{color:var(--warm2);font-size:15px;font-weight:800}
+.page-nav .page-info .ch-label{font-size:10px;display:block;color:#aaa}
+
+/* hide progress bar in paged mode */
+body.paged .progress-bar{display:none}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a href="../story/index.html" style="color:#fff;text-decoration:none;font-size:14px;opacity:.8;margin-right:4px">←</a>
+  <span class="logo">義齒學故事書</span>
+  <span class="sub">從零開始的假牙之旅</span>
+  <button class="mode-btn" id="modeBtn" onclick="toggleMode()">一章一頁</button>
+</div>
+
+<!-- CHAPTER TAB BAR -->
+<div class="ch-tabs" id="chTabs">
+  <a class="ch-tab active" data-page="0"><span class="tab-num">序</span>開始</a>
+  <a class="ch-tab" data-page="1"><span class="tab-num">1</span>缺牙</a>
+  <a class="ch-tab" data-page="2"><span class="tab-num">2</span>Kennedy</a>
+  <a class="ch-tab" data-page="3"><span class="tab-num">3</span>RPD</a>
+  <a class="ch-tab" data-page="4"><span class="tab-num">4</span>全口義齒</a>
+  <a class="ch-tab" data-page="5"><span class="tab-num">5</span>FPD</a>
+  <a class="ch-tab" data-page="6"><span class="tab-num">6</span>材料</a>
+  <a class="ch-tab" data-page="7"><span class="tab-num">7</span>咬合</a>
+  <a class="ch-tab" data-page="8"><span class="tab-num">8</span>TMD</a>
+  <a class="ch-tab" data-page="9"><span class="tab-num">9</span>美學</a>
+  <a class="ch-tab" data-page="10"><span class="tab-num">!</span>總結</a>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ============================================ -->
+<!-- 序章 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch0">
+<div class="ch-header">
+  <div class="ch-badge" style="background:#8B6914">序章</div>
+  <h1>在開始之前</h1>
+  <div class="ch-subtitle">認識我們的主角們</div>
+</div>
+
+<div class="story">
+<p>這本故事書的主角有三位：</p>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b"><b>陳醫師</b> — 經驗豐富的補綴專科醫師，負責把複雜的東西講得好懂。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b"><b>你</b> — 準備國考的牙科新手，什麼都想問，什麼都好奇。</div></div>
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b"><b>阿明</b> — 55 歲的上班族，嘴裡缺了好幾顆牙，來找陳醫師報到。</div></div>
+</div>
+
+<p>透過幫阿明治療的過程，我們會從最基本的「為什麼要做假牙」一路學到考試要考的每一個考點。每個章節結束時，會有一個紅色的「考試重點框」幫你整理必記內容。</p>
+
+<div class="key"><strong>閱讀建議：</strong>先快速讀完全部故事，建立整體觀。第二遍再仔細看考試重點框和表格。配合你的 ya5 互動筆記一起使用效果最好。</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第一章：缺牙的開始 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch1">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch1)">CHAPTER 1</div>
+  <h1>缺牙的開始</h1>
+  <div class="ch-subtitle">為什麼要做假牙？三條路怎麼選？</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，我左下後面少了兩顆牙，右邊也少了一顆，吃東西都只能用前面咬。到底要怎麼辦？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明你先別緊張。缺牙不處理的話，旁邊的牙齒會慢慢倒下來、對面的牙齒會往下長（過度萌發），咬合會整個亂掉。我們有三條路可以走。</div></div>
+</div>
+
+<h2>三大假牙選項</h2>
+
+<p>想像你家客廳少了幾片地磚：</p>
+
+<div class="analogy">
+<div class="analogy-title">生活化比喻</div>
+<b>活動假牙（RPD）</b>= 鋪一塊地毯蓋住缺口，每天可以拿起來清洗<br>
+<b>固定假牙（FPD）</b>= 重新黏上新地磚，跟旁邊的磚緊緊相連<br>
+<b>全口義齒（CD）</b>= 整個地板重鋪，因為一片磚都不剩了
+</div>
+
+<table>
+<tr><th>選項</th><th>英文</th><th>特點</th><th>適合誰</th></tr>
+<tr><td class="td-b"><b>活動局部義齒</b></td><td>RPD<br>(Removable Partial Denture)</td><td>可自行摘戴，有金屬骨架</td><td>缺多顆但還有自然牙的人</td></tr>
+<tr><td class="td-g"><b>固定義齒</b></td><td>FPD<br>(Fixed Partial Denture)</td><td>黏在支柱牙上，不能自行取下</td><td>缺 1-2 顆，旁邊牙齒狀況好</td></tr>
+<tr><td class="td-r"><b>全口義齒</b></td><td>CD<br>(Complete Denture)</td><td>整副假牙，靠吸附力固位</td><td>全口無牙的人</td></tr>
+</table>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">那植牙呢？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">植牙（Implant）是第四條路，把鈦金屬螺絲打進骨頭裡當人工牙根，上面接假牙。國考會考一些基本概念，但重點還是在 RPD、FPD、CD 這三大類。我們一個一個來。</div></div>
+</div>
+
+<h2>拔牙後的骨頭變化</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">牙齒拔掉之後，骨頭會怎麼變？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">拔牙後骨頭會持續吸收，而且有一個非常固定的規律：<b>唇側/頰側骨板比舌側/顎側吸收更快</b>。因為唇側骨板通常比較薄。結果就是牙嵴會越來越窄，而且位置會往舌側偏移。</div></div>
+</div>
+
+<div class="key">
+<strong>骨吸收規律：</strong><br>
+上顎：骨吸收以唇/頰側為主 → 牙嵴變窄、往<b>顎側</b>退縮 → 上顎牙弓越來越小<br>
+下顎：骨吸收以唇/頰側為主 → 牙嵴變窄、往<b>舌側</b>退縮 → 下顎牙弓也變小<br>
+<strong>結果：上下顎都縮小，但上顎縮得更快</strong> → 原本正常咬合的人，無牙後容易變成假性 Class III（下顎前突）
+</div>
+
+<h2>四種假牙的適應症比較</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">那到底什麼情況選 RPD、什麼情況選 FPD、什麼情況選植牙？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">這要從「缺牙數量、支柱牙條件、患者口腔衛生、經濟能力、全身健康」五個面向一起考量。</div></div>
+</div>
+
+<table>
+<tr><th>項目</th><th>RPD</th><th>FPD</th><th>CD</th><th>Implant</th></tr>
+<tr><td class="td-b"><b>缺牙數</b></td><td>多顆，可跨區</td><td>1-2 顆（短跨距）</td><td>全口無牙</td><td>單顆至全口皆可</td></tr>
+<tr><td class="td-b"><b>支柱牙條件</b></td><td>只需幾顆可用</td><td>鄰牙要健康、牙根要夠長</td><td>不需要</td><td>不需要（靠骨頭）</td></tr>
+<tr><td class="td-b"><b>骨頭條件</b></td><td>無特殊要求</td><td>無特殊要求</td><td>嚴重吸收也可做</td><td>需足夠骨量（寬 ≥ 6mm、高 ≥ 10mm）</td></tr>
+<tr><td class="td-b"><b>費用</b></td><td>中等</td><td>中高</td><td>低</td><td>最高</td></tr>
+<tr><td class="td-b"><b>維護</b></td><td>需每日摘戴清潔</td><td>如天然牙刷牙</td><td>需每日摘戴清潔</td><td>需定期回診</td></tr>
+</table>
+
+<h3>RPD 的適應症</h3>
+<ul style="font-size:14px;padding-left:20px">
+<li>缺牙跨距太長（FPD 跨距不宜超過 2 顆 pontic）</li>
+<li>游離端缺牙（後方沒有支柱牙可做 FPD）</li>
+<li>需要取代缺損的軟硬組織（牙嵴嚴重吸收時）</li>
+<li>經濟考量或全身健康不適合手術（無法植牙）</li>
+</ul>
+
+<h3>FPD 的適應症與禁忌</h3>
+<ul style="font-size:14px;padding-left:20px">
+<li>缺 1-2 顆，前後都有健康支柱牙（bounded saddle）</li>
+<li>支柱牙牙根表面積必須符合 <b>Ante's Law</b></li>
+<li><b>禁忌</b>：支柱牙牙周嚴重破壞、缺牙跨距太長、青少年牙髓腔大</li>
+</ul>
+
+<h2>Ante's Law — 支柱牙選擇的黃金法則</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">怎麼判斷旁邊的牙齒夠不夠力當支柱牙？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">用 <b>Ante's Law</b>：支柱牙的牙根表面積總和，必須大於或等於被取代牙齒的牙根表面積總和。簡單說，支柱牙的「根基」要比缺的牙「根基」更大，橋才站得穩。</div></div>
+</div>
+
+<div class="key">
+<strong>Ante's Law</strong>：支柱牙的牙周膜面積總和 ≥ 被取代牙齒的牙周膜面積總和<br>
+若支柱牙有牙周病（骨喪失）→ 有效牙根面積減少 → 可能需要<b>增加支柱牙數量</b><br>
+<b>注意</b>：Ante's Law 只是起始判斷標準，實際設計還要考慮牙周狀態、咬合力、Crown-root ratio
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>RPD = 可摘式，有金屬骨架；FPD = 固定式，黏在支柱牙上；CD = 全口無牙用</li>
+<li>缺牙不處理的後果：鄰牙傾斜、對咬牙過度萌發、咬合紊亂</li>
+<li>全口義齒的咬合目標是「平衡咬合」，天然牙的目標是「MPO」</li>
+<li><b>Ante's Law</b>：支柱牙牙根表面積 ≥ 被取代牙齒牙根表面積</li>
+<li>拔牙後骨吸收：<b>唇側/頰側吸收較快</b> → 牙嵴變窄往舌側偏</li>
+<li>上顎縮得比下顎快 → 無牙後容易出現假性 Class III 關係</li>
+<li>RPD 適用：多顆缺牙、游離端缺牙、跨距過長無法做 FPD</li>
+<li>FPD 禁忌：支柱牙牙周差、跨距太長、青少年牙髓腔大</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第二章：Kennedy 分類 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch2">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch2)">CHAPTER 2</div>
+  <h1>嘴巴的地圖</h1>
+  <div class="ch-subtitle">Kennedy 分類法 — 幫每張嘴巴取名字</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明，在幫你設計活動假牙之前，我得先幫你的嘴巴「分類」。就像醫院急診有五級檢傷，缺牙也有分類系統，叫做 <b>Kennedy Classification</b>。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">為什麼要分類？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">因為不同的缺牙分布，假牙的設計邏輯完全不同。分類就像是地址，告訴技師：這個人的嘴巴長什麼樣。</div></div>
+</div>
+
+<h2>Kennedy 四大類</h2>
+
+<p>記住一個口訣：<b>「雙游、單游、中間夾、前牙缺」</b></p>
+
+<!-- Kennedy 分類圖解 -->
+<div class="diagram">
+<img src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kennedy_Classification.svg" alt="Kennedy Classification Class I-IV" style="max-width:100%;border-radius:12px;background:#fff;padding:8px">
+<div class="caption">Kennedy 四大分類示意圖（Wikimedia Commons, CC BY-SA 4.0）<br>由左至右：Class I（雙側游離端）、Class II（單側游離端）、Class III（中間夾）、Class IV（前牙跨中線）</div>
+</div>
+
+<table>
+<tr><th>分類</th><th>缺牙型態</th><th>口訣</th></tr>
+<tr><td class="td-b"><b>Class I</b></td><td>雙側後方都缺牙（雙側游離端）</td><td>I = 一<b>對</b>游離端</td></tr>
+<tr><td class="td-b"><b>Class II</b></td><td>單側後方缺牙（單側游離端）</td><td>II = <b>一邊</b>游離</td></tr>
+<tr><td class="td-b"><b>Class III</b></td><td>缺牙前後都有牙齒（支持端）</td><td>III = <b>中間</b>夾</td></tr>
+<tr><td class="td-b"><b>Class IV</b></td><td>前牙橫跨中線缺牙</td><td>IV = <b>前牙</b>缺</td></tr>
+</table>
+
+<div class="analogy">
+<div class="analogy-title">比喻時間</div>
+想像一排書架上的書：<br>
+<b>Class I</b> = 書架兩端的書都掉了，只剩中間 → 兩邊都「懸空」<br>
+<b>Class II</b> = 只有右邊的書掉了 → 一邊懸空<br>
+<b>Class III</b> = 中間抽掉幾本，但兩端還有書夾住 → 「有支撐」<br>
+<b>Class IV</b> = 書架正中央那排書全不見了 → 跨越中線
+</div>
+
+<!-- Kennedy 分類 Class I-IV -->
+<div class="diagram">
+<img src="https://upload.wikimedia.org/wikipedia/commons/1/13/Kennedy_Classification.svg" alt="Kennedy Classification" style="max-width:100%;border-radius:12px">
+<div class="caption">Kennedy 分類 Class I-IV</div>
+</div>
+
+<h2>Modification（修飾區）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">如果一個人又缺後面、又缺前面怎麼辦？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">好問題！主分類看的是<b>最遠端</b>（最後方）的缺牙區。其他額外的缺牙區叫做「Modification」，只數<b>區數</b>，不數缺幾顆。</div></div>
+</div>
+
+<div class="key">例如：右後方缺兩顆（游離端）+ 左邊中間缺一區 + 另一處又缺一區<br>
+→ 最遠端 = 右後方游離端 → 主分類 = <strong>Class II</strong><br>
+→ 額外兩個缺牙區 → <strong>Modification 2</strong><br>
+→ 結果：<strong>Kennedy Class II, Mod. 2</strong></div>
+
+<h2>Applegate 八大法則（精華版）</h2>
+
+<table>
+<tr><th>法則</th><th>白話翻譯</th></tr>
+<tr><td class="td-b">法則 4</td><td><b>最後方的缺牙區決定主分類</b>（最常考！）</td></tr>
+<tr><td class="td-b">法則 6</td><td>Class IV 絕對沒有 Modification</td></tr>
+<tr><td class="td-b">法則 7</td><td>Modification 只數「區數」，不數「顆數」</td></tr>
+<tr><td class="td-b">法則 8</td><td>不存在 Class V（看到就是錯的選項）</td></tr>
+<tr><td>法則 1</td><td>分類要在拔牙之後才決定</td></tr>
+<tr><td>法則 2</td><td>第三大臼齒缺了且不補，可以不算</td></tr>
+<tr><td>法則 3</td><td>第三大臼齒如果當支柱牙，就要算進去</td></tr>
+<tr><td>法則 5</td><td>主分類以外的缺牙區 = Modification</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 超級陷阱</div>
+前牙全缺 + 後牙單側缺 → 你可能直覺選 Class IV，但錯！<br>
+要看<b>最遠端</b>的缺牙在哪裡 → 如果最遠端是後牙 → 答案是 Class I 或 Class II，不是 Class IV！
+</div>
+
+<h2>Applegate 八大法則 — 臨床應用詳解</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">法則 2 和 3 好容易搞混，第三大臼齒到底要不要算？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">很簡單：如果第三大臼齒<b>缺了而且不打算補</b>，就<b>不算</b>（法則 2）。但如果第三大臼齒<b>還在，而且要被當作支柱牙</b>，就<b>必須算進分類</b>（法則 3）。</div></div>
+</div>
+
+<table>
+<tr><th>法則</th><th>法則內容</th><th>臨床實例</th></tr>
+<tr><td class="td-b">法則 1</td><td>分類在拔牙後才決定</td><td>治療計畫中要拔的牙齒，先拔完再分類，否則分類會改變</td></tr>
+<tr><td class="td-b">法則 2</td><td>第三大臼齒缺且不補 → 不列入</td><td>缺 #18 #28 但不做假牙 → 不影響分類</td></tr>
+<tr><td class="td-b">法則 3</td><td>第三大臼齒存在且當支柱牙 → 列入</td><td>#18 健康且做為 RPD 支柱牙 → 必須納入分類考量</td></tr>
+<tr><td class="td-r">法則 4</td><td><b>最遠端缺牙區決定主分類</b></td><td>右後方游離端 + 左前方缺 → 主分類看右後方 = Class II</td></tr>
+<tr><td class="td-b">法則 5</td><td>主分類以外的缺牙區 = Modification</td><td>上述左前方缺牙 = Mod. 1 → Kennedy Class II Mod. 1</td></tr>
+<tr><td class="td-r">法則 6</td><td>Class IV 無 Modification</td><td>前牙跨中線缺 + 後方也缺 → 不能叫 Class IV Mod. 1，要改分類</td></tr>
+<tr><td class="td-b">法則 7</td><td>Modification 只數區數</td><td>左側中間缺 3 顆（連續）= 1 區，不是 3</td></tr>
+<tr><td class="td-b">法則 8</td><td>沒有 Class V</td><td>選項出現 Class V 直接排除</td></tr>
+</table>
+
+<h2>分類判斷 Step-by-Step 決策流程</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">如果嘴巴裡有好多個缺牙區，要怎麼一步一步判斷？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">按照這個流程走，不會錯。</div></div>
+</div>
+
+<div class="steps">
+<div class="step">先處理第三大臼齒：缺了不補 → 不算；存在且當支柱牙 → 算進去</div>
+<div class="step">找出<b>最遠端（最後方）</b>的缺牙區 → 這就決定了主分類</div>
+<div class="step">判斷最遠端缺牙是否為<b>游離端</b>（後方無牙）→ 游離端 = Class I 或 II</div>
+<div class="step">如果雙側都是游離端 → Class I；只有單側 → Class II</div>
+<div class="step">如果最遠端缺牙前後都有牙 → Class III</div>
+<div class="step">如果是前牙跨中線缺牙且無更遠端的缺牙 → Class IV</div>
+<div class="step">其餘缺牙區的<b>區數</b> = Modification 數（Class IV 不計 Mod.）</div>
+</div>
+
+<h2>Class I vs Class II — 支撐方式的本質差異</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">Class I、II 都是游離端，跟 Class III 的設計差很多嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">差非常多！Class III 前後都有牙齒夾住，是 <b>tooth-supported</b>（牙齒支撐型）。但 Class I、II 後面沒有牙可以靠，義齒坐在軟組織上，是 <b>tooth-tissue supported</b>（牙齒+黏膜支撐型），設計難度高很多。</div></div>
+</div>
+
+<table>
+<tr><th>特性</th><th>Class I / II（游離端）</th><th>Class III（支持端）</th></tr>
+<tr><td class="td-b"><b>支撐型態</b></td><td class="td-r">Tooth-tissue supported</td><td class="td-g">Tooth-supported</td></tr>
+<tr><td class="td-b"><b>義齒動態</b></td><td>受力時會旋轉下沉（義齒沉入黏膜）</td><td>幾乎不旋轉（前後都有支撐）</td></tr>
+<tr><td class="td-b"><b>卡環設計</b></td><td>RPI 系統（I-bar + 近心 Rest）</td><td>圓臂卡環（Aker clasp + 遠心 Rest）</td></tr>
+<tr><td class="td-b"><b>間接固位體</b></td><td class="td-r">必須有</td><td class="td-g">通常不需要</td></tr>
+<tr><td class="td-b"><b>印模技術</b></td><td>可能需要 Altered Cast</td><td>一般印模即可</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 常見考法</div>
+「Kennedy Class III 需要間接固位體」→ <b>通常不需要</b>！因為 Class III 前後都有牙齒支撐，不會翹起。<br>
+「Kennedy Class I 最需要間接固位體」→ <b>正確</b>！雙側游離端最容易翹起。
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>Kennedy 分類看<b>最遠端缺牙區</b>決定主分類（Applegate 法則 4）</li>
+<li>Class IV <b>沒有 Modification</b>（法則 6，鐵則）</li>
+<li>Modification 數「區」不數「顆」（法則 7）</li>
+<li>不存在 Class V（法則 8）</li>
+<li>Class I/II = <b>tooth-tissue supported</b>（需 RPI + 間接固位體）</li>
+<li>Class III = <b>tooth-supported</b>（圓臂卡環、通常不需間接固位體）</li>
+<li>判斷流程：處理第三大臼齒 → 找最遠端 → 判斷游離/支持 → 數 Mod. 區</li>
+<li>前牙全缺 + 後牙也缺 → <b>不是 Class IV</b>！看最遠端</li>
+<li>高頻考古題：108-2 #28 / 110-2 #28 / 111-2 #34 / 113-2 #29</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第三章：RPD 設計 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch3">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch3)">CHAPTER 3</div>
+  <h1>活動假牙的骨架</h1>
+  <div class="ch-subtitle">RPD 的三大要素、卡環、RPI 系統</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明，你的嘴巴分類結果是 Kennedy Class II, Mod. 1。右下後牙缺兩顆（游離端），左上中間也缺一顆。我們來設計活動假牙的「骨架」。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">骨架？活動假牙不就是一塊粉紅色的東西嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">那只是表面！裡面其實有精密的金屬骨架。設計骨架的核心就是三個字：<b>支撐、固位、穩定</b>。</div></div>
+</div>
+
+<h2>RPD 三要素</h2>
+
+<div class="analogy">
+<div class="analogy-title">比喻：想像一把椅子</div>
+<b>支撐（Support）</b>= 椅腳 → 防止你<b>往下</b>坐穿（義齒防沉陷）<br>
+<b>固位（Retention）</b>= 椅子的扶手 → 防止你被<b>往上</b>抬走（義齒防脫落）<br>
+<b>穩定（Stability）</b>= 椅背 → 防止你<b>往旁邊</b>倒（義齒防位移）
+</div>
+
+<!-- RPD 三要素力量方向圖 -->
+<div class="diagram">
+
+<div class="caption">RPD 三要素：支持、固位、穩定</div>
+</div>
+
+<!-- RPD 各部件組成圖 -->
+<div class="diagram">
+
+<div class="caption">RPD 各部件組成圖</div>
+</div>
+
+<table>
+<tr><th>要素</th><th>抵抗方向</th><th>靠誰提供</th></tr>
+<tr><td class="td-b"><b>支撐 Support</b></td><td>抵抗下沉力（↓）</td><td>Rest（支撐座）— 小匙子狀的金屬釘放在牙齒咬合面的凹窩上</td></tr>
+<tr><td class="td-r"><b>固位 Retention</b></td><td>抵抗脫落力（↑）</td><td>卡環（Clasp）的<b>末端 1/3</b> 伸入牙齒倒凹區</td></tr>
+<tr><td class="td-g"><b>穩定 Stability</b></td><td>抵抗側向力（↔）</td><td>主連接體 + 卡環的<b>剛性臂</b>（近心臂，在倒凹上方）</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 國考超級陷阱</div>
+卡環的<b>近心臂</b>在倒凹上方 → 提供<b>穩定</b>，不提供固位！<br>
+只有<b>遠心臂的末端 1/3</b> 進入倒凹 → 才提供<b>固位</b>。<br>
+題目問「卡環哪個部分提供固位？」答案永遠是末端 1/3，不是整條卡環！
+</div>
+
+<h2>Survey Line（接近線）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">什麼是倒凹？卡環怎麼知道要伸到哪裡？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">我們用一個叫 Surveyor 的工具，把模型固定好之後，用一根針去描牙齒最寬的一圈線，這條線叫 <b>Survey Line（接近線）</b>。線的上面叫「倒凹上方」，線的下面就是「倒凹」。</div></div>
+</div>
+
+<!-- Survey Line 圖解 -->
+<div class="diagram">
+
+<div class="caption">Survey Line 與卡環定位示意圖</div>
+</div>
+
+<div class="key">
+<b>接近線以上</b>：放卡環的<b>剛性臂</b>（提供穩定）<br>
+<b>接近線以下</b>：放卡環的<b>固位臂末端</b>（提供固位）
+</div>
+
+<h2>RPI 系統 — 游離端的最佳設計</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明右邊是游離端缺牙（Class II），後面沒有牙齒可以靠。這時候假牙咬東西會往黏膜方向沉下去，如果設計不好，支柱牙會被往後扯壞。所以我要用一套特別的系統：<b>RPI</b>。</div></div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">R</div><div class="label">Rest</div><div class="desc">放在支柱牙的<b>近心</b>窩</div></div>
+<div class="v-card"><div class="big">P</div><div class="label">Proximal Plate</div><div class="desc">鄰接板要<b>短</b>！可以滑動</div></div>
+<div class="v-card"><div class="big">I</div><div class="label">I-bar Clasp</div><div class="desc">從下方進入頰側倒凹</div></div>
+</div>
+
+<h3>為什麼 Rest 要放近心？</h3>
+<p>假牙受力會以支點線為軸旋轉下沉。如果 Rest 放在<b>遠心</b>，旋轉的支點就直接壓在支柱牙上面，產生遠心扭力 → 支柱牙被「扳」壞！</p>
+<p>放在<b>近心</b>，力量的傳導路徑改善，應力分散到更多結構，支柱牙安全很多。</p>
+
+<h3>I-bar 的禁忌症</h3>
+<table>
+<tr><th>禁忌</th><th>原因</th></tr>
+<tr><td class="td-r">深軟組織倒凹</td><td>I-bar 從下方進入，軟組織倒凹會卡住</td></tr>
+<tr><td class="td-r">前牙高美觀需求</td><td>I-bar 在頰側可見</td></tr>
+<tr><td class="td-r">開口度受限</td><td>摘戴角度不足</td></tr>
+</table>
+
+<h2>RPI vs RPA vs RPC — 游離端卡環系統比較</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">除了 RPI，還有其他系統嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">有。RPI 是最經典的，但軟組織倒凹深的時候 I-bar 不能用，就要換成 RPA（用 Aker clasp）或 RPC（用 C-clasp）。重點是 <b>Rest 永遠在近心</b>，P（Proximal Plate）永遠要短！</div></div>
+</div>
+
+<table>
+<tr><th>系統</th><th>R</th><th>P</th><th>卡環型態</th><th>適用</th></tr>
+<tr><td class="td-b"><b>RPI</b></td><td>Mesial Rest</td><td>短 Proximal Plate</td><td><b>I-bar</b>（從下方進入）</td><td>首選！無軟組織倒凹時</td></tr>
+<tr><td class="td-b"><b>RPA</b></td><td>Mesial Rest</td><td>短 Proximal Plate</td><td><b>Aker clasp</b>（圓臂從上方繞）</td><td>有軟組織倒凹，I-bar 不可用時</td></tr>
+<tr><td class="td-b"><b>RPC</b></td><td>Mesial Rest</td><td>短 Proximal Plate</td><td><b>C-clasp</b>（反向圓臂）</td><td>特殊牙齒形態時</td></tr>
+</table>
+
+<div class="key">
+三個系統的共通點：<b>Rest 都在近心、Proximal Plate 都要短</b><br>
+差別只在第三個字母（卡環類型）：I = I-bar、A = Aker、C = C-clasp
+</div>
+
+<h2>卡環設計原則 — 倒凹深度與合金選擇</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">卡環要伸入倒凹，但伸多深？不同金屬有差嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">有！不同材質的卡環能承受的倒凹深度不同。太深會太緊（患者拿不下來），太淺又沒有固位力。</div></div>
+</div>
+
+<table>
+<tr><th>卡環材質</th><th>適用倒凹深度</th><th>特點</th></tr>
+<tr><td class="td-b"><b>Cr-Co 鑄造</b></td><td class="td-r"><b>0.25 mm</b></td><td>最硬、最不彈 → 只能進入淺倒凹</td></tr>
+<tr><td class="td-b"><b>Gold 鑄造</b></td><td><b>0.50 mm</b></td><td>中等彈性</td></tr>
+<tr><td class="td-g"><b>Wrought wire（鍛造線）</b></td><td class="td-g"><b>0.75 mm</b></td><td>最有彈性 → 可進入最深倒凹</td></tr>
+</table>
+
+<div class="mnemonic">
+<div class="title">倒凹深度記憶法</div>
+<div class="content">Cr-Co : Gold : Wire = 0.25 : 0.50 : 0.75<br>（鑄：鑄金：鍛 = 1 : 2 : 3 倍的 0.25mm）</div>
+</div>
+
+<!-- 四種常見卡環比較 -->
+<div class="diagram">
+
+<div class="caption">四種常見卡環比較</div>
+</div>
+
+<h2>Mesial Rest vs Distal Rest — 生物力學分析</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">除了 RPI 說 Rest 要放近心，還有什麼情況會放遠心？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">Class III（支持端）的圓臂卡環就是放<b>遠心</b>。因為前後都有牙齒支撐，不存在旋轉沉陷問題，遠心 Rest 反而能更好地把力量傳到支柱牙。但游離端（Class I/II）絕對要放近心！</div></div>
+</div>
+
+<table>
+<tr><th>比較項目</th><th>Mesial Rest（近心 Rest）</th><th>Distal Rest（遠心 Rest）</th></tr>
+<tr><td class="td-b"><b>適用</b></td><td class="td-g">Class I/II 游離端</td><td class="td-g">Class III 支持端</td></tr>
+<tr><td class="td-b"><b>支點線位置</b></td><td>遠離支柱牙 → 減少扭力</td><td>直接在支柱牙上</td></tr>
+<tr><td class="td-b"><b>配合卡環</b></td><td>RPI / RPA 系統</td><td>Aker（圓臂卡環）</td></tr>
+<tr><td class="td-b"><b>支柱牙受力</b></td><td>應力分散</td><td>應力集中但無旋轉問題</td></tr>
+</table>
+
+<h2>Guide Planes（引導面）的三大功能</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">支柱牙上有時候要磨出一個平面，那是做什麼的？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">那叫 <b>Guide Plane（引導面）</b>，是在支柱牙的鄰面磨出一個與插入路徑平行的光滑面。它有三個重要功能。</div></div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">1</div><div class="label">Guiding</div><div class="desc"><b>引導</b>義齒沿唯一路徑摘戴</div></div>
+<div class="v-card"><div class="big">2</div><div class="label">Bracing</div><div class="desc"><b>側向穩定</b>（抵抗側向力）</div></div>
+<div class="v-card"><div class="big">3</div><div class="label">Reciprocation</div><div class="desc"><b>對抗</b>卡環的固位力</div></div>
+</div>
+
+<div class="key">
+Guide Plane 的高度：約為牙冠高度的 <b>1/2 到 2/3</b><br>
+Guide Plane 越多、越平行 → 義齒的<b>插入路徑越確定</b>，穩定性越好
+</div>
+
+<h2>Altered Cast Technique（變更鑄模技術）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">游離端的黏膜是軟的，牙齒是硬的，同一副印模能同時精確記錄嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">好問題！這就是 <b>Altered Cast Technique</b> 的用途。先用一般印模取得有牙區域的模型，做好金屬骨架後，再用骨架上的游離端基托做<b>第二次功能性印模</b>，只取游離端黏膜的精確形態，然後把這段模型切掉重新灌模「接」上去。</div></div>
+</div>
+
+<div class="key">
+<strong>Altered Cast 適用</strong>：Kennedy Class I、Class II（游離端）<br>
+<b>目的</b>：讓游離端基托在<b>功能性壓力下</b>取模，確保義齒受力時均勻坐在黏膜上<br>
+<b>原理</b>：牙齒是硬的（不可壓縮），黏膜是軟的（可壓縮）→ 兩者需要分別取模
+</div>
+
+<h2>Stress Breaker（應力中斷裝置）</h2>
+
+<p>在義齒的支柱牙和游離端基托之間，設計一個可以微動的連接裝置，讓咬合力不直接傳到支柱牙。原理跟 Non-rigid connector 類似，但用於 RPD。</p>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 考試注意</div>
+Stress breaker 的概念已較少使用，現代觀點認為 <b>RPI 系統</b>本身就是最好的「應力中斷」設計 — mesial rest + 短板 + I-bar 的組合已經能有效分散應力。
+</div>
+
+<h2>Flexible Denture vs 傳統 RPD</h2>
+
+<table>
+<tr><th>比較</th><th>Flexible Denture（軟性義齒）</th><th>傳統金屬骨架 RPD</th></tr>
+<tr><td class="td-b"><b>材質</b></td><td>Nylon（尼龍樹脂）</td><td>Cr-Co 或 Gold 金屬</td></tr>
+<tr><td class="td-b"><b>美觀</b></td><td class="td-g">佳（牙齦色卡環）</td><td class="td-r">金屬外露</td></tr>
+<tr><td class="td-b"><b>支撐力</b></td><td class="td-r">差（軟性 → 無法有效 support）</td><td class="td-g">佳（金屬剛性好）</td></tr>
+<tr><td class="td-b"><b>適用</b></td><td>暫時性、美觀需求、過渡期</td><td>長期使用首選</td></tr>
+<tr><td class="td-b"><b>缺點</b></td><td>容易變形、骨吸收快、無法調整</td><td>美觀差、需鑄造</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 重要觀念</div>
+Flexible denture <b>不被認為是理想的長期義齒</b>。因為它缺乏剛性支撐，咬合力直接壓在黏膜上 → 加速骨吸收。國考如果問「最佳 RPD 設計」，答案永遠是金屬骨架 RPD，不是 flexible。
+</div>
+
+<h2>主連接體設計細節</h2>
+
+<table>
+<tr><th>下顎</th><th>特點</th><th>適用條件</th></tr>
+<tr><td class="td-b"><b>Lingual Bar</b></td><td>半梨形截面，離齦緣 ≥ 6mm</td><td>口底深度足夠（首選）</td></tr>
+<tr><td>Lingual Plate</td><td>延伸覆蓋前牙舌面</td><td>口底淺 / 前牙需要穩定</td></tr>
+<tr><td>Kennedy Bar（雙桿）</td><td>前後各一桿</td><td>已少用</td></tr>
+</table>
+
+<table>
+<tr><th>上顎</th><th>特點</th><th>注意事項</th></tr>
+<tr><td>Single Palatal Strap</td><td>單條橫帶，<b>寬度 ≥ 8mm</b></td><td>寬度不夠 → 剛性差</td></tr>
+<tr><td>A-P Bars（前後雙桿）</td><td>前後兩條</td><td>剛性佳，適合大範圍缺牙</td></tr>
+<tr><td class="td-r"><b>Horseshoe（U型）</b></td><td>U形，後方開放</td><td><b>剛性最差！</b>只在有 torus palatinus 時被迫使用</td></tr>
+<tr><td>Complete Palatal Coverage</td><td>全覆蓋</td><td>支柱牙少或骨吸收嚴重時</td></tr>
+</table>
+
+<div class="key">
+<b>Torus Palatinus（顎隆突）的處理：</b><br>
+如果顎隆突不大 → 在金屬骨架上做 <b>Relief（墊空）</b>，留出空間不壓迫<br>
+如果顎隆突太大影響設計 → 考慮手術切除<br>
+Horseshoe 連接體是在無法避開 torus 時的不得已選擇
+</div>
+
+<h2>間接固位體（Indirect Retainer）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">假牙後面沉下去，前面不就翹起來了嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">正是！所以我們需要一個東西壓住前面，防止翹起。這就是<b>間接固位體</b>。想像翹翹板，一端下沉，你需要在另一端坐一個人壓住。而且那個人要坐得<b>越遠越好</b>，力臂越長，壓的力量越大。</div></div>
+</div>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 國考超高頻陷阱</div>
+「間接固位體距支點線越<b>近</b>越好」→ <b>完全錯誤！</b><br>
+槓桿原理：力臂越<b>長</b> → 抵抗翹起的力越大 → 間接固位體應盡量<b>遠離</b>支點線！
+</div>
+
+<h2>主連接體（Major Connector）</h2>
+
+<p>主連接體就像假牙的「背脊」，把所有零件連在一起。</p>
+
+<table>
+<tr><th>下顎</th><th>特點</th></tr>
+<tr><td class="td-b"><b>Lingual Bar（舌側桿）</b></td><td>首選！覆蓋黏膜最少。離齦緣至少 6mm</td></tr>
+<tr><td>Lingual Plate（舌板）</td><td>口底太淺用不了舌側桿時的替代</td></tr>
+</table>
+
+<table>
+<tr><th>上顎</th><th>特點</th></tr>
+<tr><td>Single Palatal Strap</td><td>缺牙不多時，覆蓋少、舒適</td></tr>
+<tr><td>Complete Palatal Coverage</td><td>牙槽骨嚴重吸收時，最大支撐</td></tr>
+<tr><td class="td-r"><b>Horseshoe（馬蹄形）</b></td><td><b>剛性最差！</b>考題最愛問</td></tr>
+</table>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>三要素</b>：Support（↓防沉）= Rest；Retention（↑防脫）= 卡環末端 1/3；Stability（↔防位移）= 剛性臂</li>
+<li><b>RPI</b>：游離端首選。R = Mesial Rest、P = 短板、I = I-bar。Rest 在近心防支柱牙扭力</li>
+<li>RPI 不可用時：RPA（Aker clasp）或 RPC（C-clasp）— Rest 和 P 不變，只換卡環</li>
+<li><b>I-bar 禁忌</b>：深軟組織倒凹、高美觀需求、開口受限</li>
+<li>倒凹深度：Cr-Co <b>0.25mm</b>、Gold <b>0.50mm</b>、Wrought wire <b>0.75mm</b></li>
+<li>游離端 = Mesial Rest（Class I/II）；支持端 = Distal Rest（Class III）</li>
+<li><b>Guide Plane 三功能</b>：Guiding（引導）、Bracing（穩定）、Reciprocation（對抗）</li>
+<li><b>Altered Cast</b>：Class I/II 游離端用，分別取有牙區和黏膜區印模</li>
+<li><b>間接固位體</b>越遠離支點線越好（槓桿原理）</li>
+<li><b>Horseshoe</b> 是上顎主連接體中剛性最差的</li>
+<li>Palatal Strap 寬度至少 <b>8mm</b>；下顎主連接體離齦緣至少 <b>6mm</b></li>
+<li>Torus Palatinus → 金屬骨架需做 <b>Relief</b>（墊空）</li>
+<li>Flexible denture <b>非長期首選</b>，缺乏剛性支撐 → 加速骨吸收</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第四章：全口義齒 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch4">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch4)">CHAPTER 4</div>
+  <h1>沒有牙的世界</h1>
+  <div class="ch-subtitle">全口義齒 — 從印模到排牙</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">今天來了另一位患者，王奶奶，80 歲，全口無牙。RPD 需要有牙齒可以勾，但王奶奶一顆都沒有了。我們要做的是<b>全口義齒（Complete Denture）</b>。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">沒有牙齒可以卡，全口義齒靠什麼固定？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">靠三股力量：<b>吸附力</b>（唾液薄膜的表面張力）、<b>邊緣封閉</b>（義齒邊緣的密封效果）、和<b>周圍肌肉的平衡</b>。所以每一步都要非常精確。</div></div>
+</div>
+
+<h2>製作流程</h2>
+
+<div class="steps">
+<div class="step"><b>初步印模</b> → 用 Alginate 快速取概形 → 做出個別托盤（Custom tray）</div>
+<div class="step"><b>邊界鑲嵌</b>（Border Molding） → 用 Compound 一段一段調整托盤邊緣，讓患者做各種動作</div>
+<div class="step"><b>最終印模</b> → 用 ZOE paste 或矽膠精確取模 → 翻出工作模型</div>
+<div class="step"><b>決定咬合關係</b> → VD（垂直高度）+ CR（正中關係）</div>
+<div class="step"><b>排牙</b> → 在咬合器上排人工牙 → 試戴蠟型</div>
+<div class="step"><b>裝入</b> → 加工完成 → 裝戴、調整</div>
+</div>
+
+<h2>咬合垂直高度（VD）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">什麼是 VD？為什麼這麼重要？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">VD 就是上下顎之間的「高度」。想像你的臉是一台手風琴，VD 就是手風琴打開的程度。太高，嘴巴關不攏、肌肉痠痛；太低，嘴巴塌陷、說話含糊。</div></div>
+</div>
+
+<!-- VD 圖解 -->
+<div class="diagram">
+
+<div class="caption">RVD、OVD 與 Freeway Space 的關係</div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">RVD</div><div class="label">Rest Vertical Dimension</div><div class="desc">肌肉完全放鬆時的高度</div></div>
+<div class="v-card"><div class="big">OVD</div><div class="label">Occlusal VD</div><div class="desc">牙齒咬合時的高度</div></div>
+<div class="v-card"><div class="big">FWS</div><div class="label">Freeway Space</div><div class="desc">= RVD - OVD<br><b>正常 2-4 mm</b></div></div>
+</div>
+
+<div class="key"><strong>Freeway Space（自由間隙）= 2-4 mm</strong>，這是考試必背數值。<br>
+OVD 過高（FWS < 2mm）→ 牙齒撞擊、肌肉痠痛、TMD<br>
+OVD 過低（FWS > 4mm）→ 嘴唇塌陷、說話不清</div>
+
+<h2>正中關係（CR）</h2>
+
+<p><b>CR 的現代定義</b>：下顎髁突在關節窩<b>最上前方</b>的位置（superior-anterior），是可以重複找到的起始位。</p>
+
+<div class="key">
+天然牙：CR 比 CO 略後 1-2mm（不完全重合）<br>
+全口義齒的目標：<strong>CR = CO</strong>（讓正中關係和正中咬合完全一致）
+</div>
+
+<h2>支撐區域 — Primary Stress-Bearing Areas</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">全口義齒坐在黏膜上，但不是每個地方都一樣能承受力量吧？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">沒錯！義齒主要靠的支撐區叫 <b>Primary Stress-Bearing Area</b>。上下顎的主要支撐區不同，這是考試愛考的。</div></div>
+</div>
+
+<table>
+<tr><th></th><th>Primary Stress-Bearing Area</th><th>Secondary Support Area</th></tr>
+<tr><td class="td-b"><b>上顎</b></td><td class="td-g"><b>水平硬顎（Horizontal hard palate）</b><br>骨頭水平，受垂直力最佳</td><td>牙嵴頂、後顎封閉區</td></tr>
+<tr><td class="td-b"><b>下顎</b></td><td class="td-g"><b>頰側棚區（Buccal shelf）</b><br>外斜線和頰側之間的平坦區</td><td>牙嵴頂（易吸收，非主要支撐）</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 陷阱</div>
+下顎的 <b>primary stress-bearing area 不是牙嵴頂</b>！是 <b>buccal shelf</b>。<br>
+Buccal shelf 的骨頭厚、表面平坦、上方有較厚的角化黏膜。
+</div>
+
+<!-- 全口義齒邊界解剖標誌 -->
+<div class="diagram">
+
+<div class="caption">全口義齒邊界解剖標誌</div>
+</div>
+
+<h2>Neutral Zone（中性區）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">排牙的位置怎麼決定？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">人工牙要排在 <b>Neutral Zone（中性區）</b>。舌頭從裡面往外推，嘴唇和頰肌從外面往裡壓，兩股力量平衡的地方。排在這裡，肌肉不會推翻義齒。</div></div>
+</div>
+
+<div class="key">
+<strong>Neutral Zone</strong>：舌肌向外 = 頰/唇肌向內 → 平衡區<br>
+<b>Piezography</b>：利用發音或吞嚥動作，用流動性材料記錄 neutral zone 的技術
+</div>
+
+<h2>Border Molding 順序</h2>
+
+<div class="steps">
+<div class="step"><b>後頰側（Posterior buccal）</b> → 患者張嘴、咀嚼動作</div>
+<div class="step"><b>前唇側（Anterior labial）</b> → 噘嘴、拉嘴角、微笑</div>
+<div class="step"><b>舌側（Lingual，下顎）</b> → 舌頭伸出、左右移動</div>
+</div>
+
+<h2>排牙原則與平衡咬合</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">天然牙不是追求 MPO（犬齒保護咬合）嗎？全口義齒為什麼不同？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">因為全口義齒底下沒有牙根抓著骨頭，它就放在黏膜上面。如果側方運動時只有一邊碰到（像 MPO 那樣），另一邊就翹起來了！所以全口義齒要<b>平衡咬合</b> — 在所有咬合動作中，兩邊同時有接觸，義齒才穩。</div></div>
+</div>
+
+<h3>後牙人工齒的牙尖角度</h3>
+
+<table>
+<tr><th>牙尖角度</th><th>名稱</th><th>適用</th></tr>
+<tr><td class="td-b"><b>33&deg;</b></td><td>Anatomic teeth</td><td>牙嵴吸收少、穩定 → 咀嚼效率最佳</td></tr>
+<tr><td class="td-b"><b>20&deg;</b></td><td>Semi-anatomic teeth</td><td>中度吸收 → 折衷方案</td></tr>
+<tr><td class="td-r"><b>0&deg;</b></td><td>Non-anatomic / Monoplane</td><td>嚴重吸收、不穩定的嵴 → 最不易滑動</td></tr>
+</table>
+
+<div class="key">
+<b>牙嵴吸收越嚴重 → 選越平的人工牙</b>（0&deg; monoplane）<br>
+<b>牙嵴條件好 → 選有牙尖的人工牙</b>（33&deg;）
+</div>
+
+<h3>Christensen's Phenomenon 與補償曲線</h3>
+
+<p>前突運動時，後牙會出現三角形空隙（<b>Christensen's gap</b>）。解決方案：增加 <b>Compensating Curve</b>（Curve of Spee），讓後牙弧形排列 → 消除空隙 → 維持平衡咬合。</p>
+
+<!-- 全口義齒排牙原則 -->
+<div class="diagram">
+
+<div class="caption">全口義齒排牙原則</div>
+</div>
+
+<h2>Processing Errors（加工誤差）</h2>
+
+<table>
+<tr><th>問題</th><th>原因</th><th>表現</th></tr>
+<tr><td class="td-r"><b>Warpage</b></td><td>樹脂聚合收縮不均勻</td><td>義齒不密合、後牙早接觸</td></tr>
+<tr><td class="td-r"><b>VDO 增加</b></td><td>基托增厚</td><td>咬合過高 → 肌肉痠痛</td></tr>
+</table>
+
+<h2>Immediate Denture vs Conventional Denture</h2>
+
+<table>
+<tr><th>比較</th><th>Immediate Denture</th><th>Conventional Denture</th></tr>
+<tr><td class="td-b"><b>裝入時機</b></td><td>拔牙<b>當天</b></td><td>拔牙後 <b>6-8 週</b></td></tr>
+<tr><td class="td-b"><b>優點</b></td><td>不會無牙、保護傷口、維持 VD</td><td>密合度佳</td></tr>
+<tr><td class="td-b"><b>缺點</b></td><td>無法試排牙、需多次重墊</td><td>有無牙期</td></tr>
+<tr><td class="td-b"><b>後續</b></td><td>6-12 月後需 <b>Reline</b></td><td>較少需要早期重墊</td></tr>
+</table>
+
+<h2>Overdenture（覆蓋義齒）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">如果還剩幾顆殘根，要全拔嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">不一定！殘根健康的話可以保留，做 <b>Overdenture</b>。牙根留在骨頭裡好處很大。</div></div>
+</div>
+
+<div class="key">
+<strong>Overdenture 優點：</strong><br>
+1. 保留牙根 → <b>減緩牙槽骨吸收</b>（最大優點）<br>
+2. 保留本體感覺（proprioception）→ 咬合控制更好<br>
+3. 額外的 support 和 retention<br>
+<b>常用附連體</b>：Ball attachment、Locator、Bar attachment
+</div>
+
+<h2>義齒性口腔炎（Denture Stomatitis）</h2>
+
+<p>長期戴全口義齒不好好清潔，上顎黏膜會出事。罪魁禍首：<b>念珠菌（Candida albicans）</b>。</p>
+
+<table>
+<tr><th>Newton 分類</th><th>表現</th></tr>
+<tr><td class="td-b">Type I</td><td>針孔狀局部紅點（pinpoint）</td></tr>
+<tr><td class="td-b">Type II</td><td>整片均勻發紅（diffuse）</td></tr>
+<tr><td class="td-r">Type III</td><td>乳頭狀增生（papillary hyperplasia）→ 需手術切除</td></tr>
+</table>
+
+<div class="key">最重要的危險因子：<strong>夜間不摘除義齒</strong>（不是基托過度延伸！）<br>治療：清潔衛教 + 夜間摘除 + Nystatin 抗真菌 + 必要時重做義齒</div>
+
+<h2>Post Dam 與 Retromolar Pad</h2>
+
+<table>
+<tr><th>結構</th><th>位置</th><th>功能</th></tr>
+<tr><td class="td-b"><b>Post Dam</b></td><td>硬顎與軟顎交界後方 1-2 mm</td><td>上顎義齒後緣的邊緣封閉（吸住的關鍵）</td></tr>
+<tr><td class="td-b"><b>Retromolar Pad</b></td><td>下顎最後磨牙後方的脂肪墊</td><td>下顎義齒後緣的參考標誌（覆蓋前 1/2）</td></tr>
+</table>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>Freeway Space = 2-4 mm</b>（RVD - OVD）</li>
+<li>OVD 過高 → 肌肉痠痛、TMD；過低 → 嘴唇塌陷</li>
+<li>全口義齒目標：<b>CR = CO</b> + <b>平衡咬合</b>（不是 MPO）</li>
+<li>上顎 primary stress-bearing = <b>水平硬顎</b>；下顎 = <b>Buccal shelf</b>（不是牙嵴頂！）</li>
+<li>Neutral Zone：舌肌 = 頰/唇肌平衡處 → 排牙於此 → 義齒穩定</li>
+<li>Border molding 順序：<b>後頰側 → 前唇側 → 舌側</b></li>
+<li>後牙牙尖：嵴好用 <b>33&deg;</b>、嵴差用 <b>0&deg; monoplane</b></li>
+<li>Christensen's gap → 用 <b>Compensating Curve</b> 消除</li>
+<li>Processing error：Warpage → 後牙早接觸；VDO 增加</li>
+<li>Immediate denture → 拔牙當天裝入，6-12 月後需 <b>Reline</b></li>
+<li>Overdenture 最大優點 = <b>減緩牙槽骨吸收</b></li>
+<li>邊界鑲嵌用 <b>Compound</b>，最終印模用 <b>ZOE paste</b></li>
+<li>Denture Stomatitis：念珠菌感染，Newton 三型，最大危險因子 = <b>夜間不摘除</b></li>
+<li>Post Dam 位於硬軟顎交界後 <b>1-2 mm</b></li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第五章：固定補綴 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch5">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch5)">CHAPTER 5</div>
+  <h1>固定的藝術</h1>
+  <div class="ch-subtitle">牙冠預備、Pontic、黏合劑</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明左邊缺的那顆牙，前後都有健康的牙齒。這種情況最適合做<b>固定牙橋（FPD）</b>— 磨兩邊的牙齒做牙冠，中間接一顆假牙橋體。不用摘戴，跟真牙一樣。</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">磨牙齒要磨多少？有什麼原則？</div></div>
+</div>
+
+<h2>牙冠預備的關鍵數值</h2>
+
+<div class="visual">
+<div class="v-card"><div class="big">6&deg;</div><div class="label">Taper（錐度）</div><div class="desc">理想單側傾斜角<br>最大 12&deg;</div></div>
+<div class="v-card"><div class="big">3.5-4mm</div><div class="label">軸壁高度</div><div class="desc">後牙固位最小要求</div></div>
+<div class="v-card"><div class="big">20-40&mu;m</div><div class="label">Die Spacer</div><div class="desc">Cement space 的來源</div></div>
+</div>
+
+<!-- Taper 圖解 -->
+<div class="diagram">
+
+<div class="caption">牙冠修磨錐度比較</div>
+</div>
+
+<div class="analogy">
+<div class="analogy-title">比喻：磨牙就像削鉛筆</div>
+把牙齒想成一支鉛筆。你要把它削成稍微有錐度的圓柱，好讓「牙冠帽子」套上去。<br>
+<b>削太尖</b>（taper 太大）→ 帽子容易滑掉（固位差）<br>
+<b>削太直</b>（taper 太小）→ 帽子套不上去<br>
+理想的削法是每邊 <b>6 度</b>，兩邊加起來共 12 度的收斂角。
+</div>
+
+<h2>邊界設計（Margin Design）</h2>
+
+<!-- Margin Design 截面圖 -->
+<div class="diagram">
+
+<div class="caption">四種 Margin Design 截面比較</div>
+</div>
+
+<table>
+<tr><th>類型</th><th>形狀</th><th>用在哪裡</th></tr>
+<tr><td class="td-r"><b>Feather edge</b></td><td>最薄的刀鋒</td><td>應避免！最易 <b>overcontouring</b></td></tr>
+<tr><td class="td-g"><b>Chamfer</b></td><td>圓弧凹入</td><td>金屬冠、PFM 舌側 → <b>最常用</b></td></tr>
+<tr><td class="td-b"><b>Shoulder</b></td><td>垂直平台</td><td>全瓷冠頰側（需要厚度支撐陶瓷）</td></tr>
+<tr><td>Shoulder + Bevel</td><td>肩台加斜面</td><td>PFM 金屬頰側，提供 burnish 空間</td></tr>
+</table>
+
+<h2>Ante's Law — 牙橋設計的根基</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">怎麼知道兩邊的牙齒撐不撐得住這座橋？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">用 <b>Ante's Law</b>：支柱牙的牙周膜面積加起來，要大於或等於被取代牙齒的牙周膜面積加起來。</div></div>
+</div>
+
+<div class="key">
+<strong>Ante's Law 計算範例：</strong><br>
+缺 #5（牙根面積 179 mm&sup2;）→ 需要 #4（195 mm&sup2;）+ #6（431 mm&sup2;）= 626 mm&sup2;<br>
+626 &gt; 179 → <b>合格</b>，可以做三單位牙橋<br><br>
+但如果支柱牙有 30% 骨喪失 → 有效面積只剩 70%：626 &times; 0.7 = 438 mm&sup2;<br>
+仍然 &gt; 179 → 仍可做，但要注意牙周維護
+</div>
+
+<!-- 固定義齒（牙橋）組成 -->
+<div class="diagram">
+
+<div class="caption">固定義齒（牙橋）組成</div>
+</div>
+
+<h2>Fixed-Fixed vs Fixed-Movable Bridge</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">牙橋的兩端都一定要用全冠固定嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">不一定。有幾種設計。</div></div>
+</div>
+
+<table>
+<tr><th>設計</th><th>特點</th><th>適用</th></tr>
+<tr><td class="td-g"><b>Fixed-fixed</b></td><td>兩端都是<b>剛性連接</b>（全冠 retainer）</td><td>標準設計，最常用</td></tr>
+<tr><td class="td-b"><b>Fixed-movable</b></td><td>一端剛性、一端 <b>non-rigid connector</b>（key-keyway）</td><td>兩端支柱牙牙周條件不對等；Pier abutment</td></tr>
+<tr><td class="td-r"><b>Cantilever</b></td><td>只有<b>一端</b>有支柱牙，另一端懸空</td><td>缺一顆牙但只有單側可做支柱、前牙缺</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; Cantilever 注意</div>
+Cantilever bridge 只有一端支撐，另一端懸空 → 產生<b>力矩（lever effect）</b><br>
+只適合<b>短跨距（1 顆 pontic）</b>且支柱牙條件好的情況。<br>
+Cantilever 用在下顎前牙最安全（咬合力小）。
+</div>
+
+<h2>Connector Design — 連接體的最小尺寸</h2>
+
+<table>
+<tr><th>材料</th><th>最小高度</th><th>最小寬度</th><th>備註</th></tr>
+<tr><td class="td-b"><b>PFM（金屬 + 陶瓷）</b></td><td><b>3 mm</b></td><td><b>2 mm</b></td><td>金屬核心需足夠厚度防彎曲</td></tr>
+<tr><td class="td-b"><b>All-ceramic（全瓷）</b></td><td><b>4 mm</b></td><td><b>4 mm</b></td><td>陶瓷脆性大 → 需要更大截面</td></tr>
+<tr><td class="td-b"><b>Metal（全金屬）</b></td><td>2.5 mm</td><td>2 mm</td><td>強度最佳</td></tr>
+</table>
+
+<div class="key">
+<b>Connector 斷裂是牙橋失敗的常見原因之一</b>。<br>
+全瓷牙橋的 connector 尺寸要比 PFM 大 → 4&times;4mm 是最低要求。<br>
+如果空間不足 → 不適合做全瓷牙橋，改用 PFM 或金屬。
+</div>
+
+<h2>影響固位力的因素</h2>
+
+<p>牙冠做好了，靠什麼黏住不掉？影響固位的因素很多：</p>
+<table>
+<tr><th>因素</th><th>原則</th></tr>
+<tr><td>Taper 角度</td><td>越<b>小</b>越好固位</td></tr>
+<tr><td>軸壁高度</td><td>越<b>高</b>越好固位（最重要因素之一）</td></tr>
+<tr><td>表面積</td><td>越<b>大</b>越好固位</td></tr>
+<tr><td>Cement 厚度</td><td>越<b>薄</b>越好固位（< 50 &mu;m）</td></tr>
+<tr><td>Retention groove</td><td>通常加在<b>近心</b>側</td></tr>
+</table>
+
+<h2>FPD 失敗模式</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">牙橋最常見的失敗原因是什麼？斷裂嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">不是！最常見的失敗原因是<b>次發性齲齒（secondary caries）</b>。牙冠邊緣密合度不好或口腔衛生不佳 → 蛀牙從邊緣鑽進去 → 支柱牙壞掉。</div></div>
+</div>
+
+<table>
+<tr><th>排名</th><th>失敗原因</th><th>預防</th></tr>
+<tr><td class="td-r"><b>1</b></td><td><b>Secondary caries（次發性齲齒）</b></td><td>邊緣密合、口腔衛生、定期回診</td></tr>
+<tr><td>2</td><td>牙髓壞死（Pulp necrosis）</td><td>預備時注意冷卻、保留足夠齒質</td></tr>
+<tr><td>3</td><td>Cement 失敗 / 脫落</td><td>正確固位設計、適當 cement 選擇</td></tr>
+<tr><td>4</td><td>陶瓷破裂（Porcelain fracture）</td><td>足夠 connector 尺寸、適當咬合</td></tr>
+<tr><td>5</td><td>牙周病惡化</td><td>術前評估 + 長期牙周維護</td></tr>
+</table>
+
+<h2>Maryland Bridge（Resin-Bonded FPD）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">有沒有不用磨那麼多牙齒的牙橋？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">有！<b>Maryland Bridge</b> 只需要在支柱牙的舌面做極少量的磨牙，用金屬翼片黏在後面。保守但固位力有限。</div></div>
+</div>
+
+<table>
+<tr><th>項目</th><th>Maryland Bridge（Resin-Bonded FPD）</th></tr>
+<tr><td class="td-b"><b>適應症</b></td><td>前牙單顆缺牙、年輕人牙髓腔大不宜大量磨牙</td></tr>
+<tr><td class="td-b"><b>預備方式</b></td><td>只磨支柱牙舌面（minimal prep）</td></tr>
+<tr><td class="td-b"><b>固位方式</b></td><td>金屬或氧化鋯翼片，用 <b>Resin Cement</b> 黏合</td></tr>
+<tr><td class="td-r"><b>最大問題</b></td><td><b>Debonding（脫黏）</b> — 脫落率比傳統 FPD 高</td></tr>
+<tr><td class="td-b"><b>設計原則</b></td><td>翼片不能超過接近線 → 否則 path of insertion 困難</td></tr>
+</table>
+
+<div class="key">
+Maryland bridge 失敗最常見原因 = <b>Debonding</b>（脫黏）<br>
+解決方法：金屬表面做 <b>electrochemical etching</b> 或 <b>sandblasting</b> 增加粗糙度
+</div>
+
+<h2>Ferrule Effect（箍效應）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">做過根管的牙齒要打釘子（post），上面再做牙冠。有什麼要特別注意的？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">最重要的一個觀念就是 <b>Ferrule Effect</b>。牙冠的邊緣要能抱住至少 <b>1.5-2mm</b> 的<b>健康牙齒齒質</b>（在 finish line 上方），像一個箍圈一樣把牙齒箍住。如果沒有 ferrule，post-core 受力時牙根容易裂開。</div></div>
+</div>
+
+<div class="key">
+<strong>Ferrule Effect</strong>：牙冠邊緣上方需有 ≥ <b>1.5-2mm</b> 的 sound dentin<br>
+Ferrule 不足 → 考慮 <b>Crown Lengthening（牙冠延長術）</b> 或 <b>Orthodontic Extrusion（矯正拉出）</b><br>
+沒有 ferrule 的 post-core crown → <b>根裂風險極高</b>
+</div>
+
+<h2>Provisional Restoration（臨時修復體）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">牙齒磨好到做好正式牙冠之間，要做臨時冠嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">一定要！臨時冠有四個重要功能。</div></div>
+</div>
+
+<table>
+<tr><th>功能</th><th>說明</th></tr>
+<tr><td class="td-b"><b>牙髓保護</b></td><td>覆蓋暴露的牙本質 → 防止溫度刺激和細菌入侵</td></tr>
+<tr><td class="td-b"><b>邊緣完整</b></td><td>維持 finish line 周圍牙齦健康 → 正式取模時牙齦不腫</td></tr>
+<tr><td class="td-b"><b>咬合穩定</b></td><td>防止對咬牙過度萌發、鄰牙傾斜</td></tr>
+<tr><td class="td-b"><b>美觀+功能</b></td><td>前牙區維持美觀，後牙區維持咀嚼</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 臨時冠的陷阱</div>
+臨時冠如果用 <b>ZOE cement</b> 黏著 → 之後要換 <b>Resin cement</b> 永久黏著前，<b>必須徹底清除 ZOE</b>！<br>
+建議換永久冠前 7-10 天回診，改用非 ZOE 類臨時黏合劑。
+</div>
+
+<h2>Implant vs FPD — 選擇標準</h2>
+
+<table>
+<tr><th>考量</th><th>選 Implant</th><th>選 FPD</th></tr>
+<tr><td class="td-b">鄰牙狀態</td><td>鄰牙完整健康（<b>不想磨牙</b>）</td><td>鄰牙已需做牙冠（順便做支柱）</td></tr>
+<tr><td class="td-b">骨量</td><td>骨量充足</td><td>骨量不足不願補骨</td></tr>
+<tr><td class="td-b">全身健康</td><td>可接受手術</td><td>不宜手術（未控制糖尿病、放療後）</td></tr>
+<tr><td class="td-b">時間</td><td>願等 3-6 個月骨整合</td><td>希望快速完成</td></tr>
+<tr><td class="td-b">費用</td><td>較高</td><td>較低</td></tr>
+</table>
+
+<h2>橋體（Pontic）設計</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">中間那顆假牙（橋體）底部跟牙肉的關係是什麼？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">這是設計的關鍵！底部接觸方式不同，清潔和美觀差很多。</div></div>
+</div>
+
+<!-- Pontic 設計圖解 -->
+<div class="diagram">
+<img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/f589/6089067/e25af3b569c9/EJD-12-375-g001.jpg" alt="Pontic Designs" style="max-width:100%;border-radius:12px">
+<div class="caption">五種 Pontic 設計截面比較</div>
+</div>
+
+<table>
+<tr><th>類型</th><th>接觸方式</th><th>特色</th></tr>
+<tr><td class="td-b">Sanitary</td><td>完全不接觸黏膜</td><td>最好清潔，但不美觀 → <b>下顎後牙</b>首選</td></tr>
+<tr><td class="td-g">Modified Ridge Lap</td><td>只接觸頰側，舌側開放</td><td>美觀+清潔折衷 → <b>前牙區最常用</b></td></tr>
+<tr><td class="td-r">Ridge Lap</td><td>頰舌兩側都包覆</td><td>清潔死角 → <b>幾乎不再使用</b></td></tr>
+<tr><td>Ovate</td><td>伸入拔牙位凹陷</td><td>最自然的齦緣，但需手術預備</td></tr>
+</table>
+
+<h2>Pier Abutment 問題</h2>
+
+<p>如果做一座五顆牙的長橋（例如 #2-#4-#6），中間 #4 就是 <b>Pier Abutment</b>。問題是：兩端咬合力不平衡，以 #4 為支點，一端翹起→黏合劑脫落。</p>
+
+<div class="key">
+解決方案：<b>Non-rigid connector（非剛性連接體）</b><br>
+在 Pier 的<strong>遠心側</strong>（distal）設一個可以微動的 key-keyway 接頭。<br>
+放遠心 = 正確 / 放近心 = 錯誤。
+</div>
+
+<h2>黏合劑（Cement）</h2>
+
+<table>
+<tr><th>種類</th><th>特點</th><th>固位力排名</th><th>注意</th></tr>
+<tr><td class="td-b">Zinc Phosphate</td><td>傳統首選，歷史最久</td><td>中高</td><td>酸性強，刺激牙髓；<b>機械性固位</b></td></tr>
+<tr><td>GIC</td><td>釋放氟，化學鍵結牙齒</td><td>中</td><td>溶解性較高、強度較低</td></tr>
+<tr><td>RMGIC</td><td>GIC + 樹脂，強度提升</td><td>中高</td><td>操作較 GIC 方便</td></tr>
+<tr><td class="td-g"><b>Resin Cement</b></td><td><b>固位力最強</b>，不溶於唾液</td><td class="td-g"><b>最高</b></td><td>全瓷冠必用；移除困難</td></tr>
+<tr><td class="td-r">ZOE</td><td>舒緩牙髓，<b>臨時黏著</b></td><td>最低</td><td>丁香油<b>抑制 Resin 聚合</b>！</td></tr>
+</table>
+
+<div class="key">
+<b>Luting vs Bonding 的區別：</b><br>
+<b>Luting（黏合）</b>：Zinc Phosphate、GIC → 靠機械鎖定（mechanical retention）<br>
+<b>Bonding（鍵結）</b>：Resin Cement → 靠化學鍵結 + 微機械鎖定 → 固位力最強<br>
+全瓷冠因為<b>不能做固位溝</b>（脆性材料），所以必須用 bonding（Resin cement）
+</div>
+
+<!-- 牙科黏著劑比較 -->
+<div class="diagram">
+
+<div class="caption">牙科黏著劑比較</div>
+</div>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 重要陷阱</div>
+臨時冠如果用了 ZOE cement → 換永久 Resin cement 之前，<b>必須徹底清除 ZOE 殘留</b>，否則 Resin 聚合不完全！<br>
+Frozen Slab Technique：在冰冷玻璃板上調 Zinc Phosphate cement → <b>延長 Working time，但 Setting time 不變</b>。
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>Taper 理想 <b>6&deg;</b>，軸壁高度 <b>&ge; 3.5-4mm</b></li>
+<li><b>Ante's Law</b>：支柱牙牙周膜面積 ≥ 被取代牙牙周膜面積</li>
+<li>Fixed-fixed（標準）、Fixed-movable（不對等支柱）、Cantilever（懸臂，限 1 pontic）</li>
+<li>Connector 最小尺寸：PFM <b>3&times;2mm</b>；All-ceramic <b>4&times;4mm</b></li>
+<li>FPD 最常見失敗原因 = <b>Secondary caries</b>（次發性齲齒，不是斷裂！）</li>
+<li>Feather edge 最易 <b>overcontouring</b>，Chamfer <b>最常用</b></li>
+<li>Die spacer <b>20-40 &mu;m</b>，離 margin <b>1mm</b> 上方才塗</li>
+<li>前牙 Pontic 首選 <b>Modified Ridge Lap</b>，後牙首選 <b>Sanitary</b></li>
+<li>Pier Abutment 的 Non-rigid connector 放在 <b>Pier 遠心側</b></li>
+<li>Maryland bridge 最常失敗原因 = <b>Debonding</b></li>
+<li><b>Ferrule Effect</b>：finish line 上方需 ≥ <b>1.5-2mm</b> 健康齒質</li>
+<li>臨時冠四大功能：牙髓保護、邊緣完整、咬合穩定、美觀</li>
+<li>ZOE 的丁香油<b>抑制 Resin 聚合</b> → 永久黏著前必須清除</li>
+<li>Resin Cement 固位力最強 → 全瓷冠必用（bonding 非 luting）</li>
+<li>Frozen Slab → <b>延長 Working time，Setting time 不變</b></li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第六章：材料 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch6">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch6)">CHAPTER 6</div>
+  <h1>材料的秘密</h1>
+  <div class="ch-subtitle">印模材、石膏、合金、陶瓷、包埋鑄造</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">前面一直提到各種印模材料，到底差在哪裡？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">印模材就像相機 — 有手機相機（Alginate，方便但畫質普通），也有專業相機（Addition Silicone，精確但貴）。重點是：每種材料都有自己的「個性」和「地雷」。</div></div>
+</div>
+
+<h2>五大彈性印模材</h2>
+
+<table>
+<tr><th>材料</th><th>精確度</th><th>穩定性</th><th>Working Time</th><th>副產物</th><th>地雷</th></tr>
+<tr><td class="td-b"><b>Alginate</b></td><td>低</td><td class="td-r">差</td><td>2-3 min</td><td>水</td><td>取完要<b>立即灌模</b></td></tr>
+<tr><td class="td-b"><b>Polyether</b></td><td class="td-g">最高</td><td class="td-g">好</td><td>2 min（最短）</td><td>無</td><td>親水性 &rarr; <b>吸水膨脹</b>，別泡水！硬 &rarr; 倒凹多時難取出</td></tr>
+<tr><td class="td-b"><b>Addition Silicone</b></td><td class="td-g">最高</td><td class="td-g">最佳</td><td>3-5 min</td><td class="td-r">氫氣</td><td>乳膠手套的<b>硫</b>抑制聚合！灌模前等 <b>&gt;30 分鐘</b>排氫氣</td></tr>
+<tr><td class="td-b"><b>Condensation Silicone</b></td><td>中</td><td class="td-r">差</td><td>5-10 min</td><td class="td-r">酒精</td><td>酒精揮發&rarr;收縮，1hr 內灌模</td></tr>
+<tr><td class="td-b"><b>Polysulfide</b><br>（橡膠基底）</td><td>中高</td><td class="td-r">差</td><td class="td-g">最長</td><td class="td-r">水</td><td><b>最臭</b>（硫味）、最大永久變形、尺寸穩定性最差</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; Addition Silicone 的兩大地雷</div>
+1. <b>乳膠手套含硫</b> &rarr; 接觸到矽膠表面會軟化不硬化 &rarr; 必須改用 vinyl 或 nitrile 手套<br>
+2. <b>副產物氫氣</b> &rarr; 剛取完印模內有氣泡 &rarr; 灌模前等 30 分鐘以上
+</div>
+
+<div class="key">
+<b>Polysulfide（橡膠基底）考試辨認點：</b><br>
+Working time <b>最長</b>（好處：全口義齒有足夠操作時間）<br>
+但永久變形最大、尺寸穩定性最差、<b>味道最臭</b>（硫化物味）<br>
+副產物是水 &rarr; 和 Condensation Silicone（酒精）不同！
+</div>
+
+<!-- 三種印模技術比較 -->
+<div class="diagram">
+
+<div class="caption">三種印模技術比較</div>
+</div>
+
+<div class="mnemonic">
+<div class="title">精確度排名記憶法</div>
+<div class="content">Addition Silicone = Polyether &gt; Condensation &gt; Polysulfide &gt; Alginate<br>（加聚 = 聚醚 &gt; 縮聚 &gt; 橡膠 &gt; 藻）</div>
+</div>
+
+<h3>Wetting（潤濕性）&amp; Contact Angle（接觸角）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">灌石膏的時候，有的印模材很容易灌、有的一直有氣泡，為什麼？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">關鍵是 <b>Contact Angle（接觸角）</b>。接觸角越小，材料越「親水」，石膏漿越容易流入細節。</div></div>
+</div>
+
+<table>
+<tr><th>材料</th><th>親水性</th><th>Contact Angle</th><th>灌模品質</th></tr>
+<tr><td class="td-b">Polyether</td><td class="td-g">最親水</td><td class="td-g">最小</td><td class="td-g">最好（但別泡水！）</td></tr>
+<tr><td class="td-b">Addition Silicone</td><td>本質疏水</td><td>中</td><td>需加 surfactant 改善</td></tr>
+<tr><td class="td-b">Polysulfide</td><td>中</td><td>中</td><td>尚可</td></tr>
+<tr><td class="td-b">Condensation Silicone</td><td class="td-r">疏水</td><td class="td-r">大</td><td class="td-r">較差</td></tr>
+</table>
+
+<div class="key">
+<b>Contact angle 小 = 親水 = wetting 好 = 灌出來的模型細節好。</b><br>
+Addition Silicone 本身是疏水性材料，但現代產品加了 surfactant &rarr; 變成「親水性加聚矽膠」。
+</div>
+
+<h3>Agar-Alginate 聯合印模（Laminate Technique）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">可逆膠體（Agar）不是已經淘汰了嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">單獨用確實少了，但 <b>Agar-Alginate Laminate Technique</b> 還會考。原理是：用精確的 Agar 做齒質面的精密印模，外面包 Alginate 當支架 — 兩者是同類膠體，接面可以化學結合。</div></div>
+</div>
+
+<div class="key">
+<b>Agar（可逆膠體）</b>：加熱液化 &rarr; 冷卻固化 &rarr; 可重複使用<br>
+<b>Alginate（不可逆膠體）</b>：化學反應固化 &rarr; 不可逆<br>
+Laminate 聯合印模：Agar（精密層）+ Alginate（外層）&rarr; 兩者都是 hydrocolloid &rarr; <b>可化學鍵結</b>
+</div>
+
+<h2>Gypsum Products（石膏製品）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">石膏不就是灌模用的白色粉末嗎？還分這麼多型？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">石膏有五個 Type，強度和膨脹率不同，用途天差地別。搞混了，做出來的假牙就不合。</div></div>
+</div>
+
+<table>
+<tr><th>Type</th><th>名稱</th><th>強度</th><th>膨脹率</th><th>用途</th></tr>
+<tr><td class="td-b">I</td><td>Impression plaster</td><td>最低</td><td>最高</td><td>印模（已少用）</td></tr>
+<tr><td class="td-b">II</td><td>Model plaster</td><td>低</td><td>高</td><td>初模、對咬模型</td></tr>
+<tr><td class="td-b">III</td><td>Dental stone</td><td>中</td><td>中</td><td>工作模型</td></tr>
+<tr><td class="td-g"><b>IV</b></td><td><b>Die stone</b></td><td class="td-g">高</td><td class="td-g">低</td><td><b>精密 Die（最常用！）</b></td></tr>
+<tr><td class="td-b">V</td><td>High-strength die stone</td><td class="td-g">最高</td><td>更高（加膨脹劑）</td><td>需高強度的 Die</td></tr>
+</table>
+
+<div class="key">
+<b>Type IV（Die stone）是做精密 die 最常用的：</b>強度高、膨脹率低。<br>
+<b>Type V</b> 比 IV 更強，但膨脹率反而比 IV <b>高</b>（加了膨脹劑補償金屬鑄造收縮）。<br>
+W/P ratio 越低 &rarr; 強度越高、膨脹越小。
+</div>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 石膏考試陷阱</div>
+Type V 的膨脹比 Type IV 高 — 不是因為品質差，而是<b>故意加膨脹劑</b>來補償合金鑄造的收縮。<br>
+考試常問「哪個膨脹最小」&rarr; 答案是 <b>Type IV</b>。
+</div>
+
+<h2>合金分類（Alloy Classification）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">做假牙的金屬有金的、銀的、還有灰色的，怎麼分？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">ADA 按貴金屬含量分三大類。記住兩個門檻數字：<b>60%</b> 和 <b>25%</b>。</div></div>
+</div>
+
+<table>
+<tr><th>分類</th><th>貴金屬含量</th><th>Au 含量</th><th>範例</th></tr>
+<tr><td class="td-g"><b>High Noble</b></td><td>&ge; 60% noble metals</td><td class="td-g"><b>&ge; 40% Au</b></td><td>Type III/IV gold alloy</td></tr>
+<tr><td class="td-b"><b>Noble</b></td><td>&ge; 25% noble metals</td><td>不限</td><td>Pd-Ag、Au-Pd</td></tr>
+<tr><td class="td-r"><b>Base Metal</b></td><td>&lt; 25% noble metals</td><td>極少或無</td><td>Ni-Cr、Co-Cr</td></tr>
+</table>
+
+<div class="key">
+<b>Noble metals</b> = Au、Pt、Pd、Ir、Rh、Ru、Os<br>
+<b>High Noble 的兩個條件都要滿足：</b>noble &ge; 60% <b>且</b> Au &ge; 40%<br>
+Base metal 用於 PFM framework（便宜但要注意鎳過敏）
+</div>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 鎳過敏</div>
+Ni-Cr 合金中的 <b>Ni（鎳）</b>是最常見的金屬過敏原。<br>
+有鎳過敏史的患者 &rarr; 禁用 Ni-Cr 合金 &rarr; 改用 <b>High noble</b> 或 <b>Co-Cr</b>（含鎳極少）或<b>全瓷</b>。
+</div>
+
+<h2>陶瓷材料</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">PFM、全瓷冠、Zirconia，到底怎麼分？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">想像建築：PFM 是鋼骨結構外面貼瓷磚，全瓷是整棟都用玻璃蓋，Zirconia 是用超級硬的人造鑽石做結構。</div></div>
+</div>
+
+<table>
+<tr><th>材料</th><th>強度</th><th>美觀</th><th>適用</th></tr>
+<tr><td>Feldspathic（長石質）</td><td>低</td><td class="td-g">最佳</td><td>前牙貼面</td></tr>
+<tr><td>Leucite（IPS Empress）</td><td>中</td><td>佳</td><td>前牙單冠</td></tr>
+<tr><td class="td-g"><b>Lithium Disilicate（e.max）</b></td><td>中高</td><td>佳</td><td>前後牙單冠、短橋</td></tr>
+<tr><td class="td-b"><b>Zirconia</b></td><td class="td-g">最高</td><td>傳統較差</td><td>後牙冠橋、全口重建</td></tr>
+</table>
+
+<div class="key">
+<b>Zirconia 為什麼這麼強？</b> — Stress-Induced Phase Transformation（應力誘發相轉換）<br>
+裂縫尖端有應力 &rarr; 四方晶轉為單斜晶 &rarr; 體積<b>膨脹</b> &rarr; <b>壓縮裂縫</b> &rarr; 裂縫停止擴展 &rarr; 自我強化！
+</div>
+
+<h3>PFM 關鍵數值 &amp; 燒瓷順序</h3>
+<table>
+<tr><td class="td-b">燒附前焊溫度</td><td>1110-1127&deg;C</td></tr>
+<tr><td class="td-b">燒附後焊溫度</td><td>710-743&deg;C</td></tr>
+<tr><td class="td-b">燒結體積收縮</td><td>&gt; 20%</td></tr>
+<tr><td class="td-b">Metal coping 表面</td><td>要<b>光滑</b>（增加 wetting，利於瓷結合）</td></tr>
+</table>
+
+<h3>Porcelain Firing Sequence（燒瓷順序）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">PFM 的瓷是一次燒上去的嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">不是！要分層燒，每一層有不同功能。順序很重要，考試愛考。</div></div>
+</div>
+
+<div class="steps">
+<div class="step"><b>Opaque layer</b>（遮色層）— 遮蓋金屬色、建立瓷金結合（最關鍵的一層！）</div>
+<div class="step"><b>Body / Dentin porcelain</b>（牙本質層）— 提供主色調和體積</div>
+<div class="step"><b>Incisal / Enamel porcelain</b>（切端/釉質層）— 提供透明感</div>
+<div class="step"><b>Glaze</b>（釉燒）— 表面光滑、封閉氣孔、增加美觀</div>
+</div>
+
+<div class="key">
+<b>每次燒瓷溫度依序降低</b>（Opaque 最高 &rarr; Glaze 最低）<br>
+&rarr; 避免後燒的高溫破壞前面已燒好的層次。<br>
+<b>Opaque 層最重要</b>：決定瓷金結合強度 + 遮色效果。
+</div>
+
+<h3>PFM 熱膨脹係數（CTE）匹配</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">金屬和瓷的熱膨脹不一樣，不會裂開嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">問得好！關鍵是金屬的 CTE 必須<b>略高於</b>陶瓷。這樣冷卻時金屬收縮多一點，把陶瓷「抱緊」，陶瓷處於壓縮狀態 &rarr; 壓縮力讓陶瓷更強！</div></div>
+</div>
+
+<div class="key">
+<b>CTE 規則（必背！）：</b><br>
+Metal CTE <b>略高於</b> Porcelain CTE &rarr; 冷卻時金屬收縮稍多 &rarr; 陶瓷受<b>壓縮應力</b> &rarr; 增強<br>
+如果 Metal CTE &lt; Porcelain CTE &rarr; 陶瓷受<b>張力</b> &rarr; <b>裂瓷！</b><br>
+如果兩者差太大 &rarr; 也會裂（應力過大）<br>
+「略高」才是完美匹配。
+</div>
+
+<h3>Adhesive vs Cohesive Failure（黏著失敗 vs 內聚失敗）</h3>
+
+<table>
+<tr><th>失敗類型</th><th>斷裂位置</th><th>臨床意義</th></tr>
+<tr><td class="td-b"><b>Adhesive failure</b></td><td>在<b>界面</b>斷裂（瓷和金屬之間）</td><td>結合力不足 &rarr; 可能是 opaque 層問題、表面汙染、CTE 不匹配</td></tr>
+<tr><td class="td-b"><b>Cohesive failure</b></td><td>在<b>材料本身</b>內部斷裂</td><td>結合力強於材料本身 &rarr; 理想黏著（但可能材料太薄或受過大外力）</td></tr>
+</table>
+
+<div class="key">
+<b>Cohesive failure 反而代表結合良好</b> — 因為黏合界面比材料本身更強。<br>
+PFM 的裂瓷如果是 cohesive failure（瓷本身碎裂）&rarr; 瓷太薄或咬合力太大。<br>
+如果是 adhesive failure（金屬面乾淨露出）&rarr; 瓷金結合有問題。
+</div>
+
+<h3>Law of Beams（梁定律）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">老師，FPD pontic 為什麼太長會斷？有數學公式嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">有！就是 Law of Beams。這條公式告訴你，<b>長度影響最大</b>，而且是三次方！</div></div>
+</div>
+
+<div class="key">
+<b>Deflection &prop; L&sup3; / (W &times; T&sup3;)</b><br><br>
+L = 長度（Pontic span）&rarr; 影響最大！<b>長度加倍 &rarr; 撓度變 8 倍</b><br>
+W = 寬度 &rarr; 加寬可減少撓度（線性關係）<br>
+T = 厚度 &rarr; 影響第二大！<b>厚度加倍 &rarr; 撓度變 1/8</b><br><br>
+臨床意義：Pontic 不能太長、connector 要夠厚 &rarr; 寧可增加 abutment 也不要做太長的橋體。
+</div>
+
+<h2>包埋材料 &amp; 鑄造膨脹</h2>
+
+<table>
+<tr><th>種類</th><th>結合劑</th><th>適用</th><th>耐熱</th></tr>
+<tr><td class="td-b"><b>Gypsum-bonded</b>（石膏結合型）</td><td>石膏</td><td>金合金（低熔點）</td><td>&lt; 700&deg;C</td></tr>
+<tr><td class="td-b"><b>Phosphate-bonded</b>（磷酸鹽結合型）</td><td>MgO + NH&#8324;H&#8322;PO&#8324;</td><td>Ni-Cr、Co-Cr、PFM（高熔點）</td><td>&gt; 700&deg;C</td></tr>
+</table>
+
+<h3>鑄造三大膨脹（補償蠟型收縮）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">蠟型燒掉之後，金屬冷卻會收縮，怎麼補償？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">靠包埋材的三種膨脹來補償！每一種的控制方式不同。</div></div>
+</div>
+
+<table>
+<tr><th>膨脹類型</th><th>原理</th><th>控制方式</th></tr>
+<tr><td class="td-b"><b>Setting expansion</b>（硬化膨脹）</td><td>包埋材硬化時結晶膨脹</td><td>W/P ratio（水粉比）</td></tr>
+<tr><td class="td-b"><b>Hygroscopic expansion</b>（吸水膨脹）</td><td>硬化過程中接觸水 &rarr; 額外膨脹</td><td>水浴法 &rarr; <b>Gypsum-bonded 專用</b></td></tr>
+<tr><td class="td-b"><b>Thermal expansion</b>（熱膨脹）</td><td>加熱燒蠟時受熱膨脹</td><td>最終加熱溫度</td></tr>
+</table>
+
+<div class="key">
+<b>Hygroscopic expansion 只用於 Gypsum-bonded investment</b>（因為石膏結合型的 thermal expansion 不夠大）。<br>
+<b>Phosphate-bonded investment</b> 靠 thermal expansion 就足夠補償，<b>不用</b>吸水膨脹。<br>
+<b>Ringless technique</b>：不用金屬鑄造環 &rarr; 膨脹量更大（不受環限制）&rarr; 適合高熔點合金。
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li>Addition Silicone：<b>乳膠手套含硫 = 禁忌</b>，灌模前等 <b>30 分鐘</b>排氫氣</li>
+<li>Polyether：親水性最佳但<b>不能泡水</b>（吸水膨脹）；contact angle <b>最小</b></li>
+<li>Polysulfide：working time <b>最長</b>、味道最臭、尺寸穩定性最差</li>
+<li>Agar-Alginate laminate technique：同為膠體可<b>化學結合</b></li>
+<li>石膏 Type IV（Die stone）：做 die 最常用、膨脹率<b>最低</b>；Type V 膨脹反而較高</li>
+<li>合金分類：High noble = noble &ge;60% <b>且</b> Au &ge;40%；Noble = noble &ge;25%</li>
+<li>Zirconia 強度高的原因：<b>應力誘發相轉換</b>（tetragonal &rarr; monoclinic &rarr; 體積膨脹壓裂縫）</li>
+<li>PFM 燒瓷順序：<b>Opaque &rarr; Body &rarr; Incisal &rarr; Glaze</b>（溫度遞減）</li>
+<li>PFM CTE 規則：Metal CTE <b>略高於</b> Porcelain CTE &rarr; 陶瓷受壓縮 &rarr; 增強</li>
+<li>Law of Beams：Deflection &prop; <b>L&sup3;</b> / (W &times; T&sup3;) &rarr; 長度影響最大</li>
+<li>Adhesive failure = 界面斷；Cohesive failure = 材料內斷（反而代表結合良好）</li>
+<li>Gypsum-bonded &rarr; 金合金 + hygroscopic expansion；Phosphate-bonded &rarr; PFM + thermal expansion</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第七章：咬合 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch7">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch7)">CHAPTER 7</div>
+  <h1>咬合的平衡</h1>
+  <div class="ch-subtitle">MPO、Posselt、Bennett、咬合器、Hanau's Quint、咬合調整</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">前面提到天然牙要 MPO、全口義齒要平衡咬合，到底差在哪裡？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">這是整個咬合學的核心，讓我好好解釋。</div></div>
+</div>
+
+<h2>MPO（Mutually Protected Occlusion）</h2>
+
+<p>MPO 又叫<b>犬齒保護咬合</b>，是天然牙的黃金標準。核心邏輯是「互相保護」：</p>
+
+<div class="analogy">
+<div class="analogy-title">比喻：日夜班保全</div>
+<b>正中咬合（CO）時</b>：後牙接觸、前牙不碰 &rarr; 後牙當「日班保全」，保護前牙不被垂直力磨耗<br>
+<b>側方/前突運動時</b>：前牙（犬齒）引導、後牙全分離 &rarr; 犬齒當「夜班保全」，保護後牙不受側向力破壞
+</div>
+
+<!-- CR、CO 與下顎運動 -->
+<div class="diagram">
+
+<div class="caption">CR、CO 與下顎運動</div>
+</div>
+
+<h3>MPO 四大條件</h3>
+<table>
+<tr><th>#</th><th>條件</th></tr>
+<tr><td class="td-b">1</td><td><b>CR = CO</b>（正中關係 = 正中咬合）</td></tr>
+<tr><td class="td-b">2</td><td>CO 時：<b>後牙接觸</b>、前牙<b>不接觸</b></td></tr>
+<tr><td class="td-b">3</td><td>側方及前突運動時：<b>只有犬齒接觸</b>，後牙全部分離</td></tr>
+<tr><td class="td-b">4</td><td>牙周健康、Angle Class I</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 常見陷阱</div>
+「側方運動時，工作側後牙有接觸」&rarr; 這是 <b>Group Function</b>（群功能咬合），<b>不是 MPO</b>！<br>
+MPO = 只有犬齒引導 &rarr; 工作側和非工作側後牙都不接觸。
+</div>
+
+<h3>MPO 不適用的三種情況</h3>
+<table>
+<tr><td class="td-r">Angle Class II / III</td><td>前牙關係異常，犬齒無法引導</td></tr>
+<tr><td class="td-r">全口義齒</td><td>改用平衡咬合</td></tr>
+<tr><td class="td-r">嚴重磨牙症</td><td>犬齒磨耗，引導功能喪失 &rarr; 改用 Group Function</td></tr>
+</table>
+
+<h3>Functional Cusp vs Non-Functional Cusp（功能尖 vs 非功能尖）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">哪個是「功能尖」？上顎頰尖還是舌尖？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">功能尖 = Centric holding cusp = 咬在對咬牙窩裡的那個尖。記住：<b>上顎舌尖</b>和<b>下顎頰尖</b>是功能尖。</div></div>
+</div>
+
+<table>
+<tr><th></th><th>功能尖（Centric holding cusp）</th><th>非功能尖（Non-functional cusp）</th></tr>
+<tr><td class="td-b"><b>上顎</b></td><td class="td-g"><b>舌尖（Palatal cusp）</b></td><td>頰尖（Buccal cusp）</td></tr>
+<tr><td class="td-b"><b>下顎</b></td><td class="td-g"><b>頰尖（Buccal cusp）</b></td><td>舌尖（Lingual cusp）</td></tr>
+</table>
+
+<div class="key">
+功能尖咬在對咬窩裡，維持垂直高度（VD）&rarr; <b>不能隨便磨！</b><br>
+咬合調整時，原則上磨<b>非功能尖</b>來消除干擾。
+</div>
+
+<h3>Long Centric（Freedom in Centric）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">MPO 要求 CR = CO，但有時候不完全一致？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">對！<b>Long centric</b> 就是允許從 CR 到 CO 之間有 <b>0.5-1mm</b> 的前後方向自由空間。下顎可以在這個範圍內自由滑動，不會有干擾。</div></div>
+</div>
+
+<div class="key">
+<b>Long centric = Freedom in centric</b><br>
+CR 和 CO 之間允許 <b>0.5-1mm</b> 的前後方向（anteroposterior）自由空間<br>
+目的：容納下顎自然的微小前後移動，減少咬合干擾<br>
+注意：只允許<b>前後方向</b>的自由，<b>不允許側方</b>自由
+</div>
+
+<h2>Posselt's Envelope of Motion（下顎運動軌跡）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">下顎到底能怎麼動？有沒有一張圖可以看全部？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">有！就是 <b>Posselt's Envelope</b>。從側面（矢狀面）看，下顎所有可能的運動軌跡形成一個<b>菱形</b>的範圍。</div></div>
+</div>
+
+<div class="key">
+<b>Posselt's Envelope 矢狀面重要地標（由上到下、由後到前）：</b><br>
+1. <b>CR（Centric Relation）</b> &rarr; 最上後方的點（髁突在關節窩最上前內位）<br>
+2. <b>CO / MIP（最大嵌合位）</b> &rarr; CR 前方約 1mm<br>
+3. <b>最前突位（Maximum protrusion）</b> &rarr; 下顎最前方能到的點<br>
+4. <b>最大張口位</b> &rarr; 最下方的點<br><br>
+CR 是 border movement 的起點（可重複性最高的參考位置）。<br>
+<b>CO 不在邊界上</b>，而是在 envelope 內部的功能區。
+</div>
+
+<h2>Bennett Movement（班尼特運動）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">側方運動時，兩邊的髁突分別怎麼動？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">工作側（orbiting side）的髁突原地轉動，非工作側（balancing side）的髁突向<b>前、內、下</b>移動。這個非工作側髁突的移動軌跡和矢狀面的夾角，就叫 <b>Bennett angle</b>。</div></div>
+</div>
+
+<table>
+<tr><th>類型</th><th>說明</th><th>臨床影響</th></tr>
+<tr><td class="td-b"><b>Immediate side shift</b><br>（即刻側移）</td><td>側方運動<b>開始瞬間</b>，整個下顎先做一個純側向平移（無旋轉）</td><td>越大 &rarr; 義齒需要更多 freedom in centric</td></tr>
+<tr><td class="td-b"><b>Progressive side shift</b><br>（漸進側移）</td><td>之後非工作側髁突沿斜面<b>漸進地</b>向前內下移動</td><td>由 Bennett angle 的大小決定</td></tr>
+</table>
+
+<div class="key">
+<b>Bennett angle</b> = 非工作側髁突運動軌跡與矢狀面的夾角<br>
+&rarr; 反映關節窩<b>內側壁</b>的斜度<br>
+&rarr; 用於調整 semi-adjustable articulator<br>
+Bennett angle 越大 &rarr; 後牙咬合面形態需更大的 freedom
+</div>
+
+<h3>Working Side vs Non-Working Side Interference</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">側方運動時，工作側和非工作側的干擾哪個比較危險？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b"><b>非工作側（Balancing side）干擾更危險！</b>因為它離支點（工作側髁突）最遠，槓桿效應最大，對 TMJ 和牙周的破壞力最強。</div></div>
+</div>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 必背</div>
+<b>Non-working side（balancing side）interference 比 working side interference 更具破壞性。</b><br>
+原因：距離工作側髁突越遠，力臂越長，對 TMJ 施加的扭矩越大。<br>
+&rarr; 天然牙製作修復體時，<b>一定要檢查並消除非工作側干擾</b>。
+</div>
+
+<h3>Christensen's Phenomenon</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">全口義齒患者做前突運動時，後面會怎樣？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">後牙會張開！這叫 <b>Christensen's phenomenon</b> — 前突運動時，髁突沿關節粗隆下滑，後方產生楔形間隙（posterior open bite）。全口義齒如果沒有平衡咬合來填補這個間隙，義齒就會翹起來。</div></div>
+</div>
+
+<div class="key">
+<b>Christensen's phenomenon</b>：protrusive movement 時後牙區出現的<b>楔形間隙</b>（posterior open bite）<br>
+&rarr; 全口義齒需要<b>補償曲線（compensating curve）</b>和足夠的<b>牙尖角度</b>來消除此間隙<br>
+&rarr; 這就是為什麼 Hanau's Quint 如此重要
+</div>
+
+<h2>Hanau's Quint（漢諾五因素）</h2>
+
+<p>這是控制全口義齒平衡咬合的五個關鍵旋鈕：</p>
+
+<div class="visual">
+<div class="v-card"><div class="big">1</div><div class="label">Condylar Guidance</div><div class="desc">髁突引導角<br><b>不能改</b></div></div>
+<div class="v-card"><div class="big">2</div><div class="label">Incisal Guidance</div><div class="desc">前牙引導角<br><b>不能改</b></div></div>
+<div class="v-card"><div class="big">3</div><div class="label">Cusp Angle</div><div class="desc">牙尖角度<br>可調整</div></div>
+<div class="v-card"><div class="big">4</div><div class="label">Comp. Curve</div><div class="desc">補償曲線<br>可調整</div></div>
+<div class="v-card"><div class="big">5</div><div class="label">Occlusal Plane</div><div class="desc">咬合平面<br>可調整</div></div>
+</div>
+
+<div class="key">
+五因素中，1 和 2 由患者的<b>解剖結構</b>決定，<b>不能改</b>。<br>
+3、4、5 可以透過選牙和排牙來調整。<br>
+<strong>記法：</strong>前兩個（跟人體有關的）不能改，後三個（跟假牙有關的）可以調。
+</div>
+
+<h3>Hanau's Quint 互動關係</h3>
+
+<table>
+<tr><th>如果...</th><th>則需要...</th><th>原因</th></tr>
+<tr><td>Condylar guidance &uarr;（陡）</td><td>Cusp angle &uarr; 或 Comp. curve &uarr;</td><td>陡的髁道 &rarr; 後牙間隙更大 &rarr; 需更高牙尖或更深曲線才能保持接觸</td></tr>
+<tr><td>Incisal guidance &uarr;（陡）</td><td>Comp. curve &uarr; 或 Cusp angle &uarr;</td><td>前牙引導越陡 &rarr; 後牙分離越快 &rarr; 平衡更難達到</td></tr>
+<tr><td>Occlusal plane &uarr;（陡）</td><td>Cusp angle &darr;</td><td>咬合平面越陡 &rarr; 本身已有角度 &rarr; 牙尖不需太高</td></tr>
+</table>
+
+<div class="key">
+<b>簡單記：</b>Condylar guidance 和 Incisal guidance 越陡 &rarr; 後三個因素（Cusp、Curve、Plane）需要<b>越大</b>來補償。<br>
+它們之間是<b>正比</b>關係（一個增加，另一個也要增加才能維持平衡）。
+</div>
+
+<h2>咬合器（Articulator）</h2>
+
+<table>
+<tr><th>Class</th><th>名稱</th><th>功能</th></tr>
+<tr><td class="td-b">I</td><td>Simple</td><td>只能開閉口（像鉸鏈）</td></tr>
+<tr><td class="td-g"><b>II</b></td><td><b>Semi-adjustable</b></td><td>可模擬部分下顎運動 &rarr; <b>臨床最常用</b></td></tr>
+<tr><td class="td-b">III</td><td>Fully adjustable</td><td>完全複製所有下顎運動（複雜病例）</td></tr>
+<tr><td class="td-b">IV</td><td>Arcon type</td><td>髁球在下顎（符合解剖）</td></tr>
+</table>
+
+<div class="key">
+<b>Arcon</b> = 髁球在下顎（anatomically correct）<br>
+<b>Non-Arcon</b> = 髁球在上顎（相反）<br>
+Arcon 較精確，代表：Whipmix、Denar<br>
+Non-Arcon 代表：Hanau
+</div>
+
+<h3>Semi-Adjustable Articulator 的設定流程</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">拿到 semi-adjustable articulator 之後，要怎麼調整？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">三步驟：面弓轉移、前突記錄、Bennett angle 設定。</div></div>
+</div>
+
+<div class="steps">
+<div class="step"><b>Facebow transfer（面弓轉移）</b> &rarr; 將上顎模型正確安裝到咬合器上，模擬與鉸鏈軸的關係</div>
+<div class="step"><b>Protrusive record（前突記錄）</b> &rarr; 患者做前突運動 &rarr; 用蠟記錄 &rarr; 設定<b>髁道斜度（Condylar inclination）</b></div>
+<div class="step"><b>Bennett angle 設定</b> &rarr; 用側方記錄或公式設定非工作側髁突側移角度</div>
+</div>
+
+<div class="key">
+<b>面弓種類：</b><br>
+Arbitrary facebow：用面部標誌（耳屏到外眼角）估計鉸鏈軸 &rarr; 臨床足夠<br>
+Kinematic facebow：精確找出真實鉸鏈軸 &rarr; 最高精度，但全口義齒通常不需要
+</div>
+
+<h2>BULL Rule（天然牙咬合調整規則）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">天然牙要做咬合調整的時候，磨哪邊？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">記住 <b>BULL rule</b>：<b>B</b>uccal <b>U</b>pper, <b>L</b>ingual <b>L</b>ower — 磨<b>上顎頰尖</b>和<b>下顎舌尖</b>（都是非功能尖）。</div></div>
+</div>
+
+<div class="mnemonic">
+<div class="title">BULL Rule 記憶法</div>
+<div class="content"><b>B</b>uccal <b>U</b>pper &middot; <b>L</b>ingual <b>L</b>ower<br>磨上顎頰尖、下顎舌尖（= 非功能尖）</div>
+</div>
+
+<div class="key">
+<b>BULL rule 用於天然牙的 non-working side interference 調整：</b><br>
+磨<b>上顎頰尖</b>（Buccal Upper）和<b>下顎舌尖</b>（Lingual Lower）&rarr; 都是非功能尖<br>
+&rarr; 不會影響 centric stop（正中接觸點）<br>
+<b>功能尖（upper palatal、lower buccal）絕對不能隨便磨</b> &rarr; 會降低 VD！
+</div>
+
+<h3>Diagnostic Wax-up（診斷蠟型）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">什麼時候需要做 diagnostic wax-up？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">大範圍修復前！用蠟先在模型上「預演」最終的牙齒形態和咬合關係，等患者和醫師都滿意了，再開始修磨。</div></div>
+</div>
+
+<div class="key">
+<b>Diagnostic wax-up 的用途：</b><br>
+1. 預覽最終修復結果的形態和咬合<br>
+2. 製作 provisional restoration（臨時假牙）的模板<br>
+3. 評估需要修磨的量<br>
+4. 與患者溝通治療計畫<br>
+5. 製作 surgical guide（手術導板）
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>MPO 四條件</b>：CR=CO、CO 時後牙碰前牙不碰、側方只有犬齒引導、Class I + 牙周健康</li>
+<li>側方運動工作側後牙有接觸 = <b>Group Function</b>（不是 MPO）</li>
+<li>Functional cusp：<b>上顎舌尖</b>、<b>下顎頰尖</b>（centric holding cusp，不能磨）</li>
+<li><b>Long centric</b> = Freedom in centric = CR 到 CO 之間 <b>0.5-1mm</b> 前後自由空間</li>
+<li><b>Posselt's envelope</b>：CR 在最上後方、CO 在 CR 前方約 1mm</li>
+<li><b>Bennett movement</b>：Immediate side shift + Progressive side shift；Bennett angle = 非工作側髁突軌跡與矢狀面夾角</li>
+<li><b>Non-working side interference 比 working side 更具破壞性</b>（離支點遠，力臂大）</li>
+<li><b>Christensen's phenomenon</b>：前突時後牙區出現楔形間隙 &rarr; 需補償曲線填補</li>
+<li><b>Hanau's Quint</b>：前兩個（Condylar + Incisal guidance）不能改，後三個可調；五者正比關係</li>
+<li>全口義齒 = <b>平衡咬合</b>（兩邊同時接觸）；天然牙 = <b>MPO</b></li>
+<li>Arcon（髁球在下顎）= 符合解剖 = 較精確；Non-Arcon = Hanau</li>
+<li>Semi-adjustable articulator 設定：Facebow &rarr; Protrusive record &rarr; Bennett angle</li>
+<li><b>BULL rule</b>：Buccal Upper + Lingual Lower = 磨非功能尖消除 non-working interference</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第八章：TMD -->
+<!-- ============================================ -->
+<div class="chapter" id="ch8">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch8)">CHAPTER 8</div>
+  <h1>關節的煩惱</h1>
+  <div class="ch-subtitle">TMD 分類、Wilkes 分期、咬合板、鑑別診斷、影像學</div>
+</div>
+
+<div class="story clinical">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，我最近張嘴有喀喀聲，有時候嘴巴張不開，是怎麼了？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">阿明，這可能是<b>顳顎關節紊亂症（TMD）</b>。讓我檢查一下。</div></div>
+</div>
+
+<h2>TMD 四大類型</h2>
+
+<table>
+<tr><th>類型</th><th>特徵</th><th>關鍵鑑別</th></tr>
+<tr><td class="td-b"><b>肌肉性（Myofascial pain）</b></td><td>咀嚼肌痠痛、壓痛</td><td>沒有關節聲音</td></tr>
+<tr><td class="td-b"><b>關節盤前移位 WITH reduction</b></td><td>張口時 <b>Click</b>（彈響）</td><td>Click 後功能正常（盤子有回位）</td></tr>
+<tr><td class="td-r"><b>關節盤前移位 WITHOUT reduction</b></td><td><b>嘴巴張不開</b>（&lt; 40mm）</td><td>「閉鎖」（Closed lock），沒有 click</td></tr>
+<tr><td class="td-b"><b>退化性（Osteoarthritis）</b></td><td><b>Crepitus</b>（骨擦音）</td><td>X 光可見骨變化</td></tr>
+</table>
+
+<div class="key">
+<b>Click</b>（彈響）= 關節盤快速移位的聲音 &rarr; <b>With reduction</b><br>
+<b>Crepitus</b>（摩擦音）= 骨對骨摩擦 &rarr; <b>Osteoarthritis</b> 或盤穿孔<br>
+正常張口度 <b>&ge; 40mm</b>，&lt; 40mm = limited opening
+</div>
+
+<h3>Myofascial Pain 診斷要點</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">肌肉性 TMD 跟關節問題怎麼區分？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">肌肉性 TMD 的關鍵是 <b>trigger point（激痛點）</b>和<b>referred pain（轉移痛）</b>。你按壓某個肌肉的激痛點，疼痛會放射到遠處 — 例如按壓 masseter 的 trigger point，患者說太陽穴痛。</div></div>
+</div>
+
+<div class="key">
+<b>Myofascial pain 診斷標準：</b><br>
+1. 咀嚼肌區域有<b>鈍痛</b>（dull, aching pain）<br>
+2. 觸診有 <b>trigger point</b>（激痛點）— 按壓會引發疼痛<br>
+3. <b>Referred pain</b>（轉移痛）— 痛感轉移到其他區域<br>
+4. 關節本身通常<b>無聲音</b>、<b>無結構變化</b>
+</div>
+
+<h2>Wilkes Staging System（內部紊亂分期）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">關節盤的問題有嚴重程度之分嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">有！Wilkes 把 internal derangement 分成五期，從輕微的 click 到嚴重的關節退化。</div></div>
+</div>
+
+<table>
+<tr><th>Stage</th><th>臨床表現</th><th>影像</th></tr>
+<tr><td class="td-b"><b>I（Early）</b></td><td>偶爾 click、無痛</td><td>盤稍微前移、形態正常</td></tr>
+<tr><td class="td-b"><b>II（Early-intermediate）</b></td><td>頻繁 click、偶爾疼痛、偶爾張口受限</td><td>盤前移、形態開始變化</td></tr>
+<tr><td class="td-b"><b>III（Intermediate）</b></td><td>頻繁疼痛、<b>intermittent locking</b></td><td>盤前移、盤變形</td></tr>
+<tr><td class="td-r"><b>IV（Intermediate-late）</b></td><td>持續疼痛、<b>chronic closed lock</b></td><td>盤前移+變形、<b>早期骨變化</b></td></tr>
+<tr><td class="td-r"><b>V（Late）</b></td><td>crepitus、可能減痛（燒壞了）</td><td>盤穿孔、嚴重骨變化（OA）</td></tr>
+</table>
+
+<div class="key">
+<b>Wilkes I-II</b>：有 click、盤可復位 &rarr; 保守治療<br>
+<b>Wilkes III</b>：間歇性閉鎖 &rarr; 考慮 anterior repositioning splint<br>
+<b>Wilkes IV-V</b>：慢性閉鎖或退化 &rarr; 可能需要手術介入
+</div>
+
+<h2>咬合板（Occlusal Splint）類型</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">咬合板不就是 night guard 嗎？還有別的？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">有兩大類，功能完全不同！</div></div>
+</div>
+
+<table>
+<tr><th>類型</th><th>設計</th><th>適應症</th><th>注意事項</th></tr>
+<tr><td class="td-g"><b>Stabilization splint</b><br>（穩定型咬合板）</td><td><b>Full-arch、flat plane</b>（全弓、平面）</td><td>Myofascial pain、Bruxism、一般 TMD</td><td><b>最常用、最安全</b>；不改變咬合關係</td></tr>
+<tr><td class="td-b"><b>Anterior repositioning splint</b><br>（前位化咬合板）</td><td>有斜面引導下顎<b>向前</b></td><td>Disc displacement with reduction（Click）</td><td>可能造成<b>咬合改變</b>（後牙 open bite）；只短期使用</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; Bruxism 的咬合板選擇</div>
+磨牙症（Bruxism）用 <b>stabilization splint</b>，<b>不用</b> anterior repositioning splint！<br>
+原因：Bruxism 是<b>中樞性</b>問題（不是咬合問題），不需要重新定位下顎。<br>
+Stabilization splint 的平面設計可以分散咬合力、保護牙齒。
+</div>
+
+<div class="key">
+<b>Bruxism 的病因是中樞性（central），不是周邊性（peripheral）。</b><br>
+&rarr; 調整咬合不能治癒磨牙<br>
+&rarr; 治療：stabilization splint（保護牙齒）+ 行為治療 + 必要時藥物
+</div>
+
+<h2>鑑別診斷</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">哪些疾病的症狀跟 TMD 很像？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">好幾個！漏診的話後果很嚴重，特別是心臟轉移痛。</div></div>
+</div>
+
+<table>
+<tr><th>鑑別診斷</th><th>與 TMD 的區別</th></tr>
+<tr><td class="td-b"><b>Trigeminal neuralgia<br>（三叉神經痛）</b></td><td><b>電擊樣</b>劇痛、持續數秒、有 trigger zone（如觸摸臉部某區域）；TMD 是<b>鈍痛</b></td></tr>
+<tr><td class="td-b"><b>Eagle syndrome<br>（莖突過長症候群）</b></td><td>莖突過長壓迫周圍組織；吞嚥或轉頭時痛；觸診 tonsillar fossa 可誘發</td></tr>
+<tr><td class="td-r"><b>Referred cardiac pain<br>（心臟轉移痛）</b></td><td>心絞痛或心肌梗塞可轉移至<b>左側下顎</b>；伴隨胸悶、呼吸困難 &rarr; <b>緊急！</b></td></tr>
+<tr><td class="td-b"><b>Otitis media<br>（中耳炎）</b></td><td>耳痛為主、可能有發燒和聽力下降</td></tr>
+<tr><td class="td-b"><b>Temporal arteritis<br>（顳動脈炎）</b></td><td>顳部頭痛、ESR 升高、年齡 &gt;50 歲為主</td></tr>
+</table>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; 絕對不能漏診</div>
+<b>左側下顎疼痛</b>的患者，如果合併胸痛、冒冷汗、呼吸困難 &rarr; 先排除<b>心臟問題</b>！<br>
+考試常設陷阱：「患者主訴下顎痛，你最應該先做什麼？」&rarr; 問心臟相關症狀。
+</div>
+
+<h2>影像學選擇</h2>
+
+<table>
+<tr><th>影像</th><th>看什麼</th><th>何時用</th></tr>
+<tr><td class="td-b"><b>Panoramic（環口X光）</b></td><td>髁突形態、骨質變化</td><td>初步篩檢，排除明顯骨病變</td></tr>
+<tr><td class="td-b"><b>CT / CBCT</b></td><td>精確骨結構、骨贅、侵蝕</td><td>懷疑骨性病變（OA、ankylosis）</td></tr>
+<tr><td class="td-g"><b>MRI</b></td><td class="td-g"><b>關節盤位置、形態、積液</b></td><td class="td-g"><b>Gold standard for disc position！</b></td></tr>
+</table>
+
+<div class="key">
+<b>MRI 是觀察關節盤位置的黃金標準</b>（看軟組織最清楚）。<br>
+CT 是看骨頭的；MRI 是看盤子的。考試問「哪個檢查看 disc position」&rarr; 答 <b>MRI</b>。
+</div>
+
+<h2>TMJ Ankylosis（顳顎關節僵直）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">有些患者嘴巴完全打不開，不是 closed lock 嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">如果是<b>長期</b>打不開，而且 X 光看到骨頭黏住了，那可能是 <b>ankylosis</b>，跟 closed lock 不一樣！</div></div>
+</div>
+
+<table>
+<tr><th>類型</th><th>特徵</th><th>治療</th></tr>
+<tr><td class="td-b"><b>True ankylosis</b><br>（真性僵直）</td><td>骨對骨<b>纖維性或骨性融合</b>；CT 可見</td><td>手術（gap arthroplasty、costochondral graft）</td></tr>
+<tr><td class="td-b"><b>Pseudo-ankylosis</b><br>（假性僵直）</td><td>關節外原因（如冠突肥大、瘢痕攣縮、肌肉纖維化）</td><td>針對原因治療（切除冠突、瘢痕鬆解）</td></tr>
+</table>
+
+<h2>治療原則：由保守到積極</h2>
+
+<div class="steps">
+<div class="step">衛教 + 自我護理（熱敷、軟食、不要大張口）</div>
+<div class="step">咬合板治療（Stabilization splint 優先）</div>
+<div class="step">物理治療（肌肉放鬆、超音波）</div>
+<div class="step">藥物（NSAIDs、肌肉鬆弛劑）</div>
+<div class="step">關節腔注射（透明質酸、類固醇）</div>
+<div class="step">手術（關節鏡 &rarr; 開放手術，最後手段）</div>
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>With reduction</b> = Click；<b>Without reduction</b> = Closed lock（張不開、沒有 Click）</li>
+<li><b>Crepitus</b> = 骨擦音 = Osteoarthritis 或盤穿孔</li>
+<li>正常張口 <b>&ge; 40mm</b></li>
+<li><b>Myofascial pain</b>：trigger point + referred pain + 無關節聲音</li>
+<li><b>Wilkes staging</b>：I-II 保守治療、III intermittent locking、IV-V 可能需手術</li>
+<li>咬合板：<b>Stabilization splint</b>（平面、全弓）= 最安全最常用；Anterior repositioning = 短期用於 disc displacement with reduction</li>
+<li><b>Bruxism</b> = 中樞性病因 &rarr; 用 <b>stabilization splint</b>，不用 anterior repositioning</li>
+<li>鑑別診斷：三叉神經痛（電擊樣）、Eagle syndrome、<b>心臟轉移痛</b>（左下顎痛要排除！）</li>
+<li><b>MRI = 看關節盤的 gold standard</b>；CT = 看骨頭</li>
+<li>TMJ ankylosis：True（骨融合）vs Pseudo（關節外原因）</li>
+<li>治療順序：保守 &rarr; 積極（衛教 &rarr; 咬合板 &rarr; 物理 &rarr; 藥物 &rarr; 注射 &rarr; 手術）</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 第九章：美學 -->
+<!-- ============================================ -->
+<div class="chapter" id="ch9">
+<div class="ch-header">
+  <div class="ch-badge" style="background:var(--ch9)">CHAPTER 9</div>
+  <h1>最後的追求</h1>
+  <div class="ch-subtitle">Biological Width、Smile Design、牙齦生物型、貼面、比色、植體美學</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，我前面的牙齒可以做漂亮一點嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">當然可以！但做美觀修復之前，我們必須先搞懂一個最基本的東西：<b>Biological Width（生物學寬度）</b>。如果侵犯了這條線，再漂亮的假牙都會失敗。</div></div>
+</div>
+
+<h2>Biological Width</h2>
+
+<div class="analogy">
+<div class="analogy-title">比喻：牙齒的「安全距離」</div>
+想像牙齒是一棟房子，牙齦是圍牆。圍牆跟房子之間有一段「不能動」的安全距離 — 這就是 Biological Width。如果你的修復體邊緣侵入了這個距離，圍牆就會開始崩壞（牙周發炎、骨吸收）。
+</div>
+
+<!-- Biological Width 圖解 -->
+<div class="diagram">
+<img src="https://cdn.ncbi.nlm.nih.gov/pmc/blobs/a9c1/3284004/a54686085fa5/JCD-15-12-g001.jpg" alt="Biological Width" style="max-width:600px; display:block; margin:10px auto; border-radius:12px">
+<div class="caption">自然牙 vs 植體 Biological Width</div>
+</div>
+
+<div class="visual">
+<div class="v-card"><div class="big">0.97mm</div><div class="label">Junctional Epithelium</div><div class="desc">結合上皮</div></div>
+<div class="v-card"><div class="big">1.07mm</div><div class="label">CT Attachment</div><div class="desc">結締組織附著</div></div>
+<div class="v-card"><div class="big" style="color:var(--red)">2.04mm</div><div class="label">Biological Width</div><div class="desc">= JE + CT<br>不可侵犯！</div></div>
+</div>
+
+<div class="key">
+<b>Biological Width = 0.97 + 1.07 &asymp; 2mm</b><br>
+齦溝深度（Sulcus）0.5-3mm 不包含在 Biological Width 內<br>
+從牙槽嵴頂到齦溝底 = BW + Sulcus &asymp; <strong>至少 3mm</strong><br>
+如果修復體邊緣侵入 BW &rarr; <strong>慢性牙周炎、骨吸收、齦緣紅腫</strong>
+</div>
+
+<h3>Gingival Biotype（牙齦生物型）</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">同樣侵犯 BW，有些患者反應很大、有些卻還好？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">因為牙齦有不同的<b>生物型</b>！薄的跟厚的反應完全不同。</div></div>
+</div>
+
+<table>
+<tr><th>特徵</th><th>Thin Scalloped（薄貝殼型）</th><th>Thick Flat（厚平坦型）</th></tr>
+<tr><td class="td-b">牙齦厚度</td><td class="td-r">薄（&lt; 1mm）</td><td class="td-g">厚（&ge; 1mm）</td></tr>
+<tr><td class="td-b">齦緣形態</td><td>高低起伏大（scalloped）</td><td>平坦</td></tr>
+<tr><td class="td-b">骨形態</td><td>骨開窗/裂開風險高</td><td>骨緻密、較穩定</td></tr>
+<tr><td class="td-b">侵犯 BW 後</td><td class="td-r"><b>牙齦萎縮（recession）</b></td><td>骨吸收 + 牙周袋</td></tr>
+<tr><td class="td-b">Margin 位置建議</td><td class="td-r">盡量 <b>supragingival</b>（齦溝上方）</td><td>可接受 subgingival</td></tr>
+</table>
+
+<div class="key">
+<b>Thin biotype 侵犯 BW &rarr; recession（牙齦退縮）</b><br>
+<b>Thick biotype 侵犯 BW &rarr; 骨吸收形成牙周袋</b><br>
+臨床選邊緣位置時，thin biotype 患者要特別保守 &rarr; 邊緣留在齦溝上方。
+</div>
+
+<h3>Subgingival Margin（齦下邊緣）何時使用？</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">邊緣不是放越下面越美觀嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">錯！邊緣放在齦溝下方風險很高。只有三種情況才考慮 subgingival margin。</div></div>
+</div>
+
+<div class="key">
+<b>Subgingival margin 的三個適應症（只有這三種才需要！）：</b><br>
+1. <b>齲齒</b>延伸到齦溝下<br>
+2. <b>既有修復體</b>的邊緣已在齦溝下<br>
+3. <b>美觀需求</b>（前牙區需隱藏金屬邊緣或不透明邊緣）<br><br>
+其他情況 &rarr; 盡量用 <b>supragingival 或 equigingival margin</b>
+</div>
+
+<h3>Crown Lengthening（牙冠延長術）</h3>
+<p>如果修復體邊緣需要往下延伸，但空間不夠，就要做牙冠延長術：</p>
+<table>
+<tr><th>手術類型</th><th>等待時間</th><th>規則</th></tr>
+<tr><td>有骨切除（Osseous surgery）</td><td><b>3-6 個月</b></td><td>修復體邊緣必須離 bone crest <b>&ge; 3mm</b></td></tr>
+<tr><td>只切軟組織（Gingivectomy）</td><td><b>3 個月</b></td><td>前提是 attached gingiva 足夠</td></tr>
+</table>
+
+<div class="key">
+Crown lengthening 的 <b>3mm rule</b>：<br>
+修復體邊緣到 alveolar bone crest 至少要 <b>3mm</b>（= BW 2mm + sulcus 1mm）<br>
+如果不夠 &rarr; 做骨切除把骨頭往下移，製造足夠空間。
+</div>
+
+<h2>Smile Design（微笑設計）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">美觀修復不就是做漂亮的牙齒嗎？還有什麼學問？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">美觀修復要看<b>整體</b>！不只是單顆牙，還要看嘴唇、牙齦、臉型的協調。</div></div>
+</div>
+
+<table>
+<tr><th>美學要素</th><th>理想標準</th><th>考試重點</th></tr>
+<tr><td class="td-b"><b>Smile arc</b>（微笑弧線）</td><td>上顎前牙切端弧線應<b>平行於</b>下唇弧線</td><td>Consonant smile = 美觀；Flat smile = 不自然</td></tr>
+<tr><td class="td-b"><b>Buccal corridor</b>（頰側走廊）</td><td>微笑時嘴角與後牙之間的暗影空間</td><td>太大 &rarr; 不美觀（像缺牙）；適度 &rarr; 自然</td></tr>
+<tr><td class="td-b"><b>Golden proportion</b>（黃金比例）</td><td><b>1.618 : 1 : 0.618</b></td><td>正面觀：中門牙 : 側門牙 : 犬齒的視覺寬度比</td></tr>
+<tr><td class="td-b"><b>Gingival display</b></td><td>微笑時露齦 <b>&le; 2mm</b></td><td>&gt; 2mm = Gummy smile</td></tr>
+<tr><td class="td-b"><b>牙齒長寬比</b></td><td>Width / Length = <b>0.75-0.80</b></td><td>上顎中門牙正常約 8.5mm 寬 &times; 11mm 長</td></tr>
+</table>
+
+<div class="key">
+<b>Golden proportion（黃金比例）</b>= 1.618 : 1 : 0.618<br>
+從正面看，每顆牙的「視覺可見寬度」應符合此比例<br>
+中門牙最寬、側門牙次之、犬齒再次之 &rarr; 形成自然的漸變。
+</div>
+
+<h3>Pink Aesthetics vs White Aesthetics</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">美觀只看牙齒就好了嗎？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">不！分成<b>白色美學</b>（牙齒本身）和<b>粉紅美學</b>（牙齦和軟組織）。兩個都要好，修復才成功。</div></div>
+</div>
+
+<table>
+<tr><th>White Aesthetics（白色美學）</th><th>Pink Aesthetics（粉紅美學）</th></tr>
+<tr><td>牙齒形態、大小、顏色</td><td>牙齦輪廓、齦乳頭</td></tr>
+<tr><td>切端位置、透明度</td><td>齦緣對稱性</td></tr>
+<tr><td>表面紋理</td><td>牙齦顏色（健康粉紅色）</td></tr>
+<tr><td>中線對齊</td><td>齦乳頭高度（填滿黑三角）</td></tr>
+</table>
+
+<div class="key">
+<b>Black triangle（黑三角）</b>：齦乳頭萎縮導致的牙間暗三角 &rarr; 最影響前牙美觀的因素之一<br>
+齦乳頭能否存在取決於：bone crest 到 contact point 的距離 &le; <b>5mm</b>（Tarnow rule）
+</div>
+
+<h2>比色學（Shade Selection）</h2>
+
+<h3>Munsell 色彩系統三要素</h3>
+<table>
+<tr><th>參數</th><th>定義</th><th>牙科意義</th></tr>
+<tr><td class="td-b"><b>Hue</b>（色調）</td><td>顏色種類</td><td>牙齒通常是黃-橙色調</td></tr>
+<tr><td class="td-b"><b>Value</b>（明度）</td><td>亮暗程度</td><td><b>最影響美觀</b>，應優先確認</td></tr>
+<tr><td class="td-b"><b>Chroma</b>（彩度）</td><td>飽和度</td><td>Chroma &lt; 4 最自然</td></tr>
+</table>
+
+<div class="key">
+比色順序：先 <strong>Value（明度）</strong> &rarr; 再 <strong>Hue（色調）</strong> &rarr; 最後 <strong>Chroma（彩度）</strong><br>
+比色時牙齒要<b>保持濕潤</b>，用自然光（北向窗戶）或標準比色燈<br>
+PFM 要改善透明感 &rarr; 加<b>紫色</b> external stain
+</div>
+
+<h3>Translucency &amp; Metamerism</h3>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">為什麼有些假牙在診間看起來很搭，到外面卻變色？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">那叫 <b>Metamerism（同色異譜）</b>！兩個顏色在某種光源下看起來一樣，但換另一種光源就不一樣了。</div></div>
+</div>
+
+<div class="key">
+<b>Metamerism</b>：兩個物體在一種光源下顏色匹配，但在不同光源下不匹配。<br>
+原因：光譜反射曲線不同，只在特定光源下「巧合」看起來一樣。<br>
+&rarr; 比色時最好用<b>多種光源</b>確認（自然光 + 診間燈）<br><br>
+<b>Translucency（透明度）</b>：天然牙切端較透明、頸部較不透明（opacity）。<br>
+全瓷冠比 PFM 透明度更好（PFM 有金屬遮光 &rarr; 需加 opaque layer &rarr; 透明感差）。
+</div>
+
+<h2>Porcelain Laminate Veneer（陶瓷貼面）</h2>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">貼面就是很薄的陶瓷片貼上去？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">對！最大的優點是<b>修磨量極少</b>，保留最多齒質。但有前提條件。</div></div>
+</div>
+
+<table>
+<tr><th>項目</th><th>傳統 Veneer</th><th>Minimal / No-prep Veneer</th></tr>
+<tr><td class="td-b">修磨量</td><td><b>0.3-0.5mm</b>（labial surface）</td><td>0-0.3mm（contact lens veneer）</td></tr>
+<tr><td class="td-b">邊界位置</td><td>盡量停在<b>釉質內</b></td><td>完全在釉質內</td></tr>
+<tr><td class="td-b">黏合劑</td><td colspan="2">必須用 <b>Resin Cement</b>（light-cure 或 dual-cure）</td></tr>
+<tr><td class="td-b">適用</td><td>變色、形態不佳、輕微排列不齊</td><td>主要改善形態，顏色變化不大</td></tr>
+</table>
+
+<div class="key">
+Veneer 成功的關鍵：<b>bonding 在釉質上</b><br>
+釉質的 etch + bonding 效果遠優於牙本質 &rarr; 邊界留在釉質內 = 黏著力最好<br>
+如果修磨到牙本質過多 &rarr; 改做全瓷冠（bonding 需求不同）
+</div>
+
+<div class="trap">
+<div class="trap-title">&#x26A0; Veneer 禁忌</div>
+1. <b>嚴重磨牙症</b>（Bruxism）&rarr; 咬合力過大會把貼面咬裂<br>
+2. <b>Deep bite</b> 且 edge-to-edge 咬合 &rarr; 切端直接承受力量<br>
+3. 大面積牙本質暴露（bonding 效果差）
+</div>
+
+<h2>植體美學（Implant Aesthetics）</h2>
+
+<!-- 人工植體解剖構造 -->
+<div class="diagram">
+
+<div class="caption">人工植體解剖構造</div>
+</div>
+
+<div class="dialogue">
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">植牙的美觀跟假牙有什麼不同？</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">植牙沒有牙周韌帶，軟組織行為跟天然牙不一樣。要做出漂亮的植牙，有兩個關鍵概念。</div></div>
+</div>
+
+<table>
+<tr><th>概念</th><th>說明</th><th>臨床意義</th></tr>
+<tr><td class="td-b"><b>Platform switching</b></td><td>Abutment 直徑<b>小於</b>植體平台直徑</td><td>將 micro-gap 內移 &rarr; 減少 crestal bone loss &rarr; 保存齦乳頭高度</td></tr>
+<tr><td class="td-b"><b>Emergence profile</b><br>（穿出輪廓）</td><td>從植體平台到牙冠邊緣的輪廓形態</td><td>需模擬天然牙根的漸變形態 &rarr; 支撐軟組織 &rarr; 看起來自然</td></tr>
+</table>
+
+<div class="key">
+<b>Platform switching</b> 的好處：<br>
+1. 保存 crestal bone（嵴頂骨）&rarr; 維持牙齦高度<br>
+2. 減少 micro-gap 附近的發炎反應<br>
+3. 有利於 papilla preservation（齦乳頭保存）<br><br>
+<b>Emergence profile</b> 要從 provisional restoration 開始塑形 &rarr; 軟組織會依此形態癒合。
+</div>
+
+<div class="exam-box">
+<div class="exam-title">&#x1F4CB; 考試重點框</div>
+<ul>
+<li><b>Biological Width = JE(0.97) + CT(1.07) &asymp; 2mm</b></li>
+<li>侵犯 BW &rarr; Thin biotype = <b>recession</b>；Thick biotype = <b>bone loss + pocket</b></li>
+<li>Crown lengthening <b>3mm rule</b>：margin 到 bone crest &ge; 3mm</li>
+<li>Crown lengthening 等待：有骨切除 <b>3-6 月</b>，只切軟組織 <b>3 月</b></li>
+<li>Subgingival margin 只用於：齲齒、既有修復體、美觀需求（三個適應症）</li>
+<li><b>Golden proportion</b>：1.618 : 1 : 0.618（中門牙 : 側門牙 : 犬齒）</li>
+<li>Smile arc 平行下唇弧線 = consonant smile</li>
+<li><b>Pink aesthetics</b>（牙齦）+ <b>White aesthetics</b>（牙齒）= 完整美學</li>
+<li>比色順序：<b>Value &rarr; Hue &rarr; Chroma</b>；Value 最重要</li>
+<li><b>Metamerism</b> = 同色異譜（一種光源下匹配，另一種不匹配）</li>
+<li>Ceramic veneer：修磨 <b>0.3-0.5mm</b>、邊界停在<b>釉質內</b>、用 <b>Resin cement</b></li>
+<li>No-prep veneer = Contact lens veneer（0-0.3mm）</li>
+<li><b>Platform switching</b>：abutment 比植體窄 &rarr; 保存 crestal bone</li>
+<li><b>Emergence profile</b>：從 provisional 開始塑形</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 總結 -->
+<!-- ============================================ -->
+<div class="chapter" id="summary">
+<div class="ch-header">
+  <div class="ch-badge" style="background:#8B6914">總結</div>
+  <h1>阿明的旅程結束了</h1>
+  <div class="ch-subtitle">但你的旅程才剛開始</div>
+</div>
+
+<div class="story">
+<div class="dialogue">
+  <div class="line"><div class="avatar patient">明</div><div class="bubble pat-b">陳醫師，謝謝你！我現在可以好好吃東西了。</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">不客氣，阿明。記得晚上要把活動假牙拿下來清洗喔！</div></div>
+  <div class="line"><div class="avatar student">你</div><div class="bubble stu-b">我也謝謝陳醫師，整個義齒學的架構我都懂了！</div></div>
+  <div class="line"><div class="avatar doc">師</div><div class="bubble doc-b">很好。現在你可以回去翻互動筆記，把每個考點的細節表格再看一遍。故事幫你建立骨架，數字和表格是肉，兩個加在一起才完整。加油！</div></div>
+</div>
+
+<h2>全書考點速覽</h2>
+
+<table>
+<tr><th>章節</th><th>核心考點</th></tr>
+<tr><td>Ch.1 缺牙</td><td>Ante's Law、骨吸收唇側快、RPD/FPD/CD/Implant 適應症</td></tr>
+<tr><td>Ch.2 Kennedy</td><td>看最遠端分類、Class IV 無 Mod、tooth-supported vs tooth-tissue supported</td></tr>
+<tr><td>Ch.3 RPD</td><td>三要素、RPI/RPA/RPC、倒凹 0.25/0.50/0.75mm、Guide Plane 三功能、Altered Cast</td></tr>
+<tr><td>Ch.4 CD</td><td>Buccal shelf、Neutral Zone、Border molding 順序、牙尖角度、Overdenture</td></tr>
+<tr><td>Ch.5 FPD</td><td>Ante's Law 計算、Connector 4x4mm、Secondary caries = 最常失敗、Ferrule 1.5-2mm</td></tr>
+<tr><td>Ch.6 材料</td><td>Polysulfide 最長 working time、Addition Silicone 怕硫+排氫氣、Contact angle 小=親水、Gypsum Type IV 膨脹最低、合金 High noble &ge;60% noble + &ge;40% Au、Zirconia 相轉換、PFM 燒瓷順序 Opaque&rarr;Body&rarr;Incisal&rarr;Glaze、CTE 金屬略高於瓷、Law of Beams L&sup3;、Adhesive vs Cohesive failure、Hygroscopic expansion 用於 Gypsum-bonded</td></tr>
+<tr><td>Ch.7 咬合</td><td>MPO 四條件、Functional cusp=上舌尖+下頰尖、Long centric 0.5-1mm、Posselt CR 最上後方、Bennett angle=非工作側、Non-working interference 更危險、Christensen phenomenon=後牙間隙、Hanau's 五因素正比+前兩不能改、BULL rule=磨非功能尖、Semi-adj 設定三步驟</td></tr>
+<tr><td>Ch.8 TMD</td><td>Click=With reduction、Crepitus=OA、Myofascial pain=trigger point+referred pain、Wilkes 五期、Stabilization splint=最安全（Bruxism 用這個）、Bruxism 是中樞性、MRI=關節盤 gold standard、鑑別：三叉神經痛+心臟轉移痛、TMJ ankylosis true vs pseudo</td></tr>
+<tr><td>Ch.9 美學</td><td>BW=2mm（0.97+1.07）、3mm rule（margin 到 bone crest）、Thin biotype=recession / Thick=bone loss、Subgingival margin 三適應症、Golden proportion 1.618:1:0.618、Pink+White aesthetics、比色 Value 先、Metamerism 同色異譜、Veneer 0.3-0.5mm 停釉質內用 Resin cement、Platform switching 保存 crestal bone</td></tr>
+</table>
+
+<div class="key" style="text-align:center;font-size:16px;margin-top:24px">
+<strong>接下來的步驟：</strong><br>
+打開 ya5 互動筆記，搭配故事書一起複習<br>
+做考古題，把不確定的考點標記回來查
+</div>
+</div>
+</div>
+
+<div class="footer">
+  <p>義齒學故事書 v1.0 | 距離國考還有一段路，但你每天都在前進</p>
+  <p style="margin-top:8px"><a href="index.html" style="color:var(--warm2);text-decoration:none">&#8592; 回到 ya5 互動筆記</a></p>
+</div>
+
+<!-- PAGE NAV (only visible in paged mode) -->
+<div class="page-nav" id="pageNav" style="display:none">
+  <button id="prevBtn" onclick="goPage(-1)" title="← 上一頁 (左鍵)">&larr;</button>
+  <div class="page-info"><span class="ch-label" id="pageChLabel"></span><span class="current" id="pageCur">1</span> / <span id="pageTotal"></span></div>
+  <button id="nextBtn" onclick="goPage(1)" title="→ 下一頁 (右鍵)">&rarr;</button>
+</div>
+
+<script>
+// === BUILD SLIDES FROM CHAPTERS ===
+const chapters=document.querySelectorAll('.chapter');
+const tabs=document.querySelectorAll('.ch-tab');
+const slides=[];          // flat array of slide DOM nodes
+const chapterStart=[];    // chapterStart[chIdx] = first slide index
+const slideChapter=[];    // slideChapter[slideIdx] = which chapter
+const chapterNames=['序','Ch.1 缺牙','Ch.2 Kennedy','Ch.3 RPD','Ch.4 全口義齒','Ch.5 FPD','Ch.6 材料','Ch.7 咬合','Ch.8 TMD','Ch.9 美學','總結'];
+
+// Create slide container
+const container=document.createElement('div');
+container.className='slide-container';
+
+chapters.forEach((ch,chIdx)=>{
+  chapterStart.push(slides.length);
+
+  // 1) Chapter header → its own slide
+  const header=ch.querySelector('.ch-header');
+  if(header){
+    const s=document.createElement('div');
+    s.className='slide';
+    s.appendChild(header.cloneNode(true));
+    // If there's intro content before first h2, grab it too
+    const story=ch.querySelector('.story');
+    if(story){
+      const introNodes=[];
+      for(const child of story.children){
+        if(child.tagName==='H2')break;
+        introNodes.push(child);
+      }
+      if(introNodes.length>0){
+        const wrap=document.createElement('div');
+        wrap.className='story';
+        wrap.style.borderLeft='4px solid var(--warm)';
+        introNodes.forEach(n=>wrap.appendChild(n.cloneNode(true)));
+        s.appendChild(wrap);
+      }
+    }
+    slides.push(s);
+    slideChapter.push(chIdx);
+    container.appendChild(s);
+  }
+
+  // 2) Split story at each <h2>
+  const storyEls=ch.querySelectorAll('.story');
+  storyEls.forEach(story=>{
+    let group=[];
+    let pastFirstH2=false;
+    Array.from(story.children).forEach(child=>{
+      if(child.tagName==='H2'){
+        if(pastFirstH2&&group.length>0){
+          // flush previous group
+          const s=document.createElement('div');
+          s.className='slide';
+          const wrap=document.createElement('div');
+          wrap.className='story';
+          wrap.style.borderLeft=story.style.borderLeft||'4px solid var(--warm)';
+          if(story.classList.contains('clinical'))wrap.classList.add('clinical');
+          if(story.classList.contains('exam'))wrap.classList.add('exam');
+          group.forEach(n=>wrap.appendChild(n.cloneNode(true)));
+          s.appendChild(wrap);
+          slides.push(s);
+          slideChapter.push(chIdx);
+          container.appendChild(s);
+          group=[];
+        }
+        pastFirstH2=true;
+        group.push(child);
+      } else if(pastFirstH2){
+        group.push(child);
+      }
+    });
+    // flush last group
+    if(group.length>0){
+      const s=document.createElement('div');
+      s.className='slide';
+      const wrap=document.createElement('div');
+      wrap.className='story';
+      if(story.classList.contains('clinical'))wrap.classList.add('clinical');
+      if(story.classList.contains('exam'))wrap.classList.add('exam');
+      group.forEach(n=>wrap.appendChild(n.cloneNode(true)));
+      s.appendChild(wrap);
+      slides.push(s);
+      slideChapter.push(chIdx);
+      container.appendChild(s);
+    }
+  });
+});
+
+// Insert container before footer
+const footer=document.querySelector('.footer');
+document.body.insertBefore(container,footer);
+
+// Activate paged mode
+document.body.classList.add('paged');
+document.getElementById('pageNav').style.display='flex';
+
+let cur=0;
+showSlide(0);
+
+function showSlide(idx){
+  if(idx<0||idx>=slides.length)return;
+  cur=idx;
+  slides.forEach((s,i)=>s.classList.toggle('active',i===idx));
+  // highlight chapter tab
+  const chIdx=slideChapter[idx];
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===chIdx));
+  tabs[chIdx]?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  // update nav
+  document.getElementById('pageCur').textContent=idx+1;
+  document.getElementById('pageTotal').textContent=slides.length;
+  document.getElementById('prevBtn').disabled=idx===0;
+  document.getElementById('nextBtn').disabled=idx===slides.length-1;
+  // chapter label
+  const label=document.getElementById('pageChLabel');
+  if(label)label.textContent=chapterNames[chIdx]||'';
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function goPage(dir){showSlide(cur+dir)}
+
+// Keyboard
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='ArrowRight'){e.preventDefault();goPage(1)}
+  else if(e.key==='ArrowLeft'){e.preventDefault();goPage(-1)}
+});
+
+// Touch swipe
+let touchStartX=0;
+document.addEventListener('touchstart',(e)=>{touchStartX=e.changedTouches[0].screenX},{passive:true});
+document.addEventListener('touchend',(e)=>{
+  const diff=e.changedTouches[0].screenX-touchStartX;
+  if(Math.abs(diff)>60){diff<0?goPage(1):goPage(-1)}
+},{passive:true});
+
+// Tab clicks → jump to first slide of that chapter
+tabs.forEach(t=>{
+  t.addEventListener('click',()=>{
+    const chIdx=+t.dataset.page;
+    if(mode==='chapter'){
+      showChapter(chIdx);
+    } else {
+      if(chapterStart[chIdx]!=null)showSlide(chapterStart[chIdx]);
+    }
+  });
+});
+
+// === MODE TOGGLE ===
+let mode='slide'; // 'slide' or 'chapter'
+
+function toggleMode(){
+  if(mode==='slide'){
+    mode='chapter';
+    document.getElementById('modeBtn').textContent='細分頁面';
+    // figure out which chapter we're in
+    const chIdx=slideChapter[cur];
+    slides.forEach(s=>s.classList.remove('active'));
+    showChapter(chIdx);
+  } else {
+    mode='slide';
+    document.getElementById('modeBtn').textContent='一章一頁';
+    // go back to first slide of current chapter
+    hideAllChapterViews();
+    const chIdx=currentChapter||0;
+    showSlide(chapterStart[chIdx]);
+  }
+}
+
+let currentChapter=0;
+const chapterViews=[];
+
+// Build chapter-level slides (one slide per chapter, full content)
+chapters.forEach((ch,i)=>{
+  const s=document.createElement('div');
+  s.className='slide chapter-view';
+  s.innerHTML=ch.innerHTML;
+  s.style.display='none';
+  container.appendChild(s);
+  chapterViews.push(s);
+});
+
+function hideAllChapterViews(){
+  chapterViews.forEach(v=>v.style.display='none');
+  chapterViews.forEach(v=>v.classList.remove('active'));
+}
+
+function showChapter(idx){
+  if(idx<0||idx>=chapterViews.length)return;
+  currentChapter=idx;
+  slides.forEach(s=>s.classList.remove('active'));
+  hideAllChapterViews();
+  chapterViews[idx].style.display='block';
+  chapterViews[idx].classList.add('active');
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===idx));
+  tabs[idx]?.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  document.getElementById('pageCur').textContent=idx+1;
+  document.getElementById('pageTotal').textContent=chapterViews.length;
+  document.getElementById('prevBtn').disabled=idx===0;
+  document.getElementById('nextBtn').disabled=idx===chapterViews.length-1;
+  const label=document.getElementById('pageChLabel');
+  if(label)label.textContent=chapterNames[idx]||'';
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+// Override goPage to respect mode
+goPage=function(dir){
+  if(mode==='chapter') showChapter(currentChapter+dir);
+  else showSlide(cur+dir);
+};
+</script>
+</body>
+</html>

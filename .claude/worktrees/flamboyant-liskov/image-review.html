@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>圖片審核介面</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f7f0;
+  --bg-card: #ffffff;
+  --text: #2d2a24;
+  --text-muted: #7a7567;
+  --border: #e8e4d9;
+  --grid-line: #ede9df;
+  --shadow: 0 2px 12px rgba(45,42,36,.08);
+  --shadow-hover: 0 4px 20px rgba(45,42,36,.14);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --ya3: #0e7490;
+  --ya4: #7c3aed;
+  --ya5: #3730a3;
+  --ya6: #166534;
+  --green: #16a34a;
+  --green-bg: #dcfce7;
+  --red: #dc2626;
+  --red-bg: #fee2e2;
+  --gray-btn: #78716c;
+  --gray-btn-bg: #f5f0e8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 28px 28px;
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* ── Header ── */
+.header {
+  background: linear-gradient(135deg, #44403c, #292524);
+  color: #fff;
+  padding: .9rem 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
+.header h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: .02em; }
+.header-back {
+  background: none; border: 1.5px solid rgba(255,255,255,.4);
+  color: #fff; border-radius: 10px; padding: .35rem .75rem;
+  font-size: .8rem; cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.header-back:hover { background: rgba(255,255,255,.12); }
+.header-export {
+  background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.3);
+  color: #fff; border-radius: 10px; padding: .35rem .75rem;
+  font-size: .78rem; cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.header-export:hover { background: rgba(255,255,255,.22); }
+
+/* ── Container ── */
+.container { max-width: 820px; margin: 0 auto; padding: 1.2rem; }
+
+/* ── Landing Page ── */
+.landing-title {
+  text-align: center; margin-bottom: 1.6rem; padding-top: .4rem;
+}
+.landing-title h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: .3rem; }
+.landing-title p { color: var(--text-muted); font-size: .88rem; }
+
+.subject-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 480px) { .subject-grid { grid-template-columns: 1fr; } }
+
+.subject-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.4rem;
+  cursor: pointer;
+  transition: all .2s;
+  border: 2px solid transparent;
+  position: relative; overflow: hidden;
+}
+.subject-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.subject-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 5px;
+}
+.subject-card[data-subject="ya3"]::before { background: var(--ya3); }
+.subject-card[data-subject="ya4"]::before { background: var(--ya4); }
+.subject-card[data-subject="ya5"]::before { background: var(--ya5); }
+.subject-card[data-subject="ya6"]::before { background: var(--ya6); }
+
+.subject-card .card-label {
+  font-size: .72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: .3rem; opacity: .7;
+}
+.subject-card[data-subject="ya3"] .card-label { color: var(--ya3); }
+.subject-card[data-subject="ya4"] .card-label { color: var(--ya4); }
+.subject-card[data-subject="ya5"] .card-label { color: var(--ya5); }
+.subject-card[data-subject="ya6"] .card-label { color: var(--ya6); }
+
+.subject-card .card-name { font-size: 1.15rem; font-weight: 700; margin-bottom: .8rem; }
+
+.card-stats { display: flex; gap: .7rem; font-size: .78rem; color: var(--text-muted); }
+.stat-item { display: flex; align-items: center; gap: .25rem; }
+.stat-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+.stat-dot.pending { background: #f59e0b; }
+.stat-dot.approved { background: var(--green); }
+.stat-dot.rejected { background: var(--red); opacity: .5; }
+
+/* ── Review Mode ── */
+.review-header {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1rem;
+}
+.review-topic { font-size: 1.2rem; font-weight: 700; margin-bottom: .2rem; }
+.review-section { font-size: .82rem; color: var(--text-muted); }
+.review-badge {
+  display: inline-block; font-size: .68rem; font-weight: 600;
+  padding: .15rem .55rem; border-radius: 8px; margin-left: .5rem;
+  vertical-align: middle;
+}
+
+/* Progress */
+.progress-wrap {
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: .8rem 1.2rem;
+  margin-bottom: 1rem;
+  display: flex; align-items: center; gap: .8rem;
+}
+.progress-bar-outer {
+  flex: 1; height: 8px; background: var(--border);
+  border-radius: 4px; overflow: hidden;
+}
+.progress-bar-inner {
+  height: 100%; border-radius: 4px; transition: width .3s;
+  background: linear-gradient(90deg, var(--green), #4ade80);
+}
+.progress-text { font-size: .78rem; color: var(--text-muted); white-space: nowrap; }
+
+/* Image Grid */
+.image-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem; margin-bottom: 1rem;
+}
+@media (max-width: 540px) { .image-grid { grid-template-columns: 1fr; } }
+
+.image-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: all .2s;
+  border: 2.5px solid transparent;
+}
+.image-card.approved { border-color: var(--green); }
+.image-card.rejected { border-color: var(--red); opacity: .55; }
+
+.image-preview {
+  width: 100%; aspect-ratio: 4/3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; color: #fff; font-weight: 600;
+  position: relative; overflow: hidden;
+}
+.image-preview img {
+  width: 100%; height: 100%; object-fit: contain; background: #f5f0e8;
+}
+.placeholder-img {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: .3rem;
+  font-size: .82rem; color: rgba(255,255,255,.85);
+}
+.placeholder-img .icon { font-size: 2rem; opacity: .7; }
+
+.image-card-body { padding: .8rem 1rem 1rem; }
+.image-source {
+  font-size: .74rem; color: var(--text-muted);
+  margin-bottom: .7rem; line-height: 1.4;
+  display: flex; align-items: flex-start; gap: .3rem;
+}
+.image-source::before { content: '📄'; font-size: .72rem; flex-shrink: 0; margin-top: 1px; }
+
+.image-status-label {
+  font-size: .72rem; font-weight: 600; text-align: center;
+  padding: .25rem; border-radius: 6px; margin-bottom: .5rem;
+  display: none;
+}
+.image-card.approved .image-status-label {
+  display: block; background: var(--green-bg); color: var(--green);
+}
+.image-card.rejected .image-status-label {
+  display: block; background: var(--red-bg); color: var(--red);
+}
+
+.image-actions {
+  display: flex; gap: .5rem;
+}
+.image-actions button {
+  flex: 1; border: none; border-radius: 10px;
+  padding: .5rem .3rem; font-size: .78rem; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.btn-approve { background: var(--green-bg); color: var(--green); }
+.btn-approve:hover { background: #bbf7d0; }
+.btn-swap { background: var(--gray-btn-bg); color: var(--gray-btn); }
+.btn-swap:hover { background: #ebe5d8; }
+.btn-reject { background: transparent; color: var(--red); border: 1.5px solid #fecaca !important; }
+.btn-reject:hover { background: var(--red-bg); }
+
+/* Navigation */
+.nav-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .8rem 0; gap: .5rem;
+}
+.nav-btn {
+  background: var(--bg-card); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); padding: .6rem 1.2rem;
+  font-size: .85rem; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+  box-shadow: var(--shadow);
+}
+.nav-btn:hover:not(:disabled) { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+.nav-counter { font-size: .82rem; color: var(--text-muted); font-weight: 500; }
+
+/* Demo banner */
+.demo-banner {
+  background: #fef3c7; border: 1.5px solid #fbbf24;
+  border-radius: var(--radius-sm); padding: .6rem 1rem;
+  font-size: .78rem; color: #92400e; text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: #292524; color: #fff; padding: .65rem 1.4rem;
+  border-radius: 12px; font-size: .82rem; font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0,0,0,.25);
+  opacity: 0; transition: all .3s; z-index: 999; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Hidden */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1 id="headerTitle">圖片審核介面</h1>
+  <div style="display:flex;gap:.5rem;">
+    <button class="header-export hidden" id="btnExport" onclick="exportApproved()">匯出 JSON</button>
+    <button class="header-back hidden" id="btnBack" onclick="goLanding()">返回</button>
+  </div>
+</div>
+
+<!-- Landing Screen -->
+<div class="container" id="screenLanding">
+  <div class="landing-title">
+    <h2>圖片審核介面</h2>
+    <p>選擇科目，審核筆記中的候選圖片</p>
+  </div>
+  <div class="demo-banner">
+    這是示範模式 — 目前顯示的是 placeholder 圖片，實際圖片待匯入後即可審核。
+  </div>
+  <div class="subject-grid" id="subjectGrid"></div>
+</div>
+
+<!-- Review Screen -->
+<div class="container hidden" id="screenReview">
+  <div class="demo-banner">
+    示範資料 — 按鈕功能皆可正常使用，審核結果會存在 localStorage。
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+    <div class="progress-text" id="progressText">0 / 0</div>
+  </div>
+
+  <!-- Topic Header -->
+  <div class="review-header">
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:.3rem;">
+      <span class="review-topic" id="reviewTopic"></span>
+      <span class="review-badge" id="reviewBadge"></span>
+    </div>
+    <div class="review-section" id="reviewSection"></div>
+  </div>
+
+  <!-- Image Grid -->
+  <div class="image-grid" id="imageGrid"></div>
+
+  <!-- Navigation -->
+  <div class="nav-bar">
+    <button class="nav-btn" id="btnPrev" onclick="navigate(-1)">← 上一題</button>
+    <span class="nav-counter" id="navCounter"></span>
+    <button class="nav-btn" id="btnNext" onclick="navigate(1)">下一題 →</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   Demo Review Queue
+   ══════════════════════════════════════════ */
+const REVIEW_QUEUE = [
+  {
+    topic: "根管解剖",
+    subject: "ya3",
+    section: "牙髓病學",
+    candidates: [
+      { src: "", source: "共筆/Endo/root-canal-anatomy.pdf p.5", status: "pending" },
+      { src: "", source: "考題/牙醫三/113-1.pdf p.3", status: "pending" },
+      { src: "", source: "Thetawave/ya3/endo-notes.md 圖2", status: "pending" }
+    ]
+  },
+  {
+    topic: "牙周翻瓣手術分類",
+    subject: "ya3",
+    section: "牙周病學",
+    candidates: [
+      { src: "", source: "共筆/Perio/flap-surgery.pdf p.12", status: "pending" },
+      { src: "", source: "考題/牙醫三/114-1.pdf p.8", status: "pending" }
+    ]
+  },
+  {
+    topic: "Le Fort 骨折分類",
+    subject: "ya4",
+    section: "口腔外科",
+    candidates: [
+      { src: "", source: "共筆/OS/trauma.pdf p.21", status: "pending" },
+      { src: "", source: "考題/牙醫四/112-2.pdf p.5", status: "pending" },
+      { src: "", source: "Thetawave/ya4/oral-surgery.md 圖7", status: "pending" }
+    ]
+  },
+  {
+    topic: "全瓷冠材料比較",
+    subject: "ya5",
+    section: "假牙贗復學",
+    candidates: [
+      { src: "", source: "共筆/Prostho/ceramics.pdf p.9", status: "pending" },
+      { src: "", source: "考題/牙醫五/113-2.pdf p.14", status: "pending" }
+    ]
+  },
+  {
+    topic: "Cephalometric landmarks",
+    subject: "ya6",
+    section: "齒顎矯正學",
+    candidates: [
+      { src: "", source: "共筆/Ortho/ceph-analysis.pdf p.3", status: "pending" },
+      { src: "", source: "考題/牙醫六/114-1.pdf p.6", status: "pending" }
+    ]
+  }
+];
+
+/* ══════ Placeholder colors per subject ══════ */
+const SUBJECT_META = {
+  ya3: { name: "牙醫學(三)", color: "#0e7490", bg: "#0e7490" },
+  ya4: { name: "牙醫學(四)", color: "#7c3aed", bg: "#7c3aed" },
+  ya5: { name: "牙醫學(五)", color: "#3730a3", bg: "#3730a3" },
+  ya6: { name: "牙醫學(六)", color: "#166534", bg: "#166534" }
+};
+
+/* ══════ State ══════ */
+const STORAGE_KEY = "imageReviewState";
+let currentSubject = null;
+let currentIndex = 0;
+let filteredQueue = [];
+
+/* ══════ LocalStorage ══════ */
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    // Restore statuses
+    saved.forEach(s => {
+      const item = REVIEW_QUEUE.find(q => q.topic === s.topic && q.subject === s.subject);
+      if (item && s.candidates) {
+        s.candidates.forEach((c, i) => {
+          if (item.candidates[i]) item.candidates[i].status = c.status;
+        });
+      }
+    });
+  } catch(e) {}
+}
+
+function saveState() {
+  const data = REVIEW_QUEUE.map(q => ({
+    topic: q.topic,
+    subject: q.subject,
+    candidates: q.candidates.map(c => ({ status: c.status }))
+  }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+/* ══════ Stats ══════ */
+function getStats(subject) {
+  const items = REVIEW_QUEUE.filter(q => q.subject === subject);
+  let pending = 0, approved = 0, rejected = 0;
+  items.forEach(q => q.candidates.forEach(c => {
+    if (c.status === "approved") approved++;
+    else if (c.status === "rejected") rejected++;
+    else pending++;
+  }));
+  return { pending, approved, rejected, total: pending + approved + rejected };
+}
+
+/* ══════ Landing ══════ */
+function renderLanding() {
+  const grid = document.getElementById("subjectGrid");
+  grid.innerHTML = "";
+  ["ya3","ya4","ya5","ya6"].forEach(sub => {
+    const m = SUBJECT_META[sub];
+    const s = getStats(sub);
+    const count = REVIEW_QUEUE.filter(q => q.subject === sub).length;
+    const card = document.createElement("div");
+    card.className = "subject-card";
+    card.dataset.subject = sub;
+    card.onclick = () => enterReview(sub);
+    card.innerHTML = `
+      <div class="card-label">${sub.toUpperCase()}</div>
+      <div class="card-name">${m.name}</div>
+      <div class="card-stats">
+        <span class="stat-item"><span class="stat-dot pending"></span>${s.pending} 待審</span>
+        <span class="stat-item"><span class="stat-dot approved"></span>${s.approved} 已確認</span>
+        <span class="stat-item"><span class="stat-dot rejected"></span>${s.rejected} 不要</span>
+      </div>
+      <div style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem;">${count} 個主題</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ══════ Enter Review ══════ */
+function enterReview(subject) {
+  currentSubject = subject;
+  filteredQueue = REVIEW_QUEUE.filter(q => q.subject === subject);
+  currentIndex = 0;
+  document.getElementById("screenLanding").classList.add("hidden");
+  document.getElementById("screenReview").classList.remove("hidden");
+  document.getElementById("btnBack").classList.remove("hidden");
+  document.getElementById("btnExport").classList.remove("hidden");
+  const m = SUBJECT_META[subject];
+  document.getElementById("headerTitle").textContent = m.name + " — 圖片審核";
+  document.getElementById("headerTitle").style.color = "#fff";
+  renderReview();
+}
+
+function goLanding() {
+  document.getElementById("screenReview").classList.add("hidden");
+  document.getElementById("screenLanding").classList.remove("hidden");
+  document.getElementById("btnBack").classList.add("hidden");
+  document.getElementById("btnExport").classList.add("hidden");
+  document.getElementById("headerTitle").textContent = "圖片審核介面";
+  currentSubject = null;
+  renderLanding();
+}
+
+/* ══════ Render Review ══════ */
+function renderReview() {
+  if (!filteredQueue.length) return;
+  const item = filteredQueue[currentIndex];
+  const m = SUBJECT_META[item.subject];
+
+  // Topic header
+  document.getElementById("reviewTopic").textContent = item.topic;
+  document.getElementById("reviewSection").textContent = item.section;
+  const badge = document.getElementById("reviewBadge");
+  badge.textContent = item.subject.toUpperCase();
+  badge.style.background = m.color + "18";
+  badge.style.color = m.color;
+
+  // Progress
+  const stats = getStats(currentSubject);
+  const reviewed = stats.approved + stats.rejected;
+  const pct = stats.total ? Math.round(reviewed / stats.total * 100) : 0;
+  document.getElementById("progressBar").style.width = pct + "%";
+  document.getElementById("progressText").textContent = `${reviewed} / ${stats.total} 已審核 (${pct}%)`;
+
+  // Navigation
+  document.getElementById("btnPrev").disabled = currentIndex === 0;
+  document.getElementById("btnNext").disabled = currentIndex === filteredQueue.length - 1;
+  document.getElementById("navCounter").textContent =
+    `${currentIndex + 1} / ${filteredQueue.length}`;
+
+  // Images
+  const grid = document.getElementById("imageGrid");
+  grid.innerHTML = "";
+  item.candidates.forEach((c, ci) => {
+    const card = document.createElement("div");
+    card.className = "image-card" + (c.status !== "pending" ? " " + c.status : "");
+    card.id = "imgcard-" + ci;
+
+    // Placeholder
+    const hue = parseInt(m.bg.replace("#",""), 16);
+    const placeholderBg = m.bg;
+    const previewHTML = c.src
+      ? `<img src="${c.src}" alt="candidate">`
+      : `<div class="placeholder-img" style="background:${placeholderBg};">
+           <span class="icon">🖼</span>
+           <span>候選圖片 #${ci + 1}</span>
+           <span style="font-size:.7rem;opacity:.7;">${item.topic}</span>
+         </div>`;
+
+    const statusLabel = c.status === "approved" ? "已確認" :
+                        c.status === "rejected" ? "已排除" : "";
+
+    card.innerHTML = `
+      <div class="image-preview">${previewHTML}</div>
+      <div class="image-card-body">
+        <div class="image-status-label">${statusLabel}</div>
+        <div class="image-source">${c.source}</div>
+        <div class="image-actions">
+          <button class="btn-approve" onclick="setStatus(${currentIndex},${ci},'approved')">✅ 確認</button>
+          <button class="btn-swap" onclick="showToast('換一張功能待接入圖片來源')">🔄 換一張</button>
+          <button class="btn-reject" onclick="setStatus(${currentIndex},${ci},'rejected')">✕ 不要</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ══════ Actions ══════ */
+function setStatus(topicIdx, candIdx, status) {
+  const item = filteredQueue[topicIdx];
+  const prev = item.candidates[candIdx].status;
+  // Toggle: if clicking the same status, revert to pending
+  if (prev === status) {
+    item.candidates[candIdx].status = "pending";
+    showToast("已取消標記");
+  } else {
+    item.candidates[candIdx].status = status;
+    showToast(status === "approved" ? "已確認" : "已排除");
+  }
+  saveState();
+  renderReview();
+}
+
+function navigate(dir) {
+  const next = currentIndex + dir;
+  if (next < 0 || next >= filteredQueue.length) return;
+  currentIndex = next;
+  renderReview();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ══════ Export ══════ */
+function exportApproved() {
+  const result = [];
+  REVIEW_QUEUE.forEach(q => {
+    const approved = q.candidates
+      .filter(c => c.status === "approved")
+      .map(c => ({ src: c.src, source: c.source }));
+    if (approved.length) {
+      result.push({
+        topic: q.topic,
+        subject: q.subject,
+        section: q.section,
+        approvedImages: approved
+      });
+    }
+  });
+  if (!result.length) {
+    showToast("尚無已確認的圖片");
+    return;
+  }
+  const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "approved-images.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`已匯出 ${result.length} 個主題的圖片`);
+}
+
+/* ══════ Toast ══════ */
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+}
+
+/* ══════ Keyboard Navigation ══════ */
+document.addEventListener("keydown", e => {
+  if (!currentSubject) return;
+  if (e.key === "ArrowLeft") navigate(-1);
+  if (e.key === "ArrowRight") navigate(1);
+});
+
+/* ══════ Init ══════ */
+loadState();
+renderLanding();
+</script>
+</body>
+</html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>牙醫國考：知識群島</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--card:#fffef7;--text:#2d2a22;--text-sub:#8a7e6a;--border:#d4c9b0;
+  --ya3:#0ea5e9;--ya4:#a78bfa;--ya5:#818cf8;--ya6:#4ade80}
+
+body{font-family:'Noto Sans TC',sans-serif;background:#2a7ab5;color:#fff;height:100vh;width:100vw;overflow:hidden;user-select:none}
+
+/* ===== OCEAN ===== */
+.ocean{position:fixed;inset:0;
+  background:radial-gradient(ellipse at 25% 65%,#1d6a9c 0%,transparent 55%),
+    radial-gradient(ellipse at 75% 35%,#3a9fd4 0%,transparent 50%),
+    linear-gradient(180deg,#3a8ec0 0%,#1e5f8a 100%)}
+.wave{position:absolute;inset:0;
+  background:repeating-linear-gradient(92deg,transparent,transparent 100px,rgba(255,255,255,.025) 100px,rgba(255,255,255,.025) 102px);
+  animation:wv 10s linear infinite}
+.wave:nth-child(2){background:repeating-linear-gradient(88deg,transparent,transparent 140px,rgba(255,255,255,.02) 140px,rgba(255,255,255,.02) 142px);animation:wv2 14s linear infinite}
+@keyframes wv{from{transform:translateX(0)}to{transform:translateX(102px)}}
+@keyframes wv2{from{transform:translateX(0)}to{transform:translateX(-142px)}}
+.cloud{position:absolute;background:rgba(255,255,255,.28);border-radius:50%;filter:blur(22px);animation:drift linear infinite;z-index:40;pointer-events:none}
+@keyframes drift{from{transform:translateX(-220px)}to{transform:translateX(calc(100vw + 220px))}}
+
+/* ===== TOP BAR ===== */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:.55rem .8rem;background:rgba(0,0,0,.28);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+.topbar a{color:#fff;text-decoration:none;font-size:.85rem;opacity:.7}.topbar a:hover{opacity:1}
+.topbar .title{font-size:1rem;font-weight:800}
+.topbar .stats{font-size:.8rem;opacity:.7}
+
+/* ===== VIEWPORT ===== */
+.viewport{position:fixed;inset:0;overflow:hidden;cursor:grab;z-index:10}
+.viewport:active{cursor:grabbing}
+.canvas{position:absolute;width:2200px;height:1800px;transform-origin:0 0}
+
+/* ===== ISLAND ===== */
+.island{position:absolute;cursor:pointer}
+.island img{width:100%;height:auto;display:block;filter:drop-shadow(0 12px 30px rgba(0,0,0,.35));transition:filter .2s,transform .2s}
+.island:hover img{filter:drop-shadow(0 16px 40px rgba(0,0,0,.45));transform:scale(1.02)}
+.island-label{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);font-size:1.2rem;font-weight:900;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.6),0 0 20px rgba(0,0,0,.3);z-index:25;pointer-events:none;white-space:nowrap;letter-spacing:.04em}
+
+/* Green dots on islands */
+.island-nodes{position:absolute;inset:0}
+.nd{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:20;text-align:center;transition:transform .15s}
+.nd:hover{transform:translate(-50%,-50%) scale(1.15)}
+.nd-dot{width:14px;height:14px;border-radius:50%;background:#6f3;border:2.5px solid #fff;box-shadow:0 0 7px rgba(100,255,50,.5),0 2px 4px rgba(0,0,0,.4);margin:0 auto 2px}
+.nd.visited .nd-dot{background:#fbbf24;box-shadow:0 0 7px rgba(251,191,36,.5),0 2px 4px rgba(0,0,0,.4)}
+.nd.is-hub .nd-dot{width:22px;height:22px;background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 0 12px rgba(251,191,36,.6),0 2px 6px rgba(0,0,0,.4)}
+.nd-name{background:rgba(0,0,0,.65);backdrop-filter:blur(4px);padding:.12rem .5rem;border-radius:5px;font-size:.6rem;font-weight:600;white-space:nowrap;line-height:1.3}
+.nd-sub{font-size:.5rem;opacity:.55;display:block}
+
+/* ===== ZOOM & MINIMAP ===== */
+.zoom{position:fixed;bottom:1rem;left:1rem;z-index:90;display:flex;flex-direction:column;gap:.3rem}
+.zbtn{width:36px;height:36px;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.zbtn:hover{background:rgba(0,0,0,.6)}
+.minimap{position:fixed;bottom:1rem;right:1rem;z-index:90;width:110px;height:88px;background:rgba(0,0,0,.35);border:1.5px solid rgba(255,255,255,.15);border-radius:8px;overflow:hidden;backdrop-filter:blur(4px)}
+.mm-island{position:absolute;border-radius:3px;opacity:.65}
+.mm-vp{position:absolute;border:1.5px solid #fbbf24;border-radius:2px;pointer-events:none}
+
+/* ============================
+   ISLAND PANEL — CARD WALL
+   ============================ */
+.panel-dim{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:none}
+.panel-dim.show{display:block}
+
+.island-page{
+  position:fixed;inset:0;z-index:210;
+  background:linear-gradient(180deg,#1a2a3a 0%,#0f1f2e 100%);
+  color:#fff;display:none;flex-direction:column;overflow:hidden;
+}
+.island-page.show{display:flex}
+
+.ip-top{
+  display:flex;align-items:center;gap:.7rem;
+  padding:.6rem 1rem;flex-shrink:0;
+  background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.08);
+}
+.ip-back{background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;padding:.3rem;opacity:.7}
+.ip-back:hover{opacity:1}
+.ip-icon{font-size:1.5rem}
+.ip-info h2{font-size:1.1rem;font-weight:800}
+.ip-info .sub{font-size:.75rem;opacity:.5}
+.ip-progress{margin-left:auto;font-size:.72rem;opacity:.5}
+
+.ip-body{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:1rem;
+}
+
+/* Section header card */
+.sec-head{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.7rem .8rem;margin-bottom:.6rem;
+  background:rgba(255,255,255,.06);
+  border-radius:12px;
+  border-left:4px solid rgba(255,255,255,.15);
+}
+.sec-emoji{font-size:1.3rem}
+.sec-name{font-size:.95rem;font-weight:700;flex:1}
+.sec-cnt{font-size:.68rem;opacity:.4}
+
+/* Concept cards grid */
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
+  gap:.6rem;
+  margin-bottom:1.5rem;
+}
+
+.concept-card{
+  background:rgba(255,255,255,.08);
+  border:1.5px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  padding:.8rem .7rem;
+  cursor:pointer;
+  transition:all .2s;
+  position:relative;
+  overflow:hidden;
+  min-height:90px;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.concept-card:hover{
+  background:rgba(255,255,255,.13);
+  border-color:rgba(255,255,255,.18);
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,.2);
+}
+.concept-card:active{transform:scale(.97)}
+
+.concept-card.visited{border-color:rgba(34,197,94,.3)}
+.concept-card.visited::after{
+  content:'\2705';position:absolute;top:.5rem;right:.5rem;font-size:.7rem;
+}
+
+.cc-name{font-size:.82rem;font-weight:600;line-height:1.35;margin-bottom:.5rem}
+.cc-foot{display:flex;align-items:center;justify-content:space-between}
+.cc-freq{font-size:.6rem;font-weight:700;padding:.15rem .4rem;border-radius:4px}
+.cf-critical{background:rgba(239,68,68,.25);color:#fca5a5}
+.cf-high{background:rgba(249,115,22,.2);color:#fdba74}
+.cf-mid,.cf-medium{background:rgba(234,179,8,.18);color:#fde68a}
+.cf-low{background:rgba(148,163,184,.15);color:#94a3b8}
+.cc-arrow{font-size:.7rem;opacity:.3}
+
+/* Color accents per subject */
+.sec-ya3{border-left-color:var(--ya3)}.sec-ya3 .sec-emoji{filter:drop-shadow(0 0 4px rgba(14,165,233,.4))}
+.sec-ya4{border-left-color:var(--ya4)}.sec-ya4 .sec-emoji{filter:drop-shadow(0 0 4px rgba(167,139,250,.4))}
+.sec-ya5{border-left-color:var(--ya5)}.sec-ya5 .sec-emoji{filter:drop-shadow(0 0 4px rgba(129,140,248,.4))}
+.sec-ya6{border-left-color:var(--ya6)}.sec-ya6 .sec-emoji{filter:drop-shadow(0 0 4px rgba(74,222,128,.4))}
+
+/* ============================
+   CONTENT VIEW — CARD STYLE
+   ============================ */
+.cv{position:fixed;inset:0;z-index:300;background:var(--card);color:var(--text);display:none;flex-direction:column}
+.cv.show{display:flex}
+
+.cv-top{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.6rem .8rem;border-bottom:1px solid var(--border);
+  background:#fff;flex-shrink:0;
+}
+.cv-back{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-sub);padding:.3rem}
+.cv-title{font-size:.92rem;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cv-mark{font-size:.72rem;padding:.25rem .6rem;border-radius:6px;background:#f5f0e4;border:1px solid #e8e2d4;cursor:pointer;font-family:inherit;font-weight:600;color:var(--text-sub)}
+.cv-mark.on{background:#0e7490;color:#fff;border-color:#0e7490}
+
+.cv-body{
+  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:1rem 1rem 3rem;
+  background:linear-gradient(180deg,#f8f7f0,#f0ede4);
+}
+
+/* --- Content rendered as cards --- */
+.content-card{
+  background:#fff;
+  border:1px solid #e4e0d4;
+  border-radius:16px;
+  padding:1.2rem;
+  margin-bottom:1rem;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+.content-card h3{font-size:1.05rem;font-weight:800;margin:0 0 .6rem;color:var(--text)}
+.content-card p{font-size:.92rem;line-height:1.75;margin-bottom:.5rem}
+.content-card ul.n{padding-left:1.2rem;margin-bottom:.5rem}
+.content-card ul.n li{font-size:.9rem;line-height:1.7;margin-bottom:.25rem}
+.content-card table{width:100%;border-collapse:collapse;margin:.6rem 0;font-size:.84rem}
+.content-card th,.content-card td{border:1px solid var(--border);padding:.5rem .65rem;text-align:left}
+.content-card th{background:#f5f0e4;font-weight:700;font-size:.82rem}
+.content-card td.td-k{font-weight:700;white-space:nowrap;background:#faf8f2}
+.content-card strong{color:#b45309}
+.content-card strong em{color:#dc2626;font-style:normal}
+.content-card em{color:#ea580c;font-style:normal}
+.content-card .num-hl{color:#dc2626;font-weight:700}
+.content-card .tag,.content-card .tag-r,.content-card .tag-g{display:inline-block;padding:.12rem .5rem;border-radius:5px;font-size:.74rem;font-weight:600;margin:.1rem}
+.content-card .tag{background:#e8e2d4}
+.content-card .tag-r{background:#fef2f2;color:#dc2626}
+.content-card .tag-g{background:#f0fdf4;color:#16a34a}
+.content-card .hl-y{background:#fef9c3;padding:.05rem .25rem;border-radius:2px}
+.content-card .hl-g{background:#dcfce7;padding:.05rem .25rem;border-radius:2px}
+.content-card .hl-p{background:#f3e8ff;padding:.05rem .25rem;border-radius:2px}
+.content-card .box{padding:.8rem;border-radius:10px;margin:.7rem 0;font-size:.88rem;line-height:1.65}
+.content-card .box-red{background:#fef2f2;border-left:4px solid #ef4444}
+.content-card .box-orange{background:#fff7ed;border-left:4px solid #f97316}
+.content-card .box-blue{background:#eff6ff;border-left:4px solid #3b82f6}
+.content-card .box-green{background:#f0fdf4;border-left:4px solid #22c55e}
+.content-card .box-yellow{background:#fefce8;border-left:4px solid #eab308}
+.content-card .pearl{background:linear-gradient(135deg,#fdf2f8,#fce7f3);border:1px solid #f9a8d4;border-radius:10px;padding:.7rem;margin:.7rem 0;font-size:.88rem;line-height:1.65}
+.content-card .mnemonic{background:linear-gradient(135deg,#fefce8,#fef9c3);border:1px solid #fde047;border-radius:10px;padding:.7rem;margin:.7rem 0;font-size:.88rem;line-height:1.65}
+.content-card .num-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:.5rem;margin:.7rem 0}
+.content-card .num-card{background:#f5f0e4;border-radius:8px;padding:.5rem;text-align:center}
+.content-card .num-card .big{font-size:1.3rem;font-weight:900;color:#dc2626}
+.content-card .num-card .sm{font-size:.72rem;color:var(--text-sub)}
+.content-card .steps{counter-reset:step;margin:.7rem 0}
+.content-card .step{counter-increment:step;padding:.5rem .8rem .5rem 2.5rem;position:relative;border-left:2px solid var(--border);margin-left:.5rem;font-size:.88rem;line-height:1.65}
+.content-card .step::before{content:counter(step);position:absolute;left:-14px;top:.4rem;width:26px;height:26px;background:#0e7490;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
+.content-card details{margin:.7rem 0}
+.content-card details summary{cursor:pointer;font-weight:600;font-size:.9rem;padding:.4rem 0}
+.content-card .exam-block{background:#f5f0e4;border-radius:10px;padding:.6rem .8rem}
+.content-card .diag-block{background:#eff6ff;border-radius:10px;padding:.6rem .8rem}
+
+/* Quiz card */
+.quiz-card{
+  background:#fff;
+  border:1px solid #e4e0d4;
+  border-radius:16px;
+  padding:1.2rem;
+  margin-bottom:1rem;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+.quiz-card .qc-head{font-size:.92rem;font-weight:700;color:#0e7490;margin-bottom:.8rem;display:flex;align-items:center;gap:.4rem}
+
+.qq{background:#f8f7f0;border:1px solid #e8e2d4;border-radius:12px;padding:.9rem;margin-bottom:.8rem}
+.qq .qt{font-size:.9rem;font-weight:500;line-height:1.65;margin-bottom:.6rem}
+.qq .qo{display:flex;flex-direction:column;gap:.4rem}
+.qq .qb{background:#fff;border:1.5px solid #e4e0d4;border-radius:10px;padding:.6rem .8rem;font-size:.86rem;text-align:left;cursor:pointer;font-family:inherit;color:var(--text);transition:all .15s;line-height:1.5}
+.qq .qb:hover:not(:disabled){border-color:#0e7490;background:#ecfeff}
+.qq .qb:disabled{cursor:default}
+.qq .qb.correct{border-color:#16a34a;background:#f0fdf4;color:#15803d;font-weight:600}
+.qq .qb.wrong{border-color:#dc2626;background:#fef2f2;color:#dc2626}
+.qq .qe{margin-top:.6rem;padding:.7rem;background:#fefce8;border:1px solid #fde68a;border-radius:10px;font-size:.82rem;line-height:1.65;display:none;white-space:pre-line}
+.qq .qe.show{display:block}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:500px){
+  .island-label{font-size:.9rem}
+  .nd-name{font-size:.52rem}
+  .minimap{width:85px;height:68px}
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+  .concept-card{min-height:80px;padding:.7rem .6rem}
+  .cc-name{font-size:.78rem}
+}
+</style>
+</head>
+<body>
+
+<div class="ocean" id="ocean"><div class="wave"></div><div class="wave"></div></div>
+
+<div class="topbar" id="worldTopbar">
+  <a href="../index.html">&larr; 首頁</a>
+  <span class="title">知識群島</span>
+  <span class="stats" id="topStats"></span>
+</div>
+
+<div class="viewport" id="vp">
+  <div class="canvas" id="canvas"></div>
+</div>
+
+<div class="zoom">
+  <button class="zbtn" onclick="zm(1.15)">+</button>
+  <button class="zbtn" onclick="zm(.87)">&minus;</button>
+</div>
+<div class="minimap" id="mm"></div>
+
+<!-- ===== ISLAND PAGE (card wall) ===== -->
+<div class="island-page" id="islandPage">
+  <div class="ip-top">
+    <button class="ip-back" onclick="closeIsland()">&larr;</button>
+    <span class="ip-icon" id="ipIcon"></span>
+    <div class="ip-info">
+      <h2 id="ipName"></h2>
+      <div class="sub" id="ipSub"></div>
+    </div>
+    <span class="ip-progress" id="ipProg"></span>
+  </div>
+  <div class="ip-body" id="ipBody"></div>
+</div>
+
+<!-- ===== CONTENT VIEW (card style) ===== -->
+<div class="cv" id="cv">
+  <div class="cv-top">
+    <button class="cv-back" onclick="closeC()">&larr;</button>
+    <span class="cv-title" id="cvT"></span>
+    <button class="cv-mark" id="cvM" onclick="togM()">&#9745; 已讀</button>
+  </div>
+  <div class="cv-body" id="cvB"></div>
+</div>
+
+<script src="../ya3/ya3-data.js"></script>
+<script src="../ya4/os-data.js"></script>
+<script src="../ya4/rad-data.js"></script>
+<script src="../ya5/prostho-data.js"></script>
+<script src="../ya6/ya6-data.js"></script>
+<script src="../exam/questions-data.js"></script>
+
+<script>
+/* ===== ISLANDS ===== */
+const ISL=[
+  {id:'ya3',name:'牙三島',sub:'根管・診斷・牙周',icon:'\u{1F9B7}',
+   img:'island-ya3.png',x:50,y:50,w:750,h:600,clr:'#3a8a55',
+   tree:typeof ENDO_OD_TREE!=='undefined'?ENDO_OD_TREE:[],subjs:['ya3']},
+  {id:'ya4',name:'牙四島',sub:'口外・放射線',icon:'\u{1FA78}',
+   img:'island-ya4.png',x:1050,y:30,w:720,h:580,clr:'#7a5a8a',
+   tree:[...(typeof OS_TREE!=='undefined'?OS_TREE:[]),...(typeof RAD_TREE!=='undefined'?RAD_TREE:[])],subjs:['ya4']},
+  {id:'ya5',name:'牙五島',sub:'假牙・咬合',icon:'\u{1FA7B}',
+   img:'island-ya5.png',x:100,y:780,w:730,h:590,clr:'#b49a50',
+   tree:typeof PROSTHO_TREE!=='undefined'?PROSTHO_TREE:[],subjs:['ya5']},
+  {id:'ya6',name:'牙六島',sub:'矯正・兒牙・公衛',icon:'\u{1F476}',
+   img:'island-ya6.png',x:1000,y:820,w:710,h:570,clr:'#4a9a55',
+   tree:typeof ORTHO_PEDO_TREE!=='undefined'?ORTHO_PEDO_TREE:[],subjs:['ya6']},
+];
+
+/* ===== STATE ===== */
+const SK='dental_islands_v3';
+let vis=loadV();
+function loadV(){try{return new Set(JSON.parse(localStorage.getItem(SK))||[])}catch(e){return new Set()}}
+function saveV(){localStorage.setItem(SK,JSON.stringify([...vis]))}
+function nid(iid,bi,ci){return`${iid}-${bi}-${ci}`}
+
+/* ===== BUILD WORLD MAP ===== */
+const cvs=document.getElementById('canvas');
+
+function buildMap(){
+  cvs.innerHTML='';
+  ISL.forEach(isl=>{
+    const el=document.createElement('div');
+    el.className='island';
+    el.style.cssText=`left:${isl.x}px;top:${isl.y}px;width:${isl.w}px;height:${isl.h}px`;
+
+    const img=document.createElement('img');
+    img.src=isl.img;img.alt=isl.name;img.draggable=false;
+    el.appendChild(img);
+
+    const lbl=document.createElement('div');
+    lbl.className='island-label';lbl.textContent=isl.name;
+    el.appendChild(lbl);
+
+    // Green dot nodes
+    const nodes=document.createElement('div');
+    nodes.className='island-nodes';
+    genLocs(isl).forEach(loc=>{
+      const nd=document.createElement('div');
+      const isV=loc.ci!==undefined&&vis.has(nid(isl.id,loc.bi,loc.ci));
+      nd.className=`nd${isV?' visited':''}${loc.hub?' is-hub':''}`;
+      nd.style.cssText=`left:${loc.x}%;top:${loc.y}%`;
+      nd.innerHTML=`<div class="nd-dot"></div><div class="nd-name">${loc.name}${loc.sub?`<span class="nd-sub">${loc.sub}</span>`:''}</div>`;
+      if(loc.hub) nd.onclick=()=>openIsland(isl);
+      else nd.onclick=e=>{e.stopPropagation();openC(isl,loc.bi,loc.ci)};
+      nodes.appendChild(nd);
+    });
+    el.appendChild(nodes);
+
+    el.addEventListener('click',e=>{if(!e.target.closest('.nd'))openIsland(isl)});
+    cvs.appendChild(el);
+  });
+  updStats();buildMM();
+}
+
+function genLocs(isl){
+  const L=[];const tree=isl.tree;
+  if(!tree.length)return L;
+  L.push({name:isl.name,x:48,y:46,hub:true});
+  const n=tree.length,step=360/n,bR=26;
+  tree.forEach((branch,bi)=>{
+    const a=(step*bi-90)*Math.PI/180;
+    const bx=48+Math.cos(a)*bR,by=46+Math.sin(a)*bR*.82;
+    const lm=branch.label.match(/^(\S+)\s(.+)/);
+    const nm=lm?lm[2]:branch.label;
+    L.push({name:nm.substring(0,8)+(nm.length>8?'..':''),x:bx,y:by,bi,hub:false,sub:`${branch.children?branch.children.length:0} 觀念`,ci:undefined});
+    if(branch.children){
+      const cc=branch.children.length,spread=Math.min(35,160/n),cR=13;
+      branch.children.forEach((child,ci)=>{
+        const ca=a+((ci-(cc-1)/2)*spread/Math.max(cc-1,1))*Math.PI/180;
+        const lr=bR+cR+Math.random()*3;
+        let lx=Math.max(8,Math.min(92,48+Math.cos(ca)*lr));
+        let ly=Math.max(8,Math.min(92,46+Math.sin(ca)*lr*.82));
+        L.push({name:child.label.substring(0,10)+(child.label.length>10?'..':''),x:lx,y:ly,bi,ci});
+      });
+    }
+  });
+  return L;
+}
+
+/* ===== PAN & ZOOM ===== */
+let vx=-150,vy=-80,sc=.5,drag=false,dsx,dsy,dvx,dvy,pinD=0;
+function applyT(){cvs.style.transform=`translate(${vx}px,${vy}px) scale(${sc})`;updMM()}
+const vpEl=document.getElementById('vp');
+vpEl.addEventListener('pointerdown',e=>{if(e.target.closest('.nd')||e.target.closest('.island-page')||e.target.closest('.cv'))return;drag=true;dsx=e.clientX;dsy=e.clientY;dvx=vx;dvy=vy;vpEl.setPointerCapture(e.pointerId)});
+vpEl.addEventListener('pointermove',e=>{if(!drag)return;vx=dvx+(e.clientX-dsx);vy=dvy+(e.clientY-dsy);applyT()});
+vpEl.addEventListener('pointerup',()=>drag=false);
+vpEl.addEventListener('pointercancel',()=>drag=false);
+vpEl.addEventListener('wheel',e=>{e.preventDefault();zmAt(e.clientX,e.clientY,e.deltaY>0?.92:1.08)},{passive:false});
+vpEl.addEventListener('touchstart',e=>{if(e.touches.length===2)pinD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)},{passive:true});
+vpEl.addEventListener('touchmove',e=>{if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(pinD>0)zmAt((e.touches[0].clientX+e.touches[1].clientX)/2,(e.touches[0].clientY+e.touches[1].clientY)/2,d/pinD);pinD=d}},{passive:true});
+function zmAt(cx,cy,f){const ns=Math.max(.2,Math.min(1.5,sc*f)),r=ns/sc;vx=cx-(cx-vx)*r;vy=cy-(cy-vy)*r;sc=ns;applyT()}
+function zm(f){zmAt(innerWidth/2,innerHeight/2,f)}
+
+/* ===== MINIMAP ===== */
+function buildMM(){
+  const mm=document.getElementById('mm');mm.innerHTML='';
+  const mw=mm.offsetWidth,mh=mm.offsetHeight,sx=mw/2200,sy=mh/1800;
+  ISL.forEach(i=>{const d=document.createElement('div');d.className='mm-island';d.style.cssText=`left:${i.x*sx}px;top:${i.y*sy}px;width:${i.w*sx}px;height:${i.h*sy}px;background:${i.clr}`;mm.appendChild(d)});
+  const v=document.createElement('div');v.className='mm-vp';v.id='mmV';mm.appendChild(v);updMM();
+}
+function updMM(){
+  const v=document.getElementById('mmV');if(!v)return;
+  const mm=document.getElementById('mm'),mw=mm.offsetWidth,mh=mm.offsetHeight,sx=mw/2200,sy=mh/1800;
+  v.style.cssText=`left:${(-vx/sc)*sx}px;top:${(-vy/sc)*sy}px;width:${(innerWidth/sc)*sx}px;height:${(innerHeight/sc)*sy}px`;
+}
+
+/* ===== CLOUDS ===== */
+function mkClouds(){
+  const o=document.getElementById('ocean');
+  for(let i=0;i<6;i++){const c=document.createElement('div');c.className='cloud';const s=80+Math.random()*130;c.style.cssText=`width:${s}px;height:${s*.45}px;top:${5+Math.random()*85}%;animation-duration:${25+Math.random()*30}s;animation-delay:${-Math.random()*30}s;opacity:${.12+Math.random()*.18}`;o.appendChild(c)}
+}
+
+/* ===== TOP STATS ===== */
+function updStats(){
+  let tv=0,tn=0;
+  ISL.forEach(i=>i.tree.forEach((b,bi)=>{if(b.children)b.children.forEach((_,ci)=>{tn++;if(vis.has(nid(i.id,bi,ci)))tv++})}));
+  document.getElementById('topStats').textContent=`${tv}/${tn} 已探索`;
+}
+
+/* ============================
+   ISLAND PAGE (CARD WALL)
+   ============================ */
+let curI=null;
+
+function openIsland(isl){
+  curI=isl;
+  document.getElementById('ipIcon').textContent=isl.icon;
+  document.getElementById('ipName').textContent=isl.name;
+  document.getElementById('ipSub').textContent=isl.sub;
+
+  let t=0,v2=0;
+  isl.tree.forEach((b,bi)=>{if(b.children)b.children.forEach((_,ci)=>{t++;if(vis.has(nid(isl.id,bi,ci)))v2++})});
+  document.getElementById('ipProg').textContent=`${v2}/${t} 已探索`;
+
+  const bd=document.getElementById('ipBody');bd.innerHTML='';bd.scrollTop=0;
+
+  isl.tree.forEach((branch,bi)=>{
+    if(!branch.children||!branch.children.length)return;
+    const lm=branch.label.match(/^(\S+)\s(.+)/);
+    const emo=lm?lm[1]:'\u{1F4D6}',nm=lm?lm[2]:branch.label;
+    const cc=branch.children.length;
+    const vc=branch.children.filter((_,ci)=>vis.has(nid(isl.id,bi,ci))).length;
+
+    // Section header
+    const secH=document.createElement('div');
+    secH.className=`sec-head sec-${isl.id}`;
+    secH.innerHTML=`<span class="sec-emoji">${emo}</span><span class="sec-name">${nm}</span><span class="sec-cnt">${vc}/${cc}</span>`;
+    bd.appendChild(secH);
+
+    // Cards grid
+    const grid=document.createElement('div');
+    grid.className='card-grid';
+
+    branch.children.forEach((child,ci)=>{
+      const id=nid(isl.id,bi,ci),isV=vis.has(id);
+      const fMap={critical:'cf-critical',high:'cf-high',mid:'cf-mid',medium:'cf-medium',low:'cf-low'};
+      const fLabel={critical:'必考',high:'高頻',mid:'中頻',medium:'中頻',low:'低頻'};
+
+      const card=document.createElement('div');
+      card.className=`concept-card${isV?' visited':''}`;
+      card.onclick=()=>openC(isl,bi,ci);
+      card.innerHTML=`
+        <div class="cc-name">${child.label}</div>
+        <div class="cc-foot">
+          ${child.freq?`<span class="cc-freq ${fMap[child.freq]||''}">${fLabel[child.freq]||''}</span>`:'<span></span>'}
+          <span class="cc-arrow">\u279C</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    bd.appendChild(grid);
+  });
+
+  document.getElementById('islandPage').classList.add('show');
+  document.getElementById('worldTopbar').style.display='none';
+}
+
+function closeIsland(){
+  document.getElementById('islandPage').classList.remove('show');
+  document.getElementById('worldTopbar').style.display='';
+  buildMap();
+}
+
+/* ============================
+   CONTENT VIEW (CARD STYLE)
+   ============================ */
+let curN=null;
+
+function openC(isl,bi,ci){
+  curN={isl,bi,ci};
+  const ch=isl.tree[bi].children[ci],id=nid(isl.id,bi,ci);
+  document.getElementById('cvT').textContent=ch.label;
+  const bd=document.getElementById('cvB');bd.innerHTML='';bd.scrollTop=0;
+
+  // Wrap content in a card
+  if(ch.content){
+    const card=document.createElement('div');
+    card.className='content-card';
+    card.innerHTML=ch.content;
+    bd.appendChild(card);
+  } else {
+    const card=document.createElement('div');
+    card.className='content-card';
+    card.innerHTML='<p style="color:#aaa;text-align:center">此觀念尚無內容，待補充</p>';
+    bd.appendChild(card);
+  }
+
+  // Related quiz in a separate card
+  const rq=findQ(isl,ch);
+  if(rq.length){
+    const qCard=document.createElement('div');
+    qCard.className='quiz-card';
+    qCard.innerHTML=`<div class="qc-head">\u{1F4DD} 相關考古題 (${rq.length} 題)</div>`;
+    rq.slice(0,5).forEach((q,qi)=>{
+      const uid=`qe${bi}_${ci}_${qi}`;
+      const d=document.createElement('div');d.className='qq';
+      d.innerHTML=`<div class="qt">${q.meta}\u2502${q.question}</div>
+        <div class="qo">${q.options.map((o,oi)=>`<button class="qb" onclick="ansQ(this,${oi},${q.answer},'${uid}')">${o}</button>`).join('')}</div>
+        <div class="qe" id="${uid}">${q.explanation||'暫無詳解'}</div>`;
+      qCard.appendChild(d);
+    });
+    bd.appendChild(qCard);
+  }
+
+  if(!vis.has(id)){vis.add(id);saveV();updStats()}
+  updMark();
+  document.getElementById('cv').classList.add('show');
+}
+
+function ansQ(btn,ch,ans,eid){
+  const p=btn.closest('.qo');p.querySelectorAll('.qb').forEach(b=>b.disabled=true);
+  if(ch===ans)btn.classList.add('correct');
+  else{btn.classList.add('wrong');p.querySelectorAll('.qb')[ans].classList.add('correct')}
+  document.getElementById(eid).classList.add('show');
+}
+
+function findQ(isl,child){
+  if(typeof QUESTIONS==='undefined')return[];
+  const kws=child.label.replace(/[（）()\[\]【】「」]/g,' ').split(/[\s・,，]+/).filter(w=>w.length>=2);
+  return QUESTIONS.filter(q=>{
+    if(!isl.subjs.includes(q.subject))return false;
+    const t=(q.topic||'').toLowerCase(),qn=(q.question||'').toLowerCase();
+    return kws.some(k=>t.includes(k.toLowerCase())||qn.includes(k.toLowerCase()));
+  });
+}
+
+function closeC(){
+  document.getElementById('cv').classList.remove('show');
+  // Refresh island page cards
+  if(curI)openIsland(curI);
+}
+
+function togM(){
+  if(!curN)return;const id=nid(curN.isl.id,curN.bi,curN.ci);
+  if(vis.has(id))vis.delete(id);else vis.add(id);saveV();updMark();updStats();
+}
+function updMark(){
+  if(!curN)return;const id=nid(curN.isl.id,curN.bi,curN.ci);
+  const b=document.getElementById('cvM');
+  if(vis.has(id)){b.textContent='\u2705 已讀';b.classList.add('on')}
+  else{b.textContent='\u2B1C 未讀';b.classList.remove('on')}
+}
+
+/* ===== INIT ===== */
+mkClouds();buildMap();applyT();
+setTimeout(()=>{vx=(innerWidth-2200*sc)/2;vy=(innerHeight-1800*sc)/2-10;applyT()},50);
+</script>
+</body>
+</html>

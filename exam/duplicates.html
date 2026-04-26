@@ -60,6 +60,31 @@ body {
   flex: 1;
 }
 
+.tab-bar {
+  display: flex;
+  gap: 0;
+  background: #fff;
+  border-bottom: 1.5px solid var(--nb-bd);
+  padding: 0 16px;
+}
+.tab-btn {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nb-sub);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 3px solid transparent;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--nb-text); }
+.tab-btn.active {
+  color: var(--nb-text);
+  border-bottom-color: var(--ya4);
+}
+
 .container {
   max-width: 900px;
   margin: 0 auto;
@@ -102,6 +127,31 @@ body {
 .stat-box .num { font-size: 22px; font-weight: 700; }
 .stat-box .lbl { font-size: 11px; color: var(--nb-sub); margin-top: 2px; }
 
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--nb-bd);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--nb-sub);
+  transition: all 0.15s;
+}
+.filter-btn:hover { border-color: var(--nb-bdk); }
+.filter-btn.active { background: var(--nb-text); color: #fff; border-color: var(--nb-text); }
+.filter-btn[data-f="ya3"].active { background: var(--ya3); border-color: var(--ya3); }
+.filter-btn[data-f="ya4"].active { background: var(--ya4); border-color: var(--ya4); }
+.filter-btn[data-f="ya5"].active { background: var(--ya5); border-color: var(--ya5); }
+.filter-btn[data-f="ya6"].active { background: var(--ya6); border-color: var(--ya6); }
+
 .group-card {
   background: #fff;
   border: 1.5px solid var(--nb-bd);
@@ -139,6 +189,9 @@ body {
 .badge-ya6 { background: #dcfce7; color: var(--ya6); }
 .badge-same { background: #dcfce7; color: var(--green); }
 .badge-diff { background: #fef3c7; color: var(--orange); }
+.badge-exact { background: #dbeafe; color: #1d4ed8; }
+.badge-fuzzy { background: #fef3c7; color: #92400e; }
+.badge-year { background: #fce7f3; color: #9d174d; }
 
 .instances {
   display: grid;
@@ -197,7 +250,7 @@ body {
   color: #15803d;
 }
 .option-list li.correct::after {
-  content: ' ✓';
+  content: ' \2713';
   color: var(--green);
 }
 
@@ -248,28 +301,358 @@ body {
   background: var(--nb-bg);
 }
 
-/* image question notice */
 .img-note {
   padding: 10px 18px;
   font-size: 12px;
   color: var(--nb-sub);
   font-style: italic;
 }
+
+/* Cross-era match card */
+.cross-card {
+  background: #fff;
+  border: 1.5px solid var(--nb-bd);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.cross-header {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--nb-bd);
+}
+.cross-header .stem {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+  min-width: 200px;
+}
+.cross-detail {
+  padding: 10px 18px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--nb-sub);
+}
+.cross-detail .new-ref {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--nb-text);
+  background: var(--nb-bg);
+  border: 1px solid var(--nb-bd);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  margin-right: 4px;
+}
+.cross-detail .old-ref {
+  display: inline-block;
+  font-weight: 600;
+  color: #9a3412;
+  margin-right: 4px;
+}
+.hidden { display: none !important; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <a href="index.html">← 考古題練習</a>
+  <a href="index.html">&larr; 考古題練習</a>
   <h1>重複考題統計</h1>
 </div>
 
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="cross">跨年代重複 (90-110)</button>
+  <button class="tab-btn" data-tab="intra">同期重複 (111-115)</button>
+</div>
+
+<!-- ===================== TAB 1: Cross-era matches ===================== -->
+<div class="tab-content active" id="tab-cross">
 <div class="container">
 
   <div class="summary-card">
-    <h2>📊 重複題幹分析</h2>
-    <p>在 111–115 年（共 2880 題）中，找到 <strong>7 組</strong>題幹完全相同的考題。這些題目使用相同的問法，但選項內容不同、出題年份不同。這是高效備考的重點：<strong>同一個知識點，出題者會從不同角度考你</strong>。</p>
-    <p style="margin-top:6px;">欄位說明：「答案相同」表示兩年考出的正確選項位置相同（A/B/C/D），但選項文字仍可能不同。</p>
+    <h2>跨年代重複題目</h2>
+    <p>比對 111-115 年 2880 題與 90-110 年考選部歷屆試題 7352 題，找出題幹相同或高度相似的重複題目。這些是出題委員反覆出的高頻考點。</p>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="num">19</div>
+        <div class="lbl">重複題目</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">20</div>
+        <div class="lbl">匹配筆數</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">17</div>
+        <div class="lbl">完全匹配</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">3</div>
+        <div class="lbl">模糊匹配</div>
+      </div>
+      <div class="stat-box">
+        <div class="num">133</div>
+        <div class="lbl">掃描PDF數</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-row" id="cross-filters">
+    <button class="filter-btn active" data-f="all">全部 (19)</button>
+    <button class="filter-btn" data-f="ya3">牙三 (4)</button>
+    <button class="filter-btn" data-f="ya4">牙四 (7)</button>
+    <button class="filter-btn" data-f="ya5">牙五 (5)</button>
+    <button class="filter-btn" data-f="ya6">牙六 (3)</button>
+  </div>
+
+  <div id="cross-list">
+
+    <!-- ya5-113-1-78 -->
+    <div class="cross-card" data-subj="ya5">
+      <div class="cross-header">
+        <span class="badge badge-ya5">牙五</span>
+        <span class="stem">下列有關密西根咬合板之敘述，何者正確？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya5-113-1-78</span> 113年第1次第78題<br>
+        <span class="old-ref">100年</span> 第20次考試 s=55 第68題
+      </div>
+    </div>
+
+    <!-- ya6-111-1-73 -->
+    <div class="cross-card" data-subj="ya6">
+      <div class="cross-header">
+        <span class="badge badge-ya6">牙六</span>
+        <span class="stem">「汞中毒」是牙科醫療院所應注意防範的職業傷害之一。下列相關敘述何者錯誤？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya6-111-1-73</span> 111年第1次第73題<br>
+        <span class="old-ref">100年</span> 第130次考試 s=66 第76題
+      </div>
+    </div>
+
+    <!-- ya3-112-2-6 -->
+    <div class="cross-card" data-subj="ya3">
+      <div class="cross-header">
+        <span class="badge badge-ya3">牙三</span>
+        <span class="stem">關於牙髓病檢查，下列敘述何者錯誤？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya3-112-2-6</span> 112年第2次第6題<br>
+        <span class="old-ref">101年</span> 第10次考試 s=33 第1題
+      </div>
+    </div>
+
+    <!-- ya5-113-2-1 & ya5-114-1-41 (同一舊題) -->
+    <div class="cross-card" data-subj="ya5">
+      <div class="cross-header">
+        <span class="badge badge-ya5">牙五</span>
+        <span class="stem">關於義齒性口炎（denture stomatitis）的敘述，下列何者正確？</span>
+        <span class="badge badge-exact">完全匹配</span>
+        <span class="badge badge-year">出現3次+</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya5-113-2-1</span> 113年第2次第1題<br>
+        <span class="new-ref">ya5-114-1-41</span> 114年第1次第41題<br>
+        <span class="old-ref">101年</span> 第100次考試 s=55 第12題
+      </div>
+    </div>
+
+    <!-- ya4-111-1-40 -->
+    <div class="cross-card" data-subj="ya4">
+      <div class="cross-header">
+        <span class="badge badge-ya4">牙四</span>
+        <span class="stem">關於前庭區腫裂齦瘤（epulis fissuratum）的敘述，下列何者錯誤？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya4-111-1-40</span> 111年第1次第40題<br>
+        <span class="old-ref">103年</span> 第20次考試 s=44 第21題
+      </div>
+    </div>
+
+    <!-- ya4-111-1-69 -->
+    <div class="cross-card" data-subj="ya4">
+      <div class="cross-header">
+        <span class="badge badge-ya4">牙四</span>
+        <span class="stem">X 光片影像無法幫助評估下列何種牙周狀況？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya4-111-1-69</span> 111年第1次第69題<br>
+        <span class="old-ref">103年</span> 第90次考試 s=44 第70題
+      </div>
+    </div>
+
+    <!-- ya5-113-1-38 (matched 2 old years) -->
+    <div class="cross-card" data-subj="ya5">
+      <div class="cross-header">
+        <span class="badge badge-ya5">牙五</span>
+        <span class="stem">有關可撤式局部義齒之敘述，下列何者錯誤？</span>
+        <span class="badge badge-exact">完全匹配</span>
+        <span class="badge badge-year">出現3次+</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya5-113-1-38</span> 113年第1次第38題<br>
+        <span class="old-ref">103年</span> 第90次考試 s=55 第40題<br>
+        <span class="old-ref">104年</span> 第90次考試 s=55 第41題
+      </div>
+    </div>
+
+    <!-- ya3-114-1-71 -->
+    <div class="cross-card" data-subj="ya3">
+      <div class="cross-header">
+        <span class="badge badge-ya3">牙三</span>
+        <span class="stem">在牙周維護性治療（supportive periodontal therapy）檢查中，何種檢測較能反應目前牙周發炎狀況？</span>
+        <span class="badge badge-fuzzy">模糊匹配 89.5%</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya3-114-1-71</span> 114年第1次第71題<br>
+        <span class="old-ref">105年</span> 第20次考試 s=33 第73題
+      </div>
+    </div>
+
+    <!-- ya5-115-1-41 -->
+    <div class="cross-card" data-subj="ya5">
+      <div class="cross-header">
+        <span class="badge badge-ya5">牙五</span>
+        <span class="stem">關於可撤式局部義齒印模材的敘述，下列何者錯誤？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya5-115-1-41</span> 115年第1次第41題<br>
+        <span class="old-ref">106年</span> 第100次考試 s=55 第36題
+      </div>
+    </div>
+
+    <!-- ya4-112-2-23 -->
+    <div class="cross-card" data-subj="ya4">
+      <div class="cross-header">
+        <span class="badge badge-ya4">牙四</span>
+        <span class="stem">有關齒源性角化囊腫（odontogenic keratocyst）的敘述，下列何者正確？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya4-112-2-23</span> 112年第2次第23題<br>
+        <span class="old-ref">107年</span> 第20次考試 s=44 第23題
+      </div>
+    </div>
+
+    <!-- ya6-111-1-63 & ya6-111-2-66 -->
+    <div class="cross-card" data-subj="ya6">
+      <div class="cross-header">
+        <span class="badge badge-ya6">牙六</span>
+        <span class="stem">美國醫學研究所（Institute of Medicine）指出，公共衛生的核心功能包含：評估、發展政策及保證</span>
+        <span class="badge badge-fuzzy">模糊匹配 97.7%</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya6-111-1-63</span> 111年第1次第63題<br>
+        <span class="new-ref">ya6-111-2-66</span> 111年第2次第66題<br>
+        <span class="old-ref">108年</span> 第100次考試 s=66 第63題
+      </div>
+    </div>
+
+    <!-- ya3-111-2-22 -->
+    <div class="cross-card" data-subj="ya3">
+      <div class="cross-header">
+        <span class="badge badge-ya3">牙三</span>
+        <span class="stem">關於圍箍效應（ferrule effect）的敘述，下列何者錯誤？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya3-111-2-22</span> 111年第2次第22題<br>
+        <span class="old-ref">109年</span> 第20次考試 s=55 第50題
+      </div>
+    </div>
+
+    <!-- ya3-113-1-24 -->
+    <div class="cross-card" data-subj="ya3">
+      <div class="cross-header">
+        <span class="badge badge-ya3">牙三</span>
+        <span class="stem">下列何者不是牙根切除術（root resection）的適應症？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya3-113-1-24</span> 113年第1次第24題<br>
+        <span class="old-ref">109年</span> 第20次考試 s=55 第51題
+      </div>
+    </div>
+
+    <!-- ya4-114-1-30 -->
+    <div class="cross-card" data-subj="ya4">
+      <div class="cross-header">
+        <span class="badge badge-ya4">牙四</span>
+        <span class="stem">關於鈣化齒源性囊腫（calcifying odontogenic cyst）的敘述，下列何者正確？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya4-114-1-30</span> 114年第1次第30題<br>
+        <span class="old-ref">110年</span> 第20次考試 s=44 第30題
+      </div>
+    </div>
+
+    <!-- ya4-111-1-49 -->
+    <div class="cross-card" data-subj="ya4">
+      <div class="cross-header">
+        <span class="badge badge-ya4">牙四</span>
+        <span class="stem">關於根尖囊腫（radicular cyst）的敘述，下列何者錯誤？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya4-111-1-49</span> 111年第1次第49題<br>
+        <span class="old-ref">110年</span> 第100次考試 s=44 第29題
+      </div>
+    </div>
+
+    <!-- ya4-115-1-65 -->
+    <div class="cross-card" data-subj="ya4">
+      <div class="cross-header">
+        <span class="badge badge-ya4">牙四</span>
+        <span class="stem">附圖中白色箭頭所指部位為下列何者之影像？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya4-115-1-65</span> 115年第1次第65題<br>
+        <span class="old-ref">110年</span> 第100次考試 s=44 第64題
+      </div>
+      <div class="note">圖片題：題幹完全一致，但選項或圖片可能不同</div>
+    </div>
+
+    <!-- ya4-112-2-66 -->
+    <div class="cross-card" data-subj="ya4">
+      <div class="cross-header">
+        <span class="badge badge-ya4">牙四</span>
+        <span class="stem">附圖根尖X光片中，白色箭頭所指為何種構造？</span>
+        <span class="badge badge-exact">完全匹配</span>
+      </div>
+      <div class="cross-detail">
+        <span class="new-ref">ya4-112-2-66</span> 112年第2次第66題<br>
+        <span class="old-ref">110年</span> 第100次考試 s=44 第65題
+      </div>
+      <div class="note">圖片題：題幹完全一致，但選項或圖片可能不同</div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ===================== TAB 2: Intra-era matches (111-115) ===================== -->
+<div class="tab-content" id="tab-intra">
+<div class="container">
+
+  <div class="summary-card">
+    <h2>同期重複題幹分析 (111-115)</h2>
+    <p>在 111-115 年（共 2880 題）中，找到 <strong>7 組</strong>題幹完全相同的考題。這些題目使用相同的問法，但選項內容不同、出題年份不同。同一個知識點，出題者會從不同角度考你。</p>
+    <p style="margin-top:6px;">「答案相同」表示兩年考出的正確選項位置相同（A/B/C/D），但選項文字仍可能不同。</p>
     <div class="stat-row">
       <div class="stat-box">
         <div class="num">7</div>
@@ -299,10 +682,7 @@ body {
     </div>
     <div class="instances">
       <div class="instance">
-        <div class="instance-meta">
-          111年第1次第79題
-          <span class="q-num">ya3-111-1-79</span>
-        </div>
+        <div class="instance-meta">111年第1次第79題 <span class="q-num">ya3-111-1-79</span></div>
         <ul class="option-list">
           <li>(A) 植體周圍之探測深度較自然牙的變異較大</li>
           <li>(B) 植體探測深度加深，臨床上不一定代表有較多的附連喪失</li>
@@ -311,10 +691,7 @@ body {
         </ul>
       </div>
       <div class="instance">
-        <div class="instance-meta">
-          115年第1次第79題
-          <span class="q-num">ya3-115-1-79</span>
-        </div>
+        <div class="instance-meta">115年第1次第79題 <span class="q-num">ya3-115-1-79</span></div>
         <ul class="option-list">
           <li>(A) 以傳統不鏽鋼探針施以 0.25N 的力道探測植體，不會對植體周圍黏膜造成不良反應</li>
           <li>(B) 植體周圍不像自然牙有垂直牙根走向的結締組織膠原纖維</li>
@@ -323,11 +700,7 @@ body {
         </ul>
       </div>
     </div>
-    <div class="yamol-section">
-      <div class="yamol-title">阿摩歷年 (111年以前)</div>
-      <div class="yamol-none">未找到相同題幹的歷年紀錄</div>
-    </div>
-    <div class="note">111→115 同年位（第79題）；考點：植體探測 vs. 自然牙，兩題各考「不正確」的陷阱不同</div>
+    <div class="note">111&rarr;115 同年位（第79題）；考點：植體探測 vs. 自然牙，兩題各考「不正確」的陷阱不同</div>
   </div>
 
   <!-- GROUP 2 -->
@@ -339,10 +712,7 @@ body {
     </div>
     <div class="instances">
       <div class="instance">
-        <div class="instance-meta">
-          113年第1次第48題
-          <span class="q-num">ya3-113-1-48</span>
-        </div>
+        <div class="instance-meta">113年第1次第48題 <span class="q-num">ya3-113-1-48</span></div>
         <ul class="option-list">
           <li>(A) 酸蝕後的牙本質可以 chlorhexidine 再濕潤</li>
           <li>(B) 陶瓷嵌體內面應以氫氟酸（hydrofluoric acid）處理</li>
@@ -351,27 +721,13 @@ body {
         </ul>
       </div>
       <div class="instance">
-        <div class="instance-meta">
-          115年第1次第49題
-          <span class="q-num">ya3-115-1-49</span>
-        </div>
+        <div class="instance-meta">115年第1次第49題 <span class="q-num">ya3-115-1-49</span></div>
         <ul class="option-list">
           <li class="correct">(A) 臨床使用雙重聚合（dual cure）樹脂黏合劑，可減少光照時間</li>
           <li>(B) 樹脂黏合劑可與牙釉質、牙本質以及陶瓷嵌體黏結</li>
           <li>(C) 陶瓷嵌體經樹脂黏合劑黏結後可被強化</li>
           <li>(D) 樹脂黏合劑可降低微滲漏</li>
         </ul>
-      </div>
-    </div>
-    <div class="yamol-section">
-      <div class="yamol-title">阿摩歷年 (111年以前) — 相關題（選項不同）</div>
-      <div class="yamol-entry">
-        <span class="yamol-year">107年</span>107-1 牙三 第33題 — 陶瓷嵌體黏著操作步驟排列順序（氫氟酸→矽烷→bonding agent）
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=樹脂黏合劑黏著陶瓷嵌體" target="_blank">→ 阿摩 #67632</a>
-      </div>
-      <div class="yamol-entry">
-        <span class="yamol-year">94年</span>94-1 牙三 第48題 — 陶瓷嵌體黏著面酸蝕後應以何種製劑增加接合強度
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=樹脂黏合劑黏著陶瓷嵌體" target="_blank">→ 阿摩 #99795</a>
       </div>
     </div>
     <div class="note">考點：陶瓷嵌體黏著系統（dual cure, HF acid, silane, CHX, 酸蝕時間）；113考「不能用哪種」、115考「哪個說法錯」</div>
@@ -386,10 +742,7 @@ body {
     </div>
     <div class="instances">
       <div class="instance">
-        <div class="instance-meta">
-          114年第1次第45題
-          <span class="q-num">ya3-114-1-45</span>
-        </div>
+        <div class="instance-meta">114年第1次第45題 <span class="q-num">ya3-114-1-45</span></div>
         <ul class="option-list">
           <li class="correct">(A) 高銅汞齊是指含有重量 40% 的銅</li>
           <li>(B) 高銅汞齊與低銅汞齊相比，消除了比較弱的 gamma 2 相</li>
@@ -398,10 +751,7 @@ body {
         </ul>
       </div>
       <div class="instance">
-        <div class="instance-meta">
-          114年第2次第45題
-          <span class="q-num">ya3-114-2-45</span>
-        </div>
+        <div class="instance-meta">114年第2次第45題 <span class="q-num">ya3-114-2-45</span></div>
         <ul class="option-list">
           <li>(A) 以粉末的種類分成切削型（lathe-cut）、混合型（admixed）、球型（spheres）</li>
           <li>(B) 可經由腐蝕產物（corrosion product）來降低邊緣滲漏</li>
@@ -410,11 +760,7 @@ body {
         </ul>
       </div>
     </div>
-    <div class="yamol-section">
-      <div class="yamol-title">阿摩歷年 (111年以前)</div>
-      <div class="yamol-none">未找到相同題幹的歷年紀錄（高銅汞齊相關問法首見於111年後）</div>
-    </div>
-    <div class="note">同年（114）上下半年各考一次；考點廣泛，高銅汞齊 γ2 相、含鋅汞齊機械性質、金屬鍵、汞含量等</div>
+    <div class="note">同年（114）上下半年各考一次；考點：高銅汞齊 &gamma;2 相、含鋅汞齊機械性質、金屬鍵、汞含量等</div>
   </div>
 
   <!-- GROUP 4 -->
@@ -427,10 +773,7 @@ body {
     <div class="img-note">此為放射線圖片題，兩年出的圖像相同但選項順序對調（left/right maxilla/mandible）</div>
     <div class="instances">
       <div class="instance">
-        <div class="instance-meta">
-          111年第1次第77題
-          <span class="q-num">ya4-111-1-77</span>
-        </div>
+        <div class="instance-meta">111年第1次第77題 <span class="q-num">ya4-111-1-77</span></div>
         <ul class="option-list">
           <li>(A) right maxilla</li>
           <li>(B) left maxilla</li>
@@ -439,10 +782,7 @@ body {
         </ul>
       </div>
       <div class="instance">
-        <div class="instance-meta">
-          112年第1次第77題
-          <span class="q-num">ya4-112-1-77</span>
-        </div>
+        <div class="instance-meta">112年第1次第77題 <span class="q-num">ya4-112-1-77</span></div>
         <ul class="option-list">
           <li class="correct">(A) left maxilla</li>
           <li>(B) right maxilla</li>
@@ -451,11 +791,7 @@ body {
         </ul>
       </div>
     </div>
-    <div class="yamol-section">
-      <div class="yamol-title">阿摩歷年 (111年以前)</div>
-      <div class="yamol-none">圖片題無法有效搜尋（題目文字過短）</div>
-    </div>
-    <div class="note">注意：111年答案為 left mandible (D)，112年答案為 left maxilla (A) — 兩年圖片不同！考的是不同解剖部位</div>
+    <div class="note">注意：111年答案為 left mandible (D)，112年答案為 left maxilla (A) &mdash; 兩年圖片不同！考的是不同解剖部位</div>
   </div>
 
   <!-- GROUP 5 -->
@@ -467,10 +803,7 @@ body {
     </div>
     <div class="instances">
       <div class="instance">
-        <div class="instance-meta">
-          113年第2次第32題
-          <span class="q-num">ya4-113-2-32</span>
-        </div>
+        <div class="instance-meta">113年第2次第32題 <span class="q-num">ya4-113-2-32</span></div>
         <ul class="option-list">
           <li>(A) 骨切線是自乙狀切迹（sigmoid notch）至下顎緣（mandibular border）</li>
           <li>(B) 為了維持近端骨塊血液循環，骨塊上的骨膜及肌肉組織應儘量不要剝離</li>
@@ -479,23 +812,13 @@ body {
         </ul>
       </div>
       <div class="instance">
-        <div class="instance-meta">
-          114年第2次第32題
-          <span class="q-num">ya4-114-2-32</span>
-        </div>
+        <div class="instance-meta">114年第2次第32題 <span class="q-num">ya4-114-2-32</span></div>
         <ul class="option-list">
           <li>(A) 可以從顎下（submandibular）切線暴露出下顎枝</li>
           <li>(B) 可以從口內切線暴露出下顎枝</li>
           <li class="correct">(C) 遠心段（distal segment）是指包含髁（condyle）的骨段</li>
           <li>(D) 可以使用顎間固定（IMF），也可以用鋼線、骨板或骨釘作內固定</li>
         </ul>
-      </div>
-    </div>
-    <div class="yamol-section">
-      <div class="yamol-title">阿摩歷年 (111年以前) — 相關題（不同措辭）</div>
-      <div class="yamol-entry">
-        <span class="yamol-year">105年</span>105-2 牙四 第33題 — 關於垂直下顎枝截開術（vertical ramus osteotomy），何者錯誤？答案 D
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=下顎枝垂直截骨術" target="_blank">→ 阿摩 #54709</a>
       </div>
     </div>
     <div class="note">同年位（第32題）連續兩年；VRO 是正顎手術高頻考點，近心段/遠心段定義、骨切線位置是常見陷阱</div>
@@ -510,10 +833,7 @@ body {
     </div>
     <div class="instances">
       <div class="instance">
-        <div class="instance-meta">
-          113年第2次第1題
-          <span class="q-num">ya5-113-2-1</span>
-        </div>
+        <div class="instance-meta">113年第2次第1題 <span class="q-num">ya5-113-2-1</span></div>
         <ul class="option-list">
           <li>(A) 出現在下顎的比例比上顎高</li>
           <li>(B) 根據1962年Newton的分類，第二型狀況是硬腭有出現發炎性的增生</li>
@@ -522,35 +842,13 @@ body {
         </ul>
       </div>
       <div class="instance">
-        <div class="instance-meta">
-          114年第1次第41題
-          <span class="q-num">ya5-114-1-41</span>
-        </div>
+        <div class="instance-meta">114年第1次第41題 <span class="q-num">ya5-114-1-41</span></div>
         <ul class="option-list">
           <li>(A) 多半發生在樹脂基底（resin base）下，不常發生在金屬基底（metal base）下</li>
           <li>(B) 患者經常會抱怨疼痛</li>
           <li class="correct">(C) 受影響之黏膜多會紅腫，但表面平滑</li>
           <li>(D) 只需局部投與抗黴菌藥物即可治癒</li>
         </ul>
-      </div>
-    </div>
-    <div class="yamol-section">
-      <div class="yamol-title">阿摩歷年 (111年以前) — 此題型出現頻率極高</div>
-      <div class="yamol-entry">
-        <span class="yamol-year">103年</span>103-1 牙五 第1題 — 有關義齒性口炎的敘述，何者正確？答案 C
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩 #35901</a>
-      </div>
-      <div class="yamol-entry">
-        <span class="yamol-year">102年</span>102-1 牙五 第2題 — Newton's分類第二型（diffuse erythema）
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩 #35981</a>
-      </div>
-      <div class="yamol-entry">
-        <span class="yamol-year">101年</span>101-2 牙五 — 義齒性口炎相關考題 ×2
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩</a>
-      </div>
-      <div class="yamol-entry">
-        <span class="yamol-year">99–98年</span>99-2、98-1 牙五 — 義齒性口炎相關考題
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=義齒性口炎denture+stomatitis" target="_blank">→ 阿摩</a>
       </div>
     </div>
     <div class="note">超高頻考題，近20年幾乎每年必考；核心考點：上顎 &gt; 下顎、Candida albicans、口角炎相關、Newton分類、金屬基底較少發生</div>
@@ -565,10 +863,7 @@ body {
     </div>
     <div class="instances">
       <div class="instance">
-        <div class="instance-meta">
-          113年第1次第9題
-          <span class="q-num">ya6-113-1-9</span>
-        </div>
+        <div class="instance-meta">113年第1次第9題 <span class="q-num">ya6-113-1-9</span></div>
         <ul class="option-list">
           <li class="correct">(A) Activator 之主要構造用於調整牙齒位置（tooth-moving parts）</li>
           <li>(B) Bionator 具有頰側弧線可排開臉頰肌肉（screen off muscle forces）</li>
@@ -577,10 +872,7 @@ body {
         </ul>
       </div>
       <div class="instance">
-        <div class="instance-meta">
-          114年第2次第9題
-          <span class="q-num">ya6-114-2-9</span>
-        </div>
+        <div class="instance-meta">114年第2次第9題 <span class="q-num">ya6-114-2-9</span></div>
         <ul class="option-list">
           <li>(A) Herbst appliance 屬於 passive tooth-borne</li>
           <li>(B) Bionator with expansion screws 屬於 active tooth-borne</li>
@@ -589,21 +881,38 @@ body {
         </ul>
       </div>
     </div>
-    <div class="yamol-section">
-      <div class="yamol-title">阿摩歷年 (111年以前) — 相關題（不同問法）</div>
-      <div class="yamol-entry">
-        <span class="yamol-year">100年</span>100-2 牙六 第21題 — 下列何者屬於固定式功能性裝置？答案 D（Herbst）
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=功能性矯正裝置Activator" target="_blank">→ 阿摩 #36027</a>
-      </div>
-      <div class="yamol-entry">
-        <span class="yamol-year">100年</span>100-1 牙六 第12題 — 哪些功能性矯正裝置屬於固定式？答案 B（Herbst+Jasper）
-        <a class="yamol-link" href="https://app.yamol.tw/search?type=item&kw=功能性矯正裝置Activator" target="_blank">→ 阿摩 #36050</a>
-      </div>
-    </div>
     <div class="note">同年位（第9題）連續兩年；113考各裝置特性、114考分類（tooth-borne vs tissue-borne）；Activator 是 tissue-borne（非 tooth-moving）為常見易錯點</div>
   </div>
 
 </div>
+</div>
 
+<script>
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Cross-era filter
+document.querySelectorAll('#cross-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#cross-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.f;
+    document.querySelectorAll('#cross-list .cross-card').forEach(card => {
+      if (f === 'all' || card.dataset.subj === f) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  });
+});
+</script>
 </body>
 </html>

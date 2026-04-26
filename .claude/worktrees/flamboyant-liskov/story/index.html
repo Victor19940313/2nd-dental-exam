@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>故事學習法</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif;
+background:#f8f7f0;color:#2d2a24;min-height:100vh;
+background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,#e8e4d9 27px,#e8e4d9 28px),repeating-linear-gradient(90deg,transparent,transparent 27px,#e8e4d9 27px,#e8e4d9 28px);background-size:28px 28px}
+.header{background:linear-gradient(135deg,#8B6914,#c0956c);color:#fff;padding:.8rem 1rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.header h1{font-size:1.1rem;font-weight:700}
+.btn-back{padding:.3rem .7rem;border-radius:16px;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-size:.78rem;text-decoration:none}
+.container{max-width:600px;margin:0 auto;padding:1.5rem 1rem}
+.intro{text-align:center;margin-bottom:1.5rem}
+.intro h2{font-size:1.3rem;color:#5b4a1e;margin-bottom:.5rem}
+.intro p{font-size:.88rem;color:#78716c;line-height:1.6}
+.book-grid{display:grid;gap:1rem}
+.book{background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.08);overflow:hidden;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s;display:flex;align-items:stretch}
+.book:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.book-color{width:8px;flex-shrink:0}
+.book-body{padding:1.2rem 1rem;flex:1}
+.book-subject{display:inline-block;font-size:.65rem;font-weight:600;padding:.15rem .5rem;border-radius:6px;color:#fff;margin-bottom:.4rem}
+.book-title{font-size:1.05rem;font-weight:700;margin-bottom:.3rem;line-height:1.4}
+.book-desc{font-size:.82rem;color:#78716c;line-height:1.5;margin-bottom:.5rem}
+.book-meta{font-size:.7rem;color:#a8a29e}
+.book-emoji{font-size:2.5rem;padding:1rem;display:flex;align-items:center;justify-content:center}
+.coming{opacity:.5;pointer-events:none;position:relative}
+.coming::after{content:"即將推出";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.7);color:#fff;padding:.3rem .8rem;border-radius:8px;font-size:.8rem;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📖 故事學習法</h1>
+  <a href="../index.html" class="btn-back">← 首頁</a>
+</div>
+
+<div class="container">
+  <div class="intro">
+    <h2>用故事理解觀念</h2>
+    <p>透過醫生與學生的對話，把教科書變成好懂的故事。<br>不只背誦，而是真正理解「為什麼」。</p>
+  </div>
+
+  <div class="book-grid">
+    <a class="book" href="../ya5/story.html">
+      <div class="book-color" style="background:#c0956c"></div>
+      <div class="book-body">
+
+        <div class="book-title">義齒學故事書 — 從零開始的假牙之旅</div>
+        <div class="book-desc">固定義齒、活動義齒、全口義齒、咬合學、植牙贋復，用對話帶你走過每個臨床決策。</div>
+        <div class="book-meta">9 章 · 對話式教學 · 考試重點標示</div>
+      </div>
+      <div class="book-emoji">👑</div>
+    </a>
+
+    <div class="book coming">
+      <div class="book-color" style="background:#3b82f6"></div>
+      <div class="book-body">
+
+        <div class="book-title">根管治療故事書</div>
+        <div class="book-desc">從牙髓診斷到根尖手術，一步步帶你理解齒內治療的邏輯。</div>
+        <div class="book-meta">即將推出</div>
+      </div>
+      <div class="book-emoji">🦷</div>
+    </div>
+
+    <div class="book coming">
+      <div class="book-color" style="background:#7c3aed"></div>
+      <div class="book-body">
+
+        <div class="book-title">口腔外科故事書</div>
+        <div class="book-desc">拔牙、感染、骨折、腫瘤 — 外科的臨床思路用故事串起來。</div>
+        <div class="book-meta">即將推出</div>
+      </div>
+      <div class="book-emoji">🏥</div>
+    </div>
+
+    <a class="book" href="../ya6/story.html">
+      <div class="book-color" style="background:#27ae60"></div>
+      <div class="book-body">
+
+        <div class="book-title">矯正學故事書 — 從診斷到手術的完整矯正之旅</div>
+        <div class="book-desc">Angle 分類、生長發育、牙齒移動生理、功能性矯正器、擴弓、正顎手術，用對話帶你理解矯正全貌。</div>
+        <div class="book-meta">9 章 · 對話式教學 · 考試重點標示</div>
+      </div>
+      <div class="book-emoji">🦷</div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>

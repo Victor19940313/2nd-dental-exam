@@ -3875,8 +3875,8 @@
             ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block" onclick="filterByTopic('${topic2.replace(/'/g, "\\'")}')">🏷 ${topic2}</span>`
             : "";
           explBox2.innerHTML =
-            geminiExplBlock(expl2, src2, q.id) +
             topicTag2 +
+            geminiExplBlock(expl2, src2, q.id) +
             nbExplBlock(q);
           explBox2.classList.add("visible");
         } else {
@@ -4375,9 +4375,13 @@
           })
           .join("");
 
+        const topicB = st.topic || q.topic || "";
+        const topicTagB = topicB
+          ? `<span class="topic-tag" style="margin-left:0;margin-bottom:.35rem;display:inline-block" onclick="filterByTopic('${topicB.replace(/'/g, "\\'")}');event.stopPropagation();">🏷 ${topicB}</span>`
+          : "";
         const explHtml = (expl || q.explanation_notebooklm)
-          ? `${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}`
-          : `<p class="no-expl">尚無詳解</p>`;
+          ? `${topicTagB}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}`
+          : `${topicTagB}<p class="no-expl">尚無詳解</p>`;
 
         return `
 <div class="q-card" id="bc-${q.id}">
@@ -4484,8 +4488,8 @@
               ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block" onclick="filterByTopic('${t.replace(/'/g, "\\'")}')">🏷 ${t}</span>`
               : "";
             box.innerHTML =
-              geminiExplBlock(expl, src, q.id) +
               tt +
+              geminiExplBlock(expl, src, q.id) +
               nbExplBlock(q);
             box.classList.add("visible");
           }

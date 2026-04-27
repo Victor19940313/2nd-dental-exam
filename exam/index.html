@@ -1054,6 +1054,38 @@
         color: #94a3b8;
         margin-top: 0.3rem;
       }
+      .nb-expl {
+        margin-top: 0.5rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid #d8b3ff;
+        border-radius: 8px;
+        background: #faf5ff;
+        font-size: 0.82rem;
+        line-height: 1.7;
+      }
+      .nb-expl summary {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        font-weight: 600;
+        color: #6b21a8;
+        user-select: none;
+        list-style: none;
+      }
+      .nb-expl summary::-webkit-details-marker { display: none; }
+      .nb-expl summary::before {
+        content: "▶ ";
+        display: inline-block;
+        transition: transform 0.15s;
+      }
+      .nb-expl[open] summary::before {
+        transform: rotate(90deg);
+      }
+      .nb-expl summary:hover { background: #f3e8ff; }
+      .nb-expl-content {
+        padding: 0.5rem 0.75rem 0.75rem;
+        border-top: 1px solid #e9d5ff;
+        color: #334155;
+      }
       .no-expl {
         color: #94a3b8;
         font-size: 0.8rem;
@@ -3289,6 +3321,12 @@
         return html;
       }
 
+      function nbExplBlock(q) {
+        const nb = q && q.explanation_notebooklm;
+        if (!nb || !nb.trim()) return "";
+        return `<details class="nb-expl"><summary>📚 NotebookLM 詳解（依據參考書）</summary><div class="nb-expl-content">${formatExpl(nb)}</div></details>`;
+      }
+
       function formatExpl(text) {
         if (!text) return "";
         // Remove answer-confirmation preamble sentences
@@ -3801,10 +3839,18 @@
             formatExpl(expl2) +
             topicTag2 +
             (src2 ? `<div class="expl-source">📖 ${src2}</div>` : "") +
-            renderCrossLinks(q.id);
+            renderCrossLinks(q.id) +
+            nbExplBlock(q);
           explBox2.classList.add("visible");
         } else {
-          explBox2.classList.remove("visible");
+          // 即使沒 Gemini 詳解，有 NotebookLM 詳解也要顯示
+          const nbHtml2 = nbExplBlock(q);
+          if (nbHtml2) {
+            explBox2.innerHTML = nbHtml2;
+            explBox2.classList.add("visible");
+          } else {
+            explBox2.classList.remove("visible");
+          }
         }
 
         // Auto-increment count
@@ -4294,8 +4340,8 @@
           .join("");
 
         const explHtml = expl
-          ? `<div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>`
-          : `<p class="no-expl">尚無詳解</p>`;
+          ? `<div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>${nbExplBlock(q)}`
+          : `<p class="no-expl">尚無詳解</p>${nbExplBlock(q)}`;
 
         return `
 <div class="q-card" id="bc-${q.id}">
@@ -4404,7 +4450,8 @@
             box.innerHTML =
               formatExpl(expl) +
               tt +
-              (src ? `<div class="expl-source">📖 ${src}</div>` : "");
+              (src ? `<div class="expl-source">📖 ${src}</div>` : "") +
+              nbExplBlock(q);
             box.classList.add("visible");
           }
         }
@@ -4745,7 +4792,7 @@
   </div>
   <div class="db-body">
     <div class="q-opt-list">${optHtml}</div>
-    <div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>
+    <div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>${nbExplBlock(q)}
     <div class="q-actions">
       <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️ 編輯</button>
     </div>

@@ -1054,6 +1054,38 @@
         color: #94a3b8;
         margin-top: 0.3rem;
       }
+      .gemini-expl {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #93c5fd;
+        border-radius: 8px;
+        background: #eff6ff;
+        font-size: 0.82rem;
+        line-height: 1.7;
+      }
+      .gemini-expl summary {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        font-weight: 600;
+        color: #1e40af;
+        user-select: none;
+        list-style: none;
+      }
+      .gemini-expl summary::-webkit-details-marker { display: none; }
+      .gemini-expl summary::before {
+        content: "▶ ";
+        display: inline-block;
+        transition: transform 0.15s;
+      }
+      .gemini-expl[open] summary::before {
+        transform: rotate(90deg);
+      }
+      .gemini-expl summary:hover { background: #dbeafe; }
+      .gemini-expl-content {
+        padding: 0.5rem 0.75rem 0.75rem;
+        border-top: 1px solid #bfdbfe;
+        color: #334155;
+      }
       .nb-expl {
         margin-top: 0.5rem;
         margin-bottom: 0.75rem;
@@ -3327,6 +3359,13 @@
         return `<details class="nb-expl"><summary>📚 NotebookLM 詳解（依據參考書）</summary><div class="nb-expl-content">${formatExpl(nb)}</div></details>`;
       }
 
+      function geminiExplBlock(expl, src, qid) {
+        if (!expl || !expl.trim()) return "";
+        const srcHtml = src ? `<div class="expl-source">📖 ${src}</div>` : "";
+        const links = qid ? renderCrossLinks(qid) : "";
+        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatExpl(expl)}${srcHtml}${links}</div></details>`;
+      }
+
       function formatExpl(text) {
         if (!text) return "";
         // Remove answer-confirmation preamble sentences
@@ -3836,14 +3875,11 @@
             ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block" onclick="filterByTopic('${topic2.replace(/'/g, "\\'")}')">🏷 ${topic2}</span>`
             : "";
           explBox2.innerHTML =
-            formatExpl(expl2) +
+            geminiExplBlock(expl2, src2, q.id) +
             topicTag2 +
-            (src2 ? `<div class="expl-source">📖 ${src2}</div>` : "") +
-            renderCrossLinks(q.id) +
             nbExplBlock(q);
           explBox2.classList.add("visible");
         } else {
-          // 即使沒 Gemini 詳解，有 NotebookLM 詳解也要顯示
           const nbHtml2 = nbExplBlock(q);
           if (nbHtml2) {
             explBox2.innerHTML = nbHtml2;
@@ -4339,9 +4375,9 @@
           })
           .join("");
 
-        const explHtml = expl
-          ? `<div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>${nbExplBlock(q)}`
-          : `<p class="no-expl">尚無詳解</p>${nbExplBlock(q)}`;
+        const explHtml = (expl || q.explanation_notebooklm)
+          ? `${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}`
+          : `<p class="no-expl">尚無詳解</p>`;
 
         return `
 <div class="q-card" id="bc-${q.id}">
@@ -4448,9 +4484,8 @@
               ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block" onclick="filterByTopic('${t.replace(/'/g, "\\'")}')">🏷 ${t}</span>`
               : "";
             box.innerHTML =
-              formatExpl(expl) +
+              geminiExplBlock(expl, src, q.id) +
               tt +
-              (src ? `<div class="expl-source">📖 ${src}</div>` : "") +
               nbExplBlock(q);
             box.classList.add("visible");
           }
@@ -4792,7 +4827,7 @@
   </div>
   <div class="db-body">
     <div class="q-opt-list">${optHtml}</div>
-    <div class="q-expl">${formatExpl(expl)}${src ? `<div class="expl-source">📖 ${src}</div>` : ""}${renderCrossLinks(q.id)}</div>${nbExplBlock(q)}
+    ${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}
     <div class="q-actions">
       <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️ 編輯</button>
     </div>

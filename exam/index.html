@@ -2558,6 +2558,13 @@
         <button class="btn-next" id="btn-next" onclick="nextQ()">
           下一題 →
         </button>
+        <button
+          id="btn-submit-exam"
+          onclick="earlySubmitExam()"
+          style="display:none;background:#7c3aed;color:white;border:none;border-radius:8px;padding:.5rem .9rem;font-weight:700;cursor:pointer;font-size:.85rem"
+        >
+          📊 交卷
+        </button>
       </div>
 
       <!-- Question Grid -->
@@ -3871,6 +3878,10 @@
         const q = practiceList[practiceIdx];
         answered = false;
 
+        // 交卷按鈕：只在試卷模式顯示
+        const submitBtn = document.getElementById("btn-submit-exam");
+        if (submitBtn) submitBtn.style.display = examMode ? "" : "none";
+
         // Progress
         const pct = Math.round((practiceIdx / practiceList.length) * 100);
         document.getElementById("prog-text").textContent =
@@ -4225,10 +4236,24 @@
         practiceIdx = 0;
         clearLastPos();
         showPractice();
-        // Exam mode: keep skip button visible
+        // Exam mode: keep skip button visible + show 交卷 button
         document.getElementById("btn-skip").style.display = "";
+        const submitBtn = document.getElementById("btn-submit-exam");
+        if (submitBtn) submitBtn.style.display = "";
         loadPracticeQ();
         if (useTimer) startTimer(3600);
+      }
+
+      function earlySubmitExam() {
+        const answeredCount = Object.keys(examAnswers || {}).length;
+        const total = practiceList.length;
+        const remaining = total - answeredCount;
+        let msg = `確定交卷？\n\n`;
+        msg += `已作答：${answeredCount} 題\n`;
+        msg += `未作答：${remaining} 題（將計為錯誤）\n\n`;
+        msg += `滿分 100 分，每題 1.25 分。`;
+        if (!confirm(msg)) return;
+        showExamResults();
       }
 
       // ════════════════════════════════════════════
@@ -4291,8 +4316,9 @@
         scrollExamSubmitted = true;
         stopTimer();
         const LETTERS = ["A", "B", "C", "D", "E"];
-        let correct = 0,
-          total = 0;
+        let correct = 0;
+        let answered = 0;
+        const total = scrollExamList.length; // 總題數 = 試卷全部題目
         scrollExamList.forEach((q) => {
           const userIdx = scrollExamAnswers[q.id];
           const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
@@ -4311,7 +4337,7 @@
               resultEl.innerHTML =
                 '<span class="scroll-result-badge skip">跳過</span>';
           } else {
-            total++;
+            answered++;
             const ok = correctArr.includes(userIdx);
             if (ok) correct++;
             if (resultEl)
@@ -4324,10 +4350,14 @@
         // Show score at top（每題 1.25 分，滿分 100）
         const score = (correct * 1.25).toFixed(2);
         const fullScore = (total * 1.25).toFixed(2);
+        const skipped = total - answered;
         saveExamHistory(correct, total, "整頁捲動");
+        const subText = skipped > 0
+          ? `答對 ${correct}/${total} 題 · 跳過 ${skipped} 題`
+          : (total - correct === 0 ? "🎉 全對！" : `答對 ${correct}/${total} 題`);
         const topbar = document.querySelector(".scroll-exam-topbar");
         topbar.innerHTML = `<div class="scroll-exam-done-score">${score} 分 / ${fullScore}</div>
-    <span style="font-size:.82rem;color:var(--gray);flex:1">${total - correct === 0 ? "🎉 全對！" : `答對 ${correct}/${total} 題`}</span>
+    <span style="font-size:.82rem;color:var(--gray);flex:1">${subText}</span>
     <button class="start-btn secondary" style="padding:.4rem .8rem;font-size:.8rem;margin:0" onclick="showHome()">← 返回</button>`;
         window.scrollTo(0, 0);
       }

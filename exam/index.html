@@ -1512,6 +1512,85 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
+      .exam-hist-list {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+      }
+      .exam-hist-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas: "label score" "date meta";
+        gap: 0.15rem 0.6rem;
+        padding: 0.6rem 0.85rem;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.82rem;
+      }
+      .exam-hist-row:last-child { border-bottom: none; }
+      .exam-hist-row:hover { background: #f8fafc; }
+      .exam-hist-date {
+        grid-area: date;
+        color: #94a3b8;
+        font-size: 0.72rem;
+      }
+      .exam-hist-label {
+        grid-area: label;
+        font-weight: 600;
+        color: #1f2937;
+      }
+      .exam-hist-score {
+        grid-area: score;
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .exam-hist-meta {
+        grid-area: meta;
+        text-align: right;
+        color: #64748b;
+        font-size: 0.72rem;
+      }
+      .exam-hist-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .exam-hist-modal-box {
+        background: #f9fafb;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      }
+      .exam-hist-modal-head {
+        padding: 0.8rem 1rem;
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e5e7eb;
+        color: #1f2937;
+      }
+      .exam-hist-modal-close {
+        background: none;
+        border: none;
+        font-size: 1.4rem;
+        cursor: pointer;
+        color: #6b7280;
+        padding: 0 0.5rem;
+      }
+      #exam-hist-modal-list {
+        overflow-y: auto;
+        padding: 0.8rem 1rem;
+      }
       .exam-res-card {
         background: white;
         border-radius: 10px;
@@ -2043,6 +2122,7 @@
                 style="display: none"
               ></div>
             </div>
+            <button class="daily-hist-toggle" style="margin-top:.5rem" onclick="openExamHistModal()">📊 歷次試卷成績</button>
           </div>
           <div class="topic-sidebar-title">🏷 考點分類</div>
           <div class="ts-status-bar">
@@ -2501,6 +2581,7 @@
         <div class="exam-res-sub" id="exam-res-sub"></div>
       </div>
       <div id="exam-res-wrong-list"></div>
+      <div id="exam-res-history"></div>
       <div class="exam-res-actions">
         <button class="start-btn secondary" onclick="showHome()">
           ← 返回考試首頁
@@ -2508,6 +2589,17 @@
         <button class="start-btn" id="exam-res-retry" onclick="retryWrong()">
           🔁 只練錯題
         </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ EXAM HISTORY MODAL ═══════════════ -->
+    <div id="exam-hist-modal" class="exam-hist-modal" style="display:none" onclick="if(event.target===this)closeExamHistModal()">
+      <div class="exam-hist-modal-box">
+        <div class="exam-hist-modal-head">
+          <span>📊 歷次試卷成績</span>
+          <button class="exam-hist-modal-close" onclick="closeExamHistModal()">×</button>
+        </div>
+        <div id="exam-hist-modal-list"></div>
       </div>
     </div>
 
@@ -4232,11 +4324,99 @@
         // Show score at top（每題 1.25 分，滿分 100）
         const score = (correct * 1.25).toFixed(2);
         const fullScore = (total * 1.25).toFixed(2);
+        saveExamHistory(correct, total, "整頁捲動");
         const topbar = document.querySelector(".scroll-exam-topbar");
         topbar.innerHTML = `<div class="scroll-exam-done-score">${score} 分 / ${fullScore}</div>
     <span style="font-size:.82rem;color:var(--gray);flex:1">${total - correct === 0 ? "🎉 全對！" : `答對 ${correct}/${total} 題`}</span>
     <button class="start-btn secondary" style="padding:.4rem .8rem;font-size:.8rem;margin:0" onclick="showHome()">← 返回</button>`;
         window.scrollTo(0, 0);
+      }
+
+      // ════════════════════════════════════════════
+      //  Exam history
+      // ════════════════════════════════════════════
+      function buildExamLabel() {
+        const SUBJ_NAMES = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+        const subjs = [...(homeSubjs || [])];
+        const years = [...(homeYears || [])];
+        let subjLbl = subjs.length === 1 ? SUBJ_NAMES[subjs[0]] || subjs[0]
+                    : subjs.length === 4 || subjs.length === 0 ? "全部科目"
+                    : `${subjs.length} 科`;
+        let yearLbl = years.length === 1 ? `${years[0].split('-')[0]} 年第 ${years[0].split('-')[1]} 次`
+                    : years.length === 0 ? "—"
+                    : `${years.length} 個年次`;
+        return `${subjLbl} / ${yearLbl}`;
+      }
+
+      function saveExamHistory(correct, total, mode) {
+        try {
+          const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
+          const now = new Date();
+          const pad = (n) => String(n).padStart(2, '0');
+          const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+          hist.unshift({
+            ts: now.getTime(),
+            date: dateStr,
+            label: buildExamLabel(),
+            mode: mode || "",
+            subjects: [...(homeSubjs || [])],
+            years: [...(homeYears || [])],
+            total: total,
+            correct: correct,
+            score: +(correct * 1.25).toFixed(2),
+            fullScore: +(total * 1.25).toFixed(2),
+          });
+          // 只保留最近 100 筆
+          localStorage.setItem('examHistory', JSON.stringify(hist.slice(0, 100)));
+        } catch (e) { console.error('saveExamHistory:', e); }
+      }
+
+      function renderExamHistory(containerId) {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
+        if (!hist.length) { el.innerHTML = ''; return; }
+
+        const rows = hist.slice(0, 10).map((h) => {
+          const pct = h.total > 0 ? Math.round((h.correct / h.total) * 100) : 0;
+          const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
+          return `<div class="exam-hist-row">
+            <div class="exam-hist-date">${h.date}</div>
+            <div class="exam-hist-label">${h.label}</div>
+            <div class="exam-hist-score" style="color:${color}">${h.score} / ${h.fullScore}</div>
+            <div class="exam-hist-meta">${h.correct}/${h.total} 題 · ${pct}%</div>
+          </div>`;
+        }).join('');
+
+        const more = hist.length > 10 ? `<div style="text-align:center;color:#888;font-size:.8rem;margin-top:.4rem">最近 10 筆 / 共 ${hist.length} 筆</div>` : '';
+
+        el.innerHTML = `
+          <div class="exam-res-section" style="margin-top:1.2rem;display:flex;justify-content:space-between;align-items:center">
+            <span>📊 歷次成績</span>
+            <button class="start-btn secondary" style="padding:.25rem .7rem;font-size:.78rem;margin:0" onclick="clearExamHistory()">🗑️ 清空</button>
+          </div>
+          <div class="exam-hist-list">${rows}</div>
+          ${more}`;
+      }
+
+      function clearExamHistory() {
+        if (!confirm('確定要清空所有歷次成績紀錄嗎？此動作無法復原。')) return;
+        localStorage.removeItem('examHistory');
+        renderExamHistory('exam-res-history');
+        const m = document.getElementById('exam-hist-modal-list');
+        if (m) renderExamHistory('exam-hist-modal-list');
+      }
+
+      function openExamHistModal() {
+        const m = document.getElementById('exam-hist-modal');
+        if (!m) return;
+        renderExamHistory('exam-hist-modal-list');
+        m.style.display = 'flex';
+      }
+
+      function closeExamHistModal() {
+        const m = document.getElementById('exam-hist-modal');
+        if (m) m.style.display = 'none';
       }
 
       function showExamResults() {
@@ -4273,12 +4453,14 @@
         const wrong = total - correct;
         const score = (correct * 1.25).toFixed(2);
         const fullScore = (total * 1.25).toFixed(2);
+        saveExamHistory(correct, total, "逐題試卷");
         document.getElementById("exam-res-score").textContent =
           `${score} 分 / ${fullScore}`;
         document.getElementById("exam-res-sub").textContent =
           wrong === 0
             ? `🎉 全對！太厲害了！（${correct}/${total} 題）`
             : `答對 ${correct}/${total} 題，答錯 ${wrong} 題，繼續加油！`;
+        renderExamHistory("exam-res-history");
 
         // Wrong question list
         const listEl = document.getElementById("exam-res-wrong-list");

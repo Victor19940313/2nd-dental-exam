@@ -1054,6 +1054,48 @@
         color: #94a3b8;
         margin-top: 0.3rem;
       }
+      .clinical-expl {
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid #6ee7b7;
+        border-radius: 8px;
+        background: #ecfdf5;
+        font-size: 0.82rem;
+        line-height: 1.7;
+      }
+      .clinical-expl summary {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+        font-weight: 600;
+        color: #047857;
+        user-select: none;
+        list-style: none;
+      }
+      .clinical-expl summary::-webkit-details-marker { display: none; }
+      .clinical-expl summary::before {
+        content: "▶ ";
+        display: inline-block;
+        transition: transform 0.15s;
+      }
+      .clinical-expl[open] summary::before {
+        transform: rotate(90deg);
+      }
+      .clinical-expl summary:hover { background: #d1fae5; }
+      .clinical-expl-content {
+        padding: 0.5rem 0.75rem 0.75rem;
+        border-top: 1px solid #a7f3d0;
+        color: #064e3b;
+      }
+      .clinical-expl-content .clinical-level {
+        display: inline-block;
+        margin-left: 0.5rem;
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        background: #fef3c7;
+        color: #92400e;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
       .gemini-expl {
         margin-top: 0.5rem;
         margin-bottom: 0.5rem;
@@ -3352,6 +3394,14 @@
         return `<details class="nb-expl"><summary>📚 NotebookLM 詳解（依據參考書）</summary><div class="nb-expl-content">${formatExpl(nb)}</div></details>`;
       }
 
+      function clinicalExplBlock(q) {
+        const c = q && q.clinical;
+        if (!c || !c.trim()) return "";
+        const lvl = q.clinical_level || "";
+        const tag = lvl === "重點" || lvl === "重點(深度)" ? `<span class="clinical-level">⭐ ${lvl}</span>` : "";
+        return `<details class="clinical-expl"><summary>🏥 臨床意義${tag}</summary><div class="clinical-expl-content">${formatExpl(c)}</div></details>`;
+      }
+
       function geminiExplBlock(expl, src, qid) {
         if (!expl || !expl.trim()) return "";
         const srcHtml = src ? `<div class="expl-source">📖 ${src}</div>` : "";
@@ -3869,6 +3919,7 @@
             : "";
           explBox2.innerHTML =
             topicTag2 +
+            clinicalExplBlock(q) +
             geminiExplBlock(expl2, src2, q.id) +
             nbExplBlock(q);
           explBox2.classList.add("visible");
@@ -4178,10 +4229,12 @@
             trackDailyCount(q);
           }
         });
-        // Show score at top
+        // Show score at top（每題 1.25 分，滿分 100）
+        const score = (correct * 1.25).toFixed(2);
+        const fullScore = (total * 1.25).toFixed(2);
         const topbar = document.querySelector(".scroll-exam-topbar");
-        topbar.innerHTML = `<div class="scroll-exam-done-score">${correct} / ${total}</div>
-    <span style="font-size:.82rem;color:var(--gray);flex:1">${total - correct === 0 ? "全對！" : "答錯 " + (total - correct) + " 題"}</span>
+        topbar.innerHTML = `<div class="scroll-exam-done-score">${score} 分 / ${fullScore}</div>
+    <span style="font-size:.82rem;color:var(--gray);flex:1">${total - correct === 0 ? "🎉 全對！" : `答對 ${correct}/${total} 題`}</span>
     <button class="start-btn secondary" style="padding:.4rem .8rem;font-size:.8rem;margin:0" onclick="showHome()">← 返回</button>`;
         window.scrollTo(0, 0);
       }
@@ -4218,10 +4271,14 @@
         document.getElementById("screen-exam-results").style.display = "block";
 
         const wrong = total - correct;
+        const score = (correct * 1.25).toFixed(2);
+        const fullScore = (total * 1.25).toFixed(2);
         document.getElementById("exam-res-score").textContent =
-          `${correct} / ${total}`;
+          `${score} 分 / ${fullScore}`;
         document.getElementById("exam-res-sub").textContent =
-          wrong === 0 ? "🎉 全對！太厲害了！" : `答錯 ${wrong} 題，繼續加油！`;
+          wrong === 0
+            ? `🎉 全對！太厲害了！（${correct}/${total} 題）`
+            : `答對 ${correct}/${total} 題，答錯 ${wrong} 題，繼續加油！`;
 
         // Wrong question list
         const listEl = document.getElementById("exam-res-wrong-list");
@@ -4372,8 +4429,8 @@
         const topicTagB = topicB
           ? `<span class="topic-tag" style="margin-left:0;margin-bottom:.35rem;display:inline-block" onclick="filterByTopic('${topicB.replace(/'/g, "\\'")}');event.stopPropagation();">🏷 ${topicB}</span>`
           : "";
-        const explHtml = (expl || q.explanation_notebooklm)
-          ? `${topicTagB}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}`
+        const explHtml = (expl || q.explanation_notebooklm || q.clinical)
+          ? `${topicTagB}${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}`
           : `${topicTagB}<p class="no-expl">尚無詳解</p>`;
 
         return `
@@ -4482,6 +4539,7 @@
               : "";
             box.innerHTML =
               tt +
+              clinicalExplBlock(q) +
               geminiExplBlock(expl, src, q.id) +
               nbExplBlock(q);
             box.classList.add("visible");
@@ -4824,7 +4882,7 @@
   </div>
   <div class="db-body">
     <div class="q-opt-list">${optHtml}</div>
-    ${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}
+    ${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}
     <div class="q-actions">
       <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️ 編輯</button>
     </div>

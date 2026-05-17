@@ -5700,17 +5700,21 @@
           status.textContent = '讀取 questions-data.js...';
           const token = getGithubToken();
           const repo = getGithubRepo();
-          // 1. GET 拿 sha
+          // 1. GET 拿 sha + raw content（用 GitHub API，不走 CDN 快取，避免併發 commit 覆寫）
           const metaRes = await fetch(`https://api.github.com/repos/${repo}/contents/exam/questions-data.js`, {
-            headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json'}
+            headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json'},
+            cache: 'no-store'
           });
           if (!metaRes.ok) throw new Error('讀 metadata 失敗: ' + metaRes.status);
           const meta = await metaRes.json();
           const sha = meta.sha;
 
-          status.textContent = '抓原始檔案...';
-          // 2. 抓 raw
-          const rawRes = await fetch(`https://raw.githubusercontent.com/${repo}/main/exam/questions-data.js?ts=${Date.now()}`);
+          status.textContent = '抓原始檔案（API blob，不走 CDN）...';
+          // 2. 用 GitHub API raw media type 拿最新 content（直接走 API，不會被 jsdelivr/raw CDN cache）
+          const rawRes = await fetch(`https://api.github.com/repos/${repo}/contents/exam/questions-data.js`, {
+            headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github.raw'},
+            cache: 'no-store'
+          });
           if (!rawRes.ok) throw new Error('讀 raw 失敗: ' + rawRes.status);
           let content = await rawRes.text();
 

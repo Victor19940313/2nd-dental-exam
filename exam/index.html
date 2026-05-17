@@ -2321,6 +2321,43 @@
       @media (hover:none){
         .nb-img-controls{display:flex;opacity:.85}
       }
+      /* ── Fix Exam Screen ── */
+      .fix-card{
+        background:white;border:1.5px solid #e5e7eb;border-radius:12px;
+        padding:1rem 1.2rem;margin-bottom:1.2rem;
+      }
+      .fix-card.done{opacity:.55;border-color:#16a34a;background:#f0fdf4}
+      .fix-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+      .fix-card-id{font-size:.78rem;color:#9ca3af;font-family:monospace}
+      .fix-card-meta{font-weight:800;color:#374151;font-size:1rem}
+      .fix-card-q{color:#4b5563;font-size:.92rem;line-height:1.7;background:#f9fafb;padding:.6rem .8rem;border-radius:8px;margin-bottom:.8rem}
+      .fix-card-q img{max-width:200px;display:block;margin-top:.5rem;border:1px solid #e5e7eb;border-radius:6px}
+      .fix-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:.8rem}
+      @media(max-width:760px){.fix-grid{grid-template-columns:repeat(2,1fr)}}
+      .fix-opt-box{
+        border:2.5px dashed #cbd5e1;border-radius:10px;padding:.6rem;
+        min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+        cursor:text;background:#fafafa;transition:all .15s;outline:none;
+      }
+      .fix-opt-box:focus,.fix-opt-box.focused{
+        border-color:#7c3aed;background:#faf5ff;
+        box-shadow:0 0 0 3px rgba(124,58,237,.15);
+      }
+      .fix-opt-box.has-img{border-style:solid;border-color:#16a34a;background:#f0fdf4}
+      .fix-opt-letter{font-size:1.1rem;font-weight:800;color:#6b21a8;margin-bottom:.3rem}
+      .fix-opt-preview{width:100%;text-align:center}
+      .fix-opt-preview img{max-width:100%;max-height:160px;border-radius:6px;display:inline-block}
+      .fix-opt-tip{font-size:.72rem;color:#9ca3af;margin-top:.3rem;text-align:center;line-height:1.4}
+      .fix-card-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+      .fix-save-btn{
+        background:#7c3aed;color:white;border:none;border-radius:8px;
+        padding:.5rem 1.1rem;font-weight:800;cursor:pointer;font-size:.88rem;
+      }
+      .fix-save-btn:disabled{opacity:.4;cursor:not-allowed}
+      .fix-save-btn:hover:not(:disabled){background:#6b21a8}
+      .fix-keep-main{font-size:.8rem;color:#374151;display:flex;align-items:center;gap:.3rem;cursor:pointer}
+      .fix-status{font-size:.82rem;color:#6b7280;flex:1}
+
       .nb-toc-fab{
         display:none;position:fixed;bottom:1rem;left:1rem;z-index:60;
         width:48px;height:48px;border-radius:50%;border:none;
@@ -2378,6 +2415,13 @@
           onclick="openSyncPanel()"
         >
           ☁️
+        </button>
+        <button
+          style="padding:0.25rem 0.5rem;border-radius:8px;border:1.5px solid rgba(255,255,255,0.4);background:transparent;color:white;font-size:0.85rem;cursor:pointer"
+          title="修補題目（需密碼）"
+          onclick="enterFixExam()"
+        >
+          🔧
         </button>
         <button
           style="padding:0.25rem 0.5rem;border-radius:8px;border:1.5px solid rgba(255,255,255,0.4);background:transparent;color:white;font-size:0.85rem;cursor:pointer"
@@ -3076,6 +3120,22 @@
         <input type="file" id="wb-import-file" accept=".json" style="display:none" onchange="handleWBImport(event)">
       </div>
       <div class="wb-list" id="wb-list"></div>
+    </div>
+
+    <!-- ═══════════════ FIX EXAM SCREEN ═══════════════ -->
+    <div id="screen-fixexam" style="display:none;padding:1rem;max-width:1100px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+        <h2 style="font-size:1.15rem;color:#374151;margin:0">🔧 修補題目（8 題缺圖）</h2>
+        <button class="btn-exit" onclick="showHome()" style="background:white;color:#6b7280;border:1.5px solid #d1d5db;padding:.4rem .9rem;border-radius:8px;font-weight:700;cursor:pointer">← 返回</button>
+      </div>
+      <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:.7rem 1rem;font-size:.85rem;color:#92400e;margin-bottom:1rem;line-height:1.6">
+        <strong>📋 使用方法</strong><br>
+        1. 開原始 PDF（位置：<code>Desktop\牙科學習\錯題本\q_pdfs\</code>）<br>
+        2. 對著 ABCD 選項各別截圖（Win+Shift+S）<br>
+        3. 點下方 A/B/C/D 框 → <strong>Ctrl+V 貼上</strong> → 自動上傳<br>
+        4. 4 張都上傳完 → 按 <strong>「💾 儲存修補」</strong> → 自動 commit 到 GitHub
+      </div>
+      <div id="fixexam-list"></div>
     </div>
 
     <!-- ═══════════════ NOTEBOOK SCREEN ═══════════════ -->
@@ -4160,6 +4220,7 @@
         document.getElementById("screen-scroll-exam").style.display = "none";
         document.getElementById("screen-wrongbook").style.display = "none";
         const __nb_h = document.getElementById("screen-notebook"); if (__nb_h) __nb_h.style.display = "none";
+        const __fx_h = document.getElementById("screen-fixexam"); if (__fx_h) __fx_h.style.display = "none";
         const __ner_h = document.getElementById("screen-exam-results"); if (__ner_h) __ner_h.style.display = "none";
         document.getElementById("btn-home").classList.add("active");
         document.getElementById("btn-db").classList.remove("active");
@@ -4182,6 +4243,7 @@
         document.getElementById("screen-browse").style.display = "block";
         document.getElementById("screen-wrongbook").style.display = "none";
         const __nb_b = document.getElementById("screen-notebook"); if (__nb_b) __nb_b.style.display = "none";
+        const __fx_b = document.getElementById("screen-fixexam"); if (__fx_b) __fx_b.style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.add("active");
@@ -4215,6 +4277,8 @@
         document.getElementById("screen-wrongbook").style.display = "none";
         const nb = document.getElementById("screen-notebook");
         if (nb) nb.style.display = "none";
+        const fx = document.getElementById("screen-fixexam");
+        if (fx) fx.style.display = "none";
         const er = document.getElementById("screen-exam-results");
         if (er) er.style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
@@ -4424,7 +4488,7 @@
           document.getElementById("pq-text").after(imgEl);
         }
         if (q.image) {
-          imgEl.src = "images/" + q.image;
+          imgEl.src = /^https?:\/\//.test(q.image) ? q.image : "images/" + q.image;
           imgEl.style.display = "block";
         } else {
           imgEl.style.display = "none";
@@ -4800,7 +4864,7 @@
         document.getElementById("scroll-exam-list").innerHTML = list
           .map((q, qi) => {
             const imgHtml = q.image
-              ? `<img class="scroll-q-img" src="images/${q.image}" alt="題目圖片">`
+              ? `<img class="scroll-q-img" src="${/^https?:\/\//.test(q.image) ? q.image : 'images/' + q.image}" alt="題目圖片">`
               : "";
             const opts = (q.options || [])
               .map(
@@ -5448,6 +5512,308 @@
       }
 
       // ════════════════════════════════════════════
+      //  Fix Exam — 修補 8 題缺圖
+      // ════════════════════════════════════════════
+      const BROKEN_QUESTIONS = [
+        { id:'ya4-106-1-63', note:'純文字題，選項可能是公式或圖' },
+        { id:'ya4-108-2-68', note:'主圖是 ABCD 合成（會清掉換成 4 張獨立圖）' },
+        { id:'ya4-109-2-69', note:'主圖是 ABCD 合成' },
+        { id:'ya4-109-2-70', note:'主圖是 ABCD 合成（超長）' },
+        { id:'ya4-109-2-71', note:'主圖是 ABCD 合成' },
+        { id:'ya5-105-1-26', note:'主圖只有題目示意（兩顆牙），建議勾「保留主圖」' },
+        { id:'ya5-105-1-80', note:'完全沒主圖' },
+        { id:'ya5-109-1-79', note:'主圖是 ABCD 合成' }
+      ];
+
+      function enterFixExam(){
+        const pw = prompt('輸入密碼才能進入修補模式\n提示：車號');
+        if (pw !== '6536') {
+          if (pw !== null) alert('密碼錯誤');
+          return;
+        }
+        if (!getGithubToken() || !getGithubRepo()) {
+          alert('請先到「🗂 筆記本 → ⚙️ 設定」貼上 GitHub Token 跟 repo，才能修補題目');
+          return;
+        }
+        showFixExam();
+      }
+
+      function showFixExam(){
+        ['screen-home','screen-practice','screen-db','screen-browse','screen-wrongbook','screen-exam-results','screen-scroll-exam','screen-notebook'].forEach(s => {
+          const el = document.getElementById(s);
+          if (el) el.style.display = 'none';
+        });
+        document.getElementById('screen-fixexam').style.display = 'block';
+        document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+        renderFixExamList();
+      }
+
+      function renderFixExamList(){
+        const el = document.getElementById('fixexam-list');
+        el.innerHTML = BROKEN_QUESTIONS.map(bq => {
+          const q = QS.find(x => x.id === bq.id);
+          if (!q) return `<div class="fix-card"><strong>找不到題目 ${bq.id}</strong></div>`;
+          // 判斷是否已修補過（options 是否含 <img>）
+          const alreadyFixed = (q.options || []).some(o => /<img/i.test(o));
+          const mainImg = q.image ? `<img src="images/${escapeHtml(q.image)}" alt="原主圖">` : '';
+          return `<section class="fix-card${alreadyFixed?' done':''}" data-qid="${bq.id}">
+            <div class="fix-card-head">
+              <div>
+                <div class="fix-card-meta">${escapeHtml(q.meta)} ${alreadyFixed?'<span style="color:#16a34a;font-size:.78rem;margin-left:.5rem">✓ 已修補</span>':''}</div>
+                <div class="fix-card-id">${bq.id}・${escapeHtml(bq.note)}</div>
+              </div>
+            </div>
+            <div class="fix-card-q">
+              <strong>題目：</strong>${escapeHtml(q.question)}
+              ${mainImg ? '<div style="font-size:.75rem;color:#6b7280;margin-top:.4rem">目前主圖：</div>' + mainImg : '<div style="font-size:.75rem;color:#9ca3af;margin-top:.4rem">（目前沒主圖）</div>'}
+            </div>
+            <div style="margin-bottom:.7rem">
+              <div style="font-size:.78rem;font-weight:700;color:#0369a1;margin-bottom:.3rem">📷 題目主圖（可選 — 點下方框 Ctrl+V 貼新主圖。不貼就維持現狀。）</div>
+              <div class="fix-opt-box fix-main-box" tabindex="0" onclick="this.focus()" style="max-width:260px">
+                <div class="fix-opt-letter" style="color:#0369a1">主圖</div>
+                <div class="fix-opt-preview"></div>
+                <div class="fix-opt-tip">不貼=維持現狀</div>
+              </div>
+            </div>
+            <div style="font-size:.78rem;font-weight:700;color:#6b21a8;margin-bottom:.3rem">🅰️🅱️🅲️🅳️ 四個選項圖（必填）</div>
+            <div class="fix-grid">
+              ${['A','B','C','D'].map((letter, idx) => `
+                <div class="fix-opt-box" data-idx="${idx}" tabindex="0" onclick="this.focus()">
+                  <div class="fix-opt-letter">${letter}</div>
+                  <div class="fix-opt-preview"></div>
+                  <div class="fix-opt-tip">點這裡 → Ctrl+V 貼圖</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="fix-card-actions">
+              <label class="fix-keep-main">
+                <input type="checkbox" class="fix-keep-main-check" ${q.image && bq.id === 'ya5-105-1-26' ? 'checked' : ''}> 保留原主圖（沒貼新主圖時生效）
+              </label>
+              <span class="fix-status">尚未貼圖</span>
+              <button class="fix-save-btn" disabled onclick="commitFixedQuestion('${bq.id}')">💾 儲存修補</button>
+            </div>
+          </section>`;
+        }).join('');
+        // 綁定 paste / drop 事件
+        document.querySelectorAll('.fix-opt-box').forEach(box => {
+          box.addEventListener('paste', handleFixPaste);
+          box.addEventListener('dragover', (e) => { e.preventDefault(); box.classList.add('focused'); });
+          box.addEventListener('dragleave', () => box.classList.remove('focused'));
+          box.addEventListener('drop', handleFixDrop);
+        });
+      }
+
+      async function handleFixPaste(e){
+        const box = e.currentTarget;
+        if (!e.clipboardData || !e.clipboardData.items) return;
+        for (const item of e.clipboardData.items) {
+          if (item.type && item.type.startsWith('image/')) {
+            e.preventDefault();
+            const blob = item.getAsFile();
+            if (blob) await uploadFixImage(box, blob);
+            return;
+          }
+        }
+      }
+      async function handleFixDrop(e){
+        e.preventDefault();
+        const box = e.currentTarget;
+        box.classList.remove('focused');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+          await uploadFixImage(box, e.dataTransfer.files[0]);
+        }
+      }
+      async function uploadFixImage(box, blob){
+        if (!blob.type || !blob.type.startsWith('image/')) {
+          showToast('不是圖片檔');
+          return;
+        }
+        const preview = box.querySelector('.fix-opt-preview');
+        const tip = box.querySelector('.fix-opt-tip');
+        tip.textContent = '⏳ 上傳中...';
+        try {
+          const url = await uploadImageToGitHub(blob);
+          box.dataset.url = url;
+          box.classList.add('has-img');
+          preview.innerHTML = `<img src="${url}" alt="">`;
+          tip.textContent = '✓ 已上傳';
+          updateFixCardStatus(box.closest('.fix-card'));
+        } catch(err) {
+          tip.textContent = '❌ 失敗';
+          alert('上傳失敗：' + err.message);
+        }
+      }
+      function updateFixCardStatus(card){
+        // 只計算 ABCD 四個選項框（不含主圖框）
+        const optBoxes = card.querySelectorAll('.fix-opt-box[data-idx]');
+        const mainBox = card.querySelector('.fix-main-box');
+        const done = Array.from(optBoxes).filter(b => b.dataset.url).length;
+        const mainTag = mainBox && mainBox.dataset.url ? '，含新主圖' : '';
+        const status = card.querySelector('.fix-status');
+        const btn = card.querySelector('.fix-save-btn');
+        status.textContent = `已貼 ${done}/4 張${mainTag}`;
+        btn.disabled = done < 4;
+      }
+
+      // UTF-8 safe base64 encoder（給 questions-data.js 用，檔案大要 chunked）
+      function utf8ToBase64(str){
+        const bytes = new TextEncoder().encode(str);
+        let bin = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        return btoa(bin);
+      }
+
+      async function commitFixedQuestion(qid){
+        const card = document.querySelector(`.fix-card[data-qid="${qid}"]`);
+        // 抓 ABCD 選項：用 data-idx 找（避開主圖框）
+        const optBoxes = card.querySelectorAll('.fix-opt-box[data-idx]');
+        const urls = [];
+        for (let i = 0; i < 4; i++) {
+          const url = optBoxes[i].dataset.url;
+          if (!url) { alert(`選項 ${'ABCD'[i]} 還沒貼圖`); return; }
+          urls.push(url);
+        }
+        // 主圖：使用者貼的新主圖（如果有）
+        const mainBox = card.querySelector('.fix-main-box');
+        const newMainUrl = mainBox ? mainBox.dataset.url : '';
+        const keepMain = card.querySelector('.fix-keep-main-check').checked;
+        // 決定 image 欄位最終值：
+        //   有新主圖 → 用新主圖 URL
+        //   沒新主圖 + 勾保留 → 不動（null）
+        //   沒新主圖 + 沒勾 → 清空（''）
+        let imgAction;
+        if (newMainUrl) imgAction = { type:'set', value: newMainUrl, desc:'換成新主圖' };
+        else if (keepMain) imgAction = { type:'keep', desc:'保留原主圖' };
+        else imgAction = { type:'clear', desc:'清空原主圖' };
+
+        if (!confirm(`確認修補「${qid}」？\n\n會做：\n1. 把 4 張圖寫進 options\n2. ${imgAction.desc}\n3. commit 到你的 GitHub repo\n4. GitHub Pages 自動部署（1-2 分鐘後生效）`)) return;
+
+        const btn = card.querySelector('.fix-save-btn');
+        const status = card.querySelector('.fix-status');
+        btn.disabled = true;
+        btn.textContent = '⏳ 處理中...';
+
+        try {
+          status.textContent = '讀取 questions-data.js...';
+          const token = getGithubToken();
+          const repo = getGithubRepo();
+          // 1. GET 拿 sha
+          const metaRes = await fetch(`https://api.github.com/repos/${repo}/contents/exam/questions-data.js`, {
+            headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json'}
+          });
+          if (!metaRes.ok) throw new Error('讀 metadata 失敗: ' + metaRes.status);
+          const meta = await metaRes.json();
+          const sha = meta.sha;
+
+          status.textContent = '抓原始檔案...';
+          // 2. 抓 raw
+          const rawRes = await fetch(`https://raw.githubusercontent.com/${repo}/main/exam/questions-data.js?ts=${Date.now()}`);
+          if (!rawRes.ok) throw new Error('讀 raw 失敗: ' + rawRes.status);
+          let content = await rawRes.text();
+
+          status.textContent = '修改題目...';
+          // 3. 找到該題並替換 options
+          const idMarker = `"id": "${qid}"`;
+          const startIdx = content.indexOf(idMarker);
+          if (startIdx === -1) throw new Error(`找不到題目 ${qid}（questions-data.js 沒這題）`);
+          // 找到 options key
+          const optionsKeyIdx = content.indexOf(`"options"`, startIdx);
+          if (optionsKeyIdx === -1 || optionsKeyIdx - startIdx > 800) throw new Error('找不到 options 欄位');
+          const arrayStart = content.indexOf('[', optionsKeyIdx);
+          // 找陣列結束（平衡 [ ]）
+          let depth = 1, arrayEnd = -1;
+          for (let i = arrayStart + 1; i < content.length; i++) {
+            const ch = content[i];
+            if (ch === '"') {
+              // skip string
+              i++;
+              while (i < content.length && content[i] !== '"') {
+                if (content[i] === '\\') i++;
+                i++;
+              }
+            } else if (ch === '[') depth++;
+            else if (ch === ']') { depth--; if (depth === 0) { arrayEnd = i; break; } }
+          }
+          if (arrayEnd === -1) throw new Error('找不到 options 陣列結尾');
+
+          // 建新 options
+          const newOpts = ['A','B','C','D'].map((letter, i) => {
+            // 用 jsdelivr URL；img 內用 escape 引號
+            return `"(${letter}) <img src=\\"${urls[i]}\\" style=\\"max-width:100%;display:block;margin-top:6px;border-radius:6px\\">"`;
+          });
+          const newOptionsArr = `[\n        ${newOpts.join(',\n        ')}\n      ]`;
+          let newContent = content.slice(0, arrayStart) + newOptionsArr + content.slice(arrayEnd + 1);
+
+          // 4. 處理 image 欄位
+          if (imgAction.type !== 'keep') {
+            const newStartIdx = newContent.indexOf(idMarker);
+            const imgKeyIdx = newContent.indexOf(`"image"`, newStartIdx);
+            if (imgKeyIdx !== -1 && imgKeyIdx - newStartIdx < newOptionsArr.length + 1500) {
+              const colonIdx = newContent.indexOf(':', imgKeyIdx);
+              const valStart = newContent.indexOf('"', colonIdx);
+              if (valStart !== -1) {
+                let valEnd = valStart + 1;
+                while (valEnd < newContent.length && newContent[valEnd] !== '"') {
+                  if (newContent[valEnd] === '\\') valEnd++;
+                  valEnd++;
+                }
+                if (valEnd < newContent.length) {
+                  const newVal = imgAction.type === 'set' ? `"${imgAction.value}"` : '""';
+                  newContent = newContent.slice(0, valStart) + newVal + newContent.slice(valEnd + 1);
+                }
+              }
+            } else if (imgAction.type === 'set') {
+              // 原本完全沒有 "image" 欄位（例如 ya5-105-1-80）→ 在 options 後插入
+              // 找 options 陣列結束位置（重新找一次因為內容已變）
+              const optsKey = newContent.indexOf(`"options"`, newStartIdx);
+              const optsArrStart = newContent.indexOf('[', optsKey);
+              let d = 1, optsArrEnd = -1;
+              for (let i = optsArrStart + 1; i < newContent.length; i++) {
+                const c = newContent[i];
+                if (c === '"') { i++; while (i < newContent.length && newContent[i] !== '"') { if (newContent[i] === '\\') i++; i++; } }
+                else if (c === '[') d++;
+                else if (c === ']') { d--; if (d === 0) { optsArrEnd = i; break; } }
+              }
+              if (optsArrEnd !== -1) {
+                const insertion = `, "image": "${imgAction.value}"`;
+                newContent = newContent.slice(0, optsArrEnd + 1) + insertion + newContent.slice(optsArrEnd + 1);
+              }
+            }
+          }
+
+          status.textContent = 'PUT 到 GitHub...';
+          // 5. PUT
+          const newB64 = utf8ToBase64(newContent);
+          const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/exam/questions-data.js`, {
+            method: 'PUT',
+            headers: {'Authorization':'Bearer '+token, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json'},
+            body: JSON.stringify({
+              message: `fix(exam): 補圖 ${qid}`,
+              content: newB64,
+              sha: sha
+            })
+          });
+          if (!putRes.ok) {
+            const errTxt = await putRes.text();
+            throw new Error('PUT 失敗 ' + putRes.status + ': ' + errTxt.slice(0, 300));
+          }
+
+          status.textContent = '✓ 完成！GitHub Pages 1-2 分鐘後生效';
+          card.classList.add('done');
+          btn.textContent = '✓ 已修補';
+          showToast('✓ 修補 ' + qid + ' 完成');
+        } catch(err) {
+          status.textContent = '❌ 失敗';
+          btn.disabled = false;
+          btn.textContent = '💾 重試';
+          alert('修補失敗：\n\n' + err.message);
+        }
+      }
+
+      // ════════════════════════════════════════════
       //  Sync Panel (cross-device)
       // ════════════════════════════════════════════
       function openSyncPanel(){
@@ -6001,7 +6367,7 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
       // ── Notebook screen render ──
       function showNotebook(){
         loadNotebook();
-        ['screen-home','screen-practice','screen-db','screen-browse','screen-wrongbook','screen-exam-results','screen-scroll-exam'].forEach(s => {
+        ['screen-home','screen-practice','screen-db','screen-browse','screen-wrongbook','screen-exam-results','screen-scroll-exam','screen-fixexam'].forEach(s => {
           const el = document.getElementById(s);
           if (el) el.style.display = 'none';
         });
@@ -7380,6 +7746,7 @@ ${qBlocks}
         document.getElementById("screen-scroll-exam").style.display = "none";
         document.getElementById("screen-wrongbook").style.display = "none";
         const __nb_d = document.getElementById("screen-notebook"); if (__nb_d) __nb_d.style.display = "none";
+        const __fx_d = document.getElementById("screen-fixexam"); if (__fx_d) __fx_d.style.display = "none";
         document.getElementById("screen-db").style.display = "block";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.add("active");
@@ -7569,6 +7936,7 @@ ${qBlocks}
         document.getElementById('screen-browse').style.display='none';
         document.getElementById('screen-scroll-exam').style.display='none';
         const __nb_w = document.getElementById('screen-notebook'); if (__nb_w) __nb_w.style.display='none';
+        const __fx_w = document.getElementById('screen-fixexam'); if (__fx_w) __fx_w.style.display='none';
         const er = document.getElementById('screen-exam-results');
         if(er) er.style.display='none';
         document.getElementById('screen-wrongbook').style.display='block';

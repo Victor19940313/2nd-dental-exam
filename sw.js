@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v30-notebook';
+const CACHE_NAME = 'dental-all-v31-fixexam';
 const PRECACHE = [
   './',
   './index.html',

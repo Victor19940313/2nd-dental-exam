@@ -16,7 +16,10 @@
     appId: "1:136556858599:web:de382cbbef5099d63e2642",
   };
 
-  var SYNC_KEYS = ["wrongbook_state", "daily_log", "wrongbook_lastpos"];
+  var SYNC_KEYS = [
+    "wrongbook_state", "daily_log", "wrongbook_lastpos",
+    "notebook", "gemini_api_key", "github_token", "gemini_model"
+  ];
 
   var _db = null;
   var _userId = null;

@@ -2070,6 +2070,282 @@
         width:7px;height:7px;border-radius:50%;background:#f59e0b;
         border:1.5px solid white;
       }
+
+      /* ── Notebook Screen ── */
+      #screen-notebook{ padding:0;max-width:1200px;margin:0 auto;}
+      .nb-toolbar{
+        display:flex;justify-content:space-between;align-items:center;
+        padding:.8rem 1.2rem;background:#fdf4ff;border-bottom:1.5px solid #f3d4ff;
+        position:sticky;top:0;z-index:50;flex-wrap:wrap;gap:.5rem;
+      }
+      .nb-toolbar-title{font-size:1.05rem;font-weight:800;color:#6b21a8}
+      .nb-toolbar-actions{display:flex;gap:.4rem;flex-wrap:wrap}
+      .nb-tb-btn{
+        background:white;color:#6b21a8;border:1.5px solid #e9d5ff;
+        border-radius:8px;padding:.4rem .8rem;font-weight:700;font-size:.82rem;
+        cursor:pointer;
+      }
+      .nb-tb-btn:hover{background:#f3e8ff}
+      .nb-toolbar-search{flex:1;max-width:380px;position:relative;display:flex;align-items:center;margin:0 .5rem}
+      .nb-toolbar-search input{
+        width:100%;padding:.45rem .8rem;padding-right:1.8rem;
+        border:1.5px solid #e9d5ff;border-radius:8px;font-size:.86rem;
+        background:white;color:#374151;
+      }
+      .nb-toolbar-search input:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,.15)}
+      .nb-toolbar-search button{
+        position:absolute;right:.4rem;background:#f3e8ff;color:#6b21a8;
+        border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:.7rem;
+      }
+      .nb-hl{background:#fef3c7;color:#92400e;padding:0 2px;border-radius:3px}
+      .nb-chapter.nb-search-hidden{display:none}
+      details.nb-subj-group.nb-search-hidden{display:none}
+      .nb-toc-item.nb-search-hidden{display:none}
+      details.nb-toc-group.nb-search-hidden{display:none}
+      .nb-search-empty{
+        text-align:center;color:#9ca3af;padding:2.5rem 1rem;
+      }
+      .nb-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 80px)}
+      @media (max-width:760px){.nb-layout{grid-template-columns:1fr}}
+      .nb-toc-pane{
+        background:#fafafa;border-right:1.5px solid #e5e7eb;
+        padding:1rem .8rem;position:sticky;top:60px;align-self:start;
+        max-height:calc(100vh - 80px);overflow-y:auto;
+      }
+      @media (max-width:760px){
+        .nb-toc-pane{position:fixed;top:0;left:-260px;width:240px;height:100vh;z-index:200;
+          box-shadow:2px 0 10px rgba(0,0,0,.15);transition:left .25s;background:white}
+        .nb-toc-pane.open{left:0}
+      }
+      .nb-toc-head{font-weight:800;color:#374151;margin-bottom:.6rem;font-size:.92rem}
+      .nb-toc-item{
+        display:flex;align-items:center;gap:.35rem;
+        padding:.55rem .55rem;border-radius:6px;color:#374151;text-decoration:none;
+        font-size:.85rem;line-height:1.35;cursor:pointer;
+        margin-bottom:.15rem;
+      }
+      .nb-toc-item:hover{background:#f3e8ff;color:#6b21a8}
+      .nb-toc-item.nb-toc-item-active{background:#7c3aed;color:white;font-weight:700;box-shadow:0 2px 6px rgba(124,58,237,.3)}
+      .nb-toc-item.nb-toc-item-active .nb-toc-count{background:white;color:#7c3aed}
+      .nb-toc-subitem{margin-left:.7rem;font-size:.82rem}
+      .nb-toc-leaf{margin-left:1.1rem;font-size:.82rem}
+      details.nb-toc-subgroup summary::-webkit-details-marker,
+      details.nb-toc-subj summary::-webkit-details-marker{display:none}
+      details.nb-toc-subj > summary{cursor:pointer}
+      details.nb-toc-subj .nb-fold-arrow{transition:transform .2s}
+      details.nb-toc-subj:not([open]) > summary .nb-fold-arrow{transform:rotate(-90deg)}
+      .nb-toc-num{color:#9ca3af;font-weight:700;min-width:1.6em}
+      .nb-toc-name{flex:1}
+      .nb-toc-count{font-size:.7rem;color:#9ca3af;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:1px 6px}
+      .nb-content-pane{padding:1.2rem 1.6rem;background:white;min-width:0}
+      @media (max-width:760px){.nb-content-pane{padding:1rem .9rem}}
+      .nb-chapter{margin-bottom:2.5rem;scroll-margin-top:70px}
+      .nb-chapter-head{
+        display:flex;justify-content:space-between;align-items:center;
+        border-bottom:2px solid #f3d4ff;padding-bottom:.4rem;margin-bottom:.8rem;
+      }
+      .nb-chapter-title{
+        font-size:1.25rem;font-weight:800;color:#374151;cursor:pointer;
+        flex:1;
+      }
+      .nb-chapter-title:hover{color:#7c3aed}
+      .nb-chapter-actions{display:flex;gap:.3rem}
+      .nb-chapter-actions button{
+        background:none;border:none;cursor:pointer;font-size:1rem;padding:.25rem .4rem;
+        border-radius:6px;color:#6b7280;
+      }
+      .nb-chapter-actions button:hover{background:#f3f4f6}
+      .nb-chapter-content{line-height:1.85;color:#374151;font-size:.96rem;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif}
+      .nb-chapter-content h1,.nb-chapter-content h2,.nb-chapter-content h3,.nb-chapter-content h4{
+        margin:1.5rem 0 .7rem;font-weight:800;
+      }
+      .nb-chapter-content h2{
+        font-size:1.18rem;color:white;background:linear-gradient(135deg,#7c3aed,#a855f7);
+        padding:.55rem .9rem;border-radius:10px;display:block;
+        box-shadow:0 2px 6px rgba(124,58,237,.2);
+      }
+      .nb-chapter-content h3{
+        font-size:1.02rem;color:#6b21a8;
+        border-left:5px solid #c084fc;padding-left:.7rem;
+        background:linear-gradient(90deg,#faf5ff,transparent);
+        padding-top:.35rem;padding-bottom:.35rem;
+        border-radius:0 6px 6px 0;
+      }
+      .nb-chapter-content h4{
+        font-size:.95rem;color:#7c3aed;
+        padding-left:.4rem;
+        border-left:3px solid #e9d5ff;
+      }
+      .nb-chapter-content ul,.nb-chapter-content ol{margin:.55rem 0 .8rem 1.4rem;padding:0}
+      .nb-chapter-content li{margin-bottom:.4rem;line-height:1.75}
+      .nb-chapter-content li::marker{color:#a855f7}
+      .nb-chapter-content p{margin:.6rem 0;line-height:1.8}
+      .nb-chapter-content code{background:#fef3c7;padding:1px 7px;border-radius:5px;color:#92400e;font-size:.85em;font-weight:600;font-family:'SF Mono','Cascadia Code',Consolas,monospace}
+      /* 主體名詞 / 關鍵字 — 像螢光筆畫過 */
+      .nb-chapter-content strong{
+        color:#6b21a8;font-weight:900;
+        background:linear-gradient(180deg, transparent 52%, #fde047 52%);
+        padding:0 4px;
+        font-size:1.02em;
+      }
+      .nb-chapter-content em{color:#0369a1;font-style:normal;font-weight:600}
+      .nb-chapter-content .nb-table{
+        border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;
+        box-shadow:0 1px 3px rgba(0,0,0,.06);border-radius:8px;overflow:hidden;
+      }
+      .nb-chapter-content .nb-table th,.nb-chapter-content .nb-table td{
+        border:1px solid #e9d5ff;padding:.55rem .7rem;text-align:left;vertical-align:top;
+      }
+      .nb-chapter-content .nb-table th{
+        background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;font-weight:700;font-size:.88rem;
+        border-color:#7c3aed;
+      }
+      .nb-chapter-content .nb-table tr:nth-child(even) td{background:#faf5ff}
+      .nb-chapter-content .nb-table tr:hover td{background:#f3e8ff}
+
+      /* Callout box（重點、警告、臨床等）*/
+      .nb-chapter-content blockquote{
+        margin:.9rem 0;padding:.7rem .95rem;border-radius:10px;
+        background:#f3f4f6;border-left:4px solid #9ca3af;color:#374151;
+      }
+      .nb-chapter-content blockquote.callout-tip{background:#fef9c3;border-color:#eab308;color:#713f12}
+      .nb-chapter-content blockquote.callout-warn{background:#fee2e2;border-color:#dc2626;color:#7f1d1d}
+      .nb-chapter-content blockquote.callout-clinical{background:#dcfce7;border-color:#16a34a;color:#14532d}
+      .nb-chapter-content blockquote.callout-exam{background:#ede9fe;border-color:#7c3aed;color:#5b21b6}
+      .nb-chapter-content blockquote p:first-child{margin-top:0}
+      .nb-chapter-content blockquote p:last-child{margin-bottom:0}
+
+      /* Inline "概念標籤"：當 AI 用 [[概念]] 包起來時會渲染成彩色標籤 */
+      .nb-chapter-content .ctag{
+        display:inline-block;background:#e9d5ff;color:#6b21a8;
+        padding:1px 9px;border-radius:10px;font-size:.78em;font-weight:700;
+        margin:0 2px;
+      }
+      /* 子標籤（特點/功能/機制 等）— 藍色字體 */
+      .nb-chapter-content .md-label{
+        color:#0369a1;
+        font-weight:700;
+        font-size:1em;
+        background:transparent;
+        border:none;
+        padding:0;
+        margin-right:.2rem;
+        letter-spacing:.04em;
+      }
+      .nb-chapter-content .md-colon{
+        color:#0369a1;
+        font-weight:400;
+        margin:0 .25rem 0 0;
+      }
+      /* li 開頭是子標籤 → 去掉圓點，縮排對齊，左邊細線跟子標籤同色 */
+      .nb-chapter-content li.li-sublabel{
+        list-style:none;
+        margin-left:-1.2rem;
+        padding-left:.5rem;
+        border-left:2px solid #0369a1;
+        margin-top:.2rem;
+      }
+      /* Foldable subject groups */
+      details.nb-subj-group summary::-webkit-details-marker,
+      details.nb-toc-group summary::-webkit-details-marker{display:none}
+      details.nb-subj-group .nb-fold-arrow,
+      details.nb-toc-group .nb-fold-arrow{transition:transform .2s}
+      details.nb-subj-group:not([open]) .nb-fold-arrow,
+      details.nb-toc-group:not([open]) .nb-fold-arrow{transform:rotate(-90deg)}
+      .nb-chapter-sources{
+        margin-top:.9rem;padding:.55rem .75rem;background:#fafafa;
+        border-radius:8px;font-size:.78rem;color:#6b7280;line-height:1.7;
+      }
+      .nb-source-link{
+        display:inline-block;background:white;border:1px solid #e5e7eb;
+        padding:1px 7px;border-radius:6px;color:#7c3aed;text-decoration:none;
+        margin-right:.25rem;
+      }
+      .nb-source-link:hover{background:#f3e8ff}
+      .nb-chapter-nav{
+        display:flex;justify-content:space-between;gap:.8rem;
+        margin-top:2rem;padding-top:1rem;border-top:1.5px dashed #e9d5ff;
+      }
+      .nb-nav-btn{
+        flex:1;max-width:48%;display:flex;align-items:center;gap:.7rem;
+        background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;
+        padding:.75rem 1rem;cursor:pointer;color:#374151;text-align:left;
+        font-family:inherit;font-size:.92rem;
+        transition:background .15s, border-color .15s;
+      }
+      .nb-nav-btn:hover{background:#f3e8ff;border-color:#c084fc}
+      .nb-nav-btn .arrow{font-size:1.2rem;color:#7c3aed;font-weight:800}
+      .nb-nav-btn .text{flex:1;line-height:1.3;font-weight:600}
+      .nb-nav-btn-next{justify-content:flex-end}
+      .nb-editor-wrap{margin:.5rem 0}
+      .nb-editor-toolbar{display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap}
+      .nb-editor-toolbar button{
+        background:white;color:#6b21a8;border:1.5px solid #e9d5ff;
+        border-radius:6px;padding:.4rem .7rem;font-weight:700;font-size:.82rem;cursor:pointer;
+      }
+      .nb-editor-toolbar button:hover{background:#f3e8ff}
+      .nb-editor-toolbar button:disabled{opacity:.4;cursor:not-allowed}
+      .nb-editor-textarea{
+        width:100%;min-height:55vh;
+        padding:.8rem 1rem;border:1.5px solid #d1d5db;border-radius:10px;
+        font-family:'SF Mono','Cascadia Code',Consolas,monospace;font-size:.9rem;line-height:1.65;
+        background:#fafafa;color:#374151;resize:vertical;
+        box-shadow:inset 0 1px 3px rgba(0,0,0,.04);
+      }
+      .nb-editor-textarea:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+      .nb-editor-preview{min-height:55vh;background:white;padding:1rem 1.2rem;border:1.5px solid #e9d5ff;border-radius:10px}
+      .nb-img-wrap{
+        position:relative;display:inline-block;max-width:100%;margin:.6rem 0;
+      }
+      .nb-chapter-content img{
+        display:block;max-width:60%;height:auto;
+        border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);
+        cursor:zoom-in;transition:opacity .15s;
+      }
+      .nb-img-wrap:hover img{opacity:.9}
+      .nb-img-controls{
+        position:absolute;top:.4rem;right:.4rem;
+        display:none;gap:.2rem;
+        background:rgba(0,0,0,.65);border-radius:8px;padding:.2rem;
+      }
+      .nb-img-wrap:hover .nb-img-controls{display:flex}
+      .nb-img-controls button{
+        background:white;color:#374151;border:none;
+        width:30px;height:30px;border-radius:6px;
+        font-size:1.05rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;
+        line-height:1;
+      }
+      .nb-img-controls button:hover{background:#f3e8ff;color:#6b21a8}
+      /* 手機沒有 hover，預設顯示控制 */
+      @media (hover:none){
+        .nb-img-controls{display:flex;opacity:.85}
+      }
+      .nb-toc-fab{
+        display:none;position:fixed;bottom:1rem;left:1rem;z-index:60;
+        width:48px;height:48px;border-radius:50%;border:none;
+        background:#7c3aed;color:white;font-size:1.3rem;cursor:pointer;
+        box-shadow:0 4px 14px rgba(124,58,237,.4);
+      }
+      @media (max-width:760px){.nb-toc-fab{display:flex;align-items:center;justify-content:center}}
+      .nb-loading{
+        display:inline-block;width:14px;height:14px;border:2px solid #c084fc;
+        border-top-color:transparent;border-radius:50%;animation:nb-spin 0.7s linear infinite;vertical-align:middle;margin-right:.4rem
+      }
+      @keyframes nb-spin{to{transform:rotate(360deg)}}
+      .hist-row{
+        padding:.6rem .75rem;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:.4rem;
+        display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;
+      }
+      .hist-row-info{flex:1;min-width:0}
+      .hist-row-action{font-size:.78rem;color:#6b7280;margin-top:.2rem}
+      .hist-row-meta{font-weight:700;color:#374151}
+      .hist-row-btn{
+        background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;
+        border-radius:6px;padding:.25rem .55rem;font-size:.78rem;cursor:pointer;
+        white-space:nowrap;
+      }
+      .hist-row-btn.force{background:#fdf4ff;color:#6b21a8;border-color:#e9d5ff}
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -2091,6 +2367,7 @@
           考試首頁
         </button>
         <button class="btn-mode" id="btn-wrongbook" onclick="showWrongbook()">錯題本</button>
+        <button class="btn-mode" id="btn-notebook" onclick="showNotebook()">🗂 筆記本</button>
         <button class="btn-mode" id="btn-db" onclick="showDB()">資料庫</button>
         <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
           瀏覽
@@ -2540,6 +2817,23 @@
         >
           ✏️ 編輯詳解
         </button>
+        <button
+          class="btn-add-notebook"
+          id="btn-add-notebook"
+          onclick="addCurrentToNotebook()"
+          style="display:inline-block;background:#fdf4ff;color:#7e22ce;border:1.5px solid #f3d4ff;border-radius:8px;padding:.4rem .85rem;font-weight:700;cursor:pointer;font-size:.84rem;margin-left:.4rem"
+          title="讓 AI 把這題的核心概念整理進筆記本"
+        >
+          📒 加入筆記
+        </button>
+        <button
+          id="btn-peek-notebook"
+          onclick="peekNotebook()"
+          style="display:inline-block;background:#f0f9ff;color:#0369a1;border:1.5px solid #bae6fd;border-radius:8px;padding:.4rem .85rem;font-weight:700;cursor:pointer;font-size:.84rem;margin-left:.4rem"
+          title="查看筆記本中相關章節"
+        >
+          📖 偷看筆記
+        </button>
         <div class="mark-row">
           <button class="btn-flag" id="mk-flag" onclick="toggleFlag()" title="加入錯題本">🚩 錯題本</button>
           <span class="mark-label">標記：</span>
@@ -2782,6 +3076,151 @@
         <input type="file" id="wb-import-file" accept=".json" style="display:none" onchange="handleWBImport(event)">
       </div>
       <div class="wb-list" id="wb-list"></div>
+    </div>
+
+    <!-- ═══════════════ NOTEBOOK SCREEN ═══════════════ -->
+    <div id="screen-notebook" style="display:none">
+      <div class="nb-toolbar">
+        <div class="nb-toolbar-title">🗂 我的筆記本</div>
+        <div class="nb-toolbar-search">
+          <input type="search" id="nb-search-input" placeholder="🔍 搜尋章節 / 概念 / 內容 / 題號..." oninput="onNotebookSearch()" />
+          <button id="nb-search-clear" onclick="clearNotebookSearch()" title="清除" style="display:none">✕</button>
+        </div>
+        <div class="nb-toolbar-actions">
+          <button class="nb-tb-btn" onclick="showOnboarding()" title="入門指引">📖 入門</button>
+          <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題">🗂 重整目錄</button>
+          <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
+          <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
+          <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
+          <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
+        </div>
+      </div>
+      <div class="nb-layout">
+        <aside class="nb-toc-pane">
+          <div class="nb-toc-head">📑 章節目錄</div>
+          <nav id="notebook-toc"></nav>
+        </aside>
+        <main class="nb-content-pane">
+          <div id="notebook-body"></div>
+        </main>
+      </div>
+      <!-- mobile toc toggle -->
+      <button class="nb-toc-fab" onclick="toggleMobileToc()">📑</button>
+    </div>
+
+    <!-- NOTEBOOK SETTINGS MODAL -->
+    <div class="overlay" id="ai-settings-overlay" onclick="if(event.target===this)closeAISettings()">
+      <div class="modal" style="max-width:580px;max-height:90vh;overflow-y:auto">
+        <h3>⚙️ AI / 圖床 設定</h3>
+        <p style="font-size:.82rem;color:var(--gray);margin-bottom:.5rem;line-height:1.55">
+          這些設定<strong>會跟著你的使用者帳號自動同步到雲端</strong>。<br>
+          <span style="color:#0369a1;font-weight:700">電腦上設定一次 → 手機上同個 user 自動拿到</span>，不用重設。<br>
+          <span style="color:#92400e;font-size:.78rem">⚠️ 不同 user 之間不共用 — 朋友來用你的網站，他要自己貼自己的 key（避免被吃額度）</span>
+        </p>
+
+        <details open style="margin-top:.8rem;border:1.5px solid #e9d5ff;border-radius:8px;padding:.6rem .8rem;background:#faf5ff">
+          <summary style="cursor:pointer;font-weight:800;color:#6b21a8;font-size:.9rem">🤖 Gemini API（給 AI 整理筆記用）</summary>
+          <p style="font-size:.78rem;color:#6b7280;margin-top:.4rem;line-height:1.5">
+            沒申請過 → <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#7c3aed">點這裡免費申請</a>（5 分鐘、不用綁卡、每天 1500 次免費）
+          </p>
+          <label style="display:block;font-size:.78rem;font-weight:700;margin:.4rem 0 .2rem">Gemini API Key</label>
+          <input type="password" id="ai-key-input" placeholder="AIzaSy..." style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
+          <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">使用模型</label>
+          <select id="ai-model-select" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-size:.85rem">
+            <option value="gemini-2.5-flash">gemini-2.5-flash（推薦）</option>
+            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite（更快、額度更高）</option>
+            <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp（實驗版）</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash（舊版備用）</option>
+          </select>
+        </details>
+
+        <details style="margin-top:.6rem;border:1.5px solid #bae6fd;border-radius:8px;padding:.6rem .8rem;background:#f0f9ff">
+          <summary style="cursor:pointer;font-weight:800;color:#0369a1;font-size:.9rem">📷 GitHub 圖床（給筆記貼圖用）</summary>
+          <p style="font-size:.78rem;color:#6b7280;margin-top:.4rem;line-height:1.5">
+            筆記裡貼截圖會上傳到你自己的 GitHub repo（不吃本機容量、跨裝置共用）。<br>
+            申請流程：<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" style="color:#0369a1">點這裡生 token</a>，照下面說明填寫。
+          </p>
+          <details style="margin-top:.4rem;background:white;border-radius:6px;padding:.5rem .7rem;font-size:.75rem;line-height:1.65;color:#374151">
+            <summary style="cursor:pointer;font-weight:700;color:#0369a1">📋 申請 Token 詳細步驟（點開看）</summary>
+            <ol style="margin-top:.4rem;padding-left:1.3rem">
+              <li><strong>Token name</strong>：隨便取，如 <code>dental-notebook</code></li>
+              <li><strong>Expiration</strong>：選 Custom 設 1 年</li>
+              <li><strong>Repository access</strong>：選 <em>Only select repositories</em> → 選你的 repo</li>
+              <li><strong>Permissions</strong> 區塊 → 按右上角 <strong>+ Add permissions</strong> → 搜尋並選 <em>Contents</em></li>
+              <li>把 Contents 改成 <strong>Read and write</strong>（Metadata 會自動加，是正常的）</li>
+              <li>底部按 <strong>Generate token</strong> → 複製出來</li>
+            </ol>
+          </details>
+          <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">GitHub Personal Access Token</label>
+          <input type="password" id="gh-token-input" placeholder="github_pat_..." style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
+          <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">圖檔要存到哪個 repo</label>
+          <input type="text" id="gh-repo-input" placeholder="你的GitHub帳號/你的repo名稱" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
+          <p style="font-size:.72rem;color:#9ca3af;margin-top:.3rem">不確定填什麼 → 留空也可以，貼圖功能會 disable</p>
+        </details>
+
+        <label style="display:flex;gap:.3rem;align-items:center;margin-top:.7rem;font-size:.78rem;color:#6b7280;cursor:pointer">
+          <input type="checkbox" id="ai-key-show" onchange="document.querySelectorAll('#ai-key-input, #gh-token-input').forEach(e=>e.type=this.checked?'text':'password')"> 顯示輸入內容
+        </label>
+
+        <div class="modal-btns">
+          <button class="btn-cancel" onclick="closeAISettings()">取消</button>
+          <button class="btn-save" onclick="saveAISettings()">儲存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONBOARDING WIZARD -->
+    <div id="onboarding-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeOnboarding()">
+      <div style="background:white;border-radius:16px;max-width:580px;width:100%;margin:1rem auto;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
+        <!-- header -->
+        <div style="padding:.9rem 1.2rem;border-bottom:1px solid #e5e7eb;background:linear-gradient(135deg,#7c3aed,#0369a1);color:white;display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:1.05rem">🚀 新手入門設定</strong>
+          <button onclick="closeOnboarding()" style="background:rgba(255,255,255,.2);border:none;color:white;font-size:1.2rem;cursor:pointer;width:30px;height:30px;border-radius:50%">×</button>
+        </div>
+        <!-- progress -->
+        <div id="ob-progress" style="padding:.6rem 1.2rem;display:flex;justify-content:center;gap:.5rem;background:#fafafa;border-bottom:1px solid #e5e7eb"></div>
+        <!-- body -->
+        <div id="ob-body" style="padding:1.4rem 1.5rem;overflow-y:auto;flex:1;line-height:1.7;color:#374151"></div>
+        <!-- actions -->
+        <div style="padding:.85rem 1.2rem;border-top:1px solid #e5e7eb;background:#fafafa;display:flex;justify-content:space-between;gap:.5rem">
+          <button id="ob-prev" onclick="obPrev()" style="background:white;color:#6b7280;border:1.5px solid #d1d5db;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">← 上一步</button>
+          <div style="display:flex;gap:.5rem">
+            <button id="ob-skip" onclick="closeOnboarding()" style="background:white;color:#9ca3af;border:1.5px solid #e5e7eb;padding:.55rem 1rem;border-radius:8px;font-weight:600;cursor:pointer;font-size:.85rem">跳過</button>
+            <button id="ob-next" onclick="obNext()" style="background:linear-gradient(135deg,#7c3aed,#0369a1);color:white;border:none;padding:.55rem 1.4rem;border-radius:8px;font-weight:800;cursor:pointer;font-size:.88rem">下一步 →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMAGE LIGHTBOX -->
+    <div id="img-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out" onclick="closeImgLightbox()">
+      <img id="img-lightbox-img" src="" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.5)" />
+      <button onclick="event.stopPropagation();closeImgLightbox()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.2);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:1.4rem;cursor:pointer">×</button>
+    </div>
+
+    <!-- PEEK NOTEBOOK MODAL -->
+    <div id="peek-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closePeekNotebook()">
+      <div style="background:white;border-radius:14px;max-width:780px;width:100%;margin:2rem auto;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-height:90vh;display:flex;flex-direction:column">
+        <div style="padding:.85rem 1.2rem;border-bottom:1.5px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f0f9ff;border-radius:14px 14px 0 0">
+          <strong style="font-size:1.05rem;color:#0369a1">📖 偷看筆記</strong>
+          <button onclick="closePeekNotebook()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#6b7280">×</button>
+        </div>
+        <div id="peek-body" style="padding:1.1rem 1.3rem;overflow-y:auto;flex:1">載入中…</div>
+      </div>
+    </div>
+
+    <!-- NOTEBOOK HISTORY MODAL -->
+    <div class="overlay" id="history-overlay" onclick="if(event.target===this)closeHistoryModal()">
+      <div class="modal" style="max-width:640px;max-height:80vh;overflow-y:auto">
+        <h3>🕓 編輯歷史</h3>
+        <p style="font-size:.78rem;color:var(--gray);margin-bottom:.6rem">
+          最近 50 筆。可以撤銷 AI 的決定，或把「已涵蓋」的題目強制加進來。
+        </p>
+        <div id="history-list" style="font-size:.85rem"></div>
+        <div class="modal-btns">
+          <button class="btn-cancel" onclick="closeHistoryModal()">關閉</button>
+        </div>
+      </div>
     </div>
 
     <!-- EDIT MODAL -->
@@ -3720,10 +4159,13 @@
         document.getElementById("screen-browse").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
         document.getElementById("screen-wrongbook").style.display = "none";
+        const __nb_h = document.getElementById("screen-notebook"); if (__nb_h) __nb_h.style.display = "none";
+        const __ner_h = document.getElementById("screen-exam-results"); if (__ner_h) __ner_h.style.display = "none";
         document.getElementById("btn-home").classList.add("active");
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.remove("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
+        const __nb_btn = document.getElementById("btn-notebook"); if (__nb_btn) __nb_btn.classList.remove("active");
         examMode = false;
         examAnswers = {};
         stopTimer();
@@ -3739,10 +4181,12 @@
         document.getElementById("screen-scroll-exam").style.display = "none";
         document.getElementById("screen-browse").style.display = "block";
         document.getElementById("screen-wrongbook").style.display = "none";
+        const __nb_b = document.getElementById("screen-notebook"); if (__nb_b) __nb_b.style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.add("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
+        const __nb_btnb = document.getElementById("btn-notebook"); if (__nb_btnb) __nb_btnb.classList.remove("active");
         renderBrowse();
       }
 
@@ -3769,12 +4213,16 @@
         document.getElementById("screen-browse").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
         document.getElementById("screen-wrongbook").style.display = "none";
+        const nb = document.getElementById("screen-notebook");
+        if (nb) nb.style.display = "none";
         const er = document.getElementById("screen-exam-results");
         if (er) er.style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.remove("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
+        const nbBtn = document.getElementById("btn-notebook");
+        if (nbBtn) nbBtn.classList.remove("active");
       }
 
       // ════════════════════════════════════════════
@@ -5085,6 +5533,1775 @@
       }
 
       // ════════════════════════════════════════════
+      //  My Notebook — AI 整理筆記
+      // ════════════════════════════════════════════
+      const NOTEBOOK_KEY = uKey("notebook");
+      const GEMINI_KEY_LS = uKey("gemini_api_key");
+      let notebook = { chapters: [], history: [] };
+
+      // ── 領域分類（Wilson 風格三層架構）必須在 ADD_NOTEBOOK_SCHEMA 之前定義 ──
+      const NOTEBOOK_DOMAINS = [
+        '齒內治療學 Endodontics',
+        '牙髓與牙本質 Pulp & Dentin',
+        '牙周病學 Periodontics',
+        '牙體復形 Operative Dentistry',
+        '補綴學 Prosthodontics',
+        '矯正學 Orthodontics',
+        '口腔外科 Oral Surgery',
+        '口腔病理 Oral Pathology',
+        '口腔放射 Oral Radiology',
+        '兒童牙科 Pedodontics',
+        '牙科材料 Dental Materials',
+        '局部麻醉與藥物 LA & Pharmacology',
+        '解剖與胚胎 Anatomy & Embryology',
+        '生物統計與流行病學 Biostatistics & Epi',
+        '公衛與倫理 Public Health & Ethics',
+        '其他 Other'
+      ];
+      const DOMAIN_META = {
+        '齒內治療學 Endodontics':       { emoji:'🦷', color:'#dc2626' },
+        '牙髓與牙本質 Pulp & Dentin':   { emoji:'⚡', color:'#ea580c' },
+        '牙周病學 Periodontics':         { emoji:'🌱', color:'#16a34a' },
+        '牙體復形 Operative Dentistry':  { emoji:'🔧', color:'#0e7490' },
+        '補綴學 Prosthodontics':         { emoji:'🛠', color:'#3730a3' },
+        '矯正學 Orthodontics':           { emoji:'📐', color:'#7c3aed' },
+        '口腔外科 Oral Surgery':         { emoji:'🔪', color:'#b91c1c' },
+        '口腔病理 Oral Pathology':       { emoji:'🔬', color:'#9333ea' },
+        '口腔放射 Oral Radiology':       { emoji:'📷', color:'#0369a1' },
+        '兒童牙科 Pedodontics':          { emoji:'🧒', color:'#f59e0b' },
+        '牙科材料 Dental Materials':     { emoji:'🧪', color:'#15803d' },
+        '局部麻醉與藥物 LA & Pharmacology':{ emoji:'💉', color:'#0891b2' },
+        '解剖與胚胎 Anatomy & Embryology':{ emoji:'🧬', color:'#a855f7' },
+        '生物統計與流行病學 Biostatistics & Epi':{ emoji:'📊', color:'#0284c7' },
+        '公衛與倫理 Public Health & Ethics':{ emoji:'📋', color:'#6b7280' },
+        '其他 Other':                    { emoji:'📁', color:'#9ca3af' }
+      };
+      function guessDomainBySubject(subj){
+        return {
+          ya3: '齒內治療學 Endodontics',
+          ya4: '口腔外科 Oral Surgery',
+          ya5: '補綴學 Prosthodontics',
+          ya6: '矯正學 Orthodontics',
+        }[subj] || '其他 Other';
+      }
+      function chapterDomain(c){
+        if (c.domain && NOTEBOOK_DOMAINS.includes(c.domain)) return c.domain;
+        return guessDomainBySubject(c._mainSubj);
+      }
+
+      function loadNotebook() {
+        try {
+          const raw = localStorage.getItem(NOTEBOOK_KEY);
+          notebook = raw ? JSON.parse(raw) : { chapters: [], history: [] };
+          if (!notebook.chapters) notebook.chapters = [];
+          if (!notebook.history) notebook.history = [];
+          // 自動清掉「上傳中」殘留（如果還在這代表前次上傳失敗或被中斷）
+          let cleaned = false;
+          notebook.chapters.forEach(ch => {
+            if (ch.content && ch.content.includes('![上傳中...]')) {
+              ch.content = ch.content.replace(/!\[上傳中\.\.\.\]\(uploading-\d+\)\n*/g, '');
+              ch.updatedAt = Date.now();
+              cleaned = true;
+            }
+          });
+          if (cleaned) localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
+        } catch (e) { notebook = { chapters: [], history: [] }; }
+      }
+      function saveNotebook() {
+        localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
+        if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
+      }
+      function getGeminiKey(){ return localStorage.getItem(GEMINI_KEY_LS) || ''; }
+      function setGeminiKey(k){
+        if (k) localStorage.setItem(GEMINI_KEY_LS, k);
+        else localStorage.removeItem(GEMINI_KEY_LS);
+      }
+      const GITHUB_TOKEN_LS = uKey("github_token");
+      const GITHUB_REPO_LS = uKey("github_repo");
+      function getGithubToken(){ return localStorage.getItem(GITHUB_TOKEN_LS) || ''; }
+      function setGithubToken(t){
+        if (t) localStorage.setItem(GITHUB_TOKEN_LS, t);
+        else localStorage.removeItem(GITHUB_TOKEN_LS);
+      }
+      function getGithubRepo(){ return localStorage.getItem(GITHUB_REPO_LS) || ''; }
+      function setGithubRepo(r){
+        if (r) localStorage.setItem(GITHUB_REPO_LS, r);
+        else localStorage.removeItem(GITHUB_REPO_LS);
+      }
+
+      // ── Gemini API call (可選帶 responseSchema 強制結構化) ──
+      async function callGemini(promptText, schema){
+        const key = getGeminiKey();
+        if (!key) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          throw new Error('no_key');
+        }
+        const model = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
+        const generationConfig = { temperature: 0.3, maxOutputTokens: 8192 };
+        if (schema) {
+          generationConfig.responseMimeType = 'application/json';
+          generationConfig.responseSchema = schema;
+        }
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            contents: [{ parts:[{ text: promptText }] }],
+            generationConfig
+          })
+        });
+        if (!res.ok) {
+          const errTxt = await res.text();
+          throw new Error('Gemini ' + res.status + ': ' + errTxt.slice(0, 300));
+        }
+        const data = await res.json();
+        const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!txt) {
+          console.error('Gemini empty response:', JSON.stringify(data).slice(0, 500));
+          throw new Error('Gemini 回了空內容（可能被安全過濾擋住，或 model 不支援）');
+        }
+        return txt;
+      }
+
+      // 強制結構 schema：加題決策
+      const ADD_NOTEBOOK_SCHEMA = {
+        type: "OBJECT",
+        properties: {
+          concepts: { type: "ARRAY", items: { type: "STRING" }, description: "本題核心概念（1-3 個）" },
+          domain: { type: "STRING", enum: NOTEBOOK_DOMAINS, description: "章節屬於哪個領域（必填）" },
+          subtopic: { type: "STRING", description: "章節屬於哪個子主題（如：Pulp 牙髓、Cementum 牙骨質、Major connectors 主連接體），英文為主+中文輔助" },
+          action: { type: "STRING", enum: ["new_chapter", "append", "skip"], description: "決策" },
+          chapter_id: { type: "STRING", description: "action=append 時必填" },
+          chapter_name: { type: "STRING", description: "action=new_chapter 時必填" },
+          content: { type: "STRING", description: "完整 Markdown 內容；action=skip 時可空" },
+          reasoning: { type: "STRING", description: "一句話解釋決定" }
+        },
+        required: ["concepts", "domain", "subtopic", "action", "reasoning"]
+      };
+
+      // 重整章節用的 schema
+      const REORGANIZE_SCHEMA = {
+        type: "OBJECT",
+        properties: {
+          content: { type: "STRING", description: "完整重整後的 Markdown 章節內容" }
+        },
+        required: ["content"]
+      };
+
+      // 寬鬆 JSON 解析：能容忍 ```json``` 標記、前後文字、單引號等
+      function extractJSON(raw){
+        if (!raw) throw new Error('AI 沒有回傳內容');
+        // 1. 直接 parse
+        try { return JSON.parse(raw); } catch(e) {}
+        // 2. ```json ... ``` 區塊
+        const fence = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (fence) {
+          try { return JSON.parse(fence[1]); } catch(e) {}
+        }
+        // 3. 第一個 { 到最後一個 } (greedy)
+        const i = raw.indexOf('{');
+        const j = raw.lastIndexOf('}');
+        if (i >= 0 && j > i) {
+          const candidate = raw.slice(i, j + 1);
+          try { return JSON.parse(candidate); } catch(e) {
+            // 4. 嘗試修補：把單引號換雙引號、移除尾逗號
+            try {
+              let s = candidate
+                .replace(/,(\s*[}\]])/g, '$1');
+              return JSON.parse(s);
+            } catch(e2) {}
+          }
+        }
+        // 失敗：印出來方便除錯
+        console.error('=== Failed to parse Gemini response ===');
+        console.error(raw);
+        throw new Error('AI 回傳格式無法解析\n（前 200 字：' + raw.slice(0, 200).replace(/\n/g, ' ') + '）');
+      }
+
+      function buildAIPrompt(q, chapters){
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const LETTERS = ['A','B','C','D','E'];
+        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
+        const index = chapters.map(c => ({
+          id: c.id,
+          name: c.name,
+          domain: c.domain || '',
+          subtopic: c.subtopic || '',
+          concepts: c.concepts || [],
+          summary: (c.content || '').slice(0, 300),
+          source_qids: (c.qids || []).slice(0, 5)
+        }));
+        return `你是一位專業的牙醫國考筆記整理員。
+
+【任務】
+把這題納入我的「核心概念筆記本」。**不是寫題目詳解**，是整理「將來再遇到同概念題目都能答對」的核心重點。同概念多題之間要**合併、去重、累積**，不要每題重寫。
+
+【現有章節索引】
+${chapters.length === 0 ? '（筆記本是空的，這是第一題）' : JSON.stringify(index, null, 2)}
+
+【新題目】
+題目 ID: ${q.id}
+科目: ${SMAP[q.subject] || q.subject}
+原始 topic: ${q.topic || ''}
+題目: ${q.question}
+選項:
+${(q.options || []).join('\n')}
+正確答案: ${correctTxt}
+
+詳解(Gemini): ${q.explanation || '（無）'}
+
+詳解(NotebookLM): ${q.explanation_notebooklm || '（無）'}
+
+臨床意義: ${q.clinical || '（無）'}
+
+【決策邏輯】
+1. 識別核心概念（最多 3 個關鍵字詞）
+2. 決定領域（domain）— **必填**，從下列固定清單選一個：
+${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
+3. **決定子主題（subtopic）— 必填**，章節在領域中的細分主題
+   * 寫法：英文專有名詞為主 + 括號中文，**簡短**（2-5 字英文 + 中文）
+   * **盡量沿用現有章節已有的 subtopic**（看現有索引），同主題的章節應該 group 在同一 subtopic
+   * 例：「Pulp 牙髓」「Cementum 牙骨質」「Dentin 牙本質」「Microbiology 微生物」「Diagnosis 診斷」「Periodontitis 牙周炎」「Major connectors 主連接體」「Clasp 牙鈎」
+   * **不要每章一個 subtopic** — 一個 subtopic 應該能涵蓋 2-5 章
+4. 行動三選一：
+   - new_chapter: 沒有適合章節 → 新建一章
+     * 章節名要**精確概念**：英文 + 中文，比 subtopic 更具體
+     * 例：subtopic="Pulp 牙髓"，chapter_name="Normal pulp immune cells 正常牙髓免疫細胞"
+   - append: 屬於某現有章節但有新重點 → 整段重寫該章（合併舊內容+新重點，去重）
+   - skip: 現有章節已**完整涵蓋**這題重點 → 不改筆記
+5. 類似概念積極合併到同一章
+
+【內容寫作規範（極重要，不照做就是失敗）】
+排版要求：
+- **超短條列為主**，每點最多 25 字，禁止長段落
+- **每個 bullet 點必須各自獨佔一行**，禁止把多個「- 子項」擠在同一行（這會排版亂掉，例如「- **特點**：xxx - **功能**：yyy」是錯的，必須兩行）
+- **大量使用表格**做對照、分類、比較
+- **callout 標記**：用 \`> 💡 ...\` 標關鍵記憶點、\`> ⚠️ ...\` 標易混淆陷阱、\`> 🏥 ...\` 標臨床要點、\`> 📝 ...\` 標易考角度
+- **概念標籤**：重要名詞用 \`[[概念名]]\` 包起來會被渲染成彩色標籤
+- **粗體** 只用在最關鍵的字詞（會被反白醒目顯示）
+- **斜體 *英文* 標英文專有名詞
+- 中英對照：首次出現帶英文原文
+- **絕對不要長段落解釋**！能用表格就用表格，能用條列就用條列
+
+章節結構建議（彈性使用）：
+## [概念主標題]
+### 📌 一句話定義
+（≤30 字）
+
+### 🗂 分類 / 組成
+| 類別 | 特性 | 臨床意義 |
+|---|---|---|
+| ... | ... | ... |
+
+### ⚙️ 機制
+1. 短條列
+2. 短條列
+
+> 💡 記憶要點（callout 用）
+
+### 🏥 臨床意義
+- 條列
+
+> ⚠️ 易混淆陷阱
+
+### 📝 易考重點
+- 條過的角度
+
+範例（給你參考排版）：
+## 牙本質分層
+### 📌 一句話定義
+牙本質由 [[Mantle]] → [[Primary]] → [[Secondary]] → [[Predentin]] 四層組成
+
+### 🗂 各層對照
+| 層次 | 形成時間 | 礦化 | 臨床 |
+|---|---|---|---|
+| Mantle | 最早 | 低 | 緩衝裂紋 |
+| Primary | 發育期 | 中 | 主體 |
+| Secondary | 終生 | 中 | 髓腔變小、根管難做 |
+| Tertiary | 受刺激後 | 不均 | Reactionary / Reparative |
+| Predentin | 持續存在 | 未鈣化 | 緩衝帶 |
+
+> 💡 由外到內：Mantle → Primary → Secondary → Predentin
+> ⚠️ Tertiary 只在受刺激區下方出現，不是常規層次
+
+### 📝 易考角度
+- 哪層最先形成 → Mantle
+- 老人髓腔縮小原因 → Secondary 持續沉積
+- Reactionary vs Reparative 差別 → 細胞死活
+
+【回傳】
+直接回 JSON 物件，不要 markdown 反引號包裝。`;
+      }
+
+      // 背景排隊：使用者連續按多題也不會 race condition
+      let _nbQueue = Promise.resolve();
+      let _nbPending = 0;
+      function _updateNbBadge(){
+        let badge = document.getElementById('nb-pending-badge');
+        if (_nbPending <= 0) { if (badge) badge.remove(); return; }
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.id = 'nb-pending-badge';
+          badge.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:9999;background:#7c3aed;color:white;padding:.55rem .85rem;border-radius:24px;box-shadow:0 4px 14px rgba(124,58,237,.4);font-size:.85rem;font-weight:700;display:flex;align-items:center;gap:.4rem;cursor:default';
+          document.body.appendChild(badge);
+        }
+        badge.innerHTML = '<span class="nb-loading" style="border-color:white;border-top-color:transparent"></span> AI 整理中：' + _nbPending + ' 題';
+      }
+
+      function addCurrentToNotebook(){
+        const q = practiceList[practiceIdx];
+        if (!q) { showToast('找不到當前題目'); return; }
+        // 先檢查有沒有設定 key（沒有就先彈設定，不要排隊）
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        // 立刻給回饋，使用者可以繼續做下一題
+        _nbPending++;
+        _updateNbBadge();
+        showToast('🤖 已送進 AI 整理（可繼續做題）');
+        // 排進佇列（fire-and-forget，不阻塞 UI）
+        _nbQueue = _nbQueue.then(() => addQToNotebook(q))
+          .catch(err => console.error('notebook queue err', err))
+          .finally(() => { _nbPending--; _updateNbBadge(); });
+      }
+
+      async function addQToNotebook(q){
+        try {
+          loadNotebook();
+          const prompt = buildAIPrompt(q, notebook.chapters);
+          // 帶 schema 強制 Gemini 回符合結構的 JSON
+          const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
+          const dec = extractJSON(raw);
+          applyAIDecision(dec, q);
+        } catch(err) {
+          if (err.message !== 'no_key') {
+            console.error(err);
+            alert('❌ AI 整理失敗（題目 ' + (q.meta||q.id) + '）\n\n' + err.message);
+          }
+        }
+      }
+
+      function applyAIDecision(dec, q){
+        const histEntry = {
+          ts: Date.now(),
+          qid: q.id,
+          qmeta: q.meta,
+          concepts: dec.concepts || [],
+          action: dec.action,
+          reasoning: dec.reasoning || ''
+        };
+
+        if (dec.action === 'skip') {
+          histEntry.note = '已涵蓋，未變動筆記';
+          notebook.history.unshift(histEntry);
+          trimHistory();
+          saveNotebook();
+          showToast('✓ 概念已涵蓋，未變動');
+          renderNotebookIfVisible();
+          return;
+        }
+
+        if (dec.action === 'new_chapter') {
+          const newCh = {
+            id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+            name: dec.chapter_name || dec.chapterName || '未命名章節',
+            domain: dec.domain || guessDomainBySubject(q.subject),
+            subtopic: dec.subtopic || '未分類',
+            content: dec.content || '',
+            concepts: dec.concepts || [],
+            qids: [q.id],
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          };
+          notebook.chapters.push(newCh);
+          histEntry.chapterId = newCh.id;
+          histEntry.note = '新建章節「' + newCh.name + '」';
+          histEntry.snapshot = null; // undo = delete chapter
+          notebook.history.unshift(histEntry);
+          trimHistory();
+          saveNotebook();
+          showToast('✓ 新建章節「' + newCh.name + '」');
+          renderNotebookIfVisible();
+          return;
+        }
+
+        if (dec.action === 'append') {
+          const chId = dec.chapter_id || dec.chapterId;
+          const ch = notebook.chapters.find(c => c.id === chId);
+          if (!ch) {
+            // fallback to new_chapter
+            applyAIDecision({ ...dec, action:'new_chapter' }, q);
+            return;
+          }
+          histEntry.chapterId = ch.id;
+          histEntry.snapshot = { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] };
+          histEntry.note = '補進章節「' + ch.name + '」';
+          ch.content = dec.content || ch.content;
+          if (!ch.qids.includes(q.id)) ch.qids.push(q.id);
+          // 合併 concept tags 去重
+          const allC = new Set([...(ch.concepts||[]), ...(dec.concepts||[])]);
+          ch.concepts = [...allC];
+          ch.updatedAt = Date.now();
+          notebook.history.unshift(histEntry);
+          trimHistory();
+          saveNotebook();
+          showToast('✓ 補進章節「' + ch.name + '」');
+          renderNotebookIfVisible();
+          return;
+        }
+      }
+
+      function trimHistory(){
+        if (notebook.history.length > 50) notebook.history = notebook.history.slice(0, 50);
+      }
+
+      // ── Undo a history entry ──
+      function undoHistoryAt(idx){
+        const entry = notebook.history[idx];
+        if (!entry) return;
+        if (entry.action === 'new_chapter' && entry.chapterId) {
+          if (!confirm('撤銷：刪除「' + entry.note + '」這個章節？')) return;
+          notebook.chapters = notebook.chapters.filter(c => c.id !== entry.chapterId);
+        } else if (entry.action === 'append' && entry.snapshot) {
+          if (!confirm('撤銷：把章節「' + entry.snapshot.name + '」還原到加題前的狀態？')) return;
+          const ch = notebook.chapters.find(c => c.id === entry.chapterId);
+          if (ch) {
+            ch.name = entry.snapshot.name;
+            ch.content = entry.snapshot.content;
+            ch.qids = entry.snapshot.qids;
+            ch.concepts = entry.snapshot.concepts || [];
+            ch.updatedAt = Date.now();
+          }
+        } else if (entry.action === 'skip') {
+          showToast('此筆未變更筆記，無需撤銷');
+          return;
+        }
+        notebook.history.splice(idx, 1);
+        saveNotebook();
+        renderHistoryList();
+        renderNotebookIfVisible();
+        showToast('✓ 已撤銷');
+      }
+
+      // ── 強制加：當 AI 說 skip 但使用者覺得該加 ──
+      async function forceAddFromHistory(idx){
+        const entry = notebook.history[idx];
+        if (!entry || entry.action !== 'skip') return;
+        const q = QS.find(x => x.id === entry.qid);
+        if (!q) { showToast('找不到題目'); return; }
+        // 用「強制要 new_chapter」的指令重跑 AI
+        await addQToNotebook(q);
+      }
+
+      // ── Notebook screen render ──
+      function showNotebook(){
+        loadNotebook();
+        ['screen-home','screen-practice','screen-db','screen-browse','screen-wrongbook','screen-exam-results','screen-scroll-exam'].forEach(s => {
+          const el = document.getElementById(s);
+          if (el) el.style.display = 'none';
+        });
+        document.getElementById('screen-notebook').style.display = 'block';
+        document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+        const nb = document.getElementById('btn-notebook');
+        if (nb) nb.classList.add('active');
+        renderNotebook();
+        // 重置搜尋欄
+        const inp = document.getElementById('nb-search-input');
+        if (inp) { inp.value = ''; onNotebookSearch(); }
+        // 第一次來，沒看過引導 → 自動打開
+        if (!localStorage.getItem(uKey('onboarding_seen')) && !getGeminiKey()) {
+          setTimeout(() => showOnboarding(), 300);
+        }
+      }
+      function renderNotebookIfVisible(){
+        const el = document.getElementById('screen-notebook');
+        if (el && el.style.display !== 'none') renderNotebook();
+      }
+      let currentChapterId = null;
+      let editingChapterId = null;   // 章節編輯狀態
+      let editPreviewMode = false;   // 編輯時切換預覽
+
+      // ── Image lightbox（點圖片放大）──
+      function openImgLightbox(src){
+        document.getElementById('img-lightbox-img').src = src;
+        document.getElementById('img-lightbox').style.display = 'flex';
+      }
+      function closeImgLightbox(){
+        document.getElementById('img-lightbox').style.display = 'none';
+      }
+
+      // ── AI 重整所有章節的子主題 ──
+      const REORGANIZE_SUBTOPIC_SCHEMA = {
+        type: "OBJECT",
+        properties: {
+          assignments: {
+            type: "ARRAY",
+            description: "每個章節的 subtopic 分配",
+            items: {
+              type: "OBJECT",
+              properties: {
+                chapter_id: { type: "STRING" },
+                subtopic: { type: "STRING", description: "英文為主+中文，2-5 字" }
+              },
+              required: ["chapter_id", "subtopic"]
+            }
+          }
+        },
+        required: ["assignments"]
+      };
+      async function reorganizeAllSubtopics(){
+        loadNotebook();
+        if (!notebook.chapters.length) { showToast('還沒有章節'); return; }
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        if (!confirm('讓 AI 幫所有 ' + notebook.chapters.length + ' 個章節重新分配子主題分組？\n\n相同概念的章節會被歸到同一個 subtopic，例如「Pulp 牙髓」「Cementum 牙骨質」這種，讓目錄整齊好找。')) return;
+
+        const btn = event && event.target;
+        const orig = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="nb-loading"></span> AI 整理中…'; }
+
+        // 按 domain 分批處理（避免 prompt 太長）
+        const byDomain = {};
+        notebook.chapters.forEach(c => {
+          const d = chapterDomain(c);
+          if (!byDomain[d]) byDomain[d] = [];
+          byDomain[d].push(c);
+        });
+
+        try {
+          let totalChanged = 0;
+          for (const domain of Object.keys(byDomain)) {
+            const chs = byDomain[domain];
+            if (chs.length <= 1) {
+              // 只有 1 章不需重整
+              if (!chs[0].subtopic) chs[0].subtopic = '未分類';
+              continue;
+            }
+            const list = chs.map(c => ({
+              chapter_id: c.id,
+              name: c.name,
+              concepts: c.concepts || [],
+              current_subtopic: c.subtopic || ''
+            }));
+            const prompt = `你是牙醫筆記分類員。
+
+【任務】
+把下面【${domain}】這個領域內的 ${chs.length} 個章節，分配到合適的「子主題（subtopic）」，讓目錄變整齊。
+
+【分配原則】
+- 相同概念的章節要歸到同一個 subtopic
+- subtopic 名稱：英文為主 + 括號中文，**簡短**（2-5 字英文 + 中文）
+- 例：「Pulp 牙髓」「Cementum 牙骨質」「Microbiology 微生物」「Periapical 根尖周圍」「Major connectors 主連接體」「Clasp 牙鈎」
+- **不要每章一個 subtopic** — 一個 subtopic 應該能涵蓋 2-5 章
+- 真的只有 1 章獨特的概念才獨立 subtopic
+- 沿用既有 current_subtopic 若它已合理
+
+【章節清單】
+${JSON.stringify(list, null, 2)}
+
+【回 JSON】
+{ "assignments": [{ "chapter_id": "...", "subtopic": "..." }, ...] }
+請為每一個 chapter_id 都回一個 subtopic（不能漏）。`;
+
+            const raw = await callGemini(prompt, REORGANIZE_SUBTOPIC_SCHEMA);
+            const dec = extractJSON(raw);
+            if (dec.assignments) {
+              dec.assignments.forEach(a => {
+                const ch = notebook.chapters.find(c => c.id === a.chapter_id);
+                if (ch && a.subtopic) {
+                  if (ch.subtopic !== a.subtopic) {
+                    ch.subtopic = a.subtopic;
+                    ch.updatedAt = Date.now();
+                    totalChanged++;
+                  }
+                }
+              });
+            }
+          }
+          saveNotebook();
+          renderNotebook();
+          showToast('✓ 已重整 ' + totalChanged + ' 個章節的子主題');
+        } catch(err) {
+          alert('AI 重整失敗：\n\n' + err.message);
+        } finally {
+          if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        }
+      }
+
+      // ── 清掉所有殘留的「上傳中」placeholder ──
+      function cleanStuckPlaceholders(){
+        let count = 0;
+        notebook.chapters.forEach(ch => {
+          if (!ch.content) return;
+          const before = ch.content;
+          ch.content = ch.content.replace(/!\[上傳中\.\.\.\]\(uploading-\d+\)/g, '');
+          if (ch.content !== before) {
+            count++;
+            ch.updatedAt = Date.now();
+          }
+        });
+        if (count > 0) {
+          saveNotebook();
+          renderNotebook();
+          showToast('✓ 清掉 ' + count + ' 個章節的「上傳中」殘留');
+        } else {
+          showToast('沒有殘留要清');
+        }
+      }
+
+      // ── 圖片 +/- 大小調整 ──
+      function _escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+      function _parsePctFromAlt(alt){
+        if (!alt) return 60;
+        const parts = alt.split('|');
+        const hint = (parts[1]||'').trim().toLowerCase();
+        if (hint === 'small' || hint === 's') return 30;
+        if (hint === 'medium' || hint === 'm') return 60;
+        if (hint === 'large' || hint === 'l') return 90;
+        if (hint === 'full' || hint === 'original') return 100;
+        const pctM = hint.match(/^(\d+)%$/);
+        if (pctM) return parseInt(pctM[1], 10);
+        const numM = hint.match(/^(\d+)$/);
+        if (numM) return parseInt(numM[1], 10);
+        return 60; // 預設
+      }
+      function resizeImgInChapter(urlEnc, delta){
+        const url = decodeURIComponent(urlEnc);
+        let changed = false;
+        const re = new RegExp('!\\[([^\\]]*)\\]\\(' + _escapeRegExp(url) + '\\)', 'g');
+        notebook.chapters.forEach(ch => {
+          if (!ch.content || !ch.content.includes(url)) return;
+          ch.content = ch.content.replace(re, (m, alt) => {
+            const realAlt = (alt||'').split('|')[0];
+            let pct = _parsePctFromAlt(alt);
+            pct = Math.max(15, Math.min(100, pct + delta));
+            changed = true;
+            return `![${realAlt}|${pct}%](${url})`;
+          });
+          if (changed) ch.updatedAt = Date.now();
+        });
+        if (changed) {
+          saveNotebook();
+          renderNotebook();
+        }
+      }
+      function resetImgSize(urlEnc){
+        const url = decodeURIComponent(urlEnc);
+        let changed = false;
+        const re = new RegExp('!\\[([^\\]]*)\\]\\(' + _escapeRegExp(url) + '\\)', 'g');
+        notebook.chapters.forEach(ch => {
+          if (!ch.content || !ch.content.includes(url)) return;
+          ch.content = ch.content.replace(re, (m, alt) => {
+            const realAlt = (alt||'').split('|')[0];
+            changed = true;
+            return `![${realAlt}|medium](${url})`;
+          });
+          if (changed) ch.updatedAt = Date.now();
+        });
+        if (changed) {
+          saveNotebook();
+          renderNotebook();
+        }
+      }
+
+      // ── GitHub 圖床上傳 ──
+      async function uploadImageToGitHub(blob){
+        const token = getGithubToken();
+        const repo = getGithubRepo();
+        if (!token || !repo) throw new Error('請先到 ⚙️ 設定 貼上 GitHub Token 跟 repo');
+        if (!/^[^/]+\/[^/]+$/.test(repo)) throw new Error('Repo 格式錯誤，要像 user/repo');
+        // blob → base64
+        const b64 = await new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result).split(',')[1]);
+          r.onerror = () => reject(new Error('讀檔失敗'));
+          r.readAsDataURL(blob);
+        });
+        const ts = new Date();
+        const stamp = ts.getFullYear() + String(ts.getMonth()+1).padStart(2,'0') + String(ts.getDate()).padStart(2,'0')
+          + '-' + String(ts.getHours()).padStart(2,'0') + String(ts.getMinutes()).padStart(2,'0') + String(ts.getSeconds()).padStart(2,'0');
+        const rand = Math.random().toString(36).slice(2,6);
+        const ext = ((blob.type || 'image/png').split('/')[1] || 'png').replace('jpeg','jpg');
+        const uid = localStorage.getItem('dental_cur_user') || 'user';
+        const path = `notebook-images/${uid}/${stamp}-${rand}.${ext}`;
+        const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+        const res = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'Bearer ' + token,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message: 'upload notebook image', content: b64 })
+        });
+        if (!res.ok) {
+          const errTxt = await res.text();
+          throw new Error('GitHub ' + res.status + ': ' + errTxt.slice(0, 250));
+        }
+        // 用 jsdelivr CDN 比 raw.githubusercontent 快
+        return `https://cdn.jsdelivr.net/gh/${repo}@main/${path}`;
+      }
+      function insertAtCursor(textarea, text){
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const v = textarea.value;
+        textarea.value = v.slice(0, start) + text + v.slice(end);
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      }
+      async function handleImageUpload(file, textarea){
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+          showToast('不是圖片檔');
+          return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          showToast('檔案太大（>8MB）');
+          return;
+        }
+        // 記住當下編輯的章節 ID（即使 user 中途切走也能寫回）
+        const chapterId = editingChapterId;
+        const placeholder = `![上傳中...](uploading-${Date.now()})`;
+        insertAtCursor(textarea, placeholder);
+        textarea.dispatchEvent(new Event('input'));
+
+        // 替換 placeholder 的助手：textarea 和 chapter.content 兩邊都更新
+        function replacePlaceholder(newText){
+          const liveTa = document.getElementById('ch-editor');
+          if (liveTa && liveTa.value.includes(placeholder)) {
+            liveTa.value = liveTa.value.replace(placeholder, newText);
+            liveTa.dispatchEvent(new Event('input'));
+          }
+          if (chapterId) {
+            const ch = notebook.chapters.find(c => c.id === chapterId);
+            if (ch && ch.content && ch.content.includes(placeholder)) {
+              ch.content = ch.content.replace(placeholder, newText);
+              ch.updatedAt = Date.now();
+              saveNotebook();
+              renderNotebookIfVisible();
+            }
+          }
+        }
+
+        try {
+          const url = await uploadImageToGitHub(file);
+          replacePlaceholder(`![|medium](${url})`);
+          showToast('✓ 圖已上傳');
+        } catch(err) {
+          replacePlaceholder('');
+          alert('上傳失敗：\n\n' + err.message);
+        }
+      }
+
+      function chapterMainSubject(c){
+        // 用 qids 反查 QS 取多數科目
+        const counts = {};
+        (c.qids || []).forEach(qid => {
+          const q = QS.find(x => x.id === qid);
+          if (q && q.subject) counts[q.subject] = (counts[q.subject]||0) + 1;
+        });
+        const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+        return top ? top[0] : '';
+      }
+      function renderNotebook(){
+        loadNotebook();
+        const toc = document.getElementById('notebook-toc');
+        const body = document.getElementById('notebook-body');
+        if (!toc || !body) return;
+        if (notebook.chapters.length === 0) {
+          toc.innerHTML = '<div style="color:#9ca3af;font-size:.82rem;padding:1rem 0">還沒有章節</div>';
+          body.innerHTML =
+            '<div style="text-align:center;color:#9ca3af;padding:3rem 1rem">' +
+              '<div style="font-size:2.5rem">📭</div>' +
+              '<div style="font-weight:700;margin-top:.6rem">筆記本還是空的</div>' +
+              '<div style="font-size:.85rem;margin-top:.4rem;line-height:1.7">在練習題目下方按 📒 加入筆記<br>AI 會自動幫你整理進對應章節</div>' +
+              '<div style="margin-top:1.2rem;font-size:.78rem;color:#a78bfa">第一次使用要先按右上 ⚙️ AI 設定 貼上 Gemini API key</div>' +
+            '</div>';
+          return;
+        }
+
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六', '':'其他' };
+        const SCOLOR = { ya3:'#0e7490', ya4:'#7c3aed', ya5:'#3730a3', ya6:'#166534', '':'#9ca3af' };
+        const SEMOJI = { ya3:'🦷', ya4:'🪥', ya5:'😬', ya6:'😁', '':'📁' };
+        const SUBJ_ORDER = ['ya3','ya4','ya5','ya6',''];
+
+        // 給每章標主科目
+        notebook.chapters.forEach(c => { c._mainSubj = chapterMainSubject(c); });
+
+        // 按【科目 → 領域 → subtopic】三層分組
+        const subjGroups = {}; // subj -> domain -> subtopic -> [chapters]
+        notebook.chapters.forEach(c => {
+          const s = c._mainSubj || '';
+          const d = chapterDomain(c);
+          const t = c.subtopic || '未分類';
+          if (!subjGroups[s]) subjGroups[s] = {};
+          if (!subjGroups[s][d]) subjGroups[s][d] = {};
+          if (!subjGroups[s][d][t]) subjGroups[s][d][t] = [];
+          subjGroups[s][d][t].push(c);
+        });
+
+        // 確定當前章節（沒選或被刪掉就回第一章）
+        if (!currentChapterId || !notebook.chapters.find(c => c.id === currentChapterId)) {
+          currentChapterId = notebook.chapters[0].id;
+        }
+        const allChs = notebook.chapters;
+        const curIdx = allChs.findIndex(c => c.id === currentChapterId);
+        const curCh = allChs[curIdx];
+
+        // 目錄：科目 > 領域 > subtopic > 章節（4 層樹狀）
+        let tocHtml = '';
+        SUBJ_ORDER.forEach(s => {
+          const domains = subjGroups[s];
+          if (!domains) return;
+          const allChs = [].concat(...Object.values(domains).map(d => [].concat(...Object.values(d))));
+          if (!allChs.length) return;
+
+          tocHtml +=
+            '<details open class="nb-toc-subj">' +
+              '<summary style="margin-top:.7rem;padding:.5rem .7rem;background:' + SCOLOR[s] + ';color:white;border-radius:7px;font-size:.95rem;font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.4rem">' +
+                '<span style="flex:1;display:flex;align-items:center;gap:.3rem">' + SEMOJI[s] + ' ' + SMAP[s] + '</span>' +
+                '<span style="background:rgba(255,255,255,.25);padding:0 8px;border-radius:8px;font-size:.72rem">' + allChs.length + '</span>' +
+                '<span class="nb-fold-arrow" style="font-size:.75rem">▼</span>' +
+              '</summary>';
+
+          // 第二層：領域
+          const domainOrder = NOTEBOOK_DOMAINS.filter(d => domains[d]);
+          domainOrder.forEach(d => {
+            const subtopics = domains[d];
+            const dList = [].concat(...Object.values(subtopics));
+            const meta = DOMAIN_META[d] || { emoji:'📁', color:'#9ca3af' };
+            tocHtml +=
+              '<details open class="nb-toc-group">' +
+                '<summary style="margin:.35rem 0 .15rem .35rem;padding:.3rem .55rem;background:white;border:1.5px solid ' + meta.color + ';color:' + meta.color + ';border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
+                  '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + meta.emoji + ' ' + escapeHtml(d) + '</span>' +
+                  '<span style="font-size:.68rem;color:' + meta.color + '">' + dList.length + '</span>' +
+                '</summary>';
+
+            // 第三層：subtopic
+            const stOrder = Object.keys(subtopics).sort((a,b) => {
+              if (a === '未分類') return 1;
+              if (b === '未分類') return -1;
+              return a.localeCompare(b, 'zh');
+            });
+            stOrder.forEach(st => {
+              const stList = subtopics[st];
+              tocHtml +=
+                '<details open class="nb-toc-subgroup">' +
+                  '<summary style="margin:.2rem 0 .1rem .7rem;padding:.2rem .4rem;background:#f3e8ff;color:#6b21a8;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
+                    '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📁 ' + escapeHtml(st) + '</span>' +
+                    '<span style="font-size:.62rem;color:#9333ea">' + stList.length + '</span>' +
+                  '</summary>';
+              tocHtml += stList.map(c => {
+                const active = c.id === currentChapterId ? ' nb-toc-item-active' : '';
+                return `<a class="nb-toc-item nb-toc-leaf${active}" onclick="selectChapter('${c.id}')">
+                  <span class="nb-toc-name">${escapeHtml(c.name)}</span>
+                  <span class="nb-toc-count">${(c.qids||[]).length}</span>
+                </a>`;
+              }).join('');
+              tocHtml += '</details>';
+            });
+
+            tocHtml += '</details>';
+          });
+
+          tocHtml += '</details>';
+        });
+        toc.innerHTML = tocHtml;
+
+        // 內容：只顯示當前章節
+        const subjBadge = curCh._mainSubj
+          ? `<span style="display:inline-block;background:${SCOLOR[curCh._mainSubj]};color:white;padding:2px 10px;border-radius:6px;font-size:.78rem;font-weight:800;margin-right:.4rem">${SMAP[curCh._mainSubj]}</span>`
+          : '';
+        const curDomain = chapterDomain(curCh);
+        const curDmeta = DOMAIN_META[curDomain] || { emoji:'📁', color:'#9ca3af' };
+        const domainBadge = `<span onclick="changeChapterDomain('${curCh.id}')" title="點擊更改領域" style="display:inline-block;background:${curDmeta.color};color:white;padding:2px 10px;border-radius:6px;font-size:.78rem;font-weight:800;margin-right:.4rem;cursor:pointer">${curDmeta.emoji} ${escapeHtml(curDomain)}</span>`;
+        const prevCh = allChs[curIdx - 1];
+        const nextCh = allChs[curIdx + 1];
+
+        // 編輯模式 vs 顯示模式
+        const isEditing = editingChapterId === curCh.id;
+        const contentBlock = isEditing
+          ? renderEditorView(curCh)
+          : `<div class="nb-chapter-content">${renderMarkdown(curCh.content)}</div>`;
+
+        body.innerHTML =
+          `<section id="chapter-${curCh.id}" class="nb-chapter" data-subj="${curCh._mainSubj||''}">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:#6b7280;margin-bottom:.6rem;flex-wrap:wrap;gap:.3rem">
+              <span>第 ${curIdx+1} / ${allChs.length} 章</span>
+              <span>${domainBadge}${subjBadge}</span>
+            </div>
+            <div class="nb-chapter-head">
+              <h2 class="nb-chapter-title" onclick="renameChapter('${curCh.id}')" title="點擊重新命名">${escapeHtml(curCh.name)}</h2>
+              <div class="nb-chapter-actions">
+                ${isEditing
+                  ? `<button onclick="saveChapterEdit('${curCh.id}')" title="儲存" style="color:#16a34a">💾</button>
+                     <button onclick="cancelChapterEdit()" title="取消">✕</button>`
+                  : `<button onclick="startEditChapter('${curCh.id}')" title="編輯內容（可貼圖）">✏️</button>
+                     <button onclick="reorganizeChapter('${curCh.id}')" title="叫 AI 重新整理這章">🔄</button>
+                     <button onclick="deleteChapter('${curCh.id}')" title="刪除整章">🗑</button>`}
+              </div>
+            </div>
+            ${contentBlock}
+            <div class="nb-chapter-sources">
+              <strong>💡 來源題目（${(curCh.qids||[]).length}）：</strong>
+              ${(curCh.qids||[]).map(qid => {
+                const q = QS.find(x => x.id === qid);
+                if (!q) return `<span class="nb-source-link" style="color:#9ca3af">${escapeHtml(qid)}</span>`;
+                return `<a class="nb-source-link" onclick="event.preventDefault();gotoQuestionFromNotebook('${qid}')">${escapeHtml(q.meta || qid)}</a>`;
+              }).join('')}
+            </div>
+          </section>
+          ${isEditing ? '' : `<div class="nb-chapter-nav">
+            ${prevCh
+              ? `<button class="nb-nav-btn" onclick="selectChapter('${prevCh.id}')"><span class="arrow">←</span><span class="text"><span style="color:#9ca3af;font-size:.75rem;display:block">上一章</span>${escapeHtml(prevCh.name)}</span></button>`
+              : '<span></span>'}
+            ${nextCh
+              ? `<button class="nb-nav-btn nb-nav-btn-next" onclick="selectChapter('${nextCh.id}')"><span class="text" style="text-align:right"><span style="color:#9ca3af;font-size:.75rem;display:block">下一章</span>${escapeHtml(nextCh.name)}</span><span class="arrow">→</span></button>`
+              : '<span></span>'}
+          </div>`}`;
+
+        if (isEditing) setupEditorListeners();
+
+        // 滾到頂
+        const pane = document.querySelector('.nb-content-pane');
+        if (pane) pane.scrollTop = 0;
+        window.scrollTo(0, 0);
+      }
+
+      function selectChapter(id){
+        // 切章時把編輯狀態丟掉
+        editingChapterId = null;
+        currentChapterId = id;
+        renderNotebook();
+        // 手機把 toc 收起來
+        const pane = document.querySelector('.nb-toc-pane');
+        if (pane && pane.classList.contains('open')) pane.classList.remove('open');
+      }
+
+      // ── 編輯模式 ──
+      function startEditChapter(id){
+        editingChapterId = id;
+        editPreviewMode = false;
+        renderNotebook();
+      }
+      function cancelChapterEdit(){
+        if (!confirm('放棄這次編輯？未儲存的內容會消失。')) return;
+        editingChapterId = null;
+        renderNotebook();
+      }
+      function saveChapterEdit(id){
+        const ta = document.getElementById('ch-editor');
+        if (!ta) return;
+        const ch = notebook.chapters.find(c => c.id === id);
+        if (!ch) return;
+        // 偵測還沒完成的圖片上傳
+        if (ta.value.includes('![上傳中...]')) {
+          if (!confirm('⚠️ 還有圖片正在上傳中\n\n現在儲存的話「上傳中」的圖會卡在筆記裡，等上傳完成才會自動換成正確圖片。\n\n要先等一下再儲存嗎？\n\n（按確定 = 我等等，按取消 = 不管它直接存）')) {
+            // 使用者選「不管它直接存」
+          } else {
+            return; // 使用者選「等一下」
+          }
+        }
+        ch.content = ta.value;
+        ch.updatedAt = Date.now();
+        // 存入歷史（撤銷用）
+        notebook.history.unshift({
+          ts: Date.now(),
+          action: 'manual_edit',
+          chapterId: id,
+          note: '手動編輯「' + ch.name + '」'
+        });
+        trimHistory();
+        editingChapterId = null;
+        saveNotebook();
+        renderNotebook();
+        showToast('✓ 已儲存');
+      }
+      function renderEditorView(ch){
+        const hasGH = !!getGithubToken() && !!getGithubRepo();
+        const tip = hasGH
+          ? '✅ GitHub 圖床已設定 — 可 Ctrl+V 貼圖、拖檔、或按下方 📎 選檔'
+          : '⚠️ 沒設定 GitHub 圖床 — 貼圖會 disable，請到 ⚙️ 設定貼 token+repo';
+        const tipColor = hasGH ? '#0369a1' : '#92400e';
+        const tipBg = hasGH ? '#f0f9ff' : '#fffbeb';
+        return `<div class="nb-editor-wrap">
+          <div class="nb-editor-toolbar">
+            <button onclick="document.getElementById('ch-file-input').click()" ${hasGH?'':'disabled'} title="選圖檔/拍照">📎 選圖</button>
+            <button onclick="insertImageURL()" title="貼網路圖片網址">🔗 從 URL</button>
+            <button onclick="toggleEditorPreview()">${editPreviewMode ? '✏️ 編輯' : '👁 預覽'}</button>
+            <input type="file" id="ch-file-input" accept="image/*" style="display:none" onchange="handleFileInputChange(event)" />
+          </div>
+          <div style="background:${tipBg};color:${tipColor};font-size:.78rem;padding:.4rem .7rem;border-radius:6px;margin-bottom:.5rem;line-height:1.5">${tip}</div>
+          ${editPreviewMode
+            ? `<div class="nb-chapter-content nb-editor-preview">${renderMarkdown(document.getElementById('ch-editor') ? document.getElementById('ch-editor').value : ch.content)}</div>`
+            : `<textarea id="ch-editor" class="nb-editor-textarea" spellcheck="false">${escapeHtml(ch.content || '')}</textarea>`}
+          <div style="font-size:.75rem;color:#9ca3af;margin-top:.4rem;line-height:1.6">
+            支援 Markdown：## 標題、**粗體**、- 條列、| 表格 |、&gt; 💡 callout、[[概念]] 標籤<br>
+            <strong>圖片大小</strong>：上傳的圖預設中等。要改 → 把 <code>![|medium](url)</code> 的 <code>medium</code> 改成 <code>small</code> / <code>large</code> / <code>full</code> / 或數字（例 <code>300px</code>、<code>50%</code>）
+          </div>
+        </div>`;
+      }
+      function setupEditorListeners(){
+        const ta = document.getElementById('ch-editor');
+        if (!ta) return;
+        // paste 圖片
+        ta.addEventListener('paste', (e) => {
+          if (!e.clipboardData || !e.clipboardData.items) return;
+          for (const item of e.clipboardData.items) {
+            if (item.type && item.type.startsWith('image/')) {
+              e.preventDefault();
+              const blob = item.getAsFile();
+              if (blob) handleImageUpload(blob, ta);
+              return;
+            }
+          }
+        });
+        // 拖放
+        ta.addEventListener('dragover', (e) => { e.preventDefault(); });
+        ta.addEventListener('drop', (e) => {
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            e.preventDefault();
+            handleImageUpload(e.dataTransfer.files[0], ta);
+          }
+        });
+      }
+      function handleFileInputChange(e){
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const ta = document.getElementById('ch-editor');
+        if (ta) handleImageUpload(file, ta);
+        e.target.value = '';
+      }
+      function insertImageURL(){
+        const url = prompt('請貼上圖片網址（http/https）：');
+        if (!url) return;
+        const ta = document.getElementById('ch-editor');
+        if (ta) {
+          insertAtCursor(ta, '\n![](' + url.trim() + ')\n');
+          ta.dispatchEvent(new Event('input'));
+        }
+      }
+      function toggleEditorPreview(){
+        // 切換預覽前先保留 textarea 內容
+        const ta = document.getElementById('ch-editor');
+        if (ta && !editPreviewMode) {
+          const ch = notebook.chapters.find(c => c.id === editingChapterId);
+          if (ch) ch._tempContent = ta.value;
+        }
+        editPreviewMode = !editPreviewMode;
+        renderNotebook();
+        // 切回編輯時還原內容
+        if (!editPreviewMode) {
+          const ch = notebook.chapters.find(c => c.id === editingChapterId);
+          const ta2 = document.getElementById('ch-editor');
+          if (ta2 && ch && ch._tempContent != null) ta2.value = ch._tempContent;
+        }
+      }
+
+      // 舊 API 相容：跟 selectChapter 一樣（單頁切換）
+      function scrollToChapter(id){ selectChapter(id); }
+      function toggleMobileToc(){
+        const pane = document.querySelector('.nb-toc-pane');
+        if (pane) pane.classList.toggle('open');
+      }
+      function changeChapterDomain(id){
+        const ch = notebook.chapters.find(c => c.id === id);
+        if (!ch) return;
+        const list = NOTEBOOK_DOMAINS;
+        const cur = chapterDomain(ch);
+        let msg = '請輸入領域編號（目前：' + cur + '）：\n\n';
+        list.forEach((d, i) => msg += (i+1) + '. ' + d + '\n');
+        const ans = prompt(msg, list.indexOf(cur) + 1);
+        if (ans === null) return;
+        const idx = parseInt(ans, 10);
+        if (isNaN(idx) || idx < 1 || idx > list.length) {
+          showToast('編號錯誤');
+          return;
+        }
+        ch.domain = list[idx - 1];
+        ch.updatedAt = Date.now();
+        saveNotebook();
+        renderNotebook();
+        showToast('✓ 已改到「' + ch.domain + '」');
+      }
+
+      function renameChapter(id){
+        const ch = notebook.chapters.find(c => c.id === id);
+        if (!ch) return;
+        const n = prompt('章節名稱：', ch.name);
+        if (n !== null && n.trim() && n.trim() !== ch.name) {
+          ch.name = n.trim();
+          ch.updatedAt = Date.now();
+          saveNotebook();
+          renderNotebook();
+        }
+      }
+      function deleteChapter(id){
+        const ch = notebook.chapters.find(c => c.id === id);
+        if (!ch) return;
+        if (!confirm('確定刪除章節「' + ch.name + '」？此操作無法復原。')) return;
+        notebook.chapters = notebook.chapters.filter(c => c.id !== id);
+        saveNotebook();
+        renderNotebook();
+      }
+      async function reorganizeChapter(id){
+        const ch = notebook.chapters.find(c => c.id === id);
+        if (!ch) return;
+        if (!confirm('讓 AI 把這章重新整理一遍？\n（會把所有來源題目全部丟給 AI 重寫）')) return;
+        // 重整 = 把章節清空、把所有來源題目一題一題重新跑
+        // 簡化做法：把所有題目資料一次給 AI 重寫
+        const qs = (ch.qids || []).map(qid => QS.find(x => x.id === qid)).filter(Boolean);
+        if (!qs.length) { showToast('沒有來源題目'); return; }
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const LETTERS = ['A','B','C','D','E'];
+        const qBlocks = qs.map(q => {
+          const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+          return `── 題目 ${q.id} (${SMAP[q.subject]||q.subject}・${q.meta||''}) ──
+題: ${q.question}
+選項:
+${(q.options||[]).join('\n')}
+正解: ${correctArr.map(i => LETTERS[i]).join('/')}
+
+詳解: ${q.explanation || '（無）'}
+
+臨床: ${q.clinical || '（無）'}`;
+        }).join('\n\n');
+        const prompt = `你是牙醫國考筆記整理員。請把以下 ${qs.length} 題的核心概念，整理成一份「將來再考會答」的章節筆記。
+
+章節名稱: ${ch.name}
+
+【素材：${qs.length} 題】
+${qBlocks}
+
+【整理風格】
+- Markdown: ## / ###、**粗體**、- 條列、| 表格 |
+- 結構: 概念 → 分類 → 機制 → 臨床意義 → 易考重點
+- 同概念要合併，不要每題各寫一段
+- 中英對照
+- 結尾留 "### 💡 易考重點"
+
+【回 JSON】
+{ "content": "完整 Markdown 章節內容" }`;
+        const btn = event && event.target;
+        const orig = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳'; }
+        try {
+          const raw = await callGemini(prompt, REORGANIZE_SCHEMA);
+          const dec = extractJSON(raw);
+          if (dec.content) {
+            // 存舊版到歷史
+            notebook.history.unshift({
+              ts: Date.now(),
+              action: 'reorganize',
+              chapterId: ch.id,
+              snapshot: { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] },
+              note: '重整章節「' + ch.name + '」'
+            });
+            ch.content = dec.content;
+            ch.updatedAt = Date.now();
+            trimHistory();
+            saveNotebook();
+            renderNotebook();
+            showToast('✓ 已重新整理');
+          }
+        } catch(err) {
+          showToast('❌ 重整失敗：' + err.message.slice(0,80));
+        } finally {
+          if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+        }
+      }
+      function gotoQuestionFromNotebook(qid){
+        const q = QS.find(x => x.id === qid);
+        if (!q) { showToast('找不到題目'); return; }
+        practiceList = [q];
+        practiceIdx = 0;
+        examMode = false;
+        examAnswers = {};
+        resetPracticeScore();
+        showPractice();
+        loadPracticeQ();
+      }
+
+      // ── Markdown render (minimal, safe) ──
+      function escapeHtml(s){
+        return (s == null ? '' : String(s)).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+      }
+      function renderMarkdown(md){
+        if (!md) return '<p style="color:#9ca3af">（章節內容是空的）</p>';
+        // 預處理：
+        // 1. AI 偶爾把「- **A**：xxx - **B**：yyy」寫在同一行，強制拆成各自一行
+        md = md.replace(/([^\n])\s+-\s+(\*\*)/g, '$1\n\n- $2');
+        // 2. 中文清單也拆行
+        md = md.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
+        // 3. 移除「只有 >」或「> 後面只有空白」的孤立行（AI 偶爾這樣寫，渲染會留裸 > 字符）
+        md = md.replace(/^>[ \t]*$/gm, '');
+        let s = escapeHtml(md);
+        // tables first (need raw |)
+        s = renderMDTables(s);
+        // callout: 連續 > 開頭的行視為 blockquote（允許 > 後面有空白或無內容）
+        s = s.replace(/((?:^&gt;[ \t]?.*(?:\n|$))+)/gm, (m) => {
+          const text = m.split(/\n/).map(l => l.replace(/^&gt;[ \t]?/, '')).join('\n').trim();
+          if (!text) return ''; // 完全空的 callout 丟掉
+          let cls = '';
+          if (/^(💡|⭐|🌟|🔑)/.test(text)) cls = 'callout-tip';
+          else if (/^(⚠️|❗|🚨)/.test(text)) cls = 'callout-warn';
+          else if (/^(🏥|💊|🩺)/.test(text)) cls = 'callout-clinical';
+          else if (/^(📝|📌|🎯)/.test(text)) cls = 'callout-exam';
+          // 內部 markdown
+          let inner = text;
+          // 子標籤（**xxx：**）→ 灰藍小字
+          inner = inner.replace(/\*\*\s*([^*\n:：]+?)\s*[:：]\s*\*\*/g, '<span class="md-label">$1</span><span class="md-colon">:</span>');
+          inner = inner.replace(/\*\*([^*\n]+)\*\*(?=\s*[:：])/g, '<span class="md-label">$1</span>');
+          inner = inner.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+          inner = inner.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+          inner = inner.replace(/\[\[([^\]]+)\]\]/g, '<span class="ctag">$1</span>');
+          // 處理內部的清單（- 開頭）
+          inner = inner.replace(/((?:^- .+(?:\n|$))+)/gm, (mm) => {
+            const items = mm.trim().split(/\n/).map(l => l.replace(/^- /, ''));
+            return '<ul>' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+          });
+          // 段落分隔
+          inner = inner.split(/\n\n+/).map(p => {
+            const t = p.trim();
+            if (!t) return '';
+            if (/^<(h[1-6]|ul|ol|table|p)/.test(t)) return t;
+            return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+          }).join('');
+          return '<blockquote' + (cls?' class="'+cls+'"':'') + '>' + inner + '</blockquote>';
+        });
+        // 兜底：清掉殘留的單獨 &gt; 行
+        s = s.replace(/^&gt;[ \t]*$/gm, '');
+        // headings (h4 first to avoid being captured by h3)
+        s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+        s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+        s = s.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+        // 圖片 ![alt](url) — 支援 size 參數
+        s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, url) => {
+          const cleanUrl = url.replace(/&amp;/g, '&');
+          let sizeStyle = 'max-width:60%';
+          let realAlt = alt;
+          if (alt.includes('|')) {
+            const parts = alt.split('|');
+            realAlt = parts[0];
+            const hint = (parts[1] || '').trim().toLowerCase();
+            if (hint === 'small' || hint === 's') sizeStyle = 'max-width:30%';
+            else if (hint === 'medium' || hint === 'm') sizeStyle = 'max-width:60%';
+            else if (hint === 'large' || hint === 'l') sizeStyle = 'max-width:90%';
+            else if (hint === 'full' || hint === 'original') sizeStyle = 'max-width:100%';
+            else if (/^\d+px$/.test(hint)) sizeStyle = 'max-width:' + hint;
+            else if (/^\d+%$/.test(hint)) sizeStyle = 'max-width:' + hint;
+            else if (/^\d+$/.test(hint)) sizeStyle = 'max-width:' + hint + 'px';
+          }
+          // 把 url 做 b64-safe 編碼避免 onclick 字串問題
+          const urlEnc = encodeURIComponent(cleanUrl);
+          return `<span class="nb-img-wrap">
+            <img src="${cleanUrl}" alt="${escapeHtml(realAlt)}" loading="lazy" style="${sizeStyle}" onclick="openImgLightbox('${cleanUrl}')" />
+            <span class="nb-img-controls">
+              <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',-10)" title="縮小">−</button>
+              <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',+10)" title="放大">+</button>
+              <button onclick="event.stopPropagation();resetImgSize('${urlEnc}')" title="重置成中等">⟲</button>
+            </span>
+          </span>`;
+        });
+        // 概念標籤 [[xxx]]
+        s = s.replace(/\[\[([^\]]+)\]\]/g, '<span class="ctag">$1</span>');
+        // 子標籤白名單：只有這些抽象欄位詞才當灰藍 label，其他「**xxx**：」維持主項目紫色 highlight
+        const SUBLABEL_WORDS = new Set([
+          '特點','特性','特徵','功能','機制','原理','臨床','臨床意義','臨床特徵','臨床表現',
+          '注意','警告','禁忌','適應症','適應證','併發症','風險','預後',
+          '定義','分類','類型','種類','構造','組成','成分','結構',
+          '症狀','體徵','病因','病理','病程','診斷','鑑別診斷','治療','處置','處理',
+          '作用','效果','影響','關係','差異','對照','比較',
+          '流程','步驟','方法','技術','操作',
+          '補充','重點','說明','概念','理論','背景','例如','範例','備註','關鍵','摘要',
+          '來源','備考','參考'
+        ]);
+        function _renderBoldOrLabel(word, hasColon){
+          const trimmed = word.trim();
+          if (SUBLABEL_WORDS.has(trimmed)) {
+            return '<span class="md-label">' + word + '</span>' + (hasColon ? '<span class="md-colon">:</span>' : '');
+          }
+          return '<strong>' + word + '</strong>' + (hasColon ? ':' : '');
+        }
+        // 1. 「**xxx：**」或「**xxx:**」冒號包在粗體裡
+        s = s.replace(/\*\*\s*([^*\n:：]+?)\s*[:：]\s*\*\*/g, (m, word) => _renderBoldOrLabel(word, true));
+        // 2. 「**xxx**：」或「**xxx**:」冒號在粗體外 — 只有當 xxx 是子標籤詞才轉 label，否則維持 strong
+        s = s.replace(/\*\*([^*\n]+)\*\*(?=\s*[:：])/g, (m, word) => {
+          const trimmed = word.trim();
+          if (SUBLABEL_WORDS.has(trimmed)) return '<span class="md-label">' + word + '</span>';
+          return '<strong>' + word + '</strong>';
+        });
+        // 3. 其他 **xxx** → 紫色 highlight
+        s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+        s = s.replace(/(?<![*\w])\*([^*\n]+)\*(?!\w)/g, '<em>$1</em>');
+        s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+        // lists (group consecutive lines starting with - )
+        s = s.replace(/((?:^- .+(?:\n|$))+)/gm, (m) => {
+          const items = m.trim().split(/\n/).map(l => l.replace(/^- /, ''));
+          return '<ul>' + items.map(i => {
+            // li 開頭是子標籤 → 加 class 把圓點拿掉
+            const cls = /^\s*<span class="md-label">/.test(i) ? ' class="li-sublabel"' : '';
+            return '<li' + cls + '>' + i + '</li>';
+          }).join('') + '</ul>';
+        });
+        s = s.replace(/((?:^\d+\. .+(?:\n|$))+)/gm, (m) => {
+          const items = m.trim().split(/\n/).map(l => l.replace(/^\d+\. /, ''));
+          return '<ol>' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>';
+        });
+        // paragraphs
+        s = s.split(/\n\n+/).map(p => {
+          const t = p.trim();
+          if (!t) return '';
+          if (/^<(h[1-6]|ul|ol|table|blockquote|p)/.test(t)) return t;
+          return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+        }).join('\n');
+        return s;
+      }
+      function renderMDTables(s){
+        const re = /((?:^\|[^\n]+\|\n)+)/gm;
+        return s.replace(re, (block) => {
+          const lines = block.trim().split('\n');
+          if (lines.length < 2) return block;
+          // second line must be alignment row
+          if (!/^\|[\s\-:|]+\|$/.test(lines[1])) return block;
+          const cells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
+          const out = ['<table class="nb-table">'];
+          out.push('<tr>' + cells(lines[0]).map(c => '<th>'+c+'</th>').join('') + '</tr>');
+          for (let i = 2; i < lines.length; i++) {
+            out.push('<tr>' + cells(lines[i]).map(c => '<td>'+c+'</td>').join('') + '</tr>');
+          }
+          out.push('</table>');
+          return out.join('');
+        });
+      }
+
+      // ── Onboarding wizard ──
+      let obStep = 0;
+      const OB_STEPS = [
+        { name: '歡迎' },
+        { name: 'Gemini AI' },
+        { name: 'GitHub 圖床' },
+        { name: '完成' }
+      ];
+      function showOnboarding(){
+        const overlay = document.getElementById('onboarding-overlay');
+        if (!overlay) { alert('找不到入門精靈 modal（請按 Ctrl+Shift+R 重整瀏覽器）'); return; }
+        obStep = 0;
+        try {
+          renderOnboarding();
+        } catch(err) {
+          console.error('renderOnboarding 失敗', err);
+          alert('入門精靈載入失敗：' + err.message);
+          return;
+        }
+        overlay.style.display = 'flex';
+      }
+      function closeOnboarding(){
+        document.getElementById('onboarding-overlay').style.display = 'none';
+        localStorage.setItem(uKey('onboarding_seen'), '1');
+      }
+      function obNext(){
+        // 在 Gemini 步驟與 GitHub 步驟，儲存當前輸入
+        if (obStep === 1) {
+          const k = document.getElementById('ob-gemini-key');
+          if (k) setGeminiKey(k.value.trim());
+        }
+        if (obStep === 2) {
+          const t = document.getElementById('ob-gh-token');
+          const r = document.getElementById('ob-gh-repo');
+          if (t) setGithubToken(t.value.trim());
+          if (r) setGithubRepo(r.value.trim());
+        }
+        if (obStep >= OB_STEPS.length - 1) {
+          if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
+          closeOnboarding();
+          renderNotebook();
+          return;
+        }
+        obStep++;
+        renderOnboarding();
+      }
+      function obPrev(){
+        if (obStep > 0) { obStep--; renderOnboarding(); }
+      }
+      function renderOnboarding(){
+        // 進度點
+        const prog = document.getElementById('ob-progress');
+        prog.innerHTML = OB_STEPS.map((s, i) => {
+          const dot = i === obStep
+            ? '<span style="width:24px;height:8px;background:#7c3aed;border-radius:4px"></span>'
+            : i < obStep
+              ? '<span style="width:8px;height:8px;background:#16a34a;border-radius:50%"></span>'
+              : '<span style="width:8px;height:8px;background:#d1d5db;border-radius:50%"></span>';
+          return `<div style="display:flex;align-items:center;gap:.3rem"><span style="font-size:.7rem;color:${i === obStep ? '#7c3aed' : '#9ca3af'};font-weight:700">${s.name}</span>${dot}</div>`;
+        }).join('<span style="color:#d1d5db">·</span>');
+
+        // 內容
+        const body = document.getElementById('ob-body');
+        const prevBtn = document.getElementById('ob-prev');
+        const nextBtn = document.getElementById('ob-next');
+        prevBtn.style.visibility = obStep === 0 ? 'hidden' : 'visible';
+
+        if (obStep === 0) {
+          nextBtn.textContent = '開始設定 →';
+          body.innerHTML = `
+            <div style="text-align:center;margin-bottom:1rem">
+              <div style="font-size:3rem">🎓</div>
+              <h2 style="font-size:1.2rem;color:#374151;margin-top:.5rem">歡迎使用 AI 筆記本</h2>
+            </div>
+            <p>這個筆記本能讓你做題時按一鍵，AI 就會把這題的核心概念整理進「給你將來再考用的核心筆記」。</p>
+            <p style="margin-top:.7rem"><strong style="color:#7c3aed">完整使用前需要 2 個免費設定</strong>，每個約 5 分鐘：</p>
+            <div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;padding:.8rem 1rem;margin:.8rem 0">
+              <div style="font-weight:800;color:#6b21a8;margin-bottom:.3rem">🤖 1. Gemini API key</div>
+              <div style="font-size:.85rem;color:#6b7280">給 AI 整理筆記用，<strong>每天 1500 次免費</strong>，不用綁卡</div>
+            </div>
+            <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:.8rem 1rem;margin:.8rem 0">
+              <div style="font-weight:800;color:#0369a1;margin-bottom:.3rem">📷 2. GitHub Token</div>
+              <div style="font-size:.85rem;color:#6b7280">給筆記貼截圖用，<strong>無限免費</strong>，存到你自己的 GitHub repo</div>
+            </div>
+            <p style="font-size:.82rem;color:#92400e;background:#fffbeb;border-radius:8px;padding:.55rem .8rem;margin-top:.7rem">
+              ⚠️ 這兩個設定都會綁定在你的使用者帳號（${escapeHtml(localStorage.getItem('dental_cur_user')||'未知')}）下，<strong>同 user 不同裝置自動同步</strong>，不會給其他人用。
+            </p>
+            <p style="font-size:.8rem;color:#9ca3af;margin-top:.6rem">不想現在設定可以按「跳過」，之後在筆記本右上 ⚙️ AI 設定 找到。</p>
+          `;
+        } else if (obStep === 1) {
+          nextBtn.textContent = '下一步 →';
+          const cur = getGeminiKey();
+          body.innerHTML = `
+            <h2 style="font-size:1.15rem;color:#6b21a8;margin-bottom:.4rem">🤖 設定 Gemini API key</h2>
+            <p style="font-size:.88rem;color:#6b7280">為什麼需要：AI 整理筆記要呼叫 Google Gemini 模型，需要你的 API key 認證。</p>
+            <div style="background:#faf5ff;border-left:4px solid #7c3aed;padding:.7rem 1rem;border-radius:8px;margin:.8rem 0;font-size:.85rem;line-height:1.7">
+              <strong>申請步驟（5 分鐘）：</strong>
+              <ol style="margin:.3rem 0 0 1.2rem;padding:0">
+                <li>點 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#7c3aed;font-weight:700">這裡開啟 Google AI Studio →</a></li>
+                <li>用任何 Google 帳號登入</li>
+                <li>按藍色 <strong>「+ Create API key」</strong></li>
+                <li>選 <strong>「Create API key in new project」</strong></li>
+                <li>複製出來的長字串（AIzaSy 開頭）</li>
+                <li>貼到下面這個欄位</li>
+              </ol>
+            </div>
+            <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:.3rem;color:#374151">把 key 貼這裡</label>
+            <input type="password" id="ob-gemini-key" value="${escapeHtml(cur)}" placeholder="AIzaSy..." style="width:100%;padding:.6rem .8rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.88rem" />
+            <label style="display:flex;align-items:center;gap:.3rem;font-size:.78rem;color:#6b7280;margin-top:.4rem;cursor:pointer">
+              <input type="checkbox" onchange="document.getElementById('ob-gemini-key').type=this.checked?'text':'password'"> 顯示文字
+            </label>
+            ${cur ? '<div style="color:#16a34a;font-size:.82rem;margin-top:.5rem">✓ 已有設定值（按下一步會自動儲存）</div>' : '<div style="color:#9ca3af;font-size:.82rem;margin-top:.5rem">空白也可以，但 AI 整理功能會無法使用</div>'}
+          `;
+        } else if (obStep === 2) {
+          nextBtn.textContent = '下一步 →';
+          const curT = getGithubToken();
+          const curR = getGithubRepo();
+          body.innerHTML = `
+            <h2 style="font-size:1.15rem;color:#0369a1;margin-bottom:.4rem">📷 設定 GitHub 圖床</h2>
+            <p style="font-size:.88rem;color:#6b7280">為什麼需要：筆記裡貼截圖時，圖會上傳到你的 GitHub repo 當圖床（不吃手機容量、跨裝置共用）。</p>
+            <p style="font-size:.82rem;color:#92400e;background:#fffbeb;border-radius:8px;padding:.55rem .8rem;margin-top:.5rem">
+              ⚠️ 你需要先有 GitHub 帳號 + 一個自己的 repo。如果沒打算用「貼圖」功能可以直接跳過這步。
+            </p>
+            <div style="background:#f0f9ff;border-left:4px solid #0369a1;padding:.7rem 1rem;border-radius:8px;margin:.8rem 0;font-size:.85rem;line-height:1.7">
+              <strong>申請 Token（10 分鐘）：</strong>
+              <ol style="margin:.3rem 0 0 1.2rem;padding:0">
+                <li>點 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" style="color:#0369a1;font-weight:700">這裡開啟 GitHub Token 申請頁 →</a></li>
+                <li>Token name：隨便取（例：<code>dental-notebook</code>）</li>
+                <li>Expiration：選 Custom，設 1 年</li>
+                <li>Repository access：選 <em>Only select repositories</em> → 選你的 repo</li>
+                <li>Permissions 區塊 → 按右上角 <strong>+ Add permissions</strong> → 搜尋並選擇 <strong>Contents</strong></li>
+                <li>把 Contents 的權限從 No access 改成 <strong>Read and write</strong></li>
+                <li>（Metadata 會自動加 Read-only，這正常）</li>
+                <li>底部按 <strong>Generate token</strong> → 複製出來</li>
+              </ol>
+            </div>
+            <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:.3rem;color:#374151">GitHub Personal Access Token</label>
+            <input type="password" id="ob-gh-token" value="${escapeHtml(curT)}" placeholder="github_pat_..." style="width:100%;padding:.6rem .8rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.88rem" />
+            <label style="display:block;font-size:.85rem;font-weight:700;margin-top:.7rem;margin-bottom:.3rem;color:#374151">圖檔要存到哪個 repo</label>
+            <input type="text" id="ob-gh-repo" value="${escapeHtml(curR)}" placeholder="你的GitHub帳號/你的repo名稱" style="width:100%;padding:.6rem .8rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.88rem" />
+            <label style="display:flex;align-items:center;gap:.3rem;font-size:.78rem;color:#6b7280;margin-top:.4rem;cursor:pointer">
+              <input type="checkbox" onchange="document.getElementById('ob-gh-token').type=this.checked?'text':'password'"> 顯示 token
+            </label>
+          `;
+        } else {
+          nextBtn.textContent = '✓ 完成，開始用！';
+          const hasG = !!getGeminiKey();
+          const hasT = !!getGithubToken();
+          body.innerHTML = `
+            <div style="text-align:center">
+              <div style="font-size:3rem">${hasG ? '🎉' : '👋'}</div>
+              <h2 style="font-size:1.2rem;color:#374151;margin:.5rem 0">設定完成！</h2>
+            </div>
+            <div style="background:#f9fafb;border-radius:10px;padding:.9rem 1.1rem;margin:.8rem 0">
+              <div style="margin-bottom:.5rem">${hasG ? '✅' : '⬜'} <strong>Gemini AI</strong>：${hasG ? '已設定，可以用「📒 加入筆記」' : '尚未設定，「📒 加入筆記」目前無法使用'}</div>
+              <div>${hasT ? '✅' : '⬜'} <strong>GitHub 圖床</strong>：${hasT ? '已設定，貼圖功能可用' : '尚未設定，貼圖功能 disable'}</div>
+            </div>
+            <h3 style="font-size:.95rem;color:#7c3aed;margin-top:1rem">📚 接下來怎麼用</h3>
+            <ol style="font-size:.88rem;line-height:1.8;margin-left:1.2rem">
+              <li>回到考試首頁，開始做題</li>
+              <li>看到值得記下的題目 → 答完後按 <strong>📒 加入筆記</strong></li>
+              <li>AI 自動分類、整理進「我的筆記本」</li>
+              <li>之後做題時隨時按 <strong>📖 偷看筆記</strong> 找相關章節</li>
+            </ol>
+            <p style="font-size:.82rem;color:#9ca3af;margin-top:1rem;text-align:center">隨時可從筆記本右上 ⚙️ 重新設定</p>
+          `;
+        }
+      }
+
+      // ── Settings modal ──
+      function openAISettings(){
+        document.getElementById('ai-key-input').value = getGeminiKey();
+        const sel = document.getElementById('ai-model-select');
+        if (sel) sel.value = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+        const ghInp = document.getElementById('gh-token-input');
+        if (ghInp) ghInp.value = getGithubToken();
+        const ghRepo = document.getElementById('gh-repo-input');
+        if (ghRepo) ghRepo.value = getGithubRepo();
+        document.getElementById('ai-settings-overlay').classList.add('open');
+      }
+      function closeAISettings(){
+        document.getElementById('ai-settings-overlay').classList.remove('open');
+      }
+      function saveAISettings(){
+        const k = document.getElementById('ai-key-input').value.trim();
+        setGeminiKey(k);
+        const sel = document.getElementById('ai-model-select');
+        if (sel) localStorage.setItem(uKey('gemini_model'), sel.value);
+        const ghInp = document.getElementById('gh-token-input');
+        if (ghInp) setGithubToken(ghInp.value.trim());
+        const ghRepo = document.getElementById('gh-repo-input');
+        if (ghRepo) setGithubRepo(ghRepo.value.trim());
+        if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        showToast('✓ 設定已儲存');
+        closeAISettings();
+      }
+
+      // ── History modal ──
+      function openHistoryModal(){
+        renderHistoryList();
+        document.getElementById('history-overlay').classList.add('open');
+      }
+      function closeHistoryModal(){
+        document.getElementById('history-overlay').classList.remove('open');
+      }
+      function renderHistoryList(){
+        loadNotebook();
+        const el = document.getElementById('history-list');
+        if (!notebook.history.length) {
+          el.innerHTML = '<div style="color:#9ca3af;text-align:center;padding:1.5rem">還沒有記錄</div>';
+          return;
+        }
+        el.innerHTML = notebook.history.map((h, idx) => {
+          const t = new Date(h.ts);
+          const time = `${(t.getMonth()+1)}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+          const concepts = (h.concepts||[]).join(' / ');
+          return `<div class="hist-row">
+            <div class="hist-row-info">
+              <div><span style="color:#9ca3af;font-size:.78rem">${time}</span> · <span class="hist-row-meta">${escapeHtml(h.qmeta||h.qid||'')}</span></div>
+              ${concepts ? `<div style="font-size:.78rem;color:#7c3aed;margin-top:.15rem">🏷 ${escapeHtml(concepts)}</div>` : ''}
+              <div class="hist-row-action">${escapeHtml(h.note||'')}${h.reasoning?'：'+escapeHtml(h.reasoning):''}</div>
+            </div>
+            ${h.action === 'skip'
+              ? `<button class="hist-row-btn force" onclick="forceAddFromHistory(${idx})" title="強制把這題加進來">🔁 強制加</button>`
+              : `<button class="hist-row-btn" onclick="undoHistoryAt(${idx})">🗑 撤銷</button>`}
+          </div>`;
+        }).join('');
+      }
+
+      // ── Export as Markdown ──
+      function exportNotebookMD(){
+        loadNotebook();
+        if (!notebook.chapters.length) { showToast('筆記本是空的'); return; }
+        const lines = ['# 我的牙醫國考筆記本',
+          '> 匯出時間：' + new Date().toLocaleString('zh-TW'),
+          '> 章節數：' + notebook.chapters.length,
+          ''];
+        notebook.chapters.forEach((c, i) => {
+          lines.push('---');
+          lines.push('');
+          lines.push('## ' + (i+1) + '. ' + c.name);
+          lines.push('');
+          if (c.concepts && c.concepts.length) lines.push('**概念**：' + c.concepts.join(' / '));
+          if (c.qids && c.qids.length) {
+            const metas = c.qids.map(qid => { const q = QS.find(x => x.id === qid); return q ? (q.meta||qid) : qid; }).join(' / ');
+            lines.push('**來源題**：' + metas);
+          }
+          lines.push('');
+          lines.push(c.content || '');
+          lines.push('');
+        });
+        const blob = new Blob([lines.join('\n')], { type:'text/markdown;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const uid = localStorage.getItem('dental_cur_user')||'user';
+        a.download = uid + '_牙醫筆記_' + new Date().toISOString().slice(0,10) + '.md';
+        a.click();
+        showToast('✓ 已匯出 ' + notebook.chapters.length + ' 章');
+      }
+
+      // ── Notebook 搜尋 ──
+      function onNotebookSearch(){
+        const inp = document.getElementById('nb-search-input');
+        const clearBtn = document.getElementById('nb-search-clear');
+        const q = (inp.value || '').trim().toLowerCase();
+        clearBtn.style.display = q ? 'block' : 'none';
+
+        // 沒搜尋字 → 顯示全部
+        if (!q) {
+          document.querySelectorAll('.nb-chapter, .nb-subj-group, .nb-toc-item, .nb-toc-group')
+            .forEach(el => el.classList.remove('nb-search-hidden'));
+          // 清掉舊的「無結果」提示
+          const empty = document.getElementById('nb-search-empty');
+          if (empty) empty.remove();
+          return;
+        }
+
+        // 對每章判斷是否命中
+        let hit = 0;
+        document.querySelectorAll('.nb-chapter').forEach(ch => {
+          const text = ch.textContent.toLowerCase();
+          // 抓章節 id 對應的 chapter 物件 (找來源題號也算)
+          const id = ch.id.replace(/^chapter-/, '');
+          const c = (notebook.chapters || []).find(x => x.id === id);
+          let extra = '';
+          if (c) {
+            extra = (c.qids || []).join(' ').toLowerCase();
+            // 也加進科目中文名稱
+            const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+            const sm = SMAP[c._mainSubj];
+            if (sm) extra += ' ' + sm;
+          }
+          const match = text.includes(q) || extra.includes(q);
+          if (match) { ch.classList.remove('nb-search-hidden'); hit++; }
+          else { ch.classList.add('nb-search-hidden'); }
+        });
+
+        // 科目分組：若該組內所有章節都隱藏，也把整組隱藏
+        document.querySelectorAll('.nb-subj-group').forEach(group => {
+          const visibleChapters = group.querySelectorAll('.nb-chapter:not(.nb-search-hidden)');
+          if (visibleChapters.length === 0) group.classList.add('nb-search-hidden');
+          else group.classList.remove('nb-search-hidden');
+        });
+
+        // 目錄：跟內容區同步
+        document.querySelectorAll('.nb-toc-item').forEach(item => {
+          const onclickAttr = item.getAttribute('onclick') || '';
+          const m = onclickAttr.match(/scrollToChapter\('([^']+)'\)/);
+          if (!m) return;
+          const chEl = document.getElementById('chapter-' + m[1]);
+          if (chEl && chEl.classList.contains('nb-search-hidden')) item.classList.add('nb-search-hidden');
+          else item.classList.remove('nb-search-hidden');
+        });
+        document.querySelectorAll('.nb-toc-group').forEach(group => {
+          const visibleItems = group.querySelectorAll('.nb-toc-item:not(.nb-search-hidden)');
+          if (visibleItems.length === 0) group.classList.add('nb-search-hidden');
+          else group.classList.remove('nb-search-hidden');
+        });
+
+        // 無結果提示
+        const body = document.getElementById('notebook-body');
+        let empty = document.getElementById('nb-search-empty');
+        if (hit === 0) {
+          if (!empty) {
+            empty = document.createElement('div');
+            empty.id = 'nb-search-empty';
+            empty.className = 'nb-search-empty';
+            empty.innerHTML = '<div style="font-size:2.5rem">🔍</div><div style="margin-top:.5rem;color:#374151;font-weight:700">沒找到符合「' + escapeHtml(q) + '」的章節</div><div style="font-size:.85rem;margin-top:.4rem">試試其他關鍵字、或點 ✕ 清除搜尋</div>';
+            body.appendChild(empty);
+          } else {
+            empty.querySelector('div:nth-child(2)').textContent = '沒找到符合「' + q + '」的章節';
+          }
+        } else if (empty) {
+          empty.remove();
+        }
+      }
+      function clearNotebookSearch(){
+        const inp = document.getElementById('nb-search-input');
+        if (inp) inp.value = '';
+        onNotebookSearch();
+      }
+
+      // ── Peek Notebook：在練習中查看相關章節 ──
+      function peekNotebook(){
+        const q = practiceList[practiceIdx];
+        if (!q) { showToast('找不到當前題目'); return; }
+        loadNotebook();
+        const body = document.getElementById('peek-body');
+        const overlay = document.getElementById('peek-overlay');
+
+        // 找相關章節：
+        // 1) qids 已經包含這題的
+        // 2) concepts 跟題目 topic 相關的
+        // 3) 章節名稱包含題目 topic 關鍵字
+        const topic = (q.topic || '').trim();
+        const topicTokens = topic ? topic.split(/[,，、 \/]+/).filter(s => s.length >= 2) : [];
+
+        const directHit = [];
+        const topicHit = [];
+        notebook.chapters.forEach(c => {
+          if ((c.qids || []).includes(q.id)) {
+            directHit.push(c);
+            return;
+          }
+          if (!topic) return;
+          const haystack = (c.name + ' ' + (c.concepts||[]).join(' ') + ' ' + (c.content||'').slice(0,500));
+          if (topicTokens.some(t => haystack.includes(t)) || haystack.includes(topic)) {
+            topicHit.push(c);
+          }
+        });
+
+        overlay.style.display = 'flex';
+
+        if (directHit.length === 0 && topicHit.length === 0) {
+          body.innerHTML =
+            '<div style="text-align:center;padding:2rem 1rem;color:#9ca3af">' +
+              '<div style="font-size:2.5rem">🔍</div>' +
+              '<div style="font-weight:700;margin-top:.5rem;color:#374151">沒找到相關筆記章節</div>' +
+              '<div style="font-size:.85rem;margin-top:.4rem;line-height:1.6">這題的概念「' + escapeHtml(topic || '（無 topic）') + '」<br>還沒被整理進筆記本</div>' +
+              '<div style="margin-top:1rem">' +
+                '<button onclick="closePeekNotebook();addCurrentToNotebook()" style="background:#7c3aed;color:white;border:none;padding:.6rem 1.2rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.88rem">📒 立刻整理進筆記</button>' +
+              '</div>' +
+            '</div>';
+          return;
+        }
+
+        let html = '';
+        if (directHit.length) {
+          html += '<div style="font-size:.78rem;color:#15803d;font-weight:700;margin-bottom:.5rem">🎯 這題已收錄在以下章節</div>';
+          directHit.forEach(c => { html += renderPeekChapter(c, true); });
+        }
+        if (topicHit.length) {
+          html += '<div style="font-size:.78rem;color:#0369a1;font-weight:700;margin:1.2rem 0 .5rem">💡 同領域的相關章節（' + topicHit.length + ' 章）</div>';
+          topicHit.forEach(c => { html += renderPeekChapter(c, false); });
+        }
+        html += '<div style="text-align:center;margin-top:1.2rem;padding-top:.8rem;border-top:1px solid #e5e7eb">' +
+          '<button onclick="closePeekNotebook();showNotebook()" style="background:white;color:#7c3aed;border:1.5px solid #c084fc;padding:.5rem 1.1rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem">🗂 開啟完整筆記本</button>' +
+          '</div>';
+        body.innerHTML = html;
+      }
+      function renderPeekChapter(c, isDirect){
+        const badge = isDirect
+          ? '<span style="background:#dcfce7;color:#15803d;padding:1px 8px;border-radius:8px;font-size:.7rem;margin-left:.4rem">已收錄</span>'
+          : '';
+        return '<details class="peek-ch" ' + (isDirect ? 'open' : '') + ' style="background:#fafafa;border:1.5px solid #e5e7eb;border-radius:10px;margin-bottom:.6rem;padding:.4rem .7rem">' +
+          '<summary style="cursor:pointer;font-weight:800;color:#374151;padding:.3rem 0;font-size:.95rem">' +
+            escapeHtml(c.name) + badge +
+            ' <span style="color:#9ca3af;font-size:.75rem;font-weight:400">（' + (c.qids||[]).length + ' 題）</span>' +
+          '</summary>' +
+          '<div class="nb-chapter-content" style="padding:.5rem 0 .3rem;font-size:.9rem">' + renderMarkdown(c.content) + '</div>' +
+          '</details>';
+      }
+      function closePeekNotebook(){
+        document.getElementById('peek-overlay').style.display = 'none';
+      }
+
+      // 啟動時把 notebook 載進記憶體
+      try { loadNotebook(); } catch(e) {}
+
+      // ════════════════════════════════════════════
       //  Reset All Marks
       // ════════════════════════════════════════════
       async function resetAllMarks() {
@@ -5162,11 +7379,13 @@
         document.getElementById("screen-browse").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
         document.getElementById("screen-wrongbook").style.display = "none";
+        const __nb_d = document.getElementById("screen-notebook"); if (__nb_d) __nb_d.style.display = "none";
         document.getElementById("screen-db").style.display = "block";
         document.getElementById("btn-home").classList.remove("active");
         document.getElementById("btn-db").classList.add("active");
         document.getElementById("btn-browse").classList.remove("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
+        const __nb_btnd = document.getElementById("btn-notebook"); if (__nb_btnd) __nb_btnd.classList.remove("active");
         renderDB();
       }
 
@@ -5347,6 +7566,9 @@
         document.getElementById('screen-home').style.display='none';
         document.getElementById('screen-practice').style.display='none';
         document.getElementById('screen-db').style.display='none';
+        document.getElementById('screen-browse').style.display='none';
+        document.getElementById('screen-scroll-exam').style.display='none';
+        const __nb_w = document.getElementById('screen-notebook'); if (__nb_w) __nb_w.style.display='none';
         const er = document.getElementById('screen-exam-results');
         if(er) er.style.display='none';
         document.getElementById('screen-wrongbook').style.display='block';

@@ -2043,27 +2043,33 @@
       }
       .qgrid-legend span{display:flex;align-items:center;gap:.25rem;}
       .qg-dot{width:14px;height:14px;border-radius:4px;display:inline-block;border:1.5px solid #cbd5e1;}
-      .qg-current{background:#7c3aed;border-color:#7c3aed;}
-      .qg-answered{background:#22c55e;border-color:#22c55e;}
-      .qg-skipped{background:#f59e0b;border-color:#f59e0b;}
-      .qg-flagged{background:#ef4444;border-color:#ef4444;}
-      .qg-none{background:#f1f5f9;border-color:#cbd5e1;}
+      .qg-dot.qg-current{background:#7c3aed;border-color:#7c3aed;}
+      .qg-dot.qg-correct{background:#22c55e;border-color:#22c55e;}
+      .qg-dot.qg-wrong{background:#ef4444;border-color:#ef4444;}
+      .qg-dot.qg-skipped{background:white;border:1.5px dashed #cbd5e1;}
+      .qg-dot.qg-flagged{background:white;border:1.5px solid #f59e0b;box-shadow:inset 0 0 0 2px #fef3c7;}
+      .qg-dot.qg-none{background:#f1f5f9;border-color:#cbd5e1;}
       .qgrid{
         display:grid;grid-template-columns:repeat(10,1fr);gap:4px;
       }
       @media(max-width:500px){.qgrid{grid-template-columns:repeat(8,1fr);}}
       .qg-cell{
         aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;
-        font-size:.68rem;font-weight:700;color:white;cursor:pointer;
-        transition:transform .1s;border:1.5px solid transparent;
-        background:#f1f5f9;color:#94a3b8;
+        font-size:.68rem;font-weight:700;cursor:pointer;
+        transition:transform .1s;border:1.5px solid #e5e7eb;
+        background:white;color:#94a3b8;
+        position:relative;
       }
       .qg-cell:hover{transform:scale(1.15);}
-      .qg-cell.qg-current{background:#7c3aed;color:white;border-color:#5b21b6;box-shadow:0 0 0 2px rgba(124,58,237,.3);}
-      .qg-cell.qg-answered{background:#22c55e;color:white;}
-      .qg-cell.qg-skipped{background:#f59e0b;color:white;}
-      .qg-cell.qg-flagged{background:#ef4444;color:white;}
-      .qg-cell.qg-answered.qg-flagged{background:linear-gradient(135deg,#22c55e 50%,#ef4444 50%);}
+      .qg-cell.qg-correct{background:#22c55e;color:white;border-color:#16a34a;}
+      .qg-cell.qg-wrong{background:#ef4444;color:white;border-color:#dc2626;}
+      .qg-cell.qg-skipped{background:white;color:transparent;border:1.5px dashed #cbd5e1;}
+      .qg-cell.qg-current{box-shadow:0 0 0 2.5px #7c3aed;z-index:2;}
+      .qg-cell.qg-flagged::after{
+        content:'';position:absolute;top:-3px;right:-3px;
+        width:7px;height:7px;border-radius:50%;background:#f59e0b;
+        border:1.5px solid white;
+      }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -2091,11 +2097,29 @@
         </button>
         <button
           style="padding:0.25rem 0.5rem;border-radius:8px;border:1.5px solid rgba(255,255,255,0.4);background:transparent;color:white;font-size:0.85rem;cursor:pointer"
+          title="同步狀態（手機 / 電腦）"
+          onclick="openSyncPanel()"
+        >
+          ☁️
+        </button>
+        <button
+          style="padding:0.25rem 0.5rem;border-radius:8px;border:1.5px solid rgba(255,255,255,0.4);background:transparent;color:white;font-size:0.85rem;cursor:pointer"
           title="重置所有標記"
           onclick="resetAllMarks()"
         >
           🗑️
         </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SYNC PANEL MODAL ═══════════════ -->
+    <div id="sync-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)closeSyncPanel()">
+      <div style="background:white;border-radius:14px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,0.3)">
+        <div style="padding:1rem 1.2rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+          <strong style="font-size:1.05rem;color:#374151">☁️ 跨裝置同步</strong>
+          <button onclick="closeSyncPanel()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#6b7280">×</button>
+        </div>
+        <div id="sync-panel-body" style="padding:1.2rem">載入中…</div>
       </div>
     </div>
 
@@ -2493,6 +2517,8 @@
         <span class="progress-text" id="prog-text">0 / 0</span>
         <div class="progress-bar">
           <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
+      <div id="practice-score" style="display:none;font-size:.82rem;text-align:center;margin:.25rem 0 .6rem;letter-spacing:.02em"></div>
+      
         </div>
         <button class="btn-exit" onclick="showHome()">← 返回</button>
       </div>
@@ -2571,11 +2597,11 @@
       <div class="qgrid-toggle" id="qgrid-toggle" onclick="toggleQGrid()">📋 題號總覽</div>
       <div class="qgrid-panel" id="qgrid-panel" style="display:none">
         <div class="qgrid-legend">
-          <span><span class="qg-dot qg-current"></span>目前</span>
-          <span><span class="qg-dot qg-answered"></span>已答</span>
+          <span><span class="qg-dot qg-correct"></span>答對</span>
+          <span><span class="qg-dot qg-wrong"></span>答錯</span>
           <span><span class="qg-dot qg-skipped"></span>跳過</span>
-          <span><span class="qg-dot qg-flagged"></span>🚩</span>
           <span><span class="qg-dot qg-none"></span>未作答</span>
+          <span><span class="qg-dot qg-flagged"></span>🚩 收藏</span>
         </div>
         <div class="qgrid" id="qgrid"></div>
       </div>
@@ -2846,6 +2872,29 @@
       let scrollExamList = [];
       let scrollExamAnswers = {}; // { [qId]: idx }
       let scrollExamSubmitted = false;
+
+      // ── 本輪練習計分（每次進入練習都會重置）──
+      let practiceResults = {}; // { qId: true=對 / false=錯 }
+      let practiceAnswers = {}; // { qId: idx } — 練習模式記下使用者實際選的選項
+      function resetPracticeScore() { practiceResults = {}; practiceAnswers = {}; }
+      function practiceScoreSummary() {
+        const ids = Object.keys(practiceResults);
+        const answered = ids.length;
+        const correct = ids.filter(id => practiceResults[id] === true).length;
+        const total = practiceList.length;
+        const pct = answered > 0 ? Math.round(correct / answered * 100) : 0;
+        return { total, answered, correct, wrong: answered - correct, pct };
+      }
+      function updatePracticeScoreUI() {
+        const el = document.getElementById('practice-score');
+        if (!el) return;
+        if (examMode) { el.style.display = 'none'; return; }
+        const s = practiceScoreSummary();
+        el.style.display = '';
+        el.innerHTML = '<span style="color:#15803d;font-weight:700">' + s.correct + '</span><span style="color:var(--text-sub)"> 對</span>' +
+                       ' · <span style="color:#b91c1c;font-weight:700">' + s.wrong + '</span><span style="color:var(--text-sub)"> 錯</span>' +
+                       ' · <span style="color:#7c3aed;font-weight:700">' + s.pct + '%</span>';
+      }
 
       // Timer state
       let timerInterval = null;
@@ -3410,8 +3459,10 @@
         activeTopic = null;
         practiceList = list;
         practiceIdx = 0;
+        resetPracticeScore();
         clearLastPos();
         showPractice();
+        updatePracticeScoreUI();
         loadPracticeQ();
       }
 
@@ -3427,8 +3478,10 @@
         }
         practiceList = list;
         practiceIdx = 0;
+        resetPracticeScore();
         clearLastPos();
         showPractice();
+        updatePracticeScoreUI();
         loadPracticeQ();
       }
 
@@ -3793,13 +3846,19 @@
       function saveLastPos() {
         if (!practiceList.length) return;
         const q = practiceList[practiceIdx];
+        const modeTag = examMode ? "📋 試卷" : "練習";
         localStorage.setItem(
           LASTPOS_KEY,
           JSON.stringify({
             ids: practiceList.map((q) => q.id),
             idx: practiceIdx,
+            examMode: examMode,
+            examAnswers: examMode ? examAnswers : null,
+            practiceAnswers: examMode ? null : practiceAnswers,
+            practiceResults: examMode ? null : practiceResults,
+            qgridSkipped: qgridSkipped,
             meta: q
-              ? `第 ${practiceIdx + 1} / ${practiceList.length} 題・${q.meta || ""}`
+              ? `${modeTag}・第 ${practiceIdx + 1} / ${practiceList.length} 題・${q.meta || ""}`
               : "",
           }),
         );
@@ -3839,11 +3898,19 @@
             showToast("找不到上次的題目");
             return;
           }
-          examMode = false;
-          examAnswers = {};
+          // 還原當時的模式 + 答案資料
+          examMode = !!pos.examMode;
+          examAnswers = pos.examAnswers || {};
+          practiceAnswers = pos.practiceAnswers || {};
+          practiceResults = pos.practiceResults || {};
+          qgridSkipped = pos.qgridSkipped || {};
           practiceList = list;
           practiceIdx = Math.min(pos.idx, list.length - 1);
           showPractice();
+          // 試卷模式要顯示交卷按鈕
+          const submitBtn = document.getElementById("btn-submit-exam");
+          if (submitBtn) submitBtn.style.display = examMode ? "" : "none";
+          if (!examMode) updatePracticeScoreUI();
           loadPracticeQ();
         } catch (e) {
           clearLastPos();
@@ -3863,9 +3930,11 @@
         activeTopic = null;
         practiceList = list;
         practiceIdx = 0;
+        resetPracticeScore();
         clearLastPos();
         showPractice();
         document.getElementById("btn-skip").style.display = "";
+        updatePracticeScoreUI();
         loadPracticeQ();
         if (document.getElementById("timer-enable").checked) startTimer(3600);
       }
@@ -4041,6 +4110,10 @@
           if (!qState[q.id]) qState[q.id] = { status: "none", count: 0 };
           qState[q.id].count = (qState[q.id].count || 0) + 1;
           trackDailyCount(q);
+          // ── 紀錄本輪分數 + 使用者實際選的選項（題號總覽要用）──
+          practiceResults[q.id] = isCorrect;
+          practiceAnswers[q.id] = idx;
+          updatePracticeScoreUI();
         }
         persist(q.id);
         updateMarkButtons(q.id);
@@ -4146,22 +4219,32 @@
       }
 
       function showFinish() {
-        if (examMode) {
-          showExamResults();
-          return;
-        }
-        document.getElementById("pq-badges").innerHTML = "";
-        document.getElementById("pq-text").innerHTML =
-          '<div style="text-align:center;padding:2rem 0"><div style="font-size:2.5rem">🎉</div><div style="font-size:1.1rem;font-weight:700;margin-top:.6rem">本輪練習完成！</div><div style="font-size:.85rem;color:var(--gray);margin-top:.4rem">共 ' +
-          practiceList.length +
-          " 題</div></div>";
-        document.getElementById("pq-options").innerHTML = "";
-        document.getElementById("result-area").style.display = "none";
-        document.getElementById("btn-next").style.display = "none";
-        document.getElementById("prog-fill").style.width = "100%";
-        document.getElementById("prog-text").textContent =
-          `${practiceList.length} / ${practiceList.length}`;
+        // 統一走結算頁，showExamResults() 會自動判斷是試卷模式還是練習模式
+        showExamResults();
+      }
+
+      // 只複習剛剛答錯的題目
+      function reviewWrongOnly() {
+        const ids = window.__lastWrongIds || [];
+        if (!ids.length) return;
+        const list = practiceList.filter(q => ids.includes(q.id));
+        if (!list.length) return;
+        practiceList = list;
+        practiceIdx = 0;
+        resetPracticeScore();
         clearLastPos();
+        updatePracticeScoreUI();
+        loadPracticeQ();
+      }
+
+      // 重做本輪（同樣的題目、同順序）
+      function restartPractice() {
+        if (!practiceList.length) return;
+        practiceIdx = 0;
+        resetPracticeScore();
+        clearLastPos();
+        updatePracticeScoreUI();
+        loadPracticeQ();
       }
 
       // ════════════════════════════════════════════
@@ -4232,6 +4315,7 @@
         examMode = true;
         examAnswers = {};
         qgridSkipped = {};
+        resetPracticeScore();
         practiceList = list;
         practiceIdx = 0;
         clearLastPos();
@@ -4453,18 +4537,27 @@
         const LETTERS = ["A", "B", "C", "D", "E"];
         const total = practiceList.length;
         let correct = 0;
+        let answered = 0;
         const wrongQs = [];
 
+        // 兩種模式共用：examMode 拉 examAnswers、練習模式拉 practiceAnswers
+        const answerSrc = examMode ? examAnswers : practiceAnswers;
+        const modeLabel = examMode ? "逐題試卷" : "練習模式";
+
         practiceList.forEach((q) => {
-          const userIdx = examAnswers[q.id];
-          if (userIdx === undefined) return; // skipped
+          const userIdx = answerSrc[q.id];
+          if (userIdx === undefined) return; // 跳過
+          answered++;
           const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
           const isOk = correctArr.includes(userIdx);
           if (isOk) correct++;
           else wrongQs.push({ q, userIdx, correctArr });
-          // Track daily count for exam mode here
-          trackDailyCount(q);
+          // 試卷模式還沒記過 daily count，這裡補
+          if (examMode) trackDailyCount(q);
         });
+
+        // 記下答錯題 IDs（供「只練錯題」用）
+        window.__lastWrongIds = wrongQs.map(w => w.q.id);
 
         // Show results screen
         stopTimer();
@@ -4480,17 +4573,27 @@
         });
         document.getElementById("screen-exam-results").style.display = "block";
 
-        const wrong = total - correct;
+        const wrong = answered - correct;
+        const skipped = total - answered;
         const score = (correct * 1.25).toFixed(2);
         const fullScore = (total * 1.25).toFixed(2);
-        saveExamHistory(correct, total, "逐題試卷");
+        // 只在實際有作答時記錄到歷史成績
+        if (answered > 0) saveExamHistory(correct, total, modeLabel);
         document.getElementById("exam-res-score").textContent =
           `${score} 分 / ${fullScore}`;
+        let subParts = [`答對 ${correct}/${total} 題`];
+        if (wrong > 0) subParts.push(`答錯 ${wrong}`);
+        if (skipped > 0) subParts.push(`跳過 ${skipped}`);
         document.getElementById("exam-res-sub").textContent =
-          wrong === 0
+          (correct === total && total > 0)
             ? `🎉 全對！太厲害了！（${correct}/${total} 題）`
-            : `答對 ${correct}/${total} 題，答錯 ${wrong} 題，繼續加油！`;
+            : subParts.join("、") + (wrong > 0 ? "，繼續加油！" : "");
         renderExamHistory("exam-res-history");
+
+        // 清掉斷點，避免下次又跑「繼續上次」
+        clearLastPos();
+        // 重設 mode 旗標
+        examMode = false;
 
         // Wrong question list
         const listEl = document.getElementById("exam-res-wrong-list");
@@ -4526,14 +4629,9 @@
 
       function retryWrong() {
         stopTimer();
-        // Collect wrong question IDs and start practice with them
-        const LETTERS = ["A", "B", "C", "D", "E"];
-        const wrongList = practiceList.filter((q) => {
-          const userIdx = examAnswers[q.id];
-          if (userIdx === undefined) return false;
-          const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
-          return !correctArr.includes(userIdx);
-        });
+        // 從 __lastWrongIds 收集錯題（試卷/練習模式皆可）
+        const wrongIds = window.__lastWrongIds || [];
+        const wrongList = practiceList.filter(q => wrongIds.includes(q.id));
         if (!wrongList.length) {
           showToast("沒有錯題");
           return;
@@ -4543,8 +4641,10 @@
         examAnswers = {};
         practiceList = wrongList;
         practiceIdx = 0;
+        resetPracticeScore();
         clearLastPos();
         showPractice();
+        updatePracticeScoreUI();
         loadPracticeQ();
       }
 
@@ -4897,6 +4997,91 @@
             return `<div class="daily-hist-item">${daysAgo}天前 · ${n}題<br><span style="color:#94a3b8">${examStr}</span></div>`;
           })
           .join("");
+      }
+
+      // ════════════════════════════════════════════
+      //  Sync Panel (cross-device)
+      // ════════════════════════════════════════════
+      function openSyncPanel(){
+        document.getElementById('sync-panel').style.display = 'flex';
+        renderSyncPanel();
+      }
+      function closeSyncPanel(){
+        document.getElementById('sync-panel').style.display = 'none';
+      }
+      async function renderSyncPanel(){
+        const body = document.getElementById('sync-panel-body');
+        if(typeof DentalSync === 'undefined'){
+          body.innerHTML = '<div style="color:#b91c1c">同步模組未載入</div>';
+          return;
+        }
+        const status = DentalSync.getStatus();
+        if(!status.connected){
+          body.innerHTML = '<div style="color:#b91c1c;line-height:1.6">未連線到雲端。<br>請確認首頁已選擇使用者，並重新開啟此頁。</div>';
+          return;
+        }
+        const uid = DentalSync.getUserId();
+        body.innerHTML = '<div style="color:#6b7280">讀取雲端資料中…</div>';
+        let remote;
+        try { remote = await DentalSync.getRemoteSnapshot(); }
+        catch(err){
+          body.innerHTML = '<div style="color:#b91c1c">讀取雲端失敗：' + (err.message||err) + '</div>';
+          return;
+        }
+        const localState = localStorage.getItem(uKey('wrongbook_state'));
+        const localCount = DentalSync.countMarks(localState);
+        const remoteCount = DentalSync.countMarks(remote.wrongbook_state);
+        const remoteTs = remote._ts ? new Date(remote._ts).toLocaleString('zh-TW') : '（雲端尚無資料）';
+        const localTs = parseInt(localStorage.getItem(uid + '__ts')||'0');
+        const localTsStr = localTs ? new Date(localTs).toLocaleString('zh-TW') : '（尚未同步）';
+
+        body.innerHTML =
+          '<div style="background:#f9fafb;border-radius:10px;padding:.8rem 1rem;margin-bottom:.8rem;font-size:.88rem;line-height:1.65">' +
+            '<div style="color:#6b7280;margin-bottom:.4rem">目前使用者：<strong style="color:#374151">' + uid + '</strong></div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.5rem">' +
+              '<div style="background:white;border:1.5px solid #d1d5db;border-radius:8px;padding:.6rem">' +
+                '<div style="font-size:.78rem;color:#6b7280;margin-bottom:.3rem">📱 本機（這台裝置）</div>' +
+                '<div>🚩 收藏：<strong>' + localCount.flagged + '</strong></div>' +
+                '<div>🏷 標記：<strong>' + localCount.marked + '</strong></div>' +
+                '<div style="font-size:.72rem;color:#9ca3af;margin-top:.3rem">' + localTsStr + '</div>' +
+              '</div>' +
+              '<div style="background:white;border:1.5px solid #d1d5db;border-radius:8px;padding:.6rem">' +
+                '<div style="font-size:.78rem;color:#6b7280;margin-bottom:.3rem">☁️ 雲端</div>' +
+                '<div>🚩 收藏：<strong>' + remoteCount.flagged + '</strong></div>' +
+                '<div>🏷 標記：<strong>' + remoteCount.marked + '</strong></div>' +
+                '<div style="font-size:.72rem;color:#9ca3af;margin-top:.3rem">' + remoteTs + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.7rem .9rem;font-size:.82rem;color:#92400e;line-height:1.55;margin-bottom:.8rem">' +
+            '💡 兩邊不一樣時，挑「資料正確」的那邊覆蓋過去：<br>' +
+            '・電腦資料正確 → 在電腦按「⬆ 用本機蓋雲端」，手機再按「⬇ 用雲端蓋本機」<br>' +
+            '・手機資料正確 → 在手機按「⬆ 用本機蓋雲端」，電腦再按「⬇ 用雲端蓋本機」' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">' +
+            '<button onclick="forcePullSync()" style="background:#0d9488;color:white;border:none;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer;font-size:.88rem">⬇ 用雲端蓋本機</button>' +
+            '<button onclick="forcePushSync()" style="background:#7c3aed;color:white;border:none;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer;font-size:.88rem">⬆ 用本機蓋雲端</button>' +
+          '</div>';
+      }
+      async function forcePullSync(){
+        if(!confirm('確定用「雲端」資料覆蓋這台裝置嗎？\n本機目前的標記會被取代。')) return;
+        try {
+          const n = await DentalSync.forcePull();
+          // Reload state
+          const s = localStorage.getItem(uKey('wrongbook_state'));
+          if(s) try{ qState = JSON.parse(s); }catch(e){}
+          updateHomeStats(); updateMatchCount(); renderDailyLog();
+          showToast('✅ 已從雲端拉取 ' + n + ' 項資料');
+          renderSyncPanel();
+        } catch(err){ alert('失敗：' + (err.message||err)); }
+      }
+      async function forcePushSync(){
+        if(!confirm('確定用「本機」資料覆蓋雲端嗎？\n其他裝置下次同步時會被覆蓋。')) return;
+        try {
+          await DentalSync.forcePush();
+          showToast('✅ 已將本機資料上傳到雲端');
+          renderSyncPanel();
+        } catch(err){ alert('失敗：' + (err.message||err)); }
       }
 
       // ════════════════════════════════════════════
@@ -5259,8 +5444,10 @@
         examAnswers = {};
         practiceList = flagged;
         practiceIdx = 0;
+        resetPracticeScore();
         clearLastPos();
         showPractice();
+        updatePracticeScoreUI();
         loadPracticeQ();
       }
 
@@ -5334,19 +5521,34 @@
         for(var i = 0; i < practiceList.length; i++){
           var q = practiceList[i];
           var cls = 'qg-cell';
-          // Determine status
-          var isAnswered = examMode ? (examAnswers[q.id] !== undefined) : (qgridSkipped[i] === false);
-          var isSkipped = qgridSkipped[i] === true;
+
+          // 抓使用者答的選項（試卷模式拿 examAnswers，練習模式拿 practiceAnswers）
+          var userIdx = examMode ? examAnswers[q.id] : practiceAnswers[q.id];
+          var isAnswered = userIdx !== undefined;
+          var isSkipped = qgridSkipped[i] === true && !isAnswered;
           var isFlagged = getS(q.id).flagged;
           var isCurrent = (i === practiceIdx);
 
-          if(isCurrent) cls += ' qg-current';
-          else if(isAnswered && isFlagged) cls += ' qg-answered qg-flagged';
-          else if(isAnswered) cls += ' qg-answered';
-          else if(isFlagged) cls += ' qg-flagged';
-          else if(isSkipped) cls += ' qg-skipped';
+          var label = (i + 1);
+          var titleSuffix = '';
 
-          html += '<div class="' + cls + '" onclick="jumpToIdx(' + i + ')" title="第' + (i+1) + '題">' + (i+1) + '</div>';
+          if(isAnswered){
+            var correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+            var isCorrect = correctArr.includes(userIdx);
+            cls += isCorrect ? ' qg-correct' : ' qg-wrong';
+            titleSuffix = isCorrect ? '（答對）' : '（答錯）';
+          } else if(isSkipped){
+            cls += ' qg-skipped';
+            label = ''; // 跳過題目不顯示數字
+            titleSuffix = '（跳過）';
+          } else {
+            // 未作答：白底灰字
+          }
+
+          if(isFlagged) cls += ' qg-flagged';
+          if(isCurrent) cls += ' qg-current';
+
+          html += '<div class="' + cls + '" onclick="jumpToIdx(' + i + ')" title="第' + (i+1) + '題' + titleSuffix + '">' + label + '</div>';
         }
         el.innerHTML = html;
       }

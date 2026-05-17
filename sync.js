@@ -197,6 +197,53 @@
 
   // ══════════════════════════════════════════
 
+  /** Force pull: overwrite local with cloud data, no timestamp check */
+  function forcePullFromCloud() {
+    if (!_db || !_userId) return Promise.reject(new Error("尚未連線"));
+    _syncing = true;
+    return readRemote().then(function(remote) {
+      var applied = 0;
+      SYNC_KEYS.forEach(function(sk) {
+        if (remote[sk] !== undefined) {
+          localStorage.setItem(_userId + "_" + sk, remote[sk]);
+          applied++;
+        }
+      });
+      localStorage.setItem(_userId + "__ts", String(remote._ts || Date.now()));
+      return applied;
+    }).finally(function() { _syncing = false; });
+  }
+
+  /** Force push: overwrite cloud with local data */
+  function forcePushToCloud() {
+    if (!_db || !_userId) return Promise.reject(new Error("尚未連線"));
+    var now = Date.now();
+    localStorage.setItem(_userId + "__ts", String(now));
+    return pushToFirebase().then(function() { return now; });
+  }
+
+  /** Read remote without applying — for diff display */
+  function getRemoteSnapshot() {
+    if (!_db || !_userId) return Promise.reject(new Error("尚未連線"));
+    return readRemote();
+  }
+
+  /** Count flagged + status entries from a wrongbook_state JSON string */
+  function countMarks(stateStr) {
+    if (!stateStr) return { flagged: 0, marked: 0, total: 0 };
+    try {
+      var obj = JSON.parse(stateStr);
+      var flagged = 0, marked = 0, total = 0;
+      Object.keys(obj).forEach(function(id) {
+        var s = obj[id] || {};
+        total++;
+        if (s.flagged) flagged++;
+        if (s.status && s.status !== "none") marked++;
+      });
+      return { flagged: flagged, marked: marked, total: total };
+    } catch (e) { return { flagged: 0, marked: 0, total: 0 }; }
+  }
+
   var DentalSync = {
     init: function () {
       if (_initialized) return Promise.resolve();
@@ -237,6 +284,12 @@
     },
 
     pushAll: pushToFirebase,
+
+    forcePull: forcePullFromCloud,
+    forcePush: forcePushToCloud,
+    getRemoteSnapshot: getRemoteSnapshot,
+    countMarks: countMarks,
+    getUserId: function() { return _userId; },
 
     getStatus: function () {
       return {

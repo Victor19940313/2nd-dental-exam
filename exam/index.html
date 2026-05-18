@@ -6813,6 +6813,7 @@ ${JSON.stringify(list, null, 2)}
                   ? `<button onclick="saveChapterEdit('${curCh.id}')" title="儲存" style="color:#16a34a">💾</button>
                      <button onclick="cancelChapterEdit()" title="取消">✕</button>`
                   : `<button onclick="startEditChapter('${curCh.id}')" title="編輯內容（可貼圖）">✏️</button>
+                     <button onclick="aiChatModifyChapter('${curCh.id}')" title="用自然語言告訴 AI 改什麼">💬</button>
                      <button onclick="reorganizeChapter('${curCh.id}')" title="叫 AI 重新整理這章">🔄</button>
                      <button onclick="deleteChapter('${curCh.id}')" title="刪除整章">🗑</button>`}
               </div>
@@ -7086,6 +7087,77 @@ ${qBlocks}
           if (btn) { btn.disabled = false; btn.innerHTML = orig; }
         }
       }
+      // ── 用自然語言告訴 AI 怎麼改章節 ──
+      async function aiChatModifyChapter(chId){
+        loadNotebook();
+        const ch = notebook.chapters.find(c => c.id === chId);
+        if (!ch) { showToast('找不到章節'); return; }
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        const instruction = prompt(
+          `對「${ch.name}」這章，告訴 AI 你想怎麼改：\n\n例如：\n・加一個臨床決策表格\n・把神經 fiber 那段擴充，加傳導速度資料\n・砍掉重複的部分\n・加一個易混淆陷阱 callout\n・最後加「考點對照表」整理所有易考角度\n・把英文補上中文翻譯`,
+          ''
+        );
+        if (!instruction || !instruction.trim()) return;
+
+        showToast('🤖 AI 改寫中...');
+        const prompt2 = `你是牙醫國考筆記整理員。
+
+【當前章節】
+標題：${ch.name}
+領域：${ch.domain || ''}
+子主題：${ch.subtopic || ''}
+內容：
+${ch.content}
+
+【使用者指令】
+${instruction.trim()}
+
+【任務】
+依使用者指令修改章節內容。維持原有的 Markdown 排版風格：
+- ## h2 ### h3 #### h4 標題
+- **粗體** 用於重要主項目名稱（會被反白 highlight）
+- **子標籤詞**（特點/功能/機制/臨床 等）接冒號 → 會自動變灰藍小字
+- - 條列為主，每點獨佔一行
+- | 表格 | 做對照
+- > 💡 重點 / > ⚠️ 警告 / > 🏥 臨床 / > 📝 易考 用 callout 區塊
+- [[概念]] 包關鍵詞 → 變紫色標籤
+
+【規範】
+- 維持「將來能答對同概念題目」的核心定位（不是寫題目詳解）
+- 不要刪除有用的舊資訊，除非使用者明確要求
+- 結尾保留「### 💡 易考重點」段落
+
+【回 JSON】
+{"content": "完整修改後的 Markdown"}`;
+
+        try {
+          const raw = await callGemini(prompt2, REORGANIZE_SCHEMA);
+          const dec = extractJSON(raw);
+          if (!dec.content) throw new Error('AI 沒有回新內容');
+          // 存舊版到歷史
+          notebook.history.unshift({
+            ts: Date.now(),
+            action: 'ai_modify',
+            chapterId: chId,
+            snapshot: { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] },
+            note: '依指令改寫「' + ch.name + '」',
+            reasoning: '使用者指令：' + instruction.trim()
+          });
+          ch.content = dec.content;
+          ch.updatedAt = Date.now();
+          trimHistory();
+          saveNotebook();
+          renderNotebook();
+          showToast('✓ AI 已改寫，不滿意可到 🕓 歷史 撤銷');
+        } catch(err) {
+          alert('AI 改寫失敗：\n\n' + err.message);
+        }
+      }
+
       function gotoQuestionFromNotebook(qid){
         const q = QS.find(x => x.id === qid);
         if (!q) { showToast('找不到題目'); return; }

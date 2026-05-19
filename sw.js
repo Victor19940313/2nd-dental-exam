@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v32-fixexam2';
+const CACHE_NAME = 'dental-all-v33-repo-sync';
 const PRECACHE = [
   './',
   './index.html',

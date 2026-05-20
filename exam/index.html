@@ -7602,6 +7602,19 @@ ${instruction.trim()}
         }).join('\n');
         return s;
       }
+      function _renderCellInline(c){
+        // 還原 <br> 換行（escapeHtml 把 <br> 變成 &lt;br&gt;）
+        c = c.replace(/&lt;br\s*\/?\s*&gt;/gi, '<br>');
+        // 粗體
+        c = c.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+        // 斜體 *xxx* （但不要碰已經是粗體的）
+        c = c.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+        // inline code
+        c = c.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+        // 概念標籤 [[xxx]]
+        c = c.replace(/\[\[([^\]]+)\]\]/g, '<span class="ctag">$1</span>');
+        return c;
+      }
       function renderMDTables(s){
         const re = /((?:^\|[^\n]+\|\n)+)/gm;
         return s.replace(re, (block) => {
@@ -7609,7 +7622,7 @@ ${instruction.trim()}
           if (lines.length < 2) return block;
           // second line must be alignment row
           if (!/^\|[\s\-:|]+\|$/.test(lines[1])) return block;
-          const cells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
+          const cells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => _renderCellInline(c.trim()));
           const out = ['<table class="nb-table">'];
           out.push('<tr>' + cells(lines[0]).map(c => '<th>'+c+'</th>').join('') + '</tr>');
           for (let i = 2; i < lines.length; i++) {

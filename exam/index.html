@@ -8027,8 +8027,12 @@ ${instruction.trim()}
           html += '<div style="font-size:.78rem;color:#0369a1;font-weight:700;margin:1.2rem 0 .5rem">💡 同領域的相關章節（' + topicHit.length + ' 章）</div>';
           topicHit.forEach(c => { html += renderPeekChapter(c, false); });
         }
+        // 開啟完整筆記本：優先導到第一個 directHit，再來 topicHit，都沒有才開預設
+        const bestCh = directHit[0] || topicHit[0];
+        const btnLabel = bestCh ? `🗂 開啟「${escapeHtml(bestCh.name).slice(0,30)}」` : '🗂 開啟完整筆記本';
+        const btnOnclick = bestCh ? `openNotebookAt('${bestCh.id}')` : 'closePeekNotebook();showNotebook()';
         html += '<div style="text-align:center;margin-top:1.2rem;padding-top:.8rem;border-top:1px solid #e5e7eb">' +
-          '<button onclick="closePeekNotebook();showNotebook()" style="background:white;color:#7c3aed;border:1.5px solid #c084fc;padding:.5rem 1.1rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem">🗂 開啟完整筆記本</button>' +
+          '<button onclick="' + btnOnclick + '" style="background:white;color:#7c3aed;border:1.5px solid #c084fc;padding:.5rem 1.1rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.85rem">' + btnLabel + '</button>' +
           '</div>';
         body.innerHTML = html;
       }
@@ -8036,13 +8040,19 @@ ${instruction.trim()}
         const badge = isDirect
           ? '<span style="background:#dcfce7;color:#15803d;padding:1px 8px;border-radius:8px;font-size:.7rem;margin-left:.4rem">已收錄</span>'
           : '';
+        const goBtn = '<button onclick="event.stopPropagation();openNotebookAt(\'' + c.id + '\')" title="打開完整筆記本並跳到這章" style="background:#7c3aed;color:white;border:none;padding:2px 10px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;margin-left:.4rem">→ 前往此章</button>';
         return '<details class="peek-ch" ' + (isDirect ? 'open' : '') + ' style="background:#fafafa;border:1.5px solid #e5e7eb;border-radius:10px;margin-bottom:.6rem;padding:.4rem .7rem">' +
-          '<summary style="cursor:pointer;font-weight:800;color:#374151;padding:.3rem 0;font-size:.95rem">' +
-            escapeHtml(c.name) + badge +
-            ' <span style="color:#9ca3af;font-size:.75rem;font-weight:400">（' + (c.qids||[]).length + ' 題）</span>' +
+          '<summary style="cursor:pointer;font-weight:800;color:#374151;padding:.3rem 0;font-size:.95rem;display:flex;align-items:center;justify-content:space-between;gap:.4rem;flex-wrap:wrap">' +
+            '<span>' + escapeHtml(c.name) + badge + ' <span style="color:#9ca3af;font-size:.75rem;font-weight:400">（' + (c.qids||[]).length + ' 題）</span></span>' +
+            goBtn +
           '</summary>' +
           '<div class="nb-chapter-content" style="padding:.5rem 0 .3rem;font-size:.9rem">' + renderMarkdown(c.content) + '</div>' +
           '</details>';
+      }
+      function openNotebookAt(chId){
+        closePeekNotebook();
+        currentChapterId = chId;
+        showNotebook();
       }
       function closePeekNotebook(){
         document.getElementById('peek-overlay').style.display = 'none';

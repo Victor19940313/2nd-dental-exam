@@ -3148,6 +3148,7 @@
         </div>
         <div class="nb-toolbar-actions">
           <button class="nb-tb-btn" onclick="showOnboarding()" title="入門指引">📖 入門</button>
+          <button class="nb-tb-btn" id="btn-pending" onclick="openPendingModal()" title="之前整理失敗的題目（可一鍵重試）" style="display:none;background:#fef3c7;border-color:#fbbf24;color:#92400e">📥 待整理</button>
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題">🗂 重整目錄</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
@@ -3187,14 +3188,14 @@
           <input type="password" id="ai-key-input" placeholder="AIzaSy..." style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
           <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">使用模型</label>
           <select id="ai-model-select" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-size:.85rem">
-            <option value="gemini-3.5-flash">gemini-3.5-flash（🆕 最新、最聰明）</option>
-            <option value="gemini-3-pro-preview">gemini-3-pro-preview（最強，但額度小）</option>
-            <option value="gemini-3-flash">gemini-3-flash（聰明、免費）</option>
-            <option value="gemini-2.5-flash">gemini-2.5-flash（穩定推薦）</option>
-            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite（額度最高，適合大量整理）</option>
-            <option value="gemini-2.5-pro">gemini-2.5-pro（聰明，每天 100 次上限）</option>
-            <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp（實驗版）</option>
-            <option value="gemini-1.5-flash">gemini-1.5-flash（舊版備用）</option>
+            <option value="gemini-3.5-flash">gemini-3.5-flash（🆕 最新、最聰明｜每天 500 次）</option>
+            <option value="gemini-3-pro-preview">gemini-3-pro-preview（最強推理｜每天 100 次）</option>
+            <option value="gemini-3-flash">gemini-3-flash（聰明｜每天 500 次）</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash（穩定推薦｜每天 500 次）</option>
+            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite（額度最高，適合大量整理｜每天 1500 次）</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro（聰明｜每天 100 次）</option>
+            <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp（實驗版｜每天 250 次）</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash（舊版備用｜每天 50 次）</option>
           </select>
         </details>
 
@@ -3284,6 +3285,16 @@
         <div class="modal-btns">
           <button class="btn-cancel" onclick="closeHistoryModal()">關閉</button>
         </div>
+      </div>
+    </div>
+
+    <div id="pending-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closePendingModal()">
+      <div style="background:white;border-radius:14px;max-width:640px;width:100%;margin-top:2rem;padding:1.2rem;box-shadow:0 12px 36px rgba(0,0,0,.3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+          <h3 style="margin:0">📥 待整理筆記</h3>
+          <button onclick="closePendingModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#6b7280">×</button>
+        </div>
+        <div id="pending-body" style="font-size:.85rem"></div>
       </div>
     </div>
 
@@ -6290,7 +6301,8 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
           .finally(() => { _nbPending--; _updateNbBadge(); });
       }
 
-      async function addQToNotebook(q){
+      async function addQToNotebook(q, opts){
+        opts = opts || {};
         try {
           loadNotebook();
           const prompt = buildAIPrompt(q, notebook.chapters);
@@ -6298,12 +6310,167 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
           const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
           const dec = extractJSON(raw);
           applyAIDecision(dec, q);
+          // 整理成功 → 從待整理佇列移除（如果在裡面）
+          removeFromPendingQueue(q.id);
+          return true;
         } catch(err) {
-          if (err.message !== 'no_key') {
-            console.error(err);
-            alert('❌ AI 整理失敗（題目 ' + (q.meta||q.id) + '）\n\n' + err.message);
+          if (err.message === 'no_key') return false;
+          console.error('addQToNotebook failed', err);
+          // 失敗 → 推進待整理佇列
+          const errMsg = (err.message || '').slice(0, 200);
+          addToPendingQueue(q, errMsg);
+          if (!opts.silent) {
+            // 用 toast 代替 alert，比較不打擾；429 / 503 給特別提示
+            const is429 = /429|quota|exceed/i.test(errMsg);
+            const is503 = /503|UNAVAILABLE|high demand/i.test(errMsg);
+            if (is429) showToast('⚠️ Gemini 撞到額度上限 → 已加進「📥 待整理」');
+            else if (is503) showToast('⚠️ Gemini 暫時忙線 → 已加進「📥 待整理」');
+            else showToast('❌ AI 失敗 → 已加進「📥 待整理」');
           }
+          updatePendingBadge();
+          return false;
         }
+      }
+
+      // ══════════════════════════════════════════
+      // 待整理佇列（AI 整理失敗的題目）
+      // 用 localStorage `${user}_notebook_pending` 存
+      // 結構: [{ qid, qmeta, qsubject, addedAt, lastError, retries }]
+      // ══════════════════════════════════════════
+      function getPendingQueue(){
+        try {
+          const raw = localStorage.getItem(uKey('notebook_pending'));
+          return raw ? JSON.parse(raw) : [];
+        } catch(e) { return []; }
+      }
+      function savePendingQueue(arr){
+        try {
+          localStorage.setItem(uKey('notebook_pending'), JSON.stringify(arr));
+        } catch(e) { console.error('save pending failed', e); }
+      }
+      function addToPendingQueue(q, errMsg){
+        const arr = getPendingQueue();
+        const existing = arr.find(x => x.qid === q.id);
+        if (existing) {
+          existing.lastError = errMsg;
+          existing.retries = (existing.retries || 0) + 1;
+          existing.addedAt = Date.now();
+        } else {
+          arr.unshift({
+            qid: q.id,
+            qmeta: q.meta || q.id,
+            qsubject: q.subject || '',
+            addedAt: Date.now(),
+            lastError: errMsg,
+            retries: 0
+          });
+        }
+        savePendingQueue(arr);
+      }
+      function removeFromPendingQueue(qid){
+        const arr = getPendingQueue();
+        const filtered = arr.filter(x => x.qid !== qid);
+        if (filtered.length !== arr.length) {
+          savePendingQueue(filtered);
+          updatePendingBadge();
+        }
+      }
+      function updatePendingBadge(){
+        const btn = document.getElementById('btn-pending');
+        if (!btn) return;
+        const arr = getPendingQueue();
+        if (arr.length === 0) {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = '';
+          btn.innerHTML = '📥 待整理 <span style="background:#dc2626;color:white;padding:0 6px;border-radius:8px;font-size:.7rem;margin-left:.2rem">' + arr.length + '</span>';
+        }
+      }
+      function openPendingModal(){
+        const arr = getPendingQueue();
+        const overlay = document.getElementById('pending-overlay');
+        const body = document.getElementById('pending-body');
+        if (!overlay || !body) return;
+        if (arr.length === 0) {
+          body.innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af"><div style="font-size:2.5rem">📭</div><div style="font-weight:700;margin-top:.5rem;color:#374151">沒有待整理的題目</div></div>';
+          overlay.style.display = 'flex';
+          return;
+        }
+        let html = '<div style="font-size:.85rem;color:#6b7280;margin-bottom:.6rem;line-height:1.6">這些題目之前 AI 整理失敗（額度上限 / 模型忙線 / 其他錯誤）。<br>按「<strong>🚀 一鍵整理全部</strong>」會逐一重試，仍失敗的留在這裡。</div>';
+        html += '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">';
+        html += '<button onclick="retryAllPending()" style="background:#7c3aed;color:white;border:none;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🚀 一鍵整理全部</button>';
+        html += '<button onclick="clearAllPending()" style="background:white;color:#dc2626;border:1.5px solid #fca5a5;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🗑 全部清空</button>';
+        html += '</div>';
+        html += arr.map(item => {
+          const errBadge = item.lastError ? '<div style="font-size:.72rem;color:#dc2626;margin-top:.25rem;line-height:1.4;word-break:break-all">' + escapeHtml(item.lastError) + '</div>' : '';
+          const retryInfo = item.retries > 0 ? '<span style="color:#9ca3af;font-size:.72rem;margin-left:.4rem">已重試 ' + item.retries + ' 次</span>' : '';
+          return '<div style="border:1.5px solid #fde68a;background:#fffbeb;border-radius:8px;padding:.55rem .75rem;margin-bottom:.5rem">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">' +
+              '<span style="font-weight:700;font-size:.88rem">' + escapeHtml(item.qmeta) + retryInfo + '</span>' +
+              '<span style="display:flex;gap:.3rem">' +
+                '<button onclick="retryOnePending(\'' + item.qid + '\')" style="background:#7c3aed;color:white;border:none;padding:3px 9px;border-radius:5px;font-size:.75rem;font-weight:700;cursor:pointer">↻ 重試</button>' +
+                '<button onclick="removeFromPendingQueue(\'' + item.qid + '\');openPendingModal();" style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:3px 9px;border-radius:5px;font-size:.75rem;font-weight:700;cursor:pointer">✕</button>' +
+              '</span>' +
+            '</div>' + errBadge + '</div>';
+        }).join('');
+        body.innerHTML = html;
+        overlay.style.display = 'flex';
+      }
+      function closePendingModal(){
+        const overlay = document.getElementById('pending-overlay');
+        if (overlay) overlay.style.display = 'none';
+      }
+      function clearAllPending(){
+        if (!confirm('清空所有待整理題目？\n\n（題目不會消失，只是不再排隊整理）')) return;
+        savePendingQueue([]);
+        updatePendingBadge();
+        openPendingModal();
+      }
+      async function retryOnePending(qid){
+        const q = QS.find(x => x.id === qid);
+        if (!q) { showToast('找不到題目資料'); removeFromPendingQueue(qid); openPendingModal(); return; }
+        showToast('🤖 重試中：' + (q.meta || q.id));
+        const ok = await addQToNotebook(q, { silent: true });
+        if (ok) showToast('✓ 整理成功：' + (q.meta || q.id));
+        else {
+          const arr = getPendingQueue();
+          const item = arr.find(x => x.qid === qid);
+          showToast('❌ 仍失敗：' + (item ? item.lastError.slice(0,60) : ''));
+        }
+        openPendingModal();
+      }
+      async function retryAllPending(){
+        const arr = getPendingQueue();
+        if (arr.length === 0) return;
+        if (!confirm('一鍵整理 ' + arr.length + ' 題？\n\n會逐一送進 AI 整理，過程中可能還是會撞到額度。')) return;
+        closePendingModal();
+        let ok = 0, fail = 0;
+        const total = arr.length;
+        // 用 toast 顯示進度
+        for (let i = 0; i < arr.length; i++) {
+          const item = arr[i];
+          const q = QS.find(x => x.id === item.qid);
+          if (!q) {
+            removeFromPendingQueue(item.qid);
+            continue;
+          }
+          showToast('🤖 整理中 ' + (i+1) + '/' + total + '：' + (q.meta || q.id));
+          const success = await addQToNotebook(q, { silent: true });
+          if (success) ok++;
+          else fail++;
+          // 撞到 429 連續 3 次 → 提早停（避免一直白噴）
+          if (fail >= 3) {
+            const lastErr = (getPendingQueue()[0]||{}).lastError || '';
+            if (/429|quota/i.test(lastErr)) {
+              showToast('⚠️ 連續撞到額度上限，停止整理');
+              break;
+            }
+          }
+          // 小延遲避免撞 RPM
+          if (i < arr.length - 1) await new Promise(r => setTimeout(r, 1500));
+        }
+        showToast('✓ 整理完成：成功 ' + ok + '，失敗 ' + fail);
+        openPendingModal();
       }
 
       function applyAIDecision(dec, q){
@@ -6430,6 +6597,7 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
         const nb = document.getElementById('btn-notebook');
         if (nb) nb.classList.add('active');
         renderNotebook();
+        updatePendingBadge();
         // 重置搜尋欄
         const inp = document.getElementById('nb-search-input');
         if (inp) { inp.value = ''; onNotebookSearch(); }

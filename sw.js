@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v41-peek-jump';
+const CACHE_NAME = 'dental-all-v42-pending';
 const PRECACHE = [
   './',
   './index.html',

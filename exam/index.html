@@ -6632,6 +6632,207 @@ ${JSON.stringify(list, null, 2)}
         }
       }
 
+      // 刪除一張圖（X 按鈕）
+      function removeImgFromChapter(urlEnc){
+        const url = decodeURIComponent(urlEnc);
+        if (!confirm('刪掉這張圖？')) return;
+        let changed = false;
+        const re = new RegExp('!\\[[^\\]]*\\]\\(' + _escapeRegExp(url) + '\\)\\n?', 'g');
+        notebook.chapters.forEach(ch => {
+          if (!ch.content || !ch.content.includes(url)) return;
+          ch.content = ch.content.replace(re, '');
+          ch.updatedAt = Date.now();
+          changed = true;
+        });
+        if (changed) {
+          saveNotebook();
+          renderNotebook();
+          showToast('✓ 已刪除');
+        }
+      }
+
+      // ══════════════════════════════════════════
+      // Wilson 圖庫（從 Wilson PDF 抽出來的解剖 / 臨床圖）
+      // ══════════════════════════════════════════
+      const WILSON_IMG_BASE = 'https://cdn.jsdelivr.net/gh/Victor19940313/2nd-dental-exam@main/wilson-images/';
+      let _wilsonIndex = null;
+      let _wilsonIndexLoading = null;
+      async function loadWilsonIndex(){
+        if (_wilsonIndex) return _wilsonIndex;
+        if (_wilsonIndexLoading) return _wilsonIndexLoading;
+        _wilsonIndexLoading = fetch(WILSON_IMG_BASE + 'index.json')
+          .then(r => r.ok ? r.json() : Promise.reject(new Error('index.json 載不到')))
+          .then(arr => { _wilsonIndex = arr; return arr; })
+          .catch(err => { _wilsonIndexLoading = null; throw err; });
+        return _wilsonIndexLoading;
+      }
+
+      // 從章節內容抓關鍵字（用來預篩圖庫）
+      function _extractChapterKeywords(ch){
+        const kws = new Set();
+        const add = (s) => {
+          if (!s) return;
+          // 抓出英文單字（≥3 字母）與中文 2-6 字片段
+          (s.match(/[A-Za-z][A-Za-z\-]{2,}/g) || []).forEach(w => kws.add(w.toLowerCase()));
+          (s.match(/[一-鿿]{2,6}/g) || []).forEach(w => kws.add(w));
+        };
+        add(ch.name);
+        add(ch.subtopic);
+        (ch.concepts || []).forEach(add);
+        // 從 content 抓 ## / ### 標題與 [[標籤]]
+        const content = ch.content || '';
+        (content.match(/^#{1,4}\s+(.+)$/gm) || []).forEach(line => add(line.replace(/^#+\s+/, '')));
+        (content.match(/\[\[([^\]]+)\]\]/g) || []).forEach(s => add(s.replace(/\[\[|\]\]/g, '')));
+        return Array.from(kws);
+      }
+
+      // 用關鍵字幫圖庫打分（越多關鍵字命中，分數越高）
+      function _scoreImage(img, keywords){
+        const blob = ((img.caption_before||'') + ' ' + (img.caption_after||'') + ' ' + (img.nearest_heading||'')).toLowerCase();
+        if (!blob.trim()) return 0;
+        let score = 0;
+        keywords.forEach(kw => {
+          if (!kw) return;
+          const k = kw.toLowerCase();
+          if (blob.includes(k)) score += k.length >= 4 ? 3 : 1;
+        });
+        return score;
+      }
+
+      // 按下「🖼 AI 自動放圖」
+      async function aiAutoPlaceImages(chId){
+        loadNotebook();
+        const ch = notebook.chapters.find(c => c.id === chId);
+        if (!ch) { showToast('找不到章節'); return; }
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        showToast('🔍 載入 Wilson 圖庫...');
+        let idx;
+        try {
+          idx = await loadWilsonIndex();
+        } catch (err) {
+          showToast('❌ 圖庫載入失敗：' + err.message);
+          return;
+        }
+        // 預篩：用章節關鍵字找候選圖（top 30）
+        const kws = _extractChapterKeywords(ch);
+        const scored = idx.map(img => ({ img, score: _scoreImage(img, kws) }))
+                          .filter(x => x.score > 0)
+                          .sort((a, b) => b.score - a.score)
+                          .slice(0, 30);
+        if (scored.length === 0) {
+          showToast('Wilson 圖庫沒有跟這章節相關的圖');
+          return;
+        }
+        // 把候選圖的 metadata 餵給 AI（只送 metadata，不送圖檔）
+        const candidates = scored.map(x => ({
+          id: x.img.id,
+          source: x.img.source + ' p.' + x.img.page,
+          caption_before: (x.img.caption_before||'').slice(0, 120),
+          caption_after: (x.img.caption_after||'').slice(0, 120),
+          nearest_heading: x.img.nearest_heading || '',
+        }));
+        const prompt = `你是牙醫國考筆記編輯助手。我有一份章節筆記，要從 Wilson 圖庫挑出最適合配進去的圖。
+
+【章節資訊】
+標題：${ch.name}
+subtopic：${ch.subtopic || ''}
+概念：${(ch.concepts || []).join('、')}
+
+【章節內容】
+${(ch.content || '').slice(0, 4000)}
+
+【候選圖庫（${candidates.length} 張）】
+${JSON.stringify(candidates, null, 2)}
+
+【任務】
+從候選圖挑 1–5 張最相關的（寧可少而精，不相關的圖**不要硬塞**），決定每張要插在哪個段落之後。
+
+【規則】
+- 只能挑跟筆記內容**強相關**的圖；caption 看起來不對就不要選
+- 每張圖指定要插在哪個 "after_heading"：用筆記裡實際存在的 ### 標題完整文字（包含 emoji）
+  例：### 🗂 各層對照 → after_heading = "🗂 各層對照"
+  例：### 🏥 臨床意義 → after_heading = "🏥 臨床意義"
+- caption：圖片中文簡短說明（≤20 字）
+- 如果完全沒有相關的圖，回 placements: []
+
+【回 JSON】
+{ "placements": [ { "image_id": 數字, "after_heading": "...", "caption": "..." } ] }`;
+        const schema = {
+          type: 'object',
+          properties: {
+            placements: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  image_id: { type: 'integer' },
+                  after_heading: { type: 'string' },
+                  caption: { type: 'string' }
+                },
+                required: ['image_id', 'after_heading', 'caption']
+              }
+            }
+          },
+          required: ['placements']
+        };
+        showToast('🤖 AI 挑圖中...');
+        let dec;
+        try {
+          const raw = await callGemini(prompt, schema);
+          dec = extractJSON(raw);
+        } catch (err) {
+          showToast('❌ AI 失敗：' + (err.message || '').slice(0, 100));
+          return;
+        }
+        const placements = (dec && dec.placements) || [];
+        if (placements.length === 0) {
+          showToast('AI 認為沒有適合的圖可以放');
+          return;
+        }
+        // 存舊版到歷史
+        notebook.history.unshift({
+          ts: Date.now(),
+          action: 'auto_place_imgs',
+          chapterId: ch.id,
+          snapshot: { name: ch.name, content: ch.content, qids: [...(ch.qids||[])], concepts: [...(ch.concepts||[])] },
+          note: '自動放圖：' + ch.name
+        });
+        trimHistory();
+        // 把圖片 markdown 插進對應段落後面
+        let content = ch.content || '';
+        let inserted = 0;
+        placements.forEach(p => {
+          const img = idx.find(x => x.id === p.image_id);
+          if (!img) return;
+          const url = WILSON_IMG_BASE + img.file;
+          const imgMd = `\n\n![${p.caption}|medium](${url})\n`;
+          // 找對應的 heading
+          const heading = (p.after_heading || '').trim();
+          if (heading) {
+            // 寬鬆比對：允許 ### 標題完整、或部分文字
+            const headingPattern = heading.replace(/^#+\s*/, '');
+            const re = new RegExp('(^#{2,4}\\s+.*' + _escapeRegExp(headingPattern) + '.*$)', 'm');
+            if (re.test(content)) {
+              content = content.replace(re, '$1' + imgMd);
+              inserted++;
+              return;
+            }
+          }
+          // 找不到對應 heading → 直接附到章節最後
+          content = content + imgMd;
+          inserted++;
+        });
+        ch.content = content;
+        ch.updatedAt = Date.now();
+        saveNotebook();
+        renderNotebook();
+        showToast('✓ 已放 ' + inserted + ' 張圖（不喜歡可按 X 刪）');
+      }
+
       // ── GitHub 圖床上傳 ──
       async function uploadImageToGitHub(blob){
         const token = getGithubToken();
@@ -6864,6 +7065,7 @@ ${JSON.stringify(list, null, 2)}
                      <button onclick="cancelChapterEdit()" title="取消">✕</button>`
                   : `<button onclick="startEditChapter('${curCh.id}')" title="編輯內容（可貼圖）">✏️</button>
                      <button onclick="aiChatModifyChapter('${curCh.id}')" title="用自然語言告訴 AI 改什麼">💬</button>
+                     <button onclick="aiAutoPlaceImages('${curCh.id}')" title="從 Wilson 圖庫自動配圖到對應段落">🖼 AI 配圖</button>
                      <button onclick="reorganizeChapter('${curCh.id}')" title="叫 AI 重新整理這章">🔄</button>
                      <button onclick="deleteChapter('${curCh.id}')" title="刪除整章">🗑</button>`}
               </div>
@@ -7311,6 +7513,7 @@ ${instruction.trim()}
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',-10)" title="縮小">−</button>
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',+10)" title="放大">+</button>
               <button onclick="event.stopPropagation();resetImgSize('${urlEnc}')" title="重置成中等">⟲</button>
+              <button onclick="event.stopPropagation();removeImgFromChapter('${urlEnc}')" title="刪除這張圖" style="color:#dc2626">✕</button>
             </span>
           </span>`;
         });

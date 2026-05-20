@@ -7070,7 +7070,6 @@ ${JSON.stringify(candidates, null, 2)}
         const subjBadge = curCh._mainSubj
           ? `<span style="display:inline-block;background:${SCOLOR[curCh._mainSubj]};color:white;padding:2px 10px;border-radius:6px;font-size:.78rem;font-weight:800;margin-right:.4rem">${SMAP[curCh._mainSubj]}</span>`
           : '';
-        const curDomain = chapterDomain(curCh);
         const curDmeta = DOMAIN_META[curDomain] || { emoji:'📁', color:'#9ca3af' };
         const domainBadge = `<span onclick="changeChapterDomain('${curCh.id}')" title="點擊更改領域" style="display:inline-block;background:${curDmeta.color};color:white;padding:2px 10px;border-radius:6px;font-size:.78rem;font-weight:800;margin-right:.4rem;cursor:pointer">${curDmeta.emoji} ${escapeHtml(curDomain)}</span>`;
         const prevCh = allChs[curIdx - 1];

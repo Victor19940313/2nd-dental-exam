@@ -807,6 +807,10 @@
         background: #fef3c7;
         color: #b45309;
       }
+      .btn-mark-guessed {
+        background: #dbeafe;
+        color: #2563eb;
+      }
       .btn-mark-understood {
         background: #dcfce7;
         color: #15803d;
@@ -996,6 +1000,9 @@
       }
       .dot-learning {
         background: var(--amber);
+      }
+      .dot-guessed {
+        background: #2563eb;
       }
       .dot-understood {
         background: var(--green);
@@ -1191,6 +1198,10 @@
       .a-learning {
         background: #fef3c7;
         color: #b45309;
+      }
+      .a-guessed {
+        background: #dbeafe;
+        color: #2563eb;
       }
       .a-understood {
         background: #dcfce7;
@@ -2494,6 +2505,13 @@
             </div>
             <div
               class="ts-chip"
+              data-sts="guessed"
+              onclick="setSidebarStatus(this, 'guessed')"
+            >
+              🤔 猜的
+            </div>
+            <div
+              class="ts-chip"
               data-sts="learning"
               onclick="setSidebarStatus(this, 'learning')"
             >
@@ -2527,6 +2545,12 @@
                 -
               </div>
               <div class="lbl">🟢 簡單</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: #2563eb" id="st-guessed">
+                -
+              </div>
+              <div class="lbl">🤔 猜的</div>
             </div>
             <div class="stat-item">
               <div class="num" style="color: var(--amber)" id="st-learning">
@@ -2749,6 +2773,13 @@
               </div>
               <div
                 class="chip chip-status"
+                data-status="guessed"
+                onclick="setStatusMode(this)"
+              >
+                🤔 猜的
+              </div>
+              <div
+                class="chip chip-status"
                 data-status="learning"
                 onclick="setStatusMode(this)"
               >
@@ -2889,6 +2920,13 @@
             🟢 簡單
           </button>
           <button
+            class="btn-mark btn-mark-guessed"
+            id="mk-guessed"
+            onclick="markQ('guessed')"
+          >
+            🤔 猜的
+          </button>
+          <button
             class="btn-mark btn-mark-learning"
             id="mk-learning"
             onclick="markQ('learning')"
@@ -3010,6 +3048,13 @@
           onclick="setBF(this, 'status', 'understood')"
         >
           🟢 簡單
+        </div>
+        <div
+          class="bf-chip"
+          data-bf="guessed"
+          onclick="setBF(this, 'status', 'guessed')"
+        >
+          🤔 猜的
         </div>
         <div
           class="bf-chip"
@@ -4351,7 +4396,7 @@
       }
 
       function updateHomeStats() {
-        const c = { give_up: 0, learning: 0, understood: 0 };
+        const c = { give_up: 0, learning: 0, understood: 0, guessed: 0 };
         QS.forEach((q) => {
           const s = getS(q.id).status;
           if (c[s] !== undefined) c[s]++;
@@ -4360,6 +4405,8 @@
         document.getElementById("st-giveup").textContent = c.give_up;
         document.getElementById("st-learning").textContent = c.learning;
         document.getElementById("st-understood").textContent = c.understood;
+        const stGuessed = document.getElementById("st-guessed");
+        if (stGuessed) stGuessed.textContent = c.guessed;
       }
 
       // ════════════════════════════════════════════
@@ -4655,7 +4702,7 @@
 
       function updateMarkButtons(id) {
         const st = getS(id).status;
-        ["give_up", "learning", "understood"].forEach((s) => {
+        ["give_up", "learning", "guessed", "understood"].forEach((s) => {
           const b = document.getElementById("mk-" + s);
           if (b) b.classList.toggle("active", st === s);
         });
@@ -4675,6 +4722,7 @@
           {
             give_up: "🔴 送他吧",
             learning: "🟡 再努力!",
+            guessed: "🤔 猜的",
             understood: "🟢 簡單",
             none: "標記取消",
           }[qState[q.id].status],
@@ -5187,7 +5235,7 @@
         if (type === "status") {
           document
             .querySelectorAll(
-              '.bf-chip[data-bf="all"],[data-bf="give_up"],[data-bf="learning"],[data-bf="understood"]',
+              '.bf-chip[data-bf="all"],[data-bf="give_up"],[data-bf="learning"],[data-bf="guessed"],[data-bf="understood"]',
             )
             .forEach((c) => c.classList.remove("sel"));
           el.classList.add("sel");
@@ -5235,18 +5283,21 @@
         none: "─ 未標記",
         give_up: "🔴 送他吧",
         learning: "🟡 再努力!",
+        guessed: "🤔 猜的",
         understood: "🟢 簡單",
       };
       const SCLS = {
         none: "a-none",
         give_up: "a-give_up",
         learning: "a-learning",
+        guessed: "a-guessed",
         understood: "a-understood",
       };
       const DOTCLS = {
         none: "dot-none",
         give_up: "dot-give_up",
         learning: "dot-learning",
+        guessed: "dot-guessed",
         understood: "dot-understood",
       };
 
@@ -5299,7 +5350,7 @@
 </div>`;
       }
 
-      const STATUS_CYCLE = ["none", "give_up", "learning", "understood"];
+      const STATUS_CYCLE = ["none", "give_up", "learning", "guessed", "understood"];
 
       async function browseToggleStatus(id, e) {
         e?.stopPropagation();
@@ -8235,7 +8286,7 @@ ${instruction.trim()}
       async function resetAllMarks() {
         if (
           !confirm(
-            "確定要重置所有標記嗎？\n\n🟢 簡單、🟡 再努力!、🔴 送他吧 的標記與練習次數\n都將被清除。",
+            "確定要重置所有標記嗎？\n\n🟢 簡單、🤔 猜的、🟡 再努力!、🔴 送他吧 的標記與練習次數\n都將被清除。",
           )
         )
           return;

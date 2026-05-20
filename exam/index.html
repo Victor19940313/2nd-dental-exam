@@ -6975,6 +6975,11 @@ ${JSON.stringify(candidates, null, 2)}
         const curIdx = allChs.findIndex(c => c.id === currentChapterId);
         const curCh = allChs[curIdx];
 
+        // 當前章節的「路徑」— 只有這條路徑的資料夾預設打開，其他收起
+        const curSubj = curCh._mainSubj || '';
+        const curDomain = chapterDomain(curCh);
+        const curSubtopic = curCh.subtopic || '未分類';
+
         // 目錄：科目 > 領域 > subtopic > 章節（4 層樹狀）
         let tocHtml = '';
         SUBJ_ORDER.forEach(s => {
@@ -6983,8 +6988,9 @@ ${JSON.stringify(candidates, null, 2)}
           const allChs = [].concat(...Object.values(domains).map(d => [].concat(...Object.values(d))));
           if (!allChs.length) return;
 
+          const subjOpen = (s === curSubj) ? ' open' : '';
           tocHtml +=
-            '<details open class="nb-toc-subj">' +
+            '<details' + subjOpen + ' class="nb-toc-subj">' +
               '<summary style="margin-top:.7rem;padding:.5rem .7rem;background:' + SCOLOR[s] + ';color:white;border-radius:7px;font-size:.95rem;font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.4rem">' +
                 '<span style="flex:1;display:flex;align-items:center;gap:.3rem">' + SEMOJI[s] + ' ' + SMAP[s] + '</span>' +
                 '<span style="background:rgba(255,255,255,.25);padding:0 8px;border-radius:8px;font-size:.72rem">' + allChs.length + '</span>' +
@@ -6997,8 +7003,9 @@ ${JSON.stringify(candidates, null, 2)}
             const subtopics = domains[d];
             const dList = [].concat(...Object.values(subtopics));
             const meta = DOMAIN_META[d] || { emoji:'📁', color:'#9ca3af' };
+            const domainOpen = (s === curSubj && d === curDomain) ? ' open' : '';
             tocHtml +=
-              '<details open class="nb-toc-group">' +
+              '<details' + domainOpen + ' class="nb-toc-group">' +
                 '<summary style="margin:.35rem 0 .15rem .35rem;padding:.3rem .55rem;background:white;border:1.5px solid ' + meta.color + ';color:' + meta.color + ';border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
                   '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + meta.emoji + ' ' + escapeHtml(d) + '</span>' +
                   '<span style="font-size:.68rem;color:' + meta.color + '">' + dList.length + '</span>' +
@@ -7012,8 +7019,9 @@ ${JSON.stringify(candidates, null, 2)}
             });
             stOrder.forEach(st => {
               const stList = subtopics[st];
+              const stOpen = (s === curSubj && d === curDomain && st === curSubtopic) ? ' open' : '';
               tocHtml +=
-                '<details open class="nb-toc-subgroup">' +
+                '<details' + stOpen + ' class="nb-toc-subgroup">' +
                   '<summary style="margin:.2rem 0 .1rem .7rem;padding:.2rem .4rem;background:#f3e8ff;color:#6b21a8;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
                     '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📁 ' + escapeHtml(st) + '</span>' +
                     '<span style="font-size:.62rem;color:#9333ea">' + stList.length + '</span>' +
@@ -7034,6 +7042,29 @@ ${JSON.stringify(candidates, null, 2)}
           tocHtml += '</details>';
         });
         toc.innerHTML = tocHtml;
+
+        // Accordion 行為：打開某個資料夾時，自動收起同層其他資料夾
+        // 用 capture 監聽 toggle（toggle 不冒泡，但 capture 可以截到）
+        if (!toc._accordionBound) {
+          toc._accordionBound = true;
+          toc.addEventListener('toggle', function(e){
+            const det = e.target;
+            if (!(det instanceof HTMLDetailsElement)) return;
+            if (!det.open) return;
+            // 找出 det 屬於哪一層（class）
+            const levelClass = ['nb-toc-subj', 'nb-toc-group', 'nb-toc-subgroup']
+              .find(c => det.classList.contains(c));
+            if (!levelClass) return;
+            // 收起同 parent 下、同 class 的其他 details
+            const parent = det.parentElement;
+            if (!parent) return;
+            Array.from(parent.children).forEach(child => {
+              if (child !== det && child.tagName === 'DETAILS' && child.classList.contains(levelClass)) {
+                child.open = false;
+              }
+            });
+          }, true);
+        }
 
         // 內容：只顯示當前章節
         const subjBadge = curCh._mainSubj

@@ -3207,6 +3207,7 @@
           <button class="nb-tb-btn" id="btn-pending" onclick="openPendingModal()" title="之前整理失敗的題目（可一鍵重試）" style="display:none;background:#fef3c7;border-color:#fbbf24;color:#92400e">📥 待整理</button>
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題">🗂 重整目錄</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
+          <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
@@ -6880,31 +6881,62 @@ ${dec.reasoning || ''}
       }
 
       // ── Undo a history entry ──
-      function undoHistoryAt(idx){
+      function undoHistoryAt(idx, opts){
+        opts = opts || {};
         const entry = notebook.history[idx];
-        if (!entry) return;
-        if (entry.action === 'new_chapter' && entry.chapterId) {
-          if (!confirm('撤銷：刪除「' + entry.note + '」這個章節？')) return;
-          notebook.chapters = notebook.chapters.filter(c => c.id !== entry.chapterId);
-        } else if (entry.action === 'append' && entry.snapshot) {
-          if (!confirm('撤銷：把章節「' + entry.snapshot.name + '」還原到加題前的狀態？')) return;
-          const ch = notebook.chapters.find(c => c.id === entry.chapterId);
-          if (ch) {
-            ch.name = entry.snapshot.name;
-            ch.content = entry.snapshot.content;
-            ch.qids = entry.snapshot.qids;
-            ch.concepts = entry.snapshot.concepts || [];
-            ch.updatedAt = Date.now();
-          }
-        } else if (entry.action === 'skip') {
+        if (!entry) { showToast('找不到這筆歷史'); return false; }
+        const skipConfirm = !!opts.skipConfirm;
+        // skip 動作沒改任何東西，沒得撤銷
+        if (entry.action === 'skip') {
           showToast('此筆未變更筆記，無需撤銷');
-          return;
+          return false;
+        }
+        // new_chapter → 刪掉那章
+        if (entry.action === 'new_chapter' && entry.chapterId) {
+          if (!skipConfirm && !confirm('撤銷：刪除「' + entry.note + '」這個章節？')) return false;
+          notebook.chapters = notebook.chapters.filter(c => c.id !== entry.chapterId);
+        }
+        // 其他所有動作（append / reorganize / auto_place_imgs / ai_modify / manual_edit）→ 還原 snapshot
+        else if (entry.snapshot && entry.chapterId) {
+          const ch = notebook.chapters.find(c => c.id === entry.chapterId);
+          if (!ch) { showToast('原章節已不存在，無法復原'); return false; }
+          const snapName = entry.snapshot.name || ch.name;
+          if (!skipConfirm && !confirm('撤銷：把章節「' + snapName + '」還原到這次修改前的狀態？')) return false;
+          if (entry.snapshot.name != null) ch.name = entry.snapshot.name;
+          if (entry.snapshot.content != null) ch.content = entry.snapshot.content;
+          if (entry.snapshot.qids) ch.qids = entry.snapshot.qids;
+          if (entry.snapshot.concepts) ch.concepts = entry.snapshot.concepts;
+          ch.updatedAt = Date.now();
+        } else {
+          // 沒 snapshot 又不是 new_chapter → 無法復原
+          showToast('這筆歷史沒記錄修改前內容，無法復原');
+          return false;
         }
         notebook.history.splice(idx, 1);
         saveNotebook();
         renderHistoryList();
         renderNotebookIfVisible();
         showToast('✓ 已撤銷');
+        return true;
+      }
+
+      // ↶ 快速復原上一步（不用打開歷史 modal）
+      function undoLastChange(){
+        loadNotebook();
+        if (!notebook.history || notebook.history.length === 0) {
+          showToast('沒有可復原的紀錄');
+          return;
+        }
+        // 找第一筆「可復原」的歷史（跳過 skip）
+        const idx = notebook.history.findIndex(e => e.action !== 'skip');
+        if (idx < 0) {
+          showToast('沒有可復原的紀錄');
+          return;
+        }
+        const entry = notebook.history[idx];
+        const noteTxt = entry.note || entry.action;
+        if (!confirm('復原最近一次的「' + noteTxt + '」？')) return;
+        undoHistoryAt(idx, { skipConfirm: true });
       }
 
       // ── 強制加：當 AI 說 skip 但使用者覺得該加 ──
@@ -7762,14 +7794,19 @@ ${JSON.stringify(candidates, null, 2)}
             return; // 使用者選「等一下」
           }
         }
+        // 存入歷史（撤銷用）— 拍照舊內容，這樣 undo 才能還原
+        const _oldName = ch.name;
+        const _oldContent = ch.content;
+        const _oldQids = [...(ch.qids || [])];
+        const _oldConcepts = [...(ch.concepts || [])];
         ch.content = ta.value;
         ch.updatedAt = Date.now();
-        // 存入歷史（撤銷用）
         notebook.history.unshift({
           ts: Date.now(),
           action: 'manual_edit',
           chapterId: id,
-          note: '手動編輯「' + ch.name + '」'
+          snapshot: { name: _oldName, content: _oldContent, qids: _oldQids, concepts: _oldConcepts },
+          note: '手動編輯「' + _oldName + '」'
         });
         trimHistory();
         editingChapterId = null;

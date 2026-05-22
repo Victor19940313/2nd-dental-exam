@@ -6321,6 +6321,20 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 | row1 | x |
 | row2 | y |
 \`\`\`
+- **表格不要塞「廢列」**：header 後的 \`|---|---|\` 分隔符只能有一條；後面**直接接資料列**，不要再插一條「全是 \`---\` 或空白」的占位列
+  * ❌
+  \`\`\`
+  | A | B |
+  |---|---|
+  | --- | --- |   ← 廢列
+  | row1 | x |
+  \`\`\`
+  * ✅
+  \`\`\`
+  | A | B |
+  |---|---|
+  | row1 | x |
+  \`\`\`
 
 【🧭 整理順序原則（極重要）】
 寫筆記時必須**先想好邏輯順序再開寫**，不要隨意排列。依題目主題選擇對應的順序原則：
@@ -6483,6 +6497,7 @@ ${dec.reasoning || ''}
 - **表格每一行各自獨佔一行**（header、separator、各 row 都要分行）
   * ❌ 全部擠在一行：\`| A | B |---|---|| x | y |\`
   * ✅ 標準多行 markdown 表格
+- **表格 header 後的 \`|---|---|\` 只能一條**，不要再插「全是 --- 或空白」的廢列
 
 【回傳】
 直接回 JSON 物件 { "content": "..." }，不要 markdown 反引號包裝。content 是合併後的完整章節 markdown。`;
@@ -8269,9 +8284,16 @@ ${instruction.trim()}
           // second line must be alignment row
           if (!/^\|[\s\-:|]+\|$/.test(lines[1])) return block;
           const cells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => _renderCellInline(c.trim()));
+          // 判斷一列是不是「廢列」：全部 cell 是空白 / 全破折號 / 全冒號（AI 偶爾會在 header 後多塞一條這種）
+          const isJunkRow = (l) => {
+            const raw = l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
+            if (raw.length === 0) return true;
+            return raw.every(c => c === '' || /^[\s\-:]+$/.test(c));
+          };
           const out = ['<table class="nb-table">'];
           out.push('<tr>' + cells(lines[0]).map(c => '<th>'+c+'</th>').join('') + '</tr>');
           for (let i = 2; i < lines.length; i++) {
+            if (isJunkRow(lines[i])) continue; // 跳過廢列
             out.push('<tr>' + cells(lines[i]).map(c => '<td>'+c+'</td>').join('') + '</tr>');
           }
           out.push('</table>');

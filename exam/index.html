@@ -7282,11 +7282,12 @@ ${JSON.stringify(list, null, 2)}
         const ROWBREAK = '\n\n<!--ROWBREAK-->\n\n';
         let newContent, toastMsg;
         if (direction > 0) {
-          // →  推下一排（如果還沒分排）
-          if (hasRowBreak || !/^\s*$/.test(between)) {
-            showToast('它已經在自己一排了'); return;
-          }
-          newContent = content.slice(0, prev.end) + ROWBREAK + cur.md + content.slice(cur.end);
+          // →  永遠強制動作：把中間的 ROWBREAK / 文字清掉，在圖片前面塞 ROWBREAK，
+          //     中間若有文字就擠到後面（這樣即使現在已經分排或有怪 markdown 都會重整成正規狀態）
+          const cleanBetween = between.replace(/<!--ROWBREAK-->/g, '').trim();
+          newContent = content.slice(0, prev.end) + ROWBREAK + cur.md
+                     + (cleanBetween ? '\n\n' + cleanBetween : '')
+                     + content.slice(cur.end);
           toastMsg = '✓ 跳到下一排';
         } else {
           // ←  拉回上一排（強制重整 markdown 確保兩張圖確實相鄰）

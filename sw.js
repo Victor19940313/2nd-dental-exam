@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v69-rowbreak-div';
+const CACHE_NAME = 'dental-all-v70-arrow-force-action';
 const PRECACHE = [
   './',
   './index.html',

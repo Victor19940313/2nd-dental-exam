@@ -8637,82 +8637,113 @@ ${instruction.trim()}
         const inp = document.getElementById('nb-search-input');
         const clearBtn = document.getElementById('nb-search-clear');
         const q = (inp.value || '').trim().toLowerCase();
+        const qDisplay = (inp.value || '').trim();
         clearBtn.style.display = q ? 'block' : 'none';
 
-        // 沒搜尋字 → 顯示全部
+        // 沒搜尋字 → 回到正常顯示模式（清掉 TOC 隱藏 + 重畫主內容）
         if (!q) {
-          document.querySelectorAll('.nb-chapter, .nb-subj-group, .nb-toc-item, .nb-toc-group, .nb-toc-subgroup, .nb-toc-subj')
+          document.querySelectorAll('.nb-toc-item, .nb-toc-group, .nb-toc-subgroup, .nb-toc-subj')
             .forEach(el => el.classList.remove('nb-search-hidden'));
-          const empty = document.getElementById('nb-search-empty');
-          if (empty) empty.remove();
+          if (typeof renderNotebook === 'function') renderNotebook();
           return;
         }
 
-        // 改用「資料層」搜尋（不依賴 DOM textContent，避免章節折疊或渲染遺漏）
+        // 資料層搜尋（搜全部章節 — 名稱 / 領域 / 子主題 / 概念 / 完整內容 / 題號 / 科目）
         loadNotebook();
         const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
-        const matchedIds = new Set();
+        const matches = []; // [{ chapter, snippets, nameMatch }]
         (notebook.chapters || []).forEach(c => {
-          // 蒐集所有可搜的欄位：名稱 + 領域 + 子主題 + 概念標籤 + 完整內容 + 來源題號 + 科目中文
-          const haystack = [
-            c.name || '',
-            c.domain || '',
-            c.subtopic || '',
-            (c.concepts || []).join(' '),
-            c.content || '',
+          const fields = [
+            c.name || '', c.domain || '', c.subtopic || '',
+            (c.concepts || []).join(' '), c.content || '',
             (c.qids || []).join(' '),
-            SMAP[c._mainSubj] || '',
-            SMAP[c.subject] || ''
-          ].join('\n').toLowerCase();
-          if (haystack.includes(q)) matchedIds.add(c.id);
+            SMAP[c._mainSubj] || '', SMAP[c.subject] || ''
+          ];
+          const lowered = fields.join('\n').toLowerCase();
+          if (!lowered.includes(q)) return;
+          // 抽出 content 裡的關鍵字片段（最多 3 段，前後各 50 字當上下文）
+          const snippets = [];
+          const lcContent = (c.content || '').toLowerCase();
+          let pos = 0;
+          while (snippets.length < 3) {
+            const idx = lcContent.indexOf(q, pos);
+            if (idx < 0) break;
+            const start = Math.max(0, idx - 50);
+            const end = Math.min(c.content.length, idx + q.length + 50);
+            snippets.push({
+              before: c.content.slice(start, idx).replace(/\s+/g, ' '),
+              match: c.content.slice(idx, idx + q.length),
+              after: c.content.slice(idx + q.length, end).replace(/\s+/g, ' '),
+              isStart: start === 0,
+              isEnd: end === c.content.length
+            });
+            pos = idx + q.length;
+          }
+          matches.push({
+            chapter: c,
+            snippets: snippets,
+            nameMatch: (c.name || '').toLowerCase().includes(q)
+          });
         });
 
-        // 套用到 DOM：章節區
-        let hit = 0;
-        document.querySelectorAll('.nb-chapter').forEach(ch => {
-          const id = ch.id.replace(/^chapter-/, '');
-          if (matchedIds.has(id)) { ch.classList.remove('nb-search-hidden'); hit++; }
-          else { ch.classList.add('nb-search-hidden'); }
-        });
-
-        // 科目分組：若該組內所有章節都隱藏，也把整組隱藏
-        document.querySelectorAll('.nb-subj-group').forEach(group => {
-          const visibleChapters = group.querySelectorAll('.nb-chapter:not(.nb-search-hidden)');
-          if (visibleChapters.length === 0) group.classList.add('nb-search-hidden');
-          else group.classList.remove('nb-search-hidden');
-        });
-
-        // 目錄：跟搜尋結果同步（修正：原本只 match scrollToChapter，現在 selectChapter / scrollToChapter 都認）
+        // 同步 TOC sidebar 篩選
+        const matchedIds = new Set(matches.map(m => m.chapter.id));
         document.querySelectorAll('.nb-toc-item').forEach(item => {
           const onclickAttr = item.getAttribute('onclick') || '';
-          const m = onclickAttr.match(/(?:selectChapter|scrollToChapter)\('([^']+)'\)/);
-          if (!m) return;
-          if (matchedIds.has(m[1])) item.classList.remove('nb-search-hidden');
+          const mm = onclickAttr.match(/(?:selectChapter|scrollToChapter)\('([^']+)'\)/);
+          if (!mm) return;
+          if (matchedIds.has(mm[1])) item.classList.remove('nb-search-hidden');
           else item.classList.add('nb-search-hidden');
         });
-        // 目錄分組（領域 / 子主題 / 科目）都跟著
         document.querySelectorAll('.nb-toc-group, .nb-toc-subgroup, .nb-toc-subj').forEach(group => {
-          const visibleItems = group.querySelectorAll('.nb-toc-item:not(.nb-search-hidden)');
-          if (visibleItems.length === 0) group.classList.add('nb-search-hidden');
+          const visible = group.querySelectorAll('.nb-toc-item:not(.nb-search-hidden)');
+          if (visible.length === 0) group.classList.add('nb-search-hidden');
           else group.classList.remove('nb-search-hidden');
         });
 
-        // 無結果提示
+        // 主內容區顯示搜尋結果清單（取代原本只顯示當前章節）
         const body = document.getElementById('notebook-body');
-        let empty = document.getElementById('nb-search-empty');
-        if (hit === 0) {
-          if (!empty) {
-            empty = document.createElement('div');
-            empty.id = 'nb-search-empty';
-            empty.className = 'nb-search-empty';
-            empty.innerHTML = '<div style="font-size:2.5rem">🔍</div><div style="margin-top:.5rem;color:#374151;font-weight:700">沒找到符合「' + escapeHtml(q) + '」的章節</div><div style="font-size:.85rem;margin-top:.4rem">試試其他關鍵字、或點 ✕ 清除搜尋</div>';
-            body.appendChild(empty);
-          } else {
-            empty.querySelector('div:nth-child(2)').textContent = '沒找到符合「' + q + '」的章節';
-          }
-        } else if (empty) {
-          empty.remove();
+        if (!body) return;
+        const qEsc = escapeHtml(qDisplay);
+        if (matches.length === 0) {
+          body.innerHTML =
+            '<div style="text-align:center;padding:3rem 1rem;color:#9ca3af">' +
+              '<div style="font-size:3rem">🔍</div>' +
+              '<div style="font-weight:700;margin-top:.6rem;color:#374151;font-size:1.05rem">沒找到「' + qEsc + '」</div>' +
+              '<div style="font-size:.85rem;margin-top:.4rem;line-height:1.6">試試別的關鍵字，或按右上 ✕ 清掉搜尋</div>' +
+            '</div>';
+          return;
         }
+        let html =
+          '<div style="font-size:.9rem;color:#374151;margin-bottom:.8rem;padding:.5rem .8rem;background:#f3e8ff;border-radius:8px;border-left:3px solid #7c3aed">' +
+            '🔍 找到 <strong style="color:#7c3aed">' + matches.length + '</strong> 個章節包含「' + qEsc + '」 ' +
+            '<span style="font-size:.75rem;color:#6b7280">（點下面任一章節打開）</span>' +
+          '</div>';
+        matches.forEach(({ chapter, snippets, nameMatch }) => {
+          const snippetsHtml = snippets.map(s =>
+            '<div style="font-size:.82rem;color:#4b5563;margin-top:.3rem;line-height:1.55;background:#fafafa;padding:.35rem .6rem;border-radius:6px">' +
+              (s.isStart ? '' : '…') +
+              escapeHtml(s.before) +
+              '<mark style="background:#fde047;color:#713f12;padding:0 3px;border-radius:3px;font-weight:700">' + escapeHtml(s.match) + '</mark>' +
+              escapeHtml(s.after) +
+              (s.isEnd ? '' : '…') +
+            '</div>'
+          ).join('');
+          const nameTag = nameMatch
+            ? '<span style="font-size:.7rem;color:#15803d;background:#dcfce7;padding:1px 8px;border-radius:8px;margin-left:.3rem">✓ 標題符合</span>'
+            : '';
+          const concepts = (chapter.concepts || []).slice(0, 4).map(c => '<span style="background:#e9d5ff;color:#6b21a8;padding:1px 8px;border-radius:8px;font-size:.7rem;margin-right:.2rem">' + escapeHtml(c) + '</span>').join('');
+          html +=
+            '<div onclick="selectChapter(\'' + chapter.id + '\');clearNotebookSearch()" style="background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:.7rem 1rem;margin-bottom:.6rem;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'#c084fc\';this.style.background=\'#faf5ff\'" onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.background=\'white\'">' +
+              '<div style="display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap">' +
+                '<strong style="color:#7c3aed;font-size:1rem">' + escapeHtml(chapter.name) + '</strong>' +
+                '<span style="font-size:.7rem;color:#9ca3af">' + (chapter.qids||[]).length + ' 題</span>' +
+              '</div>' +
+              (concepts || nameTag ? '<div style="margin-top:.3rem">' + concepts + nameTag + '</div>' : '') +
+              snippetsHtml +
+            '</div>';
+        });
+        body.innerHTML = html;
       }
       function clearNotebookSearch(){
         const inp = document.getElementById('nb-search-input');

@@ -6994,6 +6994,45 @@ ${dec.reasoning || ''}
         const el = document.getElementById('screen-notebook');
         if (el && el.style.display !== 'none') renderNotebook();
       }
+      // 從畫面直接抓「只放一張圖的段落」，連續 2 個以上就塞進並排容器
+      // 這是最後一道防線：不管 renderMarkdown 內部的正則有沒有抓到，這裡會兜底
+      function _domGroupImageRows(container){
+        if (!container) return;
+        const _isImageOnlyP = (p) => {
+          if (p.tagName !== 'P') return false;
+          const wraps = p.querySelectorAll('.nb-img-wrap');
+          if (wraps.length === 0) return false;
+          const clone = p.cloneNode(true);
+          clone.querySelectorAll('.nb-img-wrap').forEach(w => w.remove());
+          clone.querySelectorAll('br').forEach(b => b.remove());
+          return clone.textContent.trim() === '';
+        };
+        const children = Array.from(container.children);
+        let i = 0;
+        while (i < children.length) {
+          if (_isImageOnlyP(children[i])) {
+            const group = [children[i]];
+            let j = i + 1;
+            while (j < children.length && _isImageOnlyP(children[j])) {
+              group.push(children[j]);
+              j++;
+            }
+            if (group.length >= 2) {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'nb-img-row';
+              group[0].parentNode.insertBefore(wrapper, group[0]);
+              group.forEach(p => {
+                p.querySelectorAll('.nb-img-wrap').forEach(w => wrapper.appendChild(w));
+                p.remove();
+              });
+            }
+            i = j;
+          } else {
+            i++;
+          }
+        }
+      }
+
       // 重新渲染但保留捲動位置（給 ± / ← / → / ✕ 這類「不該跳回頂部」的操作用）
       function renderNotebookKeepScroll(){
         const pane = document.querySelector('.nb-content-pane');
@@ -7873,6 +7912,9 @@ ${JSON.stringify(candidates, null, 2)}
         const pane = document.querySelector('.nb-content-pane');
         if (pane) pane.scrollTop = 0;
         window.scrollTo(0, 0);
+        // 兜底：渲染完掃一遍，把連續「只放一張圖的段落」強制塞進並排容器
+        const contentArea = document.querySelector('.nb-chapter-content');
+        if (contentArea) _domGroupImageRows(contentArea);
       }
 
       function selectChapter(id){

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v66-row-regex-fix';
+const CACHE_NAME = 'dental-all-v67-dom-row-grouping';
 const PRECACHE = [
   './',
   './index.html',

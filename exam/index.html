@@ -2322,7 +2322,7 @@
         flex:1 1 220px;margin:0;min-width:0;
       }
       .nb-img-row .nb-img-wrap img{
-        max-width:100%!important;width:100%;display:block;
+        max-width:100%;width:100%;display:block;
       }
       .nb-img-wrap:hover img{opacity:.9}
       .nb-img-controls{
@@ -6295,8 +6295,17 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 排版要求：
 - **超短條列為主**，每點最多 25 字，禁止長段落
 - **每個 bullet 點必須各自獨佔一行**，禁止把多個「- 子項」擠在同一行（這會排版亂掉，例如「- **特點**：xxx - **功能**：yyy」是錯的，必須兩行）
-- **大量使用表格**做對照、分類、比較
-- **callout 標記**：用 \`> 💡 ...\` 標關鍵記憶點、\`> ⚠️ ...\` 標易混淆陷阱、\`> 🏥 ...\` 標臨床要點、\`> 📝 ...\` 標易考角度
+- **何時用表格**（極重要，請嚴格判斷）：
+  * ✅ **用表格的時機**：「2 個以上同類型項目，比較相同屬性」時 — 例如比較 3 種神經纖維的（直徑/速度/功能）、3 種牙周病分期的（牙周袋/骨缺失/治療）、多種材料的（成分/優點/缺點）
+  * ✅ 表格 cell 內容**必須非常短**：每 cell ≤ 15 字、一個短句或一個名詞，**禁止在 cell 裡塞多段條列（如「1. xxx 2. yyy 3. zzz」）**
+  * ❌ **不要用表格**：單一概念的多項描述（用條列或 callout）、cell 內容會超過 15 字、需要長段機制解釋
+  * 範例反例：「A: 提供支撐穩定 / 引導器械維持中心 / 強化刀刃」這種一格塞 3 點 → 改用條列 + callout，不要塞表格
+- **何時用 callout**：
+  * \`> 💡 ...\` 一句話關鍵記憶點
+  * \`> ⚠️ ...\` 易混淆 / 陷阱題
+  * \`> 🏥 ...\` 臨床要點
+  * \`> 📝 ...\` 易考角度
+- **何時用條列**：列舉、步驟、特性（≥ 3 點），每點 ≤ 25 字
 - **概念標籤**：重要名詞用 \`[[概念名]]\` 包起來會被渲染成彩色標籤
 - **粗體** 只用在最關鍵的字詞（會被反白醒目顯示）
 - **斜體 *英文* 標英文專有名詞
@@ -6482,8 +6491,9 @@ ${dec.reasoning || ''}
 
 【排版規範（跟原章節一致）】
 - 超短條列為主，每點 ≤ 25 字
-- 大量使用表格做對照、分類、比較
+- **何時用表格**：「2+ 同類項目比較相同屬性」才用；每 cell ≤ 15 字單一短句，**禁止 cell 內塞多段條列**（不要 1./2./3.）
 - callout: \`> 💡 重點\` / \`> ⚠️ 易混陷阱\` / \`> 🏥 臨床要點\` / \`> 📝 易考角度\`
+- 單一概念的多項描述 → 用條列或 callout，**不要硬塞表格**
 - 重要名詞用 \`[[概念名]]\` 包起來
 - **粗體** 只用在最關鍵的字詞
 - 必須保留 \`### 🔗 延伸補充（國考相關必知）\` 區塊（並補上新題帶來的延伸點）
@@ -7183,11 +7193,9 @@ ${JSON.stringify(list, null, 2)}
         }
       }
 
-      // ── 圖片在章節中左右移動 ──
-      // 智慧行為：
-      //   情況 A（兩張圖中間有文字）→ 把兩張圖拉到一起並排（文字擠到下面）
-      //   情況 B（兩張圖已經並排）→ 左右對調順序
-      // 配合自動並排：兩張圖只要相鄰（中間只有空白）就會自動排成左右
+      // ── 圖片左右移動 = 拆排 / 換排 ──
+      // →  這張圖跳到下一排（在 markdown 中，在這張圖前面塞 ROWBREAK，把它跟前一張隔開）
+      // ←  下一張圖跳到下一排（這張保留原位，把後面那張擠下去）
       function moveImgInChapter(urlEnc, direction){
         const url = decodeURIComponent(urlEnc);
         loadNotebook();
@@ -7202,25 +7210,28 @@ ${JSON.stringify(list, null, 2)}
         }
         const idx = imgs.findIndex(img => img.url === url);
         if (idx < 0) { showToast('找不到圖片位置'); return; }
-        const tgt = idx + direction;
-        if (tgt < 0) { showToast('左邊沒有其他圖片了'); return; }
-        if (tgt >= imgs.length) { showToast('右邊沒有其他圖片了'); return; }
-        // 找出兩張中誰先誰後（依在 markdown 中的位置）
-        const a = imgs[idx], b = imgs[tgt];
-        const first = a.start < b.start ? a : b;
-        const second = a.start < b.start ? b : a;
-        const between = content.slice(first.end, second.start);
+        const ROWBREAK = '\n\n<!--ROWBREAK-->\n\n';
         let newContent, toastMsg;
-        if (/^\s*$/.test(between)) {
-          // 已經並排 → 對調左右，並強制中間是空行（確保 2 個 <p>，並排才會啟動）
-          newContent = content.slice(0, first.start) + second.md + '\n\n' + first.md + content.slice(second.end);
-          toastMsg = '✓ 左右對調';
+        if (direction > 0) {
+          // →  這張圖跳下一排（在它跟前一張之間塞 ROWBREAK）
+          if (idx === 0) { showToast('這是第一張圖，沒有「前一排」'); return; }
+          const prev = imgs[idx - 1];
+          const cur = imgs[idx];
+          const between = content.slice(prev.end, cur.start);
+          if (between.includes('<!--ROWBREAK-->')) { showToast('它已經是自己一排了'); return; }
+          if (!/^\s*$/.test(between)) { showToast('它已經是自己一排了'); return; }
+          newContent = content.slice(0, prev.end) + ROWBREAK + cur.md + content.slice(cur.end);
+          toastMsg = '✓ 跳到下一排';
         } else {
-          // 中間有文字 → 把兩張圖拉到一起，文字擠到圖片對下面
-          newContent = content.slice(0, first.end) + '\n\n' + second.md
-                     + '\n\n' + between.trim()
-                     + content.slice(second.end);
-          toastMsg = '✓ 已並排（中間文字移到下面）';
+          // ←  把下一張圖擠到下一排（這張保留原位）
+          if (idx >= imgs.length - 1) { showToast('這是最後一張圖，後面沒有圖可以擠'); return; }
+          const cur = imgs[idx];
+          const next = imgs[idx + 1];
+          const between = content.slice(cur.end, next.start);
+          if (between.includes('<!--ROWBREAK-->')) { showToast('它後面那張圖已經是自己一排了'); return; }
+          if (!/^\s*$/.test(between)) { showToast('它後面那張圖已經是自己一排了'); return; }
+          newContent = content.slice(0, cur.end) + ROWBREAK + next.md + content.slice(next.end);
+          toastMsg = '✓ 後面那張圖跳到下一排';
         }
         ch.content = newContent;
         ch.updatedAt = Date.now();
@@ -8310,6 +8321,8 @@ ${instruction.trim()}
           const inner = match.replace(/<p>(<span class="nb-img-wrap">[\s\S]*?<\/span>)<\/p>\s*/g, '$1');
           return '<div class="nb-img-row">' + inner + '</div>\n';
         });
+        // 移除 ROWBREAK 標記（使用者按 ← / → 製造的隔斷，已經達到拆排的目的，最後把它清掉）
+        s = s.replace(/<p>\s*&lt;!--ROWBREAK--&gt;\s*<\/p>\s*/g, '');
         return s;
       }
       function _renderCellInline(c){

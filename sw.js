@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v59-search-results';
+const CACHE_NAME = 'dental-all-v60-rowbreak-table-rules';
 const PRECACHE = [
   './',
   './index.html',

@@ -6401,6 +6401,9 @@ ${dec.reasoning || ''}
 - 重要名詞用 \`[[概念名]]\` 包起來
 - **粗體** 只用在最關鍵的字詞
 - 必須保留 \`### 🔗 延伸補充（國考相關必知）\` 區塊（並補上新題帶來的延伸點）
+- **🖼 圖片必須完整保留**：舊章節中所有 \`![alt](url)\` 圖片 markdown，**一張都不可刪除**
+  * 可以重新調整圖片位置（換到更合適的段落下方），但**禁止省略**
+  * 禁止改成「（此處有圖）」這類描述、禁止省略 URL
 - **數學/公式禁止 \`$...$\` 與 LaTeX 指令**（網站不支援數學渲染）
   * ❌ \`$A / (A+C)$\`、\`$\\ge$ 0.5\`、\`\\times\`  ✅ \`A / (A+C)\`、\`≥ 0.5\`、\`×\`
   * 直接用 Unicode：≥ ≤ ≠ ± × ÷ → ← ° ≈ ∞ α β π Δ √ ∑ ∫
@@ -6468,7 +6471,8 @@ ${dec.reasoning || ''}
                 const mergeDec = extractJSON(mergeRaw);
                 if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= (oldCh.content || '').trim().length * 0.7) {
                   // 安全閥：合併版至少要有舊內容 70% 長度，否則視為失敗（保留原內容）
-                  dec.content = mergeDec.content;
+                  // 圖片安全網：若 AI 刪了任何原本的圖，自動補回章節末尾
+                  dec.content = _preserveImagesIn(oldCh.content, mergeDec.content);
                 } else {
                   console.warn('merge result too short, falling back to old content');
                   dec.content = oldCh.content; // 寧可不改也別覆蓋
@@ -7005,6 +7009,63 @@ ${JSON.stringify(list, null, 2)}
         return _wilsonIndexLoading;
       }
 
+      // 圖片安全網：AI 重寫章節後若刪了原本的圖，自動補回章節末尾
+      function _preserveImagesIn(oldContent, newContent){
+        if (!oldContent) return newContent || '';
+        if (!newContent) return newContent;
+        const oldImgs = []; // [{md, url}]
+        const re1 = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+        let m;
+        while ((m = re1.exec(oldContent)) !== null) {
+          // 跳過 placeholder
+          if (m[1].startsWith('uploading-')) continue;
+          oldImgs.push({ md: m[0], url: m[1] });
+        }
+        if (oldImgs.length === 0) return newContent;
+        const newUrls = new Set();
+        const re2 = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+        let m2;
+        while ((m2 = re2.exec(newContent)) !== null) newUrls.add(m2[1]);
+        const missing = oldImgs.filter(x => !newUrls.has(x.url));
+        if (missing.length === 0) return newContent;
+        // 補在章節末尾，加個區塊讓使用者知道是自動救回的
+        return newContent + '\n\n### 🖼 圖片（自動保留）\n\n' + missing.map(x => x.md).join('\n\n');
+      }
+
+      // 蒐集使用者已上傳到任一章節的圖（給 AI 配圖當候選用）
+      function _collectUserImagesFromNotebook(excludeChId){
+        const imgs = [];
+        const seen = new Set();
+        let nextId = 1000000; // synthetic id，避開 Wilson 圖庫 id
+        (notebook.chapters || []).forEach(ch => {
+          if (ch.id === excludeChId) return; // 當前章節跳過（避免 AI 重推同張圖）
+          const content = ch.content || '';
+          const re = /!\[([^\]]*)\]\(([^)\s]+)\)/g;
+          let m;
+          while ((m = re.exec(content)) !== null) {
+            const url = m[2];
+            if (seen.has(url)) continue;
+            if (url.startsWith('uploading-')) continue; // 跳過 placeholder
+            // 只收使用者上傳的圖（GitHub jsdelivr CDN 上 notebook-images 路徑）
+            // 跳過 Wilson 圖庫（避免重複）
+            if (url.includes('/wilson-images/')) continue;
+            seen.add(url);
+            const alt = (m[1] || '').split('|')[0].trim();
+            imgs.push({
+              id: nextId++,
+              url: url,
+              source: '我的圖庫・' + (ch.name || ''),
+              page: 0,
+              file: '', // 留空，後面用 url 直接渲染
+              caption_before: alt || ch.subtopic || '',
+              caption_after: '',
+              nearest_heading: ch.name || ''
+            });
+          }
+        });
+        return imgs;
+      }
+
       // 從章節內容抓關鍵字（用來預篩圖庫）
       function _extractChapterKeywords(ch){
         const kws = new Set();
@@ -7047,22 +7108,29 @@ ${JSON.stringify(list, null, 2)}
           openAISettings();
           return;
         }
-        showToast('🔍 載入 Wilson 圖庫...');
-        let idx;
+        showToast('🔍 載入圖庫...');
+        let wilsonIdx = [];
         try {
-          idx = await loadWilsonIndex();
+          wilsonIdx = await loadWilsonIndex();
         } catch (err) {
-          showToast('❌ 圖庫載入失敗：' + err.message);
+          // Wilson 圖庫載入失敗仍可繼續，至少還有使用者自己上傳的圖
+          console.warn('Wilson 圖庫載入失敗', err);
+        }
+        // 同時把使用者已上傳到其他章節的圖納入候選
+        const userImgs = _collectUserImagesFromNotebook(ch.id);
+        const allIdx = wilsonIdx.concat(userImgs);
+        if (allIdx.length === 0) {
+          showToast('沒有可用的圖（Wilson 圖庫掛了、你也還沒上傳過任何圖）');
           return;
         }
         // 預篩：用章節關鍵字找候選圖（top 30）
         const kws = _extractChapterKeywords(ch);
-        const scored = idx.map(img => ({ img, score: _scoreImage(img, kws) }))
+        const scored = allIdx.map(img => ({ img, score: _scoreImage(img, kws) }))
                           .filter(x => x.score > 0)
                           .sort((a, b) => b.score - a.score)
                           .slice(0, 30);
         if (scored.length === 0) {
-          showToast('Wilson 圖庫沒有跟這章節相關的圖');
+          showToast('圖庫沒有跟這章節相關的圖（Wilson + 你的 ' + userImgs.length + ' 張上傳）');
           return;
         }
         // 把候選圖的 metadata 餵給 AI（只送 metadata，不送圖檔）
@@ -7144,9 +7212,10 @@ ${JSON.stringify(candidates, null, 2)}
         let content = ch.content || '';
         let inserted = 0;
         placements.forEach(p => {
-          const img = idx.find(x => x.id === p.image_id);
+          const img = allIdx.find(x => x.id === p.image_id);
           if (!img) return;
-          const url = WILSON_IMG_BASE + img.file;
+          // 使用者上傳的圖已有完整 url；Wilson 圖庫用 file 串 BASE
+          const url = img.url || (WILSON_IMG_BASE + img.file);
           const imgMd = `\n\n![${p.caption}|medium](${url})\n`;
           // 找對應的 heading
           const heading = (p.after_heading || '').trim();
@@ -7689,6 +7758,16 @@ ${qBlocks}
 
 表格的列順序也要照這邏輯，不要按字母或隨機。
 
+【🖼 圖片必須保留（極重要）】
+章節原本內容裡的所有圖片 \`![alt](url)\` markdown 都要完整保留進新版，**一張都不可省略**。
+可以重新調整位置（換到更合適的段落下方），但禁止刪除或改寫成描述文字。
+
+【章節既有圖片（必須全部保留）】
+${(ch.content || '').match(/!\[[^\]]*\]\([^)\s]+\)/g)?.join('\n') || '（無）'}
+
+【既有章節 markdown（供參考整體脈絡）】
+${(ch.content || '').slice(0, 3000)}
+
 【回 JSON】
 { "content": "完整 Markdown 章節內容" }`;
         const btn = event && event.target;
@@ -7706,7 +7785,8 @@ ${qBlocks}
               snapshot: { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] },
               note: '重整章節「' + ch.name + '」'
             });
-            ch.content = dec.content;
+            // 圖片安全網：若 AI 刪了任何原本的圖，自動補回章節末尾
+            ch.content = _preserveImagesIn(ch.content, dec.content);
             ch.updatedAt = Date.now();
             trimHistory();
             saveNotebook();

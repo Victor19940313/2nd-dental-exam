@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v48-peek-tighter';
+const CACHE_NAME = 'dental-all-v49-keep-imgs';
 const PRECACHE = [
   './',
   './index.html',

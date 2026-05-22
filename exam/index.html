@@ -8356,52 +8356,76 @@ ${instruction.trim()}
 
       // ── Peek Notebook：在練習中查看相關章節 ──
       // 找出跟一題相關的章節（給偷看筆記用）
-      // 多訊號來源：q.topic + q.question + 選項 + 詳解 + 臨床
-      // 雙向比對：章節 concepts 出現在題目文字中 OR 題目 token 出現在章節 haystack 中
+      // 用「分數制」避免太發散：每個 signal 加分，分數高才顯示，最多 5 章
       function findRelatedChapters(q, chapters){
         const directHit = [];
-        const topicHit = [];
+        const scored = [];
 
-        // 1. 蒐集題目這邊所有可用字串（給章節 concept 反向匹配用）
-        const qFullText = [
+        const qTopic = (q.topic || '').toLowerCase().trim();
+        // 題目「核心字串」（窄）：只看題目+選項+topic，不含詳解/臨床（這兩個太發散）
+        const qCoreText = [
           q.topic || '',
           q.question || '',
-          (q.options || []).join(' '),
-          (q.explanation || '').slice(0, 400),
-          (q.explanation_notebooklm || '').slice(0, 400),
-          (q.clinical || '').slice(0, 300)
+          (q.options || []).join(' ')
         ].join(' ').toLowerCase();
+        // 題目「延伸字串」（寬）：含詳解，只給弱訊號加分
+        const qExtText = qCoreText + ' ' + (
+          (q.explanation || '').slice(0, 300) + ' ' +
+          (q.explanation_notebooklm || '').slice(0, 300)
+        ).toLowerCase();
 
-        // 2. 蒐集題目這邊的關鍵 token（給章節 haystack 正向匹配用）
-        //    topic 拆字 + 英文專有名詞（≥3 字母）+ 中文 2-4 字片段
-        const topicTokens = (q.topic || '').split(/[,，、 \/]+/).filter(s => s.length >= 2);
+        // 題目這邊的 token：
+        //   - topic 拆字（≥3 字，避免「牙髓」這種太泛的 2 字詞瘋狂亂中）
+        //   - 英文首字母大寫的詞或縮寫（≥3 字母）— 通常是專有名詞 / 學術用語
+        const topicTokens = qTopic.split(/[,，、 \/]+/).filter(s => s.length >= 3);
         const qTextForTokens = (q.question || '') + ' ' + (q.options || []).join(' ');
-        const engTokens = (qTextForTokens.match(/[A-Za-z][A-Za-z0-9\-]{2,}/g) || []).map(s => s.toLowerCase());
-        const allQTokens = Array.from(new Set([...topicTokens.map(s => s.toLowerCase()), ...engTokens]));
+        const engTokens = Array.from(new Set(
+          (qTextForTokens.match(/\b[A-Z][A-Za-z0-9\-]{2,}\b/g) || []).map(s => s.toLowerCase())
+        ));
 
         chapters.forEach(c => {
-          // directHit: 章節已經收錄了這題
           if ((c.qids || []).includes(q.id)) {
             directHit.push(c);
             return;
           }
-          const cConcepts = (c.concepts || []).map(s => (s || '').toLowerCase());
-          const cHaystack = (
-            (c.name || '') + ' ' +
-            (c.subtopic || '') + ' ' +
-            (c.concepts || []).join(' ') + ' ' +
-            (c.content || '').slice(0, 1500)
-          ).toLowerCase();
-          // 規則 A: 章節的任一 concept 出現在題目全文中（高優先 — 同概念）
-          const conceptHit = cConcepts.some(con => {
-            const t = (con || '').trim();
-            return t.length >= 2 && qFullText.includes(t);
+          const cName = (c.name || '').toLowerCase();
+          const cSubtopic = (c.subtopic || '').toLowerCase();
+          const cConcepts = (c.concepts || []).map(s => (s || '').toLowerCase().trim()).filter(s => s);
+          const cContent = (c.content || '').slice(0, 1500).toLowerCase();
+          const cHaystack = cName + ' ' + cSubtopic + ' ' + cConcepts.join(' ') + ' ' + cContent;
+
+          let score = 0;
+          const reasons = [];
+
+          // (1) 章節 name / subtopic 整字串含 topic（最強訊號）
+          if (qTopic.length >= 3 && (cName.includes(qTopic) || cSubtopic.includes(qTopic))) {
+            score += 25;
+            reasons.push('name~topic');
+          }
+          // (2) 章節 concept 出現在題目核心字串（高訊號，但要求 concept 夠具體）
+          cConcepts.forEach(con => {
+            if (!con || con.length < 3) return; // 太短跳過（避免「牙髓」「細胞」這種泛詞）
+            if (qCoreText.includes(con)) { score += 10; reasons.push('core~' + con); }
+            else if (qExtText.includes(con)) { score += 3; reasons.push('ext~' + con); }
           });
-          if (conceptHit) { topicHit.push(c); return; }
-          // 規則 B: 題目的任一 token 出現在章節 haystack 中（中優先）
-          const tokenHit = allQTokens.some(t => t.length >= 2 && cHaystack.includes(t));
-          if (tokenHit) { topicHit.push(c); return; }
+          // (3) topic 的拆字 token 在章節 haystack（中訊號）
+          topicTokens.forEach(t => {
+            if (cHaystack.includes(t)) { score += 5; reasons.push('topT~' + t); }
+          });
+          // (4) 英文專有名詞 token 在章節 haystack（中訊號）
+          engTokens.forEach(t => {
+            if (t.length >= 3 && cHaystack.includes(t)) { score += 4; reasons.push('eng~' + t); }
+          });
+
+          // 門檻：要 ≥ 8 分才視為相關（單一弱訊號不夠，需要至少 1 個強訊號或多個弱訊號疊加）
+          if (score >= 8) {
+            scored.push({ ch: c, score: score, reasons: reasons });
+          }
         });
+
+        // 高分優先，最多 5 章（避免列一大堆讓人眼花）
+        scored.sort((a, b) => b.score - a.score);
+        const topicHit = scored.slice(0, 5).map(x => x.ch);
 
         return { directHit, topicHit };
       }

@@ -7598,6 +7598,18 @@ ${JSON.stringify(candidates, null, 2)}
         }
       }
 
+      // ── 切換「重點章節」標記（目錄會顯示金色星星）──
+      function toggleChapterImportant(chId){
+        loadNotebook();
+        const ch = notebook.chapters.find(c => c.id === chId);
+        if (!ch) { showToast('找不到章節'); return; }
+        ch.important = !ch.important;
+        ch.updatedAt = Date.now();
+        saveNotebook();
+        renderNotebookKeepScroll();
+        showToast(ch.important ? '⭐ 已標記為重點章節' : '☆ 已取消重點');
+      }
+
       function chapterMainSubject(c){
         // 用 qids 反查 QS 取多數科目
         const counts = {};
@@ -7706,8 +7718,9 @@ ${JSON.stringify(candidates, null, 2)}
                   '</summary>';
               tocHtml += stList.map(c => {
                 const active = c.id === currentChapterId ? ' nb-toc-item-active' : '';
+                const star = c.important ? '<span style="color:#eab308;font-size:1rem;margin-right:.2rem" title="重點章節">★</span>' : '';
                 return `<a class="nb-toc-item nb-toc-leaf${active}" onclick="selectChapter('${c.id}')">
-                  <span class="nb-toc-name">${escapeHtml(c.name)}</span>
+                  ${star}<span class="nb-toc-name">${escapeHtml(c.name)}</span>
                   <span class="nb-toc-count">${(c.qids||[]).length}</span>
                 </a>`;
               }).join('');
@@ -7771,7 +7784,8 @@ ${JSON.stringify(candidates, null, 2)}
                 ${isEditing
                   ? `<button onclick="saveChapterEdit('${curCh.id}')" title="儲存" style="color:#16a34a">💾</button>
                      <button onclick="cancelChapterEdit()" title="取消">✕</button>`
-                  : `<button onclick="startEditChapter('${curCh.id}')" title="編輯內容（可貼圖）">✏️</button>
+                  : `<button onclick="toggleChapterImportant('${curCh.id}')" title="${curCh.important ? '取消重點章節' : '標記為重點章節（目錄會顯示金色星星）'}" style="${curCh.important ? 'color:#eab308;font-size:1.15rem' : 'color:#9ca3af;font-size:1.15rem'}">${curCh.important ? '★' : '☆'}</button>
+                     <button onclick="startEditChapter('${curCh.id}')" title="編輯內容（可貼圖）">✏️</button>
                      <button onclick="aiChatModifyChapter('${curCh.id}')" title="用自然語言告訴 AI 改什麼">💬</button>
                      <button onclick="aiAutoPlaceImages('${curCh.id}')" title="從 Wilson 圖庫自動配圖到對應段落">🖼 AI 配圖</button>
                      <button onclick="reorganizeChapter('${curCh.id}')" title="叫 AI 重新整理這章">🔄</button>

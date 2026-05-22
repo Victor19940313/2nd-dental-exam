@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v61-keep-scroll-img-flow';
+const CACHE_NAME = 'dental-all-v62-important-star';
 const PRECACHE = [
   './',
   './index.html',

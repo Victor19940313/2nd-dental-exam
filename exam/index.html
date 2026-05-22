@@ -7212,8 +7212,8 @@ ${JSON.stringify(list, null, 2)}
         const between = content.slice(first.end, second.start);
         let newContent, toastMsg;
         if (/^\s*$/.test(between)) {
-          // 已經並排 → 對調左右
-          newContent = content.slice(0, first.start) + second.md + between + first.md + content.slice(second.end);
+          // 已經並排 → 對調左右，並強制中間是空行（確保 2 個 <p>，並排才會啟動）
+          newContent = content.slice(0, first.start) + second.md + '\n\n' + first.md + content.slice(second.end);
           toastMsg = '✓ 左右對調';
         } else {
           // 中間有文字 → 把兩張圖拉到一起，文字擠到圖片對下面
@@ -8136,6 +8136,8 @@ ${instruction.trim()}
         md = md.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
         // 3. 移除「只有 >」或「> 後面只有空白」的孤立行（AI 偶爾這樣寫，渲染會留裸 > 字符）
         md = md.replace(/^>[ \t]*$/gm, '');
+        // 3b. 確保連續圖片之間有空行（不然會在同一個 <p>，並排無法啟動）
+        md = md.replace(/(!\[[^\]]*\]\([^)\s]+\))[ \t]*\n[ \t]*(?=!\[[^\]]*\]\([^)\s]+\))/g, '$1\n\n');
         // 4. AI 容錯：LaTeX 指令 → Unicode + 剝 $...$（網站不支援 LaTeX/MathJax）
         //    例：$\ge$ 0.5 mm → ≥ 0.5 mm；$A / (A+C)$ → A / (A+C)
         const _LATEX_MAP = {

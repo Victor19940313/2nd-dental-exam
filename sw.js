@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v46-latex-unicode';
+const CACHE_NAME = 'dental-all-v47-table-split';
 const PRECACHE = [
   './',
   './index.html',

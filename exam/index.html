@@ -7136,6 +7136,42 @@ ${JSON.stringify(list, null, 2)}
         }
       }
 
+      // ── 圖片在章節中左右移動（往左 = 往前移、往右 = 往後移）──
+      // 配合自動排版：相鄰圖片會自動並排，所以「移到旁邊」就會自動變並排
+      // 「移過 1 個」= 跳到下一排（被擠出原本的並排組）
+      function moveImgInChapter(urlEnc, direction){
+        const url = decodeURIComponent(urlEnc);
+        loadNotebook();
+        // 找出包含這張圖的章節
+        const ch = notebook.chapters.find(c => c.content && c.content.includes(url));
+        if (!ch) { showToast('找不到這張圖在哪一章'); return; }
+        const content = ch.content || '';
+        // 把所有圖片 markdown 位置抓出來
+        const imgRe = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+        const imgs = [];
+        let m;
+        while ((m = imgRe.exec(content)) !== null) {
+          imgs.push({ md: m[0], start: m.index, end: m.index + m[0].length, url: m[1] });
+        }
+        const idx = imgs.findIndex(img => img.url === url);
+        if (idx < 0) { showToast('找不到圖片位置'); return; }
+        const tgt = idx + direction;
+        if (tgt < 0) { showToast('已經是第一張圖'); return; }
+        if (tgt >= imgs.length) { showToast('已經是最後一張圖'); return; }
+        // 跟相鄰圖片交換 markdown 位置（保留中間文字 / 換行）
+        const a = imgs[idx], b = imgs[tgt];
+        let newContent;
+        if (a.start < b.start) {
+          newContent = content.slice(0, a.start) + b.md + content.slice(a.end, b.start) + a.md + content.slice(b.end);
+        } else {
+          newContent = content.slice(0, b.start) + a.md + content.slice(b.end, a.start) + b.md + content.slice(a.end);
+        }
+        ch.content = newContent;
+        ch.updatedAt = Date.now();
+        saveNotebook();
+        renderNotebookIfVisible();
+      }
+
       // ══════════════════════════════════════════
       // Wilson 圖庫（從 Wilson PDF 抽出來的解剖 / 臨床圖）
       // ══════════════════════════════════════════
@@ -8146,6 +8182,8 @@ ${instruction.trim()}
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',-10)" title="縮小">−</button>
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',+10)" title="放大">+</button>
               <button onclick="event.stopPropagation();resetImgSize('${urlEnc}')" title="重置成中等">⟲</button>
+              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',-1)" title="往左移（換到前一張圖的位置）">←</button>
+              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',+1)" title="往右移（換到下一張圖的位置）">→</button>
               <button onclick="event.stopPropagation();removeImgFromChapter('${urlEnc}')" title="刪除這張圖" style="color:#dc2626">✕</button>
             </span>
           </span>`;

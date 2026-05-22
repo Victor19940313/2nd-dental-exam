@@ -8411,9 +8411,9 @@ ${instruction.trim()}
           return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
         }).join('\n');
         // 連續多張圖片自動排成左右並排：把相鄰「只含一張圖的 <p>」合併成 .nb-img-row 容器
-        s = s.replace(/(<p><span class="nb-img-wrap">[\s\S]*?<\/span><\/p>\s*){2,}/g, (match) => {
-          // 抽出每個 <span class="nb-img-wrap">...</span>，放進 flex 容器
-          const inner = match.replace(/<p>(<span class="nb-img-wrap">[\s\S]*?<\/span>)<\/p>\s*/g, '$1');
+        // 注意：要允許 nb-img-wrap" 後面有額外屬性（如 style="--img-max:60%"）所以用 [^>]*
+        s = s.replace(/(<p><span class="nb-img-wrap"[^>]*>[\s\S]*?<\/span><\/p>\s*){2,}/g, (match) => {
+          const inner = match.replace(/<p>(<span class="nb-img-wrap"[^>]*>[\s\S]*?<\/span>)<\/p>\s*/g, '$1');
           return '<div class="nb-img-row">' + inner + '</div>\n';
         });
         // 移除 ROWBREAK 標記（使用者按 ← / → 製造的隔斷，已經達到拆排的目的，最後把它清掉）

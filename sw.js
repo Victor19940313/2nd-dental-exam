@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v67-dom-row-grouping';
+const CACHE_NAME = 'dental-all-v68-img-own-paragraph';
 const PRECACHE = [
   './',
   './index.html',

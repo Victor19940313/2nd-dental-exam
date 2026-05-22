@@ -6126,6 +6126,15 @@
         required: ["content"]
       };
 
+      // 合併章節用的 schema（同概念第 2 題以後加入時用）
+      const MERGE_SCHEMA = {
+        type: "OBJECT",
+        properties: {
+          content: { type: "STRING", description: "合併後完整 Markdown 章節內容（必須保留原內容資訊量並擴充）" }
+        },
+        required: ["content"]
+      };
+
       // 寬鬆 JSON 解析：能容忍 ```json``` 標記、前後文字、單引號等
       function extractJSON(raw){
         if (!raw) throw new Error('AI 沒有回傳內容');
@@ -6318,6 +6327,65 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 直接回 JSON 物件，不要 markdown 反引號包裝。`;
       }
 
+      // ── 同概念第 2 題以後加入時的合併 prompt ──
+      // 把舊章節完整內容 + 新題資料一起餵給 AI，要它保留全部 + 修正錯誤 + 擴充新重點
+      function buildMergePrompt(q, oldCh, dec){
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const LETTERS = ['A','B','C','D','E'];
+        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
+        return `你是牙醫國考筆記整理員。我有一份既有章節，現在要把一道新題目「加深加廣」進去。
+
+【核心鐵則（極重要）】
+1. **保留**現有章節所有正確內容（不可刪除原本的條目、表格、callout、延伸補充）
+2. **修正**現有章節中明顯錯誤的內容（若新題詳解顯示舊敘述是錯的，更正它，但要保留該段落結構）
+3. **擴充**新題帶來的新重點（同概念補強、加新例子、加新對照表列）
+4. **整合**重複內容（同一概念不要寫兩遍）
+5. 保持原本的整體結構（標題層級、表格、callout、🔗 延伸補充 區塊都要在）
+6. **合併後內容資訊量必須 ≥ 原內容**（你只能補強，不能刪減未提及的部分）
+
+【現有章節（完整內容）】
+章節名：${oldCh.name}
+領域：${oldCh.domain || ''}
+子主題：${oldCh.subtopic || ''}
+現有 concepts: ${(oldCh.concepts||[]).join(', ')}
+已收錄題目: ${(oldCh.qids||[]).slice(0, 10).join(', ')}
+
+---舊章節 markdown 開始---
+${oldCh.content || ''}
+---舊章節 markdown 結束---
+
+【新題目】
+題目 ID: ${q.id}
+科目: ${SMAP[q.subject] || q.subject}
+原始 topic: ${q.topic || ''}
+題目: ${q.question}
+選項:
+${(q.options || []).join('\n')}
+正確答案: ${correctTxt}
+
+詳解(Gemini): ${q.explanation || '（無）'}
+
+詳解(NotebookLM): ${q.explanation_notebooklm || '（無）'}
+
+臨床意義: ${q.clinical || '（無）'}
+
+【AI 第一階段給的提示】
+${dec.reasoning || ''}
+新概念關鍵字: ${(dec.concepts||[]).join(', ')}
+
+【排版規範（跟原章節一致）】
+- 超短條列為主，每點 ≤ 25 字
+- 大量使用表格做對照、分類、比較
+- callout: \`> 💡 重點\` / \`> ⚠️ 易混陷阱\` / \`> 🏥 臨床要點\` / \`> 📝 易考角度\`
+- 重要名詞用 \`[[概念名]]\` 包起來
+- **粗體** 只用在最關鍵的字詞
+- 必須保留 \`### 🔗 延伸補充（國考相關必知）\` 區塊（並補上新題帶來的延伸點）
+
+【回傳】
+直接回 JSON 物件 { "content": "..." }，不要 markdown 反引號包裝。content 是合併後的完整章節 markdown。`;
+      }
+
       // 背景排隊：使用者連續按多題也不會 race condition
       let _nbQueue = Promise.resolve();
       let _nbPending = 0;
@@ -6360,6 +6428,29 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
           // 帶 schema 強制 Gemini 回符合結構的 JSON
           const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
           const dec = extractJSON(raw);
+          // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
+          // 第 1 階段只看摘要決定要 append 到哪章，第 2 階段把舊章節完整內容餵給 AI 做合併
+          if (dec && dec.action === 'append') {
+            const chId = dec.chapter_id || dec.chapterId;
+            const oldCh = notebook.chapters.find(c => c.id === chId);
+            if (oldCh && (oldCh.content || '').trim()) {
+              try {
+                const mergePrompt = buildMergePrompt(q, oldCh, dec);
+                const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA);
+                const mergeDec = extractJSON(mergeRaw);
+                if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= (oldCh.content || '').trim().length * 0.7) {
+                  // 安全閥：合併版至少要有舊內容 70% 長度，否則視為失敗（保留原內容）
+                  dec.content = mergeDec.content;
+                } else {
+                  console.warn('merge result too short, falling back to old content');
+                  dec.content = oldCh.content; // 寧可不改也別覆蓋
+                }
+              } catch(mergeErr) {
+                console.warn('merge step failed, keeping old content', mergeErr);
+                dec.content = oldCh.content; // 合併失敗就維持舊內容
+              }
+            }
+          }
           applyAIDecision(dec, q);
           // 整理成功 → 從待整理佇列移除（如果在裡面）
           removeFromPendingQueue(q.id);
@@ -8194,6 +8285,57 @@ ${instruction.trim()}
       }
 
       // ── Peek Notebook：在練習中查看相關章節 ──
+      // 找出跟一題相關的章節（給偷看筆記用）
+      // 多訊號來源：q.topic + q.question + 選項 + 詳解 + 臨床
+      // 雙向比對：章節 concepts 出現在題目文字中 OR 題目 token 出現在章節 haystack 中
+      function findRelatedChapters(q, chapters){
+        const directHit = [];
+        const topicHit = [];
+
+        // 1. 蒐集題目這邊所有可用字串（給章節 concept 反向匹配用）
+        const qFullText = [
+          q.topic || '',
+          q.question || '',
+          (q.options || []).join(' '),
+          (q.explanation || '').slice(0, 400),
+          (q.explanation_notebooklm || '').slice(0, 400),
+          (q.clinical || '').slice(0, 300)
+        ].join(' ').toLowerCase();
+
+        // 2. 蒐集題目這邊的關鍵 token（給章節 haystack 正向匹配用）
+        //    topic 拆字 + 英文專有名詞（≥3 字母）+ 中文 2-4 字片段
+        const topicTokens = (q.topic || '').split(/[,，、 \/]+/).filter(s => s.length >= 2);
+        const qTextForTokens = (q.question || '') + ' ' + (q.options || []).join(' ');
+        const engTokens = (qTextForTokens.match(/[A-Za-z][A-Za-z0-9\-]{2,}/g) || []).map(s => s.toLowerCase());
+        const allQTokens = Array.from(new Set([...topicTokens.map(s => s.toLowerCase()), ...engTokens]));
+
+        chapters.forEach(c => {
+          // directHit: 章節已經收錄了這題
+          if ((c.qids || []).includes(q.id)) {
+            directHit.push(c);
+            return;
+          }
+          const cConcepts = (c.concepts || []).map(s => (s || '').toLowerCase());
+          const cHaystack = (
+            (c.name || '') + ' ' +
+            (c.subtopic || '') + ' ' +
+            (c.concepts || []).join(' ') + ' ' +
+            (c.content || '').slice(0, 1500)
+          ).toLowerCase();
+          // 規則 A: 章節的任一 concept 出現在題目全文中（高優先 — 同概念）
+          const conceptHit = cConcepts.some(con => {
+            const t = (con || '').trim();
+            return t.length >= 2 && qFullText.includes(t);
+          });
+          if (conceptHit) { topicHit.push(c); return; }
+          // 規則 B: 題目的任一 token 出現在章節 haystack 中（中優先）
+          const tokenHit = allQTokens.some(t => t.length >= 2 && cHaystack.includes(t));
+          if (tokenHit) { topicHit.push(c); return; }
+        });
+
+        return { directHit, topicHit };
+      }
+
       function peekNotebook(){
         const q = practiceList[practiceIdx];
         if (!q) { showToast('找不到當前題目'); return; }
@@ -8201,26 +8343,8 @@ ${instruction.trim()}
         const body = document.getElementById('peek-body');
         const overlay = document.getElementById('peek-overlay');
 
-        // 找相關章節：
-        // 1) qids 已經包含這題的
-        // 2) concepts 跟題目 topic 相關的
-        // 3) 章節名稱包含題目 topic 關鍵字
+        const { directHit, topicHit } = findRelatedChapters(q, notebook.chapters);
         const topic = (q.topic || '').trim();
-        const topicTokens = topic ? topic.split(/[,，、 \/]+/).filter(s => s.length >= 2) : [];
-
-        const directHit = [];
-        const topicHit = [];
-        notebook.chapters.forEach(c => {
-          if ((c.qids || []).includes(q.id)) {
-            directHit.push(c);
-            return;
-          }
-          if (!topic) return;
-          const haystack = (c.name + ' ' + (c.concepts||[]).join(' ') + ' ' + (c.content||'').slice(0,500));
-          if (topicTokens.some(t => haystack.includes(t)) || haystack.includes(topic)) {
-            topicHit.push(c);
-          }
-        });
 
         overlay.style.display = 'flex';
 

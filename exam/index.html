@@ -6549,7 +6549,25 @@ ${dec.reasoning || ''}
           updatePendingBadge();
         }
       }
+      // 清掉已經在任一章節 qids 裡的待整理項目（例如使用者手動編輯 / 🔄 重整章節 把題目涵蓋進去了）
+      function _cleanupAlreadyOrganizedPending(){
+        try { loadNotebook(); } catch(e) {}
+        const arr = getPendingQueue();
+        if (arr.length === 0) return 0;
+        const allQids = new Set();
+        ((notebook && notebook.chapters) || []).forEach(c => {
+          (c.qids || []).forEach(qid => allQids.add(qid));
+        });
+        const remaining = arr.filter(item => !allQids.has(item.qid));
+        const removed = arr.length - remaining.length;
+        if (removed > 0) {
+          savePendingQueue(remaining);
+        }
+        return removed;
+      }
       function updatePendingBadge(){
+        // 順手清掉已整理的
+        _cleanupAlreadyOrganizedPending();
         const btn = document.getElementById('btn-pending');
         if (!btn) return;
         const arr = getPendingQueue();
@@ -6561,16 +6579,25 @@ ${dec.reasoning || ''}
         }
       }
       function openPendingModal(){
+        // 開啟前先自動清掉已整理的
+        const autoCleared = _cleanupAlreadyOrganizedPending();
         const arr = getPendingQueue();
         const overlay = document.getElementById('pending-overlay');
         const body = document.getElementById('pending-body');
         if (!overlay || !body) return;
         if (arr.length === 0) {
-          body.innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af"><div style="font-size:2.5rem">📭</div><div style="font-weight:700;margin-top:.5rem;color:#374151">沒有待整理的題目</div></div>';
+          const note = autoCleared > 0
+            ? '<div style="font-size:.85rem;color:#15803d;margin-top:.6rem">✓ 已自動清掉 ' + autoCleared + ' 題（已經在筆記章節裡了）</div>'
+            : '';
+          body.innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af"><div style="font-size:2.5rem">📭</div><div style="font-weight:700;margin-top:.5rem;color:#374151">沒有待整理的題目</div>' + note + '</div>';
           overlay.style.display = 'flex';
+          updatePendingBadge();
           return;
         }
-        let html = '<div style="font-size:.85rem;color:#6b7280;margin-bottom:.6rem;line-height:1.6">這些題目之前 AI 整理失敗（額度上限 / 模型忙線 / 其他錯誤）。<br>按「<strong>🚀 一鍵整理全部</strong>」會逐一重試，仍失敗的留在這裡。</div>';
+        const autoNote = autoCleared > 0
+          ? '<div style="font-size:.8rem;color:#15803d;margin-bottom:.4rem">✓ 已自動清掉 ' + autoCleared + ' 題已整理的（已經在筆記章節裡了）</div>'
+          : '';
+        let html = autoNote + '<div style="font-size:.85rem;color:#6b7280;margin-bottom:.6rem;line-height:1.6">這些題目之前 AI 整理失敗（額度上限 / 模型忙線 / 其他錯誤）。<br>按「<strong>🚀 一鍵整理全部</strong>」會逐一重試，仍失敗的留在這裡。</div>';
         html += '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">';
         html += '<button onclick="retryAllPending()" style="background:#7c3aed;color:white;border:none;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🚀 一鍵整理全部</button>';
         html += '<button onclick="clearAllPending()" style="background:white;color:#dc2626;border:1.5px solid #fca5a5;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🗑 全部清空</button>';
@@ -8575,8 +8602,12 @@ ${instruction.trim()}
         document.getElementById('peek-overlay').style.display = 'none';
       }
 
-      // 啟動時把 notebook 載進記憶體
-      try { loadNotebook(); } catch(e) {}
+      // 啟動時把 notebook 載進記憶體 + 自動清待整理裡已整理的
+      try {
+        loadNotebook();
+        _cleanupAlreadyOrganizedPending();
+        updatePendingBadge();
+      } catch(e) {}
 
       // ════════════════════════════════════════════
       //  Reset All Marks

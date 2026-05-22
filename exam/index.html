@@ -6460,27 +6460,37 @@ ${dec.reasoning || ''}
           const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
           const dec = extractJSON(raw);
           // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
-          // 第 1 階段只看摘要決定要 append 到哪章，第 2 階段把舊章節完整內容餵給 AI 做合併
+          // 智慧判斷：
+          //   - 短章節 (<800 字)：第 1 階段已看到接近全文摘要，跳過第 2 階段省 API 額度
+          //   - 長章節 (≥800 字)：做完整 2 階段合併避免覆蓋
           if (dec && dec.action === 'append') {
             const chId = dec.chapter_id || dec.chapterId;
             const oldCh = notebook.chapters.find(c => c.id === chId);
-            if (oldCh && (oldCh.content || '').trim()) {
+            const oldContent = (oldCh && oldCh.content) || '';
+            const oldLen = oldContent.trim().length;
+            if (oldCh && oldLen >= 800) {
+              // 長章節：跑第 2 階段合併
               try {
                 const mergePrompt = buildMergePrompt(q, oldCh, dec);
                 const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA);
                 const mergeDec = extractJSON(mergeRaw);
-                if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= (oldCh.content || '').trim().length * 0.7) {
-                  // 安全閥：合併版至少要有舊內容 70% 長度，否則視為失敗（保留原內容）
-                  // 圖片安全網：若 AI 刪了任何原本的圖，自動補回章節末尾
-                  dec.content = _preserveImagesIn(oldCh.content, mergeDec.content);
+                if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= oldLen * 0.7) {
+                  dec.content = _preserveImagesIn(oldContent, mergeDec.content);
                 } else {
                   console.warn('merge result too short, falling back to old content');
-                  dec.content = oldCh.content; // 寧可不改也別覆蓋
+                  dec.content = oldContent;
                 }
               } catch(mergeErr) {
+                // 撞額度 → 整題拋出讓 pending queue 重排
+                if (/429|quota|exceed/i.test(mergeErr.message || '')) {
+                  throw new Error('合併撞額度: ' + (mergeErr.message || '').slice(0, 80));
+                }
                 console.warn('merge step failed, keeping old content', mergeErr);
-                dec.content = oldCh.content; // 合併失敗就維持舊內容
+                dec.content = oldContent;
               }
+            } else if (oldCh) {
+              // 短章節：用第 1 階段結果 + 圖片安全網（不再花第 2 次 API）
+              dec.content = _preserveImagesIn(oldContent, dec.content || oldContent);
             }
           }
           applyAIDecision(dec, q);
@@ -6540,6 +6550,41 @@ ${dec.reasoning || ''}
           });
         }
         savePendingQueue(arr);
+        // 啟動自動重試（如果還沒在跑）
+        startPendingAutoRetry();
+      }
+
+      // ── 背景自動重試 ──
+      // 每 70 秒重試 1 題（避免再撞 RPM）。retries ≥ 5 的不再自動重試，要人工處理
+      let _pendingAutoRetryTimer = null;
+      function startPendingAutoRetry(){
+        if (_pendingAutoRetryTimer) return; // 已經在跑
+        _pendingAutoRetryTimer = setInterval(async () => {
+          // 先清掉已整理的
+          _cleanupAlreadyOrganizedPending();
+          const arr = getPendingQueue();
+          if (arr.length === 0) { stopPendingAutoRetry(); return; }
+          // 挑第 1 個 retries < 5 的試
+          const item = arr.find(x => (x.retries || 0) < 5);
+          if (!item) {
+            // 全部都試過 5 次以上 → 停掉自動重試，要使用者人工處理
+            stopPendingAutoRetry();
+            return;
+          }
+          const q = QS.find(x => x.id === item.qid);
+          if (!q) { removeFromPendingQueue(item.qid); return; }
+          // 不打擾使用者，只在 console 留紀錄
+          console.log('[auto-retry pending]', q.meta || q.id, 'retries=' + (item.retries||0));
+          try {
+            await addQToNotebook(q, { silent: true });
+          } catch(e) { /* 失敗會自動進 pending，無需處理 */ }
+        }, 70000); // 70 秒
+      }
+      function stopPendingAutoRetry(){
+        if (_pendingAutoRetryTimer) {
+          clearInterval(_pendingAutoRetryTimer);
+          _pendingAutoRetryTimer = null;
+        }
       }
       function removeFromPendingQueue(qid){
         const arr = getPendingQueue();
@@ -8602,11 +8647,13 @@ ${instruction.trim()}
         document.getElementById('peek-overlay').style.display = 'none';
       }
 
-      // 啟動時把 notebook 載進記憶體 + 自動清待整理裡已整理的
+      // 啟動時把 notebook 載進記憶體 + 自動清待整理裡已整理的 + 啟動背景重試
       try {
         loadNotebook();
         _cleanupAlreadyOrganizedPending();
         updatePendingBadge();
+        // 若還有 pending，啟動背景自動重試（70 秒一題）
+        if (getPendingQueue().length > 0) startPendingAutoRetry();
       } catch(e) {}
 
       // ════════════════════════════════════════════

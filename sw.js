@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v50-pending-clean';
+const CACHE_NAME = 'dental-all-v51-smart-merge-autoretry';
 const PRECACHE = [
   './',
   './index.html',

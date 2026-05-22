@@ -7183,17 +7183,17 @@ ${JSON.stringify(list, null, 2)}
         }
       }
 
-      // ── 圖片在章節中左右移動（往左 = 往前移、往右 = 往後移）──
-      // 配合自動排版：相鄰圖片會自動並排，所以「移到旁邊」就會自動變並排
-      // 「移過 1 個」= 跳到下一排（被擠出原本的並排組）
+      // ── 圖片在章節中左右移動 ──
+      // 智慧行為：
+      //   情況 A（兩張圖中間有文字）→ 把兩張圖拉到一起並排（文字擠到下面）
+      //   情況 B（兩張圖已經並排）→ 左右對調順序
+      // 配合自動並排：兩張圖只要相鄰（中間只有空白）就會自動排成左右
       function moveImgInChapter(urlEnc, direction){
         const url = decodeURIComponent(urlEnc);
         loadNotebook();
-        // 找出包含這張圖的章節
         const ch = notebook.chapters.find(c => c.content && c.content.includes(url));
         if (!ch) { showToast('找不到這張圖在哪一章'); return; }
         const content = ch.content || '';
-        // 把所有圖片 markdown 位置抓出來
         const imgRe = /!\[[^\]]*\]\(([^)\s]+)\)/g;
         const imgs = [];
         let m;
@@ -7203,20 +7203,30 @@ ${JSON.stringify(list, null, 2)}
         const idx = imgs.findIndex(img => img.url === url);
         if (idx < 0) { showToast('找不到圖片位置'); return; }
         const tgt = idx + direction;
-        if (tgt < 0) { showToast('已經是第一張圖'); return; }
-        if (tgt >= imgs.length) { showToast('已經是最後一張圖'); return; }
-        // 跟相鄰圖片交換 markdown 位置（保留中間文字 / 換行）
+        if (tgt < 0) { showToast('左邊沒有其他圖片了'); return; }
+        if (tgt >= imgs.length) { showToast('右邊沒有其他圖片了'); return; }
+        // 找出兩張中誰先誰後（依在 markdown 中的位置）
         const a = imgs[idx], b = imgs[tgt];
-        let newContent;
-        if (a.start < b.start) {
-          newContent = content.slice(0, a.start) + b.md + content.slice(a.end, b.start) + a.md + content.slice(b.end);
+        const first = a.start < b.start ? a : b;
+        const second = a.start < b.start ? b : a;
+        const between = content.slice(first.end, second.start);
+        let newContent, toastMsg;
+        if (/^\s*$/.test(between)) {
+          // 已經並排 → 對調左右
+          newContent = content.slice(0, first.start) + second.md + between + first.md + content.slice(second.end);
+          toastMsg = '✓ 左右對調';
         } else {
-          newContent = content.slice(0, b.start) + a.md + content.slice(b.end, a.start) + b.md + content.slice(a.end);
+          // 中間有文字 → 把兩張圖拉到一起，文字擠到圖片對下面
+          newContent = content.slice(0, first.end) + '\n\n' + second.md
+                     + '\n\n' + between.trim()
+                     + content.slice(second.end);
+          toastMsg = '✓ 已並排（中間文字移到下面）';
         }
         ch.content = newContent;
         ch.updatedAt = Date.now();
         saveNotebook();
         renderNotebookIfVisible();
+        showToast(toastMsg);
       }
 
       // ══════════════════════════════════════════
@@ -8234,8 +8244,8 @@ ${instruction.trim()}
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',-10)" title="縮小">−</button>
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',+10)" title="放大">+</button>
               <button onclick="event.stopPropagation();resetImgSize('${urlEnc}')" title="重置成中等">⟲</button>
-              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',-1)" title="往左移（換到前一張圖的位置）">←</button>
-              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',+1)" title="往右移（換到下一張圖的位置）">→</button>
+              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',-1)" title="跟左邊那張圖並排（已並排就左右對調）">←</button>
+              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',+1)" title="跟右邊那張圖並排（已並排就左右對調）">→</button>
               <button onclick="event.stopPropagation();removeImgFromChapter('${urlEnc}')" title="刪除這張圖" style="color:#dc2626">✕</button>
             </span>
           </span>`;

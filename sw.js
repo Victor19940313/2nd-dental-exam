@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v56-undo-fix';
+const CACHE_NAME = 'dental-all-v57-img-join';
 const PRECACHE = [
   './',
   './index.html',

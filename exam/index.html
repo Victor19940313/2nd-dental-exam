@@ -6297,9 +6297,10 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 - **每個 bullet 點必須各自獨佔一行**，禁止把多個「- 子項」擠在同一行（這會排版亂掉，例如「- **特點**：xxx - **功能**：yyy」是錯的，必須兩行）
 - **何時用表格**（極重要，請嚴格判斷）：
   * ✅ **用表格的時機**：「2 個以上同類型項目，比較相同屬性」時 — 例如比較 3 種神經纖維的（直徑/速度/功能）、3 種牙周病分期的（牙周袋/骨缺失/治療）、多種材料的（成分/優點/缺點）
-  * ✅ 表格 cell 內容**必須非常短**：每 cell ≤ 15 字、一個短句或一個名詞，**禁止在 cell 裡塞多段條列（如「1. xxx 2. yyy 3. zzz」）**
-  * ❌ **不要用表格**：單一概念的多項描述（用條列或 callout）、cell 內容會超過 15 字、需要長段機制解釋
-  * 範例反例：「A: 提供支撐穩定 / 引導器械維持中心 / 強化刀刃」這種一格塞 3 點 → 改用條列 + callout，不要塞表格
+  * ✅ 表格 cell 內容**短句即可**（一個短句 / 名詞 / 數值 / 簡短描述都行），**禁止當成長文敘事段落用**
+  * ❌ **禁止在 cell 裡塞多段條列**（例如「1. xxx 2. yyy 3. zzz」這種 → 改成多個 row 拆開，或乾脆別用表格）
+  * ❌ **不要用表格**：單一概念的多項描述（用條列或 callout）、需要長段機制解釋
+  * 原則：表格是「**對照表**」不是「**段落容器**」— 想寫長解釋就改用條列 / callout
 - **何時用 callout**：
   * \`> 💡 ...\` 一句話關鍵記憶點
   * \`> ⚠️ ...\` 易混淆 / 陷阱題
@@ -6491,7 +6492,7 @@ ${dec.reasoning || ''}
 
 【排版規範（跟原章節一致）】
 - 超短條列為主，每點 ≤ 25 字
-- **何時用表格**：「2+ 同類項目比較相同屬性」才用；每 cell ≤ 15 字單一短句，**禁止 cell 內塞多段條列**（不要 1./2./3.）
+- **何時用表格**：「2+ 同類項目比較相同屬性」才用；cell 寫短句即可（**不要當長文敘事段落**），**禁止 cell 內塞多段條列**（不要 1./2./3.）
 - callout: \`> 💡 重點\` / \`> ⚠️ 易混陷阱\` / \`> 🏥 臨床要點\` / \`> 📝 易考角度\`
 - 單一概念的多項描述 → 用條列或 callout，**不要硬塞表格**
 - 重要名詞用 \`[[概念名]]\` 包起來
@@ -6984,6 +6985,18 @@ ${dec.reasoning || ''}
         const el = document.getElementById('screen-notebook');
         if (el && el.style.display !== 'none') renderNotebook();
       }
+      // 重新渲染但保留捲動位置（給 ± / ← / → / ✕ 這類「不該跳回頂部」的操作用）
+      function renderNotebookKeepScroll(){
+        const pane = document.querySelector('.nb-content-pane');
+        const paneScroll = pane ? pane.scrollTop : 0;
+        const winScroll = window.scrollY || window.pageYOffset || 0;
+        renderNotebook();
+        // renderNotebook 結尾會 scrollTo(0, 0)，這裡再把它撥回去
+        requestAnimationFrame(() => {
+          if (pane) pane.scrollTop = paneScroll;
+          window.scrollTo(0, winScroll);
+        });
+      }
       let currentChapterId = null;
       let editingChapterId = null;   // 章節編輯狀態
       let editPreviewMode = false;   // 編輯時切換預覽
@@ -7152,7 +7165,7 @@ ${JSON.stringify(list, null, 2)}
         });
         if (changed) {
           saveNotebook();
-          renderNotebook();
+          renderNotebookKeepScroll();
         }
       }
       function resetImgSize(urlEnc){
@@ -7170,7 +7183,7 @@ ${JSON.stringify(list, null, 2)}
         });
         if (changed) {
           saveNotebook();
-          renderNotebook();
+          renderNotebookKeepScroll();
         }
       }
 
@@ -7188,14 +7201,14 @@ ${JSON.stringify(list, null, 2)}
         });
         if (changed) {
           saveNotebook();
-          renderNotebook();
+          renderNotebookKeepScroll();
           showToast('✓ 已刪除');
         }
       }
 
-      // ── 圖片左右移動 = 拆排 / 換排 ──
-      // →  這張圖跳到下一排（在 markdown 中，在這張圖前面塞 ROWBREAK，把它跟前一張隔開）
-      // ←  下一張圖跳到下一排（這張保留原位，把後面那張擠下去）
+      // ── 圖片 ← / → = Word 風格的「換行/退格」邏輯 ──
+      // →  把這張圖推到下一排（在它跟前一張之間塞 ROWBREAK，相當於前面打一個換行）
+      // ←  把這張圖拉回上一排（刪掉它跟前一張之間的 ROWBREAK / 文字，相當於退格）
       function moveImgInChapter(urlEnc, direction){
         const url = decodeURIComponent(urlEnc);
         loadNotebook();
@@ -7210,33 +7223,44 @@ ${JSON.stringify(list, null, 2)}
         }
         const idx = imgs.findIndex(img => img.url === url);
         if (idx < 0) { showToast('找不到圖片位置'); return; }
+        if (idx === 0) {
+          showToast(direction > 0 ? '已經是第一張圖了，沒法再往下' : '已經是第一張圖了，沒法再往上');
+          return;
+        }
+        const prev = imgs[idx - 1];
+        const cur = imgs[idx];
+        const between = content.slice(prev.end, cur.start);
+        const hasRowBreak = between.includes('<!--ROWBREAK-->');
         const ROWBREAK = '\n\n<!--ROWBREAK-->\n\n';
         let newContent, toastMsg;
         if (direction > 0) {
-          // →  這張圖跳下一排（在它跟前一張之間塞 ROWBREAK）
-          if (idx === 0) { showToast('這是第一張圖，沒有「前一排」'); return; }
-          const prev = imgs[idx - 1];
-          const cur = imgs[idx];
-          const between = content.slice(prev.end, cur.start);
-          if (between.includes('<!--ROWBREAK-->')) { showToast('它已經是自己一排了'); return; }
-          if (!/^\s*$/.test(between)) { showToast('它已經是自己一排了'); return; }
+          // →  推下一排（如果還沒分排）
+          if (hasRowBreak || !/^\s*$/.test(between)) {
+            showToast('它已經在自己一排了'); return;
+          }
           newContent = content.slice(0, prev.end) + ROWBREAK + cur.md + content.slice(cur.end);
           toastMsg = '✓ 跳到下一排';
         } else {
-          // ←  把下一張圖擠到下一排（這張保留原位）
-          if (idx >= imgs.length - 1) { showToast('這是最後一張圖，後面沒有圖可以擠'); return; }
-          const cur = imgs[idx];
-          const next = imgs[idx + 1];
-          const between = content.slice(cur.end, next.start);
-          if (between.includes('<!--ROWBREAK-->')) { showToast('它後面那張圖已經是自己一排了'); return; }
-          if (!/^\s*$/.test(between)) { showToast('它後面那張圖已經是自己一排了'); return; }
-          newContent = content.slice(0, cur.end) + ROWBREAK + next.md + content.slice(next.end);
-          toastMsg = '✓ 後面那張圖跳到下一排';
+          // ←  拉回上一排（刪掉前面的 ROWBREAK / 文字）
+          if (!hasRowBreak && /^\s*$/.test(between)) {
+            showToast('它已經跟前一張並排了'); return;
+          }
+          if (hasRowBreak) {
+            // 純粹只有 ROWBREAK 標記 → 直接拿掉，圖併到上一排
+            newContent = content.slice(0, prev.end) + '\n\n' + cur.md + content.slice(cur.end);
+            toastMsg = '✓ 拉回上一排（並排）';
+          } else {
+            // 中間有文字 → 把文字擠到圖片下面，圖併到上一排
+            newContent = content.slice(0, prev.end) + '\n\n' + cur.md
+                       + '\n\n' + between.trim()
+                       + content.slice(cur.end);
+            toastMsg = '✓ 拉回上一排（中間文字擠到下面）';
+          }
         }
         ch.content = newContent;
         ch.updatedAt = Date.now();
         saveNotebook();
-        renderNotebookIfVisible();
+        renderNotebookKeepScroll();
         showToast(toastMsg);
       }
 
@@ -8257,8 +8281,8 @@ ${instruction.trim()}
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',-10)" title="縮小">−</button>
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',+10)" title="放大">+</button>
               <button onclick="event.stopPropagation();resetImgSize('${urlEnc}')" title="重置成中等">⟲</button>
-              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',-1)" title="跟左邊那張圖並排（已並排就左右對調）">←</button>
-              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',+1)" title="跟右邊那張圖並排（已並排就左右對調）">→</button>
+              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',-1)" title="拉回上一排（跟前一張圖並排）">←</button>
+              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',+1)" title="跳到下一排（自己一排）">→</button>
               <button onclick="event.stopPropagation();removeImgFromChapter('${urlEnc}')" title="刪除這張圖" style="color:#dc2626">✕</button>
             </span>
           </span>`;

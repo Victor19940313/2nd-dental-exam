@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v60-rowbreak-table-rules';
+const CACHE_NAME = 'dental-all-v61-keep-scroll-img-flow';
 const PRECACHE = [
   './',
   './index.html',

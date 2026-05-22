@@ -2315,13 +2315,13 @@
         position:relative;display:inline-block;max-width:100%;margin:.6rem 0;
       }
       .nb-chapter-content img{
-        display:block;max-width:60%;height:auto;
+        display:block;max-width:var(--img-max, 60%);height:auto;
         border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);
         cursor:zoom-in;transition:opacity .15s;
       }
       /* 連續多張圖片自動左右並排 */
       .nb-img-row{
-        display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-start;
+        display:flex;gap:.3rem;flex-wrap:wrap;align-items:flex-start;
         margin:.8rem 0;
       }
       .nb-img-row .nb-img-wrap{
@@ -8329,24 +8329,25 @@ ${instruction.trim()}
         // 圖片 ![alt](url) — 支援 size 參數
         s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, url) => {
           const cleanUrl = url.replace(/&amp;/g, '&');
-          let sizeStyle = 'max-width:60%';
+          let imgMaxWidth = '60%'; // default medium
           let realAlt = alt;
           if (alt.includes('|')) {
             const parts = alt.split('|');
             realAlt = parts[0];
             const hint = (parts[1] || '').trim().toLowerCase();
-            if (hint === 'small' || hint === 's') sizeStyle = 'max-width:30%';
-            else if (hint === 'medium' || hint === 'm') sizeStyle = 'max-width:60%';
-            else if (hint === 'large' || hint === 'l') sizeStyle = 'max-width:90%';
-            else if (hint === 'full' || hint === 'original') sizeStyle = 'max-width:100%';
-            else if (/^\d+px$/.test(hint)) sizeStyle = 'max-width:' + hint;
-            else if (/^\d+%$/.test(hint)) sizeStyle = 'max-width:' + hint;
-            else if (/^\d+$/.test(hint)) sizeStyle = 'max-width:' + hint + 'px';
+            if (hint === 'small' || hint === 's') imgMaxWidth = '30%';
+            else if (hint === 'medium' || hint === 'm') imgMaxWidth = '60%';
+            else if (hint === 'large' || hint === 'l') imgMaxWidth = '90%';
+            else if (hint === 'full' || hint === 'original') imgMaxWidth = '100%';
+            else if (/^\d+px$/.test(hint)) imgMaxWidth = hint;
+            else if (/^\d+%$/.test(hint)) imgMaxWidth = hint;
+            else if (/^\d+$/.test(hint)) imgMaxWidth = hint + 'px';
           }
+          // 用 CSS 變數而不是 inline max-width on img，這樣並排狀態下 CSS 可以覆蓋成 100%
           // 把 url 做 b64-safe 編碼避免 onclick 字串問題
           const urlEnc = encodeURIComponent(cleanUrl);
-          return `<span class="nb-img-wrap">
-            <img src="${cleanUrl}" alt="${escapeHtml(realAlt)}" loading="lazy" style="${sizeStyle}" onclick="openImgLightbox('${cleanUrl}')" />
+          return `<span class="nb-img-wrap" style="--img-max:${imgMaxWidth}">
+            <img src="${cleanUrl}" alt="${escapeHtml(realAlt)}" loading="lazy" onclick="openImgLightbox('${cleanUrl}')" />
             <span class="nb-img-controls">
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',-10)" title="縮小">−</button>
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',+10)" title="放大">+</button>

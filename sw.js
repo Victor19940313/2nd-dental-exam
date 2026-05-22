@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v62-important-star';
+const CACHE_NAME = 'dental-all-v63-ai-img-format-arrow-force';
 const PRECACHE = [
   './',
   './index.html',

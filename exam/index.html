@@ -7241,14 +7241,19 @@ ${JSON.stringify(list, null, 2)}
           newContent = content.slice(0, prev.end) + ROWBREAK + cur.md + content.slice(cur.end);
           toastMsg = '✓ 跳到下一排';
         } else {
-          // ←  拉回上一排（刪掉前面的 ROWBREAK / 文字）
-          if (!hasRowBreak && /^\s*$/.test(between)) {
-            showToast('它已經跟前一張並排了'); return;
-          }
+          // ←  拉回上一排（強制重整 markdown 確保兩張圖確實相鄰）
+          // 即使我們以為「已經並排」，也重寫一次（避免 markdown 看起來 OK 但實際渲染卡到的 edge case）
           if (hasRowBreak) {
-            // 純粹只有 ROWBREAK 標記 → 直接拿掉，圖併到上一排
-            newContent = content.slice(0, prev.end) + '\n\n' + cur.md + content.slice(cur.end);
+            // 拿掉 ROWBREAK 標記，圖併到上一排
+            const cleaned = between.replace(/<!--ROWBREAK-->/g, '').trim();
+            newContent = content.slice(0, prev.end) + '\n\n' + cur.md
+                       + (cleaned ? '\n\n' + cleaned : '')
+                       + content.slice(cur.end);
             toastMsg = '✓ 拉回上一排（並排）';
+          } else if (/^\s*$/.test(between)) {
+            // 已經是空白 → 強制重寫成正規 \n\n（修可能藏的奇怪空白 / 換行格式）
+            newContent = content.slice(0, prev.end) + '\n\n' + cur.md + content.slice(cur.end);
+            toastMsg = '✓ 確認並排';
           } else {
             // 中間有文字 → 把文字擠到圖片下面，圖併到上一排
             newContent = content.slice(0, prev.end) + '\n\n' + cur.md
@@ -7487,7 +7492,8 @@ ${JSON.stringify(candidates, null, 2)}
           if (!img) return;
           // 使用者上傳的圖已有完整 url；Wilson 圖庫用 file 串 BASE
           const url = img.url || (WILSON_IMG_BASE + img.file);
-          const imgMd = `\n\n![${p.caption}|medium](${url})\n`;
+          // 前後都用兩個換行，確保圖片獨立成段（單行換行會跟下面內容黏在一起，版面會跑掉）
+          const imgMd = `\n\n![${p.caption}|medium](${url})\n\n`;
           // 找對應的 heading
           const heading = (p.after_heading || '').trim();
           if (heading) {

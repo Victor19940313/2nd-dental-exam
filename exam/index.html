@@ -2113,6 +2113,12 @@
       details.nb-subj-group.nb-search-hidden{display:none}
       .nb-toc-item.nb-search-hidden{display:none}
       details.nb-toc-group.nb-search-hidden{display:none}
+      /* ⭐ 只看重點 篩選器 */
+      .nb-toc-item.nb-star-hidden{display:none}
+      details.nb-toc-group.nb-star-hidden{display:none}
+      details.nb-toc-subgroup.nb-star-hidden{display:none}
+      details.nb-toc-subj.nb-star-hidden{display:none}
+      #nb-star-filter.is-active{background:#fbbf24!important;color:white!important;border-color:#f59e0b!important}
       .nb-search-empty{
         text-align:center;color:#9ca3af;padding:2.5rem 1rem;
       }
@@ -3215,7 +3221,10 @@
       </div>
       <div class="nb-layout">
         <aside class="nb-toc-pane">
-          <div class="nb-toc-head">📑 章節目錄</div>
+          <div class="nb-toc-head" style="display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap">
+            <span>📑 章節目錄</span>
+            <button id="nb-star-filter" onclick="toggleStarFilter()" title="只顯示標記為重點 ★ 的章節" style="background:#fef3c7;color:#92400e;border:1.5px solid #fbbf24;padding:3px 9px;border-radius:14px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap">⭐ 只看重點</button>
+          </div>
           <nav id="notebook-toc"></nav>
         </aside>
         <main class="nb-content-pane">
@@ -7604,6 +7613,44 @@ ${JSON.stringify(candidates, null, 2)}
         }
       }
 
+      // ── 切換「只看重點」目錄篩選 ──
+      const STAR_FILTER_LS = uKey('nb_star_filter_on');
+      function applyStarFilter(){
+        const on = localStorage.getItem(STAR_FILTER_LS) === '1';
+        const btn = document.getElementById('nb-star-filter');
+        if (btn) btn.classList.toggle('is-active', on);
+        loadNotebook();
+        // 抓出所有 chapter id 的「是否重點」對應表
+        const importantIds = new Set((notebook.chapters || []).filter(c => c.important).map(c => c.id));
+        // 套用到 TOC 葉子節點
+        document.querySelectorAll('.nb-toc-item').forEach(item => {
+          const onclickAttr = item.getAttribute('onclick') || '';
+          const m = onclickAttr.match(/(?:selectChapter|scrollToChapter)\('([^']+)'\)/);
+          if (!m) return;
+          if (on && !importantIds.has(m[1])) item.classList.add('nb-star-hidden');
+          else item.classList.remove('nb-star-hidden');
+        });
+        // 群組：若整組內所有葉子都被隱藏，把群組也藏起來
+        document.querySelectorAll('.nb-toc-subgroup').forEach(g => {
+          const visible = g.querySelectorAll('.nb-toc-item:not(.nb-star-hidden):not(.nb-search-hidden)');
+          g.classList.toggle('nb-star-hidden', on && visible.length === 0);
+        });
+        document.querySelectorAll('.nb-toc-group').forEach(g => {
+          const visible = g.querySelectorAll('.nb-toc-item:not(.nb-star-hidden):not(.nb-search-hidden)');
+          g.classList.toggle('nb-star-hidden', on && visible.length === 0);
+        });
+        document.querySelectorAll('.nb-toc-subj').forEach(g => {
+          const visible = g.querySelectorAll('.nb-toc-item:not(.nb-star-hidden):not(.nb-search-hidden)');
+          g.classList.toggle('nb-star-hidden', on && visible.length === 0);
+        });
+      }
+      function toggleStarFilter(){
+        const cur = localStorage.getItem(STAR_FILTER_LS) === '1';
+        localStorage.setItem(STAR_FILTER_LS, cur ? '0' : '1');
+        applyStarFilter();
+        showToast(cur ? '✓ 顯示全部章節' : '⭐ 只顯示重點章節');
+      }
+
       // ── 切換「重點章節」標記（目錄會顯示金色星星）──
       function toggleChapterImportant(chId){
         loadNotebook();
@@ -7613,6 +7660,7 @@ ${JSON.stringify(candidates, null, 2)}
         ch.updatedAt = Date.now();
         saveNotebook();
         renderNotebookKeepScroll();
+        applyStarFilter(); // 立刻反映「只看重點」過濾結果
         showToast(ch.important ? '⭐ 已標記為重點章節' : '☆ 已取消重點');
       }
 
@@ -7739,6 +7787,8 @@ ${JSON.stringify(candidates, null, 2)}
           tocHtml += '</details>';
         });
         toc.innerHTML = tocHtml;
+        // 套用「只看重點」篩選（如果已開啟）
+        applyStarFilter();
 
         // Accordion 行為：打開某個資料夾時，自動收起同層其他資料夾
         // 用 capture 監聽 toggle（toggle 不冒泡，但 capture 可以截到）

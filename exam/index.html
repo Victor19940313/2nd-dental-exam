@@ -8463,8 +8463,8 @@ ${instruction.trim()}
           const inner = match.replace(/<p>(<span class="nb-img-wrap"[^>]*>[\s\S]*?<\/span>)<\/p>\s*/g, '$1');
           return '<div class="nb-img-row">' + inner + '</div>\n';
         });
-        // 移除 ROWBREAK 標記（使用者按 ← / → 製造的隔斷，已經達到拆排的目的，最後把它清掉）
-        s = s.replace(/<p>\s*&lt;!--ROWBREAK--&gt;\s*<\/p>\s*/g, '');
+        // 把 ROWBREAK 標記換成「看不見但存在的 div」(不能直接刪掉，否則 DOM 兜底會誤把兩圖併排)
+        s = s.replace(/<p>\s*&lt;!--ROWBREAK--&gt;\s*<\/p>\s*/g, '<div class="nb-rowbreak" hidden></div>');
         return s;
       }
       function _renderCellInline(c){

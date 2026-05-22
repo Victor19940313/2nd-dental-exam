@@ -3229,8 +3229,12 @@
           <p style="font-size:.78rem;color:#6b7280;margin-top:.4rem;line-height:1.5">
             沒申請過 → <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#7c3aed">點這裡免費申請</a>（5 分鐘、不用綁卡、每天 1500 次免費）
           </p>
-          <label style="display:block;font-size:.78rem;font-weight:700;margin:.4rem 0 .2rem">Gemini API Key</label>
-          <input type="password" id="ai-key-input" placeholder="AIzaSy..." style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
+          <label style="display:block;font-size:.78rem;font-weight:700;margin:.4rem 0 .2rem">
+            Gemini API Keys
+            <span style="font-weight:400;color:#6b7280;font-size:.72rem">（可貼多把不同 Google 帳號的 key，撞額度會自動換）</span>
+          </label>
+          <div id="ai-keys-list" style="display:flex;flex-direction:column;gap:.35rem"></div>
+          <button type="button" onclick="addGeminiKeyInputRow('')" style="margin-top:.35rem;background:#f3e8ff;color:#6b21a8;border:1px dashed #c084fc;padding:.35rem .7rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">+ 新增一把 key</button>
           <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">使用模型</label>
           <select id="ai-model-select" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-size:.85rem">
             <option value="gemini-3.5-flash">gemini-3.5-flash（🆕 最新、最聰明｜每天 500 次）</option>
@@ -6047,10 +6051,42 @@
         localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
         if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
       }
-      function getGeminiKey(){ return localStorage.getItem(GEMINI_KEY_LS) || ''; }
-      function setGeminiKey(k){
-        if (k) localStorage.setItem(GEMINI_KEY_LS, k);
+      const GEMINI_KEYS_LS = uKey("gemini_api_keys"); // 多把 key（JSON 陣列）
+      // 取目前所有 key（會自動從舊單 key 欄位 migrate）
+      function getGeminiKeys(){
+        try {
+          const raw = localStorage.getItem(GEMINI_KEYS_LS);
+          if (raw) {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) return arr.map(k => (k||'').trim()).filter(Boolean);
+          }
+        } catch(e) {}
+        // 沒有新格式 → 從舊單 key 拿（auto-migrate）
+        const old = localStorage.getItem(GEMINI_KEY_LS);
+        if (old && old.trim()) {
+          const arr = [old.trim()];
+          localStorage.setItem(GEMINI_KEYS_LS, JSON.stringify(arr));
+          return arr;
+        }
+        return [];
+      }
+      function setGeminiKeys(arr){
+        const clean = (arr || []).map(k => (k||'').trim()).filter(Boolean);
+        localStorage.setItem(GEMINI_KEYS_LS, JSON.stringify(clean));
+        // 同步保留第 1 把到舊欄位（向下相容）
+        if (clean.length > 0) localStorage.setItem(GEMINI_KEY_LS, clean[0]);
         else localStorage.removeItem(GEMINI_KEY_LS);
+      }
+      // 老 API：getGeminiKey 回傳第 1 把（其他地方還在用）
+      function getGeminiKey(){ const ks = getGeminiKeys(); return ks[0] || ''; }
+      function setGeminiKey(k){ setGeminiKeys(k ? [k] : []); }
+      // 冷卻管理：撞額度的 key 暫時跳過
+      const _keyCooldowns = {}; // {keyString: expiryTs}
+      function _isKeyHealthy(k){ const e = _keyCooldowns[k]; return !e || e <= Date.now(); }
+      function _markKeyCooldown(k, ms){ _keyCooldowns[k] = Date.now() + (ms||60000); }
+      function _pickHealthyKey(keys){
+        for (const k of keys) if (_isKeyHealthy(k)) return k;
+        return null;
       }
       const GITHUB_TOKEN_LS = uKey("github_token");
       const GITHUB_REPO_LS = uKey("github_repo");
@@ -6066,14 +6102,38 @@
       }
 
       // ── Gemini API call (可選帶 responseSchema 強制結構化) ──
+      // 多 key 輪替：撞 429 自動切換到下一把 healthy 的 key，並把該 key 冷卻 60 秒
       async function callGemini(promptText, schema){
-        const key = getGeminiKey();
-        if (!key) {
+        const keys = getGeminiKeys();
+        if (keys.length === 0) {
           showToast('請先設定 Gemini API key');
           openAISettings();
           throw new Error('no_key');
         }
         const model = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+        let lastErr = null;
+        // 最多嘗試 keys.length 次（每把 key 一次）
+        for (let attempt = 0; attempt < keys.length; attempt++) {
+          const key = _pickHealthyKey(keys);
+          if (!key) {
+            // 全部冷卻中 → 抛 429 讓 pending queue 接手
+            throw new Error('Gemini 429: 所有 key 都撞到額度，已自動排隊重試');
+          }
+          try {
+            return await _callGeminiWithKey(promptText, schema, key, model);
+          } catch (err) {
+            lastErr = err;
+            if (/429|quota|exceed|rate.*limit/i.test(err.message)) {
+              _markKeyCooldown(key, 60000); // 撞額度 → 冷卻 60 秒
+              console.warn('[Gemini key 撞額度] 切換到下一把', err.message.slice(0, 120));
+              continue;
+            }
+            throw err; // 非 429 直接拋
+          }
+        }
+        throw lastErr || new Error('Gemini call failed');
+      }
+      async function _callGeminiWithKey(promptText, schema, key, model){
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
         const generationConfig = { temperature: 0.3, maxOutputTokens: 8192 };
         if (schema) {
@@ -7486,7 +7546,7 @@ ${JSON.stringify(candidates, null, 2)}
             tocHtml +=
               '<details' + domainOpen + ' class="nb-toc-group">' +
                 '<summary style="margin:.35rem 0 .15rem .35rem;padding:.3rem .55rem;background:white;border:1.5px solid ' + meta.color + ';color:' + meta.color + ';border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
-                  '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + meta.emoji + ' ' + escapeHtml(d) + '</span>' +
+                  '<span style="flex:1;word-break:break-word;line-height:1.3">' + meta.emoji + ' ' + escapeHtml(d) + '</span>' +
                   '<span style="font-size:.68rem;color:' + meta.color + '">' + dList.length + '</span>' +
                 '</summary>';
 
@@ -7502,7 +7562,7 @@ ${JSON.stringify(candidates, null, 2)}
               tocHtml +=
                 '<details' + stOpen + ' class="nb-toc-subgroup">' +
                   '<summary style="margin:.2rem 0 .1rem .7rem;padding:.2rem .4rem;background:#f3e8ff;color:#6b21a8;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
-                    '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📁 ' + escapeHtml(st) + '</span>' +
+                    '<span style="flex:1;word-break:break-word;line-height:1.3">📁 ' + escapeHtml(st) + '</span>' +
                     '<span style="font-size:.62rem;color:#9333ea">' + stList.length + '</span>' +
                   '</summary>';
               tocHtml += stList.map(c => {
@@ -8334,8 +8394,28 @@ ${instruction.trim()}
       }
 
       // ── Settings modal ──
+      // 多 key UI：render N 列輸入框
+      function renderGeminiKeyInputs(keys){
+        const list = document.getElementById('ai-keys-list');
+        if (!list) return;
+        list.innerHTML = '';
+        const arr = (keys && keys.length) ? keys : [''];
+        arr.forEach((k, i) => addGeminiKeyInputRow(k));
+      }
+      function addGeminiKeyInputRow(value){
+        const list = document.getElementById('ai-keys-list');
+        if (!list) return;
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:.35rem;align-items:center';
+        const showCheck = document.getElementById('ai-key-show');
+        const inputType = (showCheck && showCheck.checked) ? 'text' : 'password';
+        row.innerHTML =
+          '<input type="' + inputType + '" class="ai-key-input" value="' + escapeHtml(value || '') + '" placeholder="AIzaSy..." style="flex:1;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />' +
+          '<button type="button" onclick="this.parentElement.remove()" title="移除這把" style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:.4rem .6rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">✕</button>';
+        list.appendChild(row);
+      }
       function openAISettings(){
-        document.getElementById('ai-key-input').value = getGeminiKey();
+        renderGeminiKeyInputs(getGeminiKeys());
         const sel = document.getElementById('ai-model-select');
         if (sel) sel.value = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
         const ghInp = document.getElementById('gh-token-input');
@@ -8348,8 +8428,10 @@ ${instruction.trim()}
         document.getElementById('ai-settings-overlay').classList.remove('open');
       }
       function saveAISettings(){
-        const k = document.getElementById('ai-key-input').value.trim();
-        setGeminiKey(k);
+        // 收集所有 key 輸入框
+        const inputs = document.querySelectorAll('.ai-key-input');
+        const keys = Array.from(inputs).map(i => (i.value || '').trim()).filter(Boolean);
+        setGeminiKeys(keys);
         const sel = document.getElementById('ai-model-select');
         if (sel) localStorage.setItem(uKey('gemini_model'), sel.value);
         const ghInp = document.getElementById('gh-token-input');
@@ -8357,7 +8439,7 @@ ${instruction.trim()}
         const ghRepo = document.getElementById('gh-repo-input');
         if (ghRepo) setGithubRepo(ghRepo.value.trim());
         if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
-        showToast('✓ 設定已儲存');
+        showToast(keys.length > 1 ? '✓ 已儲存 ' + keys.length + ' 把 key（撞額度會自動輪替）' : '✓ 設定已儲存');
         closeAISettings();
       }
 
@@ -8433,31 +8515,37 @@ ${instruction.trim()}
 
         // 沒搜尋字 → 顯示全部
         if (!q) {
-          document.querySelectorAll('.nb-chapter, .nb-subj-group, .nb-toc-item, .nb-toc-group')
+          document.querySelectorAll('.nb-chapter, .nb-subj-group, .nb-toc-item, .nb-toc-group, .nb-toc-subgroup, .nb-toc-subj')
             .forEach(el => el.classList.remove('nb-search-hidden'));
-          // 清掉舊的「無結果」提示
           const empty = document.getElementById('nb-search-empty');
           if (empty) empty.remove();
           return;
         }
 
-        // 對每章判斷是否命中
+        // 改用「資料層」搜尋（不依賴 DOM textContent，避免章節折疊或渲染遺漏）
+        loadNotebook();
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const matchedIds = new Set();
+        (notebook.chapters || []).forEach(c => {
+          // 蒐集所有可搜的欄位：名稱 + 領域 + 子主題 + 概念標籤 + 完整內容 + 來源題號 + 科目中文
+          const haystack = [
+            c.name || '',
+            c.domain || '',
+            c.subtopic || '',
+            (c.concepts || []).join(' '),
+            c.content || '',
+            (c.qids || []).join(' '),
+            SMAP[c._mainSubj] || '',
+            SMAP[c.subject] || ''
+          ].join('\n').toLowerCase();
+          if (haystack.includes(q)) matchedIds.add(c.id);
+        });
+
+        // 套用到 DOM：章節區
         let hit = 0;
         document.querySelectorAll('.nb-chapter').forEach(ch => {
-          const text = ch.textContent.toLowerCase();
-          // 抓章節 id 對應的 chapter 物件 (找來源題號也算)
           const id = ch.id.replace(/^chapter-/, '');
-          const c = (notebook.chapters || []).find(x => x.id === id);
-          let extra = '';
-          if (c) {
-            extra = (c.qids || []).join(' ').toLowerCase();
-            // 也加進科目中文名稱
-            const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
-            const sm = SMAP[c._mainSubj];
-            if (sm) extra += ' ' + sm;
-          }
-          const match = text.includes(q) || extra.includes(q);
-          if (match) { ch.classList.remove('nb-search-hidden'); hit++; }
+          if (matchedIds.has(id)) { ch.classList.remove('nb-search-hidden'); hit++; }
           else { ch.classList.add('nb-search-hidden'); }
         });
 
@@ -8468,16 +8556,16 @@ ${instruction.trim()}
           else group.classList.remove('nb-search-hidden');
         });
 
-        // 目錄：跟內容區同步
+        // 目錄：跟搜尋結果同步（修正：原本只 match scrollToChapter，現在 selectChapter / scrollToChapter 都認）
         document.querySelectorAll('.nb-toc-item').forEach(item => {
           const onclickAttr = item.getAttribute('onclick') || '';
-          const m = onclickAttr.match(/scrollToChapter\('([^']+)'\)/);
+          const m = onclickAttr.match(/(?:selectChapter|scrollToChapter)\('([^']+)'\)/);
           if (!m) return;
-          const chEl = document.getElementById('chapter-' + m[1]);
-          if (chEl && chEl.classList.contains('nb-search-hidden')) item.classList.add('nb-search-hidden');
-          else item.classList.remove('nb-search-hidden');
+          if (matchedIds.has(m[1])) item.classList.remove('nb-search-hidden');
+          else item.classList.add('nb-search-hidden');
         });
-        document.querySelectorAll('.nb-toc-group').forEach(group => {
+        // 目錄分組（領域 / 子主題 / 科目）都跟著
+        document.querySelectorAll('.nb-toc-group, .nb-toc-subgroup, .nb-toc-subj').forEach(group => {
           const visibleItems = group.querySelectorAll('.nb-toc-item:not(.nb-search-hidden)');
           if (visibleItems.length === 0) group.classList.add('nb-search-hidden');
           else group.classList.remove('nb-search-hidden');

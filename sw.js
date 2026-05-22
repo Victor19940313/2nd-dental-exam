@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v51-smart-merge-autoretry';
+const CACHE_NAME = 'dental-all-v52-multikey-toc-search';
 const PRECACHE = [
   './',
   './index.html',

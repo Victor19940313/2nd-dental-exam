@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v52-multikey-toc-search';
+const CACHE_NAME = 'dental-all-v53-img-row';
 const PRECACHE = [
   './',
   './index.html',

@@ -2313,6 +2313,17 @@
         border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);
         cursor:zoom-in;transition:opacity .15s;
       }
+      /* 連續多張圖片自動左右並排 */
+      .nb-img-row{
+        display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-start;
+        margin:.8rem 0;
+      }
+      .nb-img-row .nb-img-wrap{
+        flex:1 1 220px;margin:0;min-width:0;
+      }
+      .nb-img-row .nb-img-wrap img{
+        max-width:100%!important;width:100%;display:block;
+      }
       .nb-img-wrap:hover img{opacity:.9}
       .nb-img-controls{
         position:absolute;top:.4rem;right:.4rem;
@@ -8191,6 +8202,12 @@ ${instruction.trim()}
           if (/^<(h[1-6]|ul|ol|table|blockquote|p)/.test(t)) return t;
           return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
         }).join('\n');
+        // 連續多張圖片自動排成左右並排：把相鄰「只含一張圖的 <p>」合併成 .nb-img-row 容器
+        s = s.replace(/(<p><span class="nb-img-wrap">[\s\S]*?<\/span><\/p>\s*){2,}/g, (match) => {
+          // 抽出每個 <span class="nb-img-wrap">...</span>，放進 flex 容器
+          const inner = match.replace(/<p>(<span class="nb-img-wrap">[\s\S]*?<\/span>)<\/p>\s*/g, '$1');
+          return '<div class="nb-img-row">' + inner + '</div>\n';
+        });
         return s;
       }
       function _renderCellInline(c){

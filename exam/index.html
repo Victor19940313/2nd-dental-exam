@@ -2459,6 +2459,7 @@
         <button class="btn-mode active" id="btn-home" onclick="showHome()">
           考試首頁
         </button>
+        <button class="btn-mode" id="btn-resume" onclick="resumePractice()" title="回到剛剛在做的那一題">↩ 回到考題</button>
         <button class="btn-mode" id="btn-wrongbook" onclick="showWrongbook()">錯題本</button>
         <button class="btn-mode" id="btn-notebook" onclick="showNotebook()">🗂 筆記本</button>
         <button class="btn-mode" id="btn-db" onclick="showDB()">資料庫</button>
@@ -4408,6 +4409,19 @@
         document.getElementById("btn-wrongbook").classList.remove("active");
         const nbBtn = document.getElementById("btn-notebook");
         if (nbBtn) nbBtn.classList.remove("active");
+      }
+
+      // 從筆記本 / 錯題本 / 資料庫 等畫面跳回剛剛在練習的題目
+      function resumePractice(){
+        if (!practiceList || practiceList.length === 0) {
+          showToast('還沒開始練習，請先到考試首頁挑一個模式開始');
+          return;
+        }
+        if (practiceIdx >= practiceList.length) practiceIdx = practiceList.length - 1;
+        if (practiceIdx < 0) practiceIdx = 0;
+        showPractice();
+        loadPracticeQ();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
       // ════════════════════════════════════════════

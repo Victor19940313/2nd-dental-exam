@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v79-outline-kws';
+const CACHE_NAME = 'dental-all-v80-resume-btn';
 const PRECACHE = [
   './',
   './index.html',

@@ -2349,6 +2349,34 @@
       @media (hover:none){
         .nb-img-controls{display:flex;opacity:.85}
       }
+      /* ── Inline 螢光標記 ── */
+      .nb-chapter-content mark.hl-y,
+      .nb-chapter-content mark.hl-g,
+      .nb-chapter-content mark.hl-p{
+        padding:.05em .2em;border-radius:4px;color:inherit;
+        background:#fef08a;box-decoration-break:clone;-webkit-box-decoration-break:clone;
+      }
+      .nb-chapter-content mark.hl-y{background:#fef08a}
+      .nb-chapter-content mark.hl-g{background:#bbf7d0}
+      .nb-chapter-content mark.hl-p{background:#e9d5ff}
+      #hl-popover{
+        position:fixed;display:none;z-index:9000;
+        background:#1f2937;color:#fff;border-radius:10px;
+        box-shadow:0 6px 24px rgba(0,0,0,.35);
+        padding:.35rem;gap:.3rem;align-items:center;
+        font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+      }
+      #hl-popover.on{display:flex}
+      #hl-popover button{
+        width:36px;height:36px;border:none;border-radius:7px;
+        font-size:.95rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;line-height:1;
+      }
+      #hl-popover button:hover{transform:scale(1.05)}
+      #hl-popover .hl-btn-y{background:#fef08a;color:#7c5b00}
+      #hl-popover .hl-btn-g{background:#bbf7d0;color:#065f46}
+      #hl-popover .hl-btn-p{background:#e9d5ff;color:#6b21a8}
+      #hl-popover .hl-btn-x{background:#374151;color:#fff;font-size:1.1rem}
       /* ── Fix Exam Screen ── */
       .fix-card{
         background:white;border:1.5px solid #e5e7eb;border-radius:12px;
@@ -3331,6 +3359,14 @@
     <div id="img-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out" onclick="closeImgLightbox()">
       <img id="img-lightbox-img" src="" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.5)" />
       <button onclick="event.stopPropagation();closeImgLightbox()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.2);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:1.4rem;cursor:pointer">×</button>
+    </div>
+
+    <!-- 選取文字後的螢光浮動工具列 -->
+    <div id="hl-popover" onmousedown="event.preventDefault()" ontouchstart="event.stopPropagation()">
+      <button class="hl-btn-y" onclick="applyHighlight('hl-y')" title="黃色螢光">黃</button>
+      <button class="hl-btn-g" onclick="applyHighlight('hl-g')" title="綠色螢光">綠</button>
+      <button class="hl-btn-p" onclick="applyHighlight('hl-p')" title="紫色螢光">紫</button>
+      <button class="hl-btn-x" onclick="applyHighlight('clear')" title="清除螢光">✕</button>
     </div>
 
     <!-- PEEK NOTEBOOK MODAL -->
@@ -7058,6 +7094,95 @@ ${dec.reasoning || ''}
         document.getElementById('img-lightbox').style.display = 'none';
       }
 
+      // ── Inline 螢光：選文字後跳浮動小工具列 ──
+      (function initHighlightPopover(){
+        const pop = document.getElementById('hl-popover');
+        if (!pop) return;
+        let activeChId = null;
+        function hidePop(){ pop.classList.remove('on'); activeChId = null; }
+        function showPop(rect, chId){
+          activeChId = chId;
+          pop.classList.add('on');
+          const pw = pop.offsetWidth, ph = pop.offsetHeight;
+          let top = rect.top - ph - 8;
+          let left = rect.left + rect.width/2 - pw/2;
+          if (top < 10) top = rect.bottom + 8;
+          if (left < 8) left = 8;
+          if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+          pop.style.top = top + 'px';
+          pop.style.left = left + 'px';
+        }
+        function check(){
+          const sel = window.getSelection();
+          if (!sel || sel.isCollapsed || !sel.toString().trim()) { hidePop(); return; }
+          const range = sel.getRangeAt(0);
+          const node = range.commonAncestorContainer;
+          const el = node.nodeType === 1 ? node : node.parentElement;
+          if (!el) { hidePop(); return; }
+          const wrap = el.closest && el.closest('.nb-chapter-content');
+          if (!wrap || wrap.classList.contains('nb-editor-preview')) { hidePop(); return; }
+          const chId = wrap.getAttribute('data-chid');
+          if (!chId) { hidePop(); return; }
+          const rect = range.getBoundingClientRect();
+          if (rect.width === 0 && rect.height === 0) { hidePop(); return; }
+          showPop(rect, chId);
+        }
+        // 桌面：mouseup；行動裝置：touchend / selectionchange
+        document.addEventListener('mouseup', () => setTimeout(check, 10));
+        document.addEventListener('touchend', () => setTimeout(check, 10));
+        document.addEventListener('selectionchange', () => setTimeout(check, 50));
+        // 點 popover 外面 + 失去 selection → 關掉
+        document.addEventListener('mousedown', (e) => {
+          if (e.target.closest && e.target.closest('#hl-popover')) return;
+          setTimeout(() => {
+            const sel = window.getSelection();
+            if (!sel || sel.isCollapsed) hidePop();
+          }, 0);
+        });
+        // 捲動時關掉避免位置錯
+        window.addEventListener('scroll', hidePop, true);
+        window._getActiveHighlightChId = () => activeChId;
+        window._hideHighlightPop = hidePop;
+      })();
+
+      function applyHighlight(kind){
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) return;
+        const text = sel.toString();
+        if (!text || !text.trim()) return;
+        const chId = window._getActiveHighlightChId && window._getActiveHighlightChId();
+        if (!chId) return;
+        loadNotebook();
+        const ch = notebook.chapters.find(c => c.id === chId);
+        if (!ch || !ch.content) { showToast('找不到章節'); return; }
+
+        if (kind === 'clear') {
+          const escTxt = text.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const reClear = new RegExp(`<mark class="hl-[ygp]">(${escTxt})</mark>`, 'g');
+          if (!reClear.test(ch.content)) { showToast('沒找到對應螢光'); return; }
+          ch.content = ch.content.replace(reClear, '$1');
+        } else {
+          const idx = ch.content.indexOf(text);
+          if (idx === -1) {
+            showToast('選的範圍含格式字（粗體/標籤等），請只選一段純文字');
+            return;
+          }
+          const before = ch.content.slice(0, idx);
+          const after = ch.content.slice(idx + text.length);
+          // 已被相鄰 <mark> 包住 → 改 class 即可
+          if (/<mark class="hl-[ygp]">$/.test(before) && /^<\/mark>/.test(after)) {
+            ch.content = before.replace(/<mark class="hl-[ygp]">$/, `<mark class="${kind}">`) + text + after;
+          } else {
+            ch.content = before + `<mark class="${kind}">${text}</mark>` + after;
+          }
+        }
+        ch.updatedAt = Date.now();
+        saveNotebook();
+        window._hideHighlightPop && window._hideHighlightPop();
+        if (window.getSelection) window.getSelection().removeAllRanges();
+        renderNotebookKeepScroll();
+      }
+
       // ── AI 重整所有章節的子主題 ──
       const REORGANIZE_SUBTOPIC_SCHEMA = {
         type: "OBJECT",
@@ -7866,7 +7991,7 @@ ${JSON.stringify(candidates, null, 2)}
         const isEditing = editingChapterId === curCh.id;
         const contentBlock = isEditing
           ? renderEditorView(curCh)
-          : `<div class="nb-chapter-content">${renderMarkdown(curCh.content)}</div>`;
+          : `<div class="nb-chapter-content" data-chid="${curCh.id}">${renderMarkdown(curCh.content)}</div>`;
 
         body.innerHTML =
           `<section id="chapter-${curCh.id}" class="nb-chapter" data-subj="${curCh._mainSubj||''}">
@@ -8373,6 +8498,9 @@ ${instruction.trim()}
         // 6. AI 容錯：粗體跨換行（** \n xxx \n **）→ 收成單行
         md = md.replace(/\*\*\s*\n\s*([^*]+?)\s*\n\s*\*\*/g, '**$1**');
         let s = escapeHtml(md);
+        // 還原使用者用螢光工具加的 <mark class="hl-y/g/p">（escapeHtml 把它變成 &lt;mark...&gt;）
+        s = s.replace(/&lt;mark class=&quot;(hl-[ygp])&quot;&gt;([\s\S]*?)&lt;\/mark&gt;/g,
+          '<mark class="$1">$2</mark>');
         // tables first (need raw |)
         s = renderMDTables(s);
         // callout: 連續 > 開頭的行視為 blockquote（允許 > 後面有空白或無內容）

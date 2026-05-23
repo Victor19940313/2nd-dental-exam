@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
     />
     <title>🦷 牙醫國考練習本</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2113,12 +2113,6 @@
       details.nb-subj-group.nb-search-hidden{display:none}
       .nb-toc-item.nb-search-hidden{display:none}
       details.nb-toc-group.nb-search-hidden{display:none}
-      /* ⭐ 只看重點 篩選器 */
-      .nb-toc-item.nb-star-hidden{display:none}
-      details.nb-toc-group.nb-star-hidden{display:none}
-      details.nb-toc-subgroup.nb-star-hidden{display:none}
-      details.nb-toc-subj.nb-star-hidden{display:none}
-      #nb-star-filter.is-active{background:#fbbf24!important;color:white!important;border-color:#f59e0b!important}
       .nb-search-empty{
         text-align:center;color:#9ca3af;padding:2.5rem 1rem;
       }
@@ -2315,20 +2309,9 @@
         position:relative;display:inline-block;max-width:100%;margin:.6rem 0;
       }
       .nb-chapter-content img{
-        display:block;max-width:var(--img-max, 60%);height:auto;
+        display:block;max-width:60%;height:auto;
         border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);
         cursor:zoom-in;transition:opacity .15s;
-      }
-      /* 連續多張圖片自動左右並排 */
-      .nb-img-row{
-        display:flex;gap:.3rem;flex-wrap:wrap;align-items:flex-start;
-        margin:.8rem 0;
-      }
-      .nb-img-row .nb-img-wrap{
-        flex:1 1 220px;margin:0;min-width:0;
-      }
-      .nb-img-row .nb-img-wrap img{
-        max-width:var(--img-max, 100%);width:var(--img-max, 100%);display:block;
       }
       .nb-img-wrap:hover img{opacity:.9}
       .nb-img-controls{
@@ -3213,7 +3196,6 @@
           <button class="nb-tb-btn" id="btn-pending" onclick="openPendingModal()" title="之前整理失敗的題目（可一鍵重試）" style="display:none;background:#fef3c7;border-color:#fbbf24;color:#92400e">📥 待整理</button>
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題">🗂 重整目錄</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
-          <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
@@ -3221,10 +3203,7 @@
       </div>
       <div class="nb-layout">
         <aside class="nb-toc-pane">
-          <div class="nb-toc-head" style="display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap">
-            <span>📑 章節目錄</span>
-            <button id="nb-star-filter" onclick="toggleStarFilter()" title="只顯示標記為重點 ★ 的章節" style="background:#fef3c7;color:#92400e;border:1.5px solid #fbbf24;padding:3px 9px;border-radius:14px;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap">⭐ 只看重點</button>
-          </div>
+          <div class="nb-toc-head">📑 章節目錄</div>
           <nav id="notebook-toc"></nav>
         </aside>
         <main class="nb-content-pane">
@@ -3250,12 +3229,8 @@
           <p style="font-size:.78rem;color:#6b7280;margin-top:.4rem;line-height:1.5">
             沒申請過 → <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#7c3aed">點這裡免費申請</a>（5 分鐘、不用綁卡、每天 1500 次免費）
           </p>
-          <label style="display:block;font-size:.78rem;font-weight:700;margin:.4rem 0 .2rem">
-            Gemini API Keys
-            <span style="font-weight:400;color:#6b7280;font-size:.72rem">（可貼多把不同 Google 帳號的 key，撞額度會自動換）</span>
-          </label>
-          <div id="ai-keys-list" style="display:flex;flex-direction:column;gap:.35rem"></div>
-          <button type="button" onclick="addGeminiKeyInputRow('')" style="margin-top:.35rem;background:#f3e8ff;color:#6b21a8;border:1px dashed #c084fc;padding:.35rem .7rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">+ 新增一把 key</button>
+          <label style="display:block;font-size:.78rem;font-weight:700;margin:.4rem 0 .2rem">Gemini API Key</label>
+          <input type="password" id="ai-key-input" placeholder="AIzaSy..." style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
           <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">使用模型</label>
           <select id="ai-model-select" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-size:.85rem">
             <option value="gemini-3.5-flash">gemini-3.5-flash（🆕 最新、最聰明｜每天 500 次）</option>
@@ -6072,42 +6047,10 @@
         localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
         if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
       }
-      const GEMINI_KEYS_LS = uKey("gemini_api_keys"); // 多把 key（JSON 陣列）
-      // 取目前所有 key（會自動從舊單 key 欄位 migrate）
-      function getGeminiKeys(){
-        try {
-          const raw = localStorage.getItem(GEMINI_KEYS_LS);
-          if (raw) {
-            const arr = JSON.parse(raw);
-            if (Array.isArray(arr)) return arr.map(k => (k||'').trim()).filter(Boolean);
-          }
-        } catch(e) {}
-        // 沒有新格式 → 從舊單 key 拿（auto-migrate）
-        const old = localStorage.getItem(GEMINI_KEY_LS);
-        if (old && old.trim()) {
-          const arr = [old.trim()];
-          localStorage.setItem(GEMINI_KEYS_LS, JSON.stringify(arr));
-          return arr;
-        }
-        return [];
-      }
-      function setGeminiKeys(arr){
-        const clean = (arr || []).map(k => (k||'').trim()).filter(Boolean);
-        localStorage.setItem(GEMINI_KEYS_LS, JSON.stringify(clean));
-        // 同步保留第 1 把到舊欄位（向下相容）
-        if (clean.length > 0) localStorage.setItem(GEMINI_KEY_LS, clean[0]);
+      function getGeminiKey(){ return localStorage.getItem(GEMINI_KEY_LS) || ''; }
+      function setGeminiKey(k){
+        if (k) localStorage.setItem(GEMINI_KEY_LS, k);
         else localStorage.removeItem(GEMINI_KEY_LS);
-      }
-      // 老 API：getGeminiKey 回傳第 1 把（其他地方還在用）
-      function getGeminiKey(){ const ks = getGeminiKeys(); return ks[0] || ''; }
-      function setGeminiKey(k){ setGeminiKeys(k ? [k] : []); }
-      // 冷卻管理：撞額度的 key 暫時跳過
-      const _keyCooldowns = {}; // {keyString: expiryTs}
-      function _isKeyHealthy(k){ const e = _keyCooldowns[k]; return !e || e <= Date.now(); }
-      function _markKeyCooldown(k, ms){ _keyCooldowns[k] = Date.now() + (ms||60000); }
-      function _pickHealthyKey(keys){
-        for (const k of keys) if (_isKeyHealthy(k)) return k;
-        return null;
       }
       const GITHUB_TOKEN_LS = uKey("github_token");
       const GITHUB_REPO_LS = uKey("github_repo");
@@ -6123,38 +6066,14 @@
       }
 
       // ── Gemini API call (可選帶 responseSchema 強制結構化) ──
-      // 多 key 輪替：撞 429 自動切換到下一把 healthy 的 key，並把該 key 冷卻 60 秒
       async function callGemini(promptText, schema){
-        const keys = getGeminiKeys();
-        if (keys.length === 0) {
+        const key = getGeminiKey();
+        if (!key) {
           showToast('請先設定 Gemini API key');
           openAISettings();
           throw new Error('no_key');
         }
         const model = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
-        let lastErr = null;
-        // 最多嘗試 keys.length 次（每把 key 一次）
-        for (let attempt = 0; attempt < keys.length; attempt++) {
-          const key = _pickHealthyKey(keys);
-          if (!key) {
-            // 全部冷卻中 → 抛 429 讓 pending queue 接手
-            throw new Error('Gemini 429: 所有 key 都撞到額度，已自動排隊重試');
-          }
-          try {
-            return await _callGeminiWithKey(promptText, schema, key, model);
-          } catch (err) {
-            lastErr = err;
-            if (/429|quota|exceed|rate.*limit/i.test(err.message)) {
-              _markKeyCooldown(key, 60000); // 撞額度 → 冷卻 60 秒
-              console.warn('[Gemini key 撞額度] 切換到下一把', err.message.slice(0, 120));
-              continue;
-            }
-            throw err; // 非 429 直接拋
-          }
-        }
-        throw lastErr || new Error('Gemini call failed');
-      }
-      async function _callGeminiWithKey(promptText, schema, key, model){
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
         const generationConfig = { temperature: 0.3, maxOutputTokens: 8192 };
         if (schema) {
@@ -6203,15 +6122,6 @@
         type: "OBJECT",
         properties: {
           content: { type: "STRING", description: "完整重整後的 Markdown 章節內容" }
-        },
-        required: ["content"]
-      };
-
-      // 合併章節用的 schema（同概念第 2 題以後加入時用）
-      const MERGE_SCHEMA = {
-        type: "OBJECT",
-        properties: {
-          content: { type: "STRING", description: "合併後完整 Markdown 章節內容（必須保留原內容資訊量並擴充）" }
         },
         required: ["content"]
       };
@@ -6304,57 +6214,13 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 排版要求：
 - **超短條列為主**，每點最多 25 字，禁止長段落
 - **每個 bullet 點必須各自獨佔一行**，禁止把多個「- 子項」擠在同一行（這會排版亂掉，例如「- **特點**：xxx - **功能**：yyy」是錯的，必須兩行）
-- **何時用表格**（極重要，請嚴格判斷）：
-  * ✅ **用表格的時機**：「2 個以上同類型項目，比較相同屬性」時 — 例如比較 3 種神經纖維的（直徑/速度/功能）、3 種牙周病分期的（牙周袋/骨缺失/治療）、多種材料的（成分/優點/缺點）
-  * ✅ 表格 cell 內容**短句即可**（一個短句 / 名詞 / 數值 / 簡短描述都行），**禁止當成長文敘事段落用**
-  * ❌ **禁止在 cell 裡塞多段條列**（例如「1. xxx 2. yyy 3. zzz」這種 → 改成多個 row 拆開，或乾脆別用表格）
-  * ❌ **不要用表格**：單一概念的多項描述（用條列或 callout）、需要長段機制解釋
-  * 原則：表格是「**對照表**」不是「**段落容器**」— 想寫長解釋就改用條列 / callout
-- **何時用 callout**：
-  * \`> 💡 ...\` 一句話關鍵記憶點
-  * \`> ⚠️ ...\` 易混淆 / 陷阱題
-  * \`> 🏥 ...\` 臨床要點
-  * \`> 📝 ...\` 易考角度
-- **何時用條列**：列舉、步驟、特性（≥ 3 點），每點 ≤ 25 字
+- **大量使用表格**做對照、分類、比較
+- **callout 標記**：用 \`> 💡 ...\` 標關鍵記憶點、\`> ⚠️ ...\` 標易混淆陷阱、\`> 🏥 ...\` 標臨床要點、\`> 📝 ...\` 標易考角度
 - **概念標籤**：重要名詞用 \`[[概念名]]\` 包起來會被渲染成彩色標籤
 - **粗體** 只用在最關鍵的字詞（會被反白醒目顯示）
 - **斜體 *英文* 標英文專有名詞
 - 中英對照：首次出現帶英文原文
 - **絕對不要長段落解釋**！能用表格就用表格，能用條列就用條列
-- **數學/公式禁止使用 \`$...$\` 包起來**（網站不支援數學渲染）
-  * ❌ \`$A / (A+C)$\`、\`$A + B$\`、\`$\\ge$ 0.5 mm\`
-  * ✅ \`A / (A+C)\`、\`A + B\`、\`≥ 0.5 mm\`
-- **禁止使用 LaTeX 指令**（\`\\ge\`、\`\\le\`、\`\\pm\`、\`\\times\`、\`\\to\` 等）
-  * 數學符號**直接用 Unicode**：≥ ≤ ≠ ± × ÷ → ← ° ≈ ∞ α β π σ Δ Σ √ ∑ ∫
-  * ❌ \`\\ge 0.5\`、\`x \\times y\`、\`30 \\degree\`、\`\\alpha\` 角
-  * ✅ \`≥ 0.5\`、\`x × y\`、\`30°\`、\`α\` 角
-- **粗體符號 \`**\` 兩側不要留空格**（否則無法正確顯示）
-  * ❌ \`** 敏感性 **\`、\`** [[特異性]] **\`
-  * ✅ \`**敏感性**\`、\`**[[特異性]]**\`
-- **表格每一行必須各自獨佔一行**，禁止把整張表擠在同一行
-  * 換行 = 真的 \\n（不是空格），header / separator / row1 / row2 都要在自己的行
-  * ❌ \`| A | B |---|---|| row1 | x || row2 | y |\`（全部擠在一行）
-  * ✅ 像這樣分行：
-\`\`\`
-| 標題 A | 標題 B |
-|---|---|
-| row1 | x |
-| row2 | y |
-\`\`\`
-- **表格不要塞「廢列」**：header 後的 \`|---|---|\` 分隔符只能有一條；後面**直接接資料列**，不要再插一條「全是 \`---\` 或空白」的占位列
-  * ❌
-  \`\`\`
-  | A | B |
-  |---|---|
-  | --- | --- |   ← 廢列
-  | row1 | x |
-  \`\`\`
-  * ✅
-  \`\`\`
-  | A | B |
-  |---|---|
-  | row1 | x |
-  \`\`\`
 
 【🧭 整理順序原則（極重要）】
 寫筆記時必須**先想好邏輯順序再開寫**，不要隨意排列。依題目主題選擇對應的順序原則：
@@ -6452,78 +6318,6 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 直接回 JSON 物件，不要 markdown 反引號包裝。`;
       }
 
-      // ── 同概念第 2 題以後加入時的合併 prompt ──
-      // 把舊章節完整內容 + 新題資料一起餵給 AI，要它保留全部 + 修正錯誤 + 擴充新重點
-      function buildMergePrompt(q, oldCh, dec){
-        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
-        const LETTERS = ['A','B','C','D','E'];
-        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
-        const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
-        return `你是牙醫國考筆記整理員。我有一份既有章節，現在要把一道新題目「加深加廣」進去。
-
-【核心鐵則（極重要）】
-1. **保留**現有章節所有正確內容（不可刪除原本的條目、表格、callout、延伸補充）
-2. **修正**現有章節中明顯錯誤的內容（若新題詳解顯示舊敘述是錯的，更正它，但要保留該段落結構）
-3. **擴充**新題帶來的新重點（同概念補強、加新例子、加新對照表列）
-4. **整合**重複內容（同一概念不要寫兩遍）
-5. 保持原本的整體結構（標題層級、表格、callout、🔗 延伸補充 區塊都要在）
-6. **合併後內容資訊量必須 ≥ 原內容**（你只能補強，不能刪減未提及的部分）
-
-【現有章節（完整內容）】
-章節名：${oldCh.name}
-領域：${oldCh.domain || ''}
-子主題：${oldCh.subtopic || ''}
-現有 concepts: ${(oldCh.concepts||[]).join(', ')}
-已收錄題目: ${(oldCh.qids||[]).slice(0, 10).join(', ')}
-
----舊章節 markdown 開始---
-${oldCh.content || ''}
----舊章節 markdown 結束---
-
-【新題目】
-題目 ID: ${q.id}
-科目: ${SMAP[q.subject] || q.subject}
-原始 topic: ${q.topic || ''}
-題目: ${q.question}
-選項:
-${(q.options || []).join('\n')}
-正確答案: ${correctTxt}
-
-詳解(Gemini): ${q.explanation || '（無）'}
-
-詳解(NotebookLM): ${q.explanation_notebooklm || '（無）'}
-
-臨床意義: ${q.clinical || '（無）'}
-
-【AI 第一階段給的提示】
-${dec.reasoning || ''}
-新概念關鍵字: ${(dec.concepts||[]).join(', ')}
-
-【排版規範（跟原章節一致）】
-- 超短條列為主，每點 ≤ 25 字
-- **何時用表格**：「2+ 同類項目比較相同屬性」才用；cell 寫短句即可（**不要當長文敘事段落**），**禁止 cell 內塞多段條列**（不要 1./2./3.）
-- callout: \`> 💡 重點\` / \`> ⚠️ 易混陷阱\` / \`> 🏥 臨床要點\` / \`> 📝 易考角度\`
-- 單一概念的多項描述 → 用條列或 callout，**不要硬塞表格**
-- 重要名詞用 \`[[概念名]]\` 包起來
-- **粗體** 只用在最關鍵的字詞
-- 必須保留 \`### 🔗 延伸補充（國考相關必知）\` 區塊（並補上新題帶來的延伸點）
-- **🖼 圖片必須完整保留**：舊章節中所有 \`![alt](url)\` 圖片 markdown，**一張都不可刪除**
-  * 可以重新調整圖片位置（換到更合適的段落下方），但**禁止省略**
-  * 禁止改成「（此處有圖）」這類描述、禁止省略 URL
-- **數學/公式禁止 \`$...$\` 與 LaTeX 指令**（網站不支援數學渲染）
-  * ❌ \`$A / (A+C)$\`、\`$\\ge$ 0.5\`、\`\\times\`  ✅ \`A / (A+C)\`、\`≥ 0.5\`、\`×\`
-  * 直接用 Unicode：≥ ≤ ≠ ± × ÷ → ← ° ≈ ∞ α β π Δ √ ∑ ∫
-- **粗體 \`**\` 兩側不要留空格**
-  * ❌ \`** 敏感性 **\`  ✅ \`**敏感性**\`
-- **表格每一行各自獨佔一行**（header、separator、各 row 都要分行）
-  * ❌ 全部擠在一行：\`| A | B |---|---|| x | y |\`
-  * ✅ 標準多行 markdown 表格
-- **表格 header 後的 \`|---|---|\` 只能一條**，不要再插「全是 --- 或空白」的廢列
-
-【回傳】
-直接回 JSON 物件 { "content": "..." }，不要 markdown 反引號包裝。content 是合併後的完整章節 markdown。`;
-      }
-
       // 背景排隊：使用者連續按多題也不會 race condition
       let _nbQueue = Promise.resolve();
       let _nbPending = 0;
@@ -6566,40 +6360,6 @@ ${dec.reasoning || ''}
           // 帶 schema 強制 Gemini 回符合結構的 JSON
           const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
           const dec = extractJSON(raw);
-          // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
-          // 智慧判斷：
-          //   - 短章節 (<800 字)：第 1 階段已看到接近全文摘要，跳過第 2 階段省 API 額度
-          //   - 長章節 (≥800 字)：做完整 2 階段合併避免覆蓋
-          if (dec && dec.action === 'append') {
-            const chId = dec.chapter_id || dec.chapterId;
-            const oldCh = notebook.chapters.find(c => c.id === chId);
-            const oldContent = (oldCh && oldCh.content) || '';
-            const oldLen = oldContent.trim().length;
-            if (oldCh && oldLen >= 800) {
-              // 長章節：跑第 2 階段合併
-              try {
-                const mergePrompt = buildMergePrompt(q, oldCh, dec);
-                const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA);
-                const mergeDec = extractJSON(mergeRaw);
-                if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= oldLen * 0.7) {
-                  dec.content = _preserveImagesIn(oldContent, mergeDec.content);
-                } else {
-                  console.warn('merge result too short, falling back to old content');
-                  dec.content = oldContent;
-                }
-              } catch(mergeErr) {
-                // 撞額度 → 整題拋出讓 pending queue 重排
-                if (/429|quota|exceed/i.test(mergeErr.message || '')) {
-                  throw new Error('合併撞額度: ' + (mergeErr.message || '').slice(0, 80));
-                }
-                console.warn('merge step failed, keeping old content', mergeErr);
-                dec.content = oldContent;
-              }
-            } else if (oldCh) {
-              // 短章節：用第 1 階段結果 + 圖片安全網（不再花第 2 次 API）
-              dec.content = _preserveImagesIn(oldContent, dec.content || oldContent);
-            }
-          }
           applyAIDecision(dec, q);
           // 整理成功 → 從待整理佇列移除（如果在裡面）
           removeFromPendingQueue(q.id);
@@ -6657,41 +6417,6 @@ ${dec.reasoning || ''}
           });
         }
         savePendingQueue(arr);
-        // 啟動自動重試（如果還沒在跑）
-        startPendingAutoRetry();
-      }
-
-      // ── 背景自動重試 ──
-      // 每 70 秒重試 1 題（避免再撞 RPM）。retries ≥ 5 的不再自動重試，要人工處理
-      let _pendingAutoRetryTimer = null;
-      function startPendingAutoRetry(){
-        if (_pendingAutoRetryTimer) return; // 已經在跑
-        _pendingAutoRetryTimer = setInterval(async () => {
-          // 先清掉已整理的
-          _cleanupAlreadyOrganizedPending();
-          const arr = getPendingQueue();
-          if (arr.length === 0) { stopPendingAutoRetry(); return; }
-          // 挑第 1 個 retries < 5 的試
-          const item = arr.find(x => (x.retries || 0) < 5);
-          if (!item) {
-            // 全部都試過 5 次以上 → 停掉自動重試，要使用者人工處理
-            stopPendingAutoRetry();
-            return;
-          }
-          const q = QS.find(x => x.id === item.qid);
-          if (!q) { removeFromPendingQueue(item.qid); return; }
-          // 不打擾使用者，只在 console 留紀錄
-          console.log('[auto-retry pending]', q.meta || q.id, 'retries=' + (item.retries||0));
-          try {
-            await addQToNotebook(q, { silent: true });
-          } catch(e) { /* 失敗會自動進 pending，無需處理 */ }
-        }, 70000); // 70 秒
-      }
-      function stopPendingAutoRetry(){
-        if (_pendingAutoRetryTimer) {
-          clearInterval(_pendingAutoRetryTimer);
-          _pendingAutoRetryTimer = null;
-        }
       }
       function removeFromPendingQueue(qid){
         const arr = getPendingQueue();
@@ -6701,25 +6426,7 @@ ${dec.reasoning || ''}
           updatePendingBadge();
         }
       }
-      // 清掉已經在任一章節 qids 裡的待整理項目（例如使用者手動編輯 / 🔄 重整章節 把題目涵蓋進去了）
-      function _cleanupAlreadyOrganizedPending(){
-        try { loadNotebook(); } catch(e) {}
-        const arr = getPendingQueue();
-        if (arr.length === 0) return 0;
-        const allQids = new Set();
-        ((notebook && notebook.chapters) || []).forEach(c => {
-          (c.qids || []).forEach(qid => allQids.add(qid));
-        });
-        const remaining = arr.filter(item => !allQids.has(item.qid));
-        const removed = arr.length - remaining.length;
-        if (removed > 0) {
-          savePendingQueue(remaining);
-        }
-        return removed;
-      }
       function updatePendingBadge(){
-        // 順手清掉已整理的
-        _cleanupAlreadyOrganizedPending();
         const btn = document.getElementById('btn-pending');
         if (!btn) return;
         const arr = getPendingQueue();
@@ -6731,25 +6438,16 @@ ${dec.reasoning || ''}
         }
       }
       function openPendingModal(){
-        // 開啟前先自動清掉已整理的
-        const autoCleared = _cleanupAlreadyOrganizedPending();
         const arr = getPendingQueue();
         const overlay = document.getElementById('pending-overlay');
         const body = document.getElementById('pending-body');
         if (!overlay || !body) return;
         if (arr.length === 0) {
-          const note = autoCleared > 0
-            ? '<div style="font-size:.85rem;color:#15803d;margin-top:.6rem">✓ 已自動清掉 ' + autoCleared + ' 題（已經在筆記章節裡了）</div>'
-            : '';
-          body.innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af"><div style="font-size:2.5rem">📭</div><div style="font-weight:700;margin-top:.5rem;color:#374151">沒有待整理的題目</div>' + note + '</div>';
+          body.innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af"><div style="font-size:2.5rem">📭</div><div style="font-weight:700;margin-top:.5rem;color:#374151">沒有待整理的題目</div></div>';
           overlay.style.display = 'flex';
-          updatePendingBadge();
           return;
         }
-        const autoNote = autoCleared > 0
-          ? '<div style="font-size:.8rem;color:#15803d;margin-bottom:.4rem">✓ 已自動清掉 ' + autoCleared + ' 題已整理的（已經在筆記章節裡了）</div>'
-          : '';
-        let html = autoNote + '<div style="font-size:.85rem;color:#6b7280;margin-bottom:.6rem;line-height:1.6">這些題目之前 AI 整理失敗（額度上限 / 模型忙線 / 其他錯誤）。<br>按「<strong>🚀 一鍵整理全部</strong>」會逐一重試，仍失敗的留在這裡。</div>';
+        let html = '<div style="font-size:.85rem;color:#6b7280;margin-bottom:.6rem;line-height:1.6">這些題目之前 AI 整理失敗（額度上限 / 模型忙線 / 其他錯誤）。<br>按「<strong>🚀 一鍵整理全部</strong>」會逐一重試，仍失敗的留在這裡。</div>';
         html += '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">';
         html += '<button onclick="retryAllPending()" style="background:#7c3aed;color:white;border:none;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🚀 一鍵整理全部</button>';
         html += '<button onclick="clearAllPending()" style="background:white;color:#dc2626;border:1.5px solid #fca5a5;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🗑 全部清空</button>';
@@ -6901,62 +6599,31 @@ ${dec.reasoning || ''}
       }
 
       // ── Undo a history entry ──
-      function undoHistoryAt(idx, opts){
-        opts = opts || {};
+      function undoHistoryAt(idx){
         const entry = notebook.history[idx];
-        if (!entry) { showToast('找不到這筆歷史'); return false; }
-        const skipConfirm = !!opts.skipConfirm;
-        // skip 動作沒改任何東西，沒得撤銷
-        if (entry.action === 'skip') {
-          showToast('此筆未變更筆記，無需撤銷');
-          return false;
-        }
-        // new_chapter → 刪掉那章
+        if (!entry) return;
         if (entry.action === 'new_chapter' && entry.chapterId) {
-          if (!skipConfirm && !confirm('撤銷：刪除「' + entry.note + '」這個章節？')) return false;
+          if (!confirm('撤銷：刪除「' + entry.note + '」這個章節？')) return;
           notebook.chapters = notebook.chapters.filter(c => c.id !== entry.chapterId);
-        }
-        // 其他所有動作（append / reorganize / auto_place_imgs / ai_modify / manual_edit）→ 還原 snapshot
-        else if (entry.snapshot && entry.chapterId) {
+        } else if (entry.action === 'append' && entry.snapshot) {
+          if (!confirm('撤銷：把章節「' + entry.snapshot.name + '」還原到加題前的狀態？')) return;
           const ch = notebook.chapters.find(c => c.id === entry.chapterId);
-          if (!ch) { showToast('原章節已不存在，無法復原'); return false; }
-          const snapName = entry.snapshot.name || ch.name;
-          if (!skipConfirm && !confirm('撤銷：把章節「' + snapName + '」還原到這次修改前的狀態？')) return false;
-          if (entry.snapshot.name != null) ch.name = entry.snapshot.name;
-          if (entry.snapshot.content != null) ch.content = entry.snapshot.content;
-          if (entry.snapshot.qids) ch.qids = entry.snapshot.qids;
-          if (entry.snapshot.concepts) ch.concepts = entry.snapshot.concepts;
-          ch.updatedAt = Date.now();
-        } else {
-          // 沒 snapshot 又不是 new_chapter → 無法復原
-          showToast('這筆歷史沒記錄修改前內容，無法復原');
-          return false;
+          if (ch) {
+            ch.name = entry.snapshot.name;
+            ch.content = entry.snapshot.content;
+            ch.qids = entry.snapshot.qids;
+            ch.concepts = entry.snapshot.concepts || [];
+            ch.updatedAt = Date.now();
+          }
+        } else if (entry.action === 'skip') {
+          showToast('此筆未變更筆記，無需撤銷');
+          return;
         }
         notebook.history.splice(idx, 1);
         saveNotebook();
         renderHistoryList();
         renderNotebookIfVisible();
         showToast('✓ 已撤銷');
-        return true;
-      }
-
-      // ↶ 快速復原上一步（不用打開歷史 modal）
-      function undoLastChange(){
-        loadNotebook();
-        if (!notebook.history || notebook.history.length === 0) {
-          showToast('沒有可復原的紀錄');
-          return;
-        }
-        // 找第一筆「可復原」的歷史（跳過 skip）
-        const idx = notebook.history.findIndex(e => e.action !== 'skip');
-        if (idx < 0) {
-          showToast('沒有可復原的紀錄');
-          return;
-        }
-        const entry = notebook.history[idx];
-        const noteTxt = entry.note || entry.action;
-        if (!confirm('復原最近一次的「' + noteTxt + '」？')) return;
-        undoHistoryAt(idx, { skipConfirm: true });
       }
 
       // ── 強制加：當 AI 說 skip 但使用者覺得該加 ──
@@ -6993,57 +6660,6 @@ ${dec.reasoning || ''}
       function renderNotebookIfVisible(){
         const el = document.getElementById('screen-notebook');
         if (el && el.style.display !== 'none') renderNotebook();
-      }
-      // 從畫面直接抓「只放一張圖的段落」，連續 2 個以上就塞進並排容器
-      // 這是最後一道防線：不管 renderMarkdown 內部的正則有沒有抓到，這裡會兜底
-      function _domGroupImageRows(container){
-        if (!container) return;
-        const _isImageOnlyP = (p) => {
-          if (p.tagName !== 'P') return false;
-          const wraps = p.querySelectorAll('.nb-img-wrap');
-          if (wraps.length === 0) return false;
-          const clone = p.cloneNode(true);
-          clone.querySelectorAll('.nb-img-wrap').forEach(w => w.remove());
-          clone.querySelectorAll('br').forEach(b => b.remove());
-          return clone.textContent.trim() === '';
-        };
-        const children = Array.from(container.children);
-        let i = 0;
-        while (i < children.length) {
-          if (_isImageOnlyP(children[i])) {
-            const group = [children[i]];
-            let j = i + 1;
-            while (j < children.length && _isImageOnlyP(children[j])) {
-              group.push(children[j]);
-              j++;
-            }
-            if (group.length >= 2) {
-              const wrapper = document.createElement('div');
-              wrapper.className = 'nb-img-row';
-              group[0].parentNode.insertBefore(wrapper, group[0]);
-              group.forEach(p => {
-                p.querySelectorAll('.nb-img-wrap').forEach(w => wrapper.appendChild(w));
-                p.remove();
-              });
-            }
-            i = j;
-          } else {
-            i++;
-          }
-        }
-      }
-
-      // 重新渲染但保留捲動位置（給 ± / ← / → / ✕ 這類「不該跳回頂部」的操作用）
-      function renderNotebookKeepScroll(){
-        const pane = document.querySelector('.nb-content-pane');
-        const paneScroll = pane ? pane.scrollTop : 0;
-        const winScroll = window.scrollY || window.pageYOffset || 0;
-        renderNotebook();
-        // renderNotebook 結尾會 scrollTo(0, 0)，這裡再把它撥回去
-        requestAnimationFrame(() => {
-          if (pane) pane.scrollTop = paneScroll;
-          window.scrollTo(0, winScroll);
-        });
       }
       let currentChapterId = null;
       let editingChapterId = null;   // 章節編輯狀態
@@ -7213,7 +6829,7 @@ ${JSON.stringify(list, null, 2)}
         });
         if (changed) {
           saveNotebook();
-          renderNotebookKeepScroll();
+          renderNotebook();
         }
       }
       function resetImgSize(urlEnc){
@@ -7231,7 +6847,7 @@ ${JSON.stringify(list, null, 2)}
         });
         if (changed) {
           saveNotebook();
-          renderNotebookKeepScroll();
+          renderNotebook();
         }
       }
 
@@ -7249,73 +6865,9 @@ ${JSON.stringify(list, null, 2)}
         });
         if (changed) {
           saveNotebook();
-          renderNotebookKeepScroll();
+          renderNotebook();
           showToast('✓ 已刪除');
         }
-      }
-
-      // ── 圖片 ← / → = Word 風格的「換行/退格」邏輯 ──
-      // →  把這張圖推到下一排（在它跟前一張之間塞 ROWBREAK，相當於前面打一個換行）
-      // ←  把這張圖拉回上一排（刪掉它跟前一張之間的 ROWBREAK / 文字，相當於退格）
-      function moveImgInChapter(urlEnc, direction){
-        const url = decodeURIComponent(urlEnc);
-        loadNotebook();
-        const ch = notebook.chapters.find(c => c.content && c.content.includes(url));
-        if (!ch) { showToast('找不到這張圖在哪一章'); return; }
-        const content = ch.content || '';
-        const imgRe = /!\[[^\]]*\]\(([^)\s]+)\)/g;
-        const imgs = [];
-        let m;
-        while ((m = imgRe.exec(content)) !== null) {
-          imgs.push({ md: m[0], start: m.index, end: m.index + m[0].length, url: m[1] });
-        }
-        const idx = imgs.findIndex(img => img.url === url);
-        if (idx < 0) { showToast('找不到圖片位置'); return; }
-        if (idx === 0) {
-          showToast(direction > 0 ? '已經是第一張圖了，沒法再往下' : '已經是第一張圖了，沒法再往上');
-          return;
-        }
-        const prev = imgs[idx - 1];
-        const cur = imgs[idx];
-        const between = content.slice(prev.end, cur.start);
-        const hasRowBreak = between.includes('<!--ROWBREAK-->');
-        const ROWBREAK = '\n\n<!--ROWBREAK-->\n\n';
-        let newContent, toastMsg;
-        if (direction > 0) {
-          // →  永遠強制動作：把中間的 ROWBREAK / 文字清掉，在圖片前面塞 ROWBREAK，
-          //     中間若有文字就擠到後面（這樣即使現在已經分排或有怪 markdown 都會重整成正規狀態）
-          const cleanBetween = between.replace(/<!--ROWBREAK-->/g, '').trim();
-          newContent = content.slice(0, prev.end) + ROWBREAK + cur.md
-                     + (cleanBetween ? '\n\n' + cleanBetween : '')
-                     + content.slice(cur.end);
-          toastMsg = '✓ 跳到下一排';
-        } else {
-          // ←  拉回上一排（強制重整 markdown 確保兩張圖確實相鄰）
-          // 即使我們以為「已經並排」，也重寫一次（避免 markdown 看起來 OK 但實際渲染卡到的 edge case）
-          if (hasRowBreak) {
-            // 拿掉 ROWBREAK 標記，圖併到上一排
-            const cleaned = between.replace(/<!--ROWBREAK-->/g, '').trim();
-            newContent = content.slice(0, prev.end) + '\n\n' + cur.md
-                       + (cleaned ? '\n\n' + cleaned : '')
-                       + content.slice(cur.end);
-            toastMsg = '✓ 拉回上一排（並排）';
-          } else if (/^\s*$/.test(between)) {
-            // 已經是空白 → 強制重寫成正規 \n\n（修可能藏的奇怪空白 / 換行格式）
-            newContent = content.slice(0, prev.end) + '\n\n' + cur.md + content.slice(cur.end);
-            toastMsg = '✓ 確認並排';
-          } else {
-            // 中間有文字 → 把文字擠到圖片下面，圖併到上一排
-            newContent = content.slice(0, prev.end) + '\n\n' + cur.md
-                       + '\n\n' + between.trim()
-                       + content.slice(cur.end);
-            toastMsg = '✓ 拉回上一排（中間文字擠到下面）';
-          }
-        }
-        ch.content = newContent;
-        ch.updatedAt = Date.now();
-        saveNotebook();
-        renderNotebookKeepScroll();
-        showToast(toastMsg);
       }
 
       // ══════════════════════════════════════════
@@ -7332,63 +6884,6 @@ ${JSON.stringify(list, null, 2)}
           .then(arr => { _wilsonIndex = arr; return arr; })
           .catch(err => { _wilsonIndexLoading = null; throw err; });
         return _wilsonIndexLoading;
-      }
-
-      // 圖片安全網：AI 重寫章節後若刪了原本的圖，自動補回章節末尾
-      function _preserveImagesIn(oldContent, newContent){
-        if (!oldContent) return newContent || '';
-        if (!newContent) return newContent;
-        const oldImgs = []; // [{md, url}]
-        const re1 = /!\[[^\]]*\]\(([^)\s]+)\)/g;
-        let m;
-        while ((m = re1.exec(oldContent)) !== null) {
-          // 跳過 placeholder
-          if (m[1].startsWith('uploading-')) continue;
-          oldImgs.push({ md: m[0], url: m[1] });
-        }
-        if (oldImgs.length === 0) return newContent;
-        const newUrls = new Set();
-        const re2 = /!\[[^\]]*\]\(([^)\s]+)\)/g;
-        let m2;
-        while ((m2 = re2.exec(newContent)) !== null) newUrls.add(m2[1]);
-        const missing = oldImgs.filter(x => !newUrls.has(x.url));
-        if (missing.length === 0) return newContent;
-        // 補在章節末尾，加個區塊讓使用者知道是自動救回的
-        return newContent + '\n\n### 🖼 圖片（自動保留）\n\n' + missing.map(x => x.md).join('\n\n');
-      }
-
-      // 蒐集使用者已上傳到任一章節的圖（給 AI 配圖當候選用）
-      function _collectUserImagesFromNotebook(excludeChId){
-        const imgs = [];
-        const seen = new Set();
-        let nextId = 1000000; // synthetic id，避開 Wilson 圖庫 id
-        (notebook.chapters || []).forEach(ch => {
-          if (ch.id === excludeChId) return; // 當前章節跳過（避免 AI 重推同張圖）
-          const content = ch.content || '';
-          const re = /!\[([^\]]*)\]\(([^)\s]+)\)/g;
-          let m;
-          while ((m = re.exec(content)) !== null) {
-            const url = m[2];
-            if (seen.has(url)) continue;
-            if (url.startsWith('uploading-')) continue; // 跳過 placeholder
-            // 只收使用者上傳的圖（GitHub jsdelivr CDN 上 notebook-images 路徑）
-            // 跳過 Wilson 圖庫（避免重複）
-            if (url.includes('/wilson-images/')) continue;
-            seen.add(url);
-            const alt = (m[1] || '').split('|')[0].trim();
-            imgs.push({
-              id: nextId++,
-              url: url,
-              source: '我的圖庫・' + (ch.name || ''),
-              page: 0,
-              file: '', // 留空，後面用 url 直接渲染
-              caption_before: alt || ch.subtopic || '',
-              caption_after: '',
-              nearest_heading: ch.name || ''
-            });
-          }
-        });
-        return imgs;
       }
 
       // 從章節內容抓關鍵字（用來預篩圖庫）
@@ -7433,29 +6928,22 @@ ${JSON.stringify(list, null, 2)}
           openAISettings();
           return;
         }
-        showToast('🔍 載入圖庫...');
-        let wilsonIdx = [];
+        showToast('🔍 載入 Wilson 圖庫...');
+        let idx;
         try {
-          wilsonIdx = await loadWilsonIndex();
+          idx = await loadWilsonIndex();
         } catch (err) {
-          // Wilson 圖庫載入失敗仍可繼續，至少還有使用者自己上傳的圖
-          console.warn('Wilson 圖庫載入失敗', err);
-        }
-        // 同時把使用者已上傳到其他章節的圖納入候選
-        const userImgs = _collectUserImagesFromNotebook(ch.id);
-        const allIdx = wilsonIdx.concat(userImgs);
-        if (allIdx.length === 0) {
-          showToast('沒有可用的圖（Wilson 圖庫掛了、你也還沒上傳過任何圖）');
+          showToast('❌ 圖庫載入失敗：' + err.message);
           return;
         }
         // 預篩：用章節關鍵字找候選圖（top 30）
         const kws = _extractChapterKeywords(ch);
-        const scored = allIdx.map(img => ({ img, score: _scoreImage(img, kws) }))
+        const scored = idx.map(img => ({ img, score: _scoreImage(img, kws) }))
                           .filter(x => x.score > 0)
                           .sort((a, b) => b.score - a.score)
                           .slice(0, 30);
         if (scored.length === 0) {
-          showToast('圖庫沒有跟這章節相關的圖（Wilson + 你的 ' + userImgs.length + ' 張上傳）');
+          showToast('Wilson 圖庫沒有跟這章節相關的圖');
           return;
         }
         // 把候選圖的 metadata 餵給 AI（只送 metadata，不送圖檔）
@@ -7537,12 +7025,10 @@ ${JSON.stringify(candidates, null, 2)}
         let content = ch.content || '';
         let inserted = 0;
         placements.forEach(p => {
-          const img = allIdx.find(x => x.id === p.image_id);
+          const img = idx.find(x => x.id === p.image_id);
           if (!img) return;
-          // 使用者上傳的圖已有完整 url；Wilson 圖庫用 file 串 BASE
-          const url = img.url || (WILSON_IMG_BASE + img.file);
-          // 前後都用兩個換行，確保圖片獨立成段（單行換行會跟下面內容黏在一起，版面會跑掉）
-          const imgMd = `\n\n![${p.caption}|medium](${url})\n\n`;
+          const url = WILSON_IMG_BASE + img.file;
+          const imgMd = `\n\n![${p.caption}|medium](${url})\n`;
           // 找對應的 heading
           const heading = (p.after_heading || '').trim();
           if (heading) {
@@ -7653,57 +7139,6 @@ ${JSON.stringify(candidates, null, 2)}
         }
       }
 
-      // ── 切換「只看重點」目錄篩選 ──
-      const STAR_FILTER_LS = uKey('nb_star_filter_on');
-      function applyStarFilter(){
-        const on = localStorage.getItem(STAR_FILTER_LS) === '1';
-        const btn = document.getElementById('nb-star-filter');
-        if (btn) btn.classList.toggle('is-active', on);
-        loadNotebook();
-        // 抓出所有 chapter id 的「是否重點」對應表
-        const importantIds = new Set((notebook.chapters || []).filter(c => c.important).map(c => c.id));
-        // 套用到 TOC 葉子節點
-        document.querySelectorAll('.nb-toc-item').forEach(item => {
-          const onclickAttr = item.getAttribute('onclick') || '';
-          const m = onclickAttr.match(/(?:selectChapter|scrollToChapter)\('([^']+)'\)/);
-          if (!m) return;
-          if (on && !importantIds.has(m[1])) item.classList.add('nb-star-hidden');
-          else item.classList.remove('nb-star-hidden');
-        });
-        // 群組：若整組內所有葉子都被隱藏，把群組也藏起來
-        document.querySelectorAll('.nb-toc-subgroup').forEach(g => {
-          const visible = g.querySelectorAll('.nb-toc-item:not(.nb-star-hidden):not(.nb-search-hidden)');
-          g.classList.toggle('nb-star-hidden', on && visible.length === 0);
-        });
-        document.querySelectorAll('.nb-toc-group').forEach(g => {
-          const visible = g.querySelectorAll('.nb-toc-item:not(.nb-star-hidden):not(.nb-search-hidden)');
-          g.classList.toggle('nb-star-hidden', on && visible.length === 0);
-        });
-        document.querySelectorAll('.nb-toc-subj').forEach(g => {
-          const visible = g.querySelectorAll('.nb-toc-item:not(.nb-star-hidden):not(.nb-search-hidden)');
-          g.classList.toggle('nb-star-hidden', on && visible.length === 0);
-        });
-      }
-      function toggleStarFilter(){
-        const cur = localStorage.getItem(STAR_FILTER_LS) === '1';
-        localStorage.setItem(STAR_FILTER_LS, cur ? '0' : '1');
-        applyStarFilter();
-        showToast(cur ? '✓ 顯示全部章節' : '⭐ 只顯示重點章節');
-      }
-
-      // ── 切換「重點章節」標記（目錄會顯示金色星星）──
-      function toggleChapterImportant(chId){
-        loadNotebook();
-        const ch = notebook.chapters.find(c => c.id === chId);
-        if (!ch) { showToast('找不到章節'); return; }
-        ch.important = !ch.important;
-        ch.updatedAt = Date.now();
-        saveNotebook();
-        renderNotebookKeepScroll();
-        applyStarFilter(); // 立刻反映「只看重點」過濾結果
-        showToast(ch.important ? '⭐ 已標記為重點章節' : '☆ 已取消重點');
-      }
-
       function chapterMainSubject(c){
         // 用 qids 反查 QS 取多數科目
         const counts = {};
@@ -7791,7 +7226,7 @@ ${JSON.stringify(candidates, null, 2)}
             tocHtml +=
               '<details' + domainOpen + ' class="nb-toc-group">' +
                 '<summary style="margin:.35rem 0 .15rem .35rem;padding:.3rem .55rem;background:white;border:1.5px solid ' + meta.color + ';color:' + meta.color + ';border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
-                  '<span style="flex:1;word-break:break-word;line-height:1.3">' + meta.emoji + ' ' + escapeHtml(d) + '</span>' +
+                  '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + meta.emoji + ' ' + escapeHtml(d) + '</span>' +
                   '<span style="font-size:.68rem;color:' + meta.color + '">' + dList.length + '</span>' +
                 '</summary>';
 
@@ -7807,14 +7242,13 @@ ${JSON.stringify(candidates, null, 2)}
               tocHtml +=
                 '<details' + stOpen + ' class="nb-toc-subgroup">' +
                   '<summary style="margin:.2rem 0 .1rem .7rem;padding:.2rem .4rem;background:#f3e8ff;color:#6b21a8;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
-                    '<span style="flex:1;word-break:break-word;line-height:1.3">📁 ' + escapeHtml(st) + '</span>' +
+                    '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📁 ' + escapeHtml(st) + '</span>' +
                     '<span style="font-size:.62rem;color:#9333ea">' + stList.length + '</span>' +
                   '</summary>';
               tocHtml += stList.map(c => {
                 const active = c.id === currentChapterId ? ' nb-toc-item-active' : '';
-                const star = c.important ? '<span style="color:#eab308;font-size:1rem;margin-right:.2rem" title="重點章節">★</span>' : '';
                 return `<a class="nb-toc-item nb-toc-leaf${active}" onclick="selectChapter('${c.id}')">
-                  ${star}<span class="nb-toc-name">${escapeHtml(c.name)}</span>
+                  <span class="nb-toc-name">${escapeHtml(c.name)}</span>
                   <span class="nb-toc-count">${(c.qids||[]).length}</span>
                 </a>`;
               }).join('');
@@ -7827,8 +7261,6 @@ ${JSON.stringify(candidates, null, 2)}
           tocHtml += '</details>';
         });
         toc.innerHTML = tocHtml;
-        // 套用「只看重點」篩選（如果已開啟）
-        applyStarFilter();
 
         // Accordion 行為：打開某個資料夾時，自動收起同層其他資料夾
         // 用 capture 監聽 toggle（toggle 不冒泡，但 capture 可以截到）
@@ -7880,8 +7312,7 @@ ${JSON.stringify(candidates, null, 2)}
                 ${isEditing
                   ? `<button onclick="saveChapterEdit('${curCh.id}')" title="儲存" style="color:#16a34a">💾</button>
                      <button onclick="cancelChapterEdit()" title="取消">✕</button>`
-                  : `<button onclick="toggleChapterImportant('${curCh.id}')" title="${curCh.important ? '取消重點章節' : '標記為重點章節（目錄會顯示金色星星）'}" style="${curCh.important ? 'color:#eab308;font-size:1.15rem' : 'color:#9ca3af;font-size:1.15rem'}">${curCh.important ? '★' : '☆'}</button>
-                     <button onclick="startEditChapter('${curCh.id}')" title="編輯內容（可貼圖）">✏️</button>
+                  : `<button onclick="startEditChapter('${curCh.id}')" title="編輯內容（可貼圖）">✏️</button>
                      <button onclick="aiChatModifyChapter('${curCh.id}')" title="用自然語言告訴 AI 改什麼">💬</button>
                      <button onclick="aiAutoPlaceImages('${curCh.id}')" title="從 Wilson 圖庫自動配圖到對應段落">🖼 AI 配圖</button>
                      <button onclick="reorganizeChapter('${curCh.id}')" title="叫 AI 重新整理這章">🔄</button>
@@ -7913,9 +7344,6 @@ ${JSON.stringify(candidates, null, 2)}
         const pane = document.querySelector('.nb-content-pane');
         if (pane) pane.scrollTop = 0;
         window.scrollTo(0, 0);
-        // 兜底：渲染完掃一遍，把連續「只放一張圖的段落」強制塞進並排容器
-        const contentArea = document.querySelector('.nb-chapter-content');
-        if (contentArea) _domGroupImageRows(contentArea);
       }
 
       function selectChapter(id){
@@ -7952,19 +7380,14 @@ ${JSON.stringify(candidates, null, 2)}
             return; // 使用者選「等一下」
           }
         }
-        // 存入歷史（撤銷用）— 拍照舊內容，這樣 undo 才能還原
-        const _oldName = ch.name;
-        const _oldContent = ch.content;
-        const _oldQids = [...(ch.qids || [])];
-        const _oldConcepts = [...(ch.concepts || [])];
         ch.content = ta.value;
         ch.updatedAt = Date.now();
+        // 存入歷史（撤銷用）
         notebook.history.unshift({
           ts: Date.now(),
           action: 'manual_edit',
           chapterId: id,
-          snapshot: { name: _oldName, content: _oldContent, qids: _oldQids, concepts: _oldConcepts },
-          note: '手動編輯「' + _oldName + '」'
+          note: '手動編輯「' + ch.name + '」'
         });
         trimHistory();
         editingChapterId = null;
@@ -8147,16 +7570,6 @@ ${qBlocks}
 
 表格的列順序也要照這邏輯，不要按字母或隨機。
 
-【🖼 圖片必須保留（極重要）】
-章節原本內容裡的所有圖片 \`![alt](url)\` markdown 都要完整保留進新版，**一張都不可省略**。
-可以重新調整位置（換到更合適的段落下方），但禁止刪除或改寫成描述文字。
-
-【章節既有圖片（必須全部保留）】
-${(ch.content || '').match(/!\[[^\]]*\]\([^)\s]+\)/g)?.join('\n') || '（無）'}
-
-【既有章節 markdown（供參考整體脈絡）】
-${(ch.content || '').slice(0, 3000)}
-
 【回 JSON】
 { "content": "完整 Markdown 章節內容" }`;
         const btn = event && event.target;
@@ -8174,8 +7587,7 @@ ${(ch.content || '').slice(0, 3000)}
               snapshot: { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] },
               note: '重整章節「' + ch.name + '」'
             });
-            // 圖片安全網：若 AI 刪了任何原本的圖，自動補回章節末尾
-            ch.content = _preserveImagesIn(ch.content, dec.content);
+            ch.content = dec.content;
             ch.updatedAt = Date.now();
             trimHistory();
             saveNotebook();
@@ -8284,55 +7696,6 @@ ${instruction.trim()}
         md = md.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
         // 3. 移除「只有 >」或「> 後面只有空白」的孤立行（AI 偶爾這樣寫，渲染會留裸 > 字符）
         md = md.replace(/^>[ \t]*$/gm, '');
-        // 3b. 確保每張圖片獨立成段（前後都補空行，這樣 image-only <p> 才會成立、並排才會啟動）
-        // 圖片前面：若前一行有內容（包括 |、文字、其他段落結尾）→ 補空行
-        md = md.replace(/([^\n])\n[ \t]*(!\[[^\]]*\]\([^)\s]+\))/g, '$1\n\n$2');
-        // 圖片後面：若下一行有內容 → 補空行
-        md = md.replace(/(!\[[^\]]*\]\([^)\s]+\))\n(?!\n)([^\n])/g, '$1\n\n$2');
-        // 連續圖片之間（image\n image）也補一下
-        md = md.replace(/(!\[[^\]]*\]\([^)\s]+\))[ \t]*\n[ \t]*(?=!\[[^\]]*\]\([^)\s]+\))/g, '$1\n\n');
-        // 4. AI 容錯：LaTeX 指令 → Unicode + 剝 $...$（網站不支援 LaTeX/MathJax）
-        //    例：$\ge$ 0.5 mm → ≥ 0.5 mm；$A / (A+C)$ → A / (A+C)
-        const _LATEX_MAP = {
-          '\\ge':'≥','\\geq':'≥','\\le':'≤','\\leq':'≤','\\neq':'≠','\\ne':'≠',
-          '\\approx':'≈','\\equiv':'≡','\\propto':'∝','\\sim':'~',
-          '\\pm':'±','\\mp':'∓','\\times':'×','\\div':'÷','\\cdot':'·','\\ast':'∗',
-          '\\to':'→','\\rightarrow':'→','\\leftarrow':'←','\\Rightarrow':'⇒','\\Leftarrow':'⇐','\\leftrightarrow':'↔','\\Leftrightarrow':'⇔',
-          '\\infty':'∞','\\partial':'∂','\\nabla':'∇','\\sqrt':'√',
-          '\\alpha':'α','\\beta':'β','\\gamma':'γ','\\delta':'δ','\\epsilon':'ε','\\zeta':'ζ','\\eta':'η','\\theta':'θ','\\iota':'ι','\\kappa':'κ','\\lambda':'λ','\\mu':'μ','\\nu':'ν','\\xi':'ξ','\\pi':'π','\\rho':'ρ','\\sigma':'σ','\\tau':'τ','\\upsilon':'υ','\\phi':'φ','\\chi':'χ','\\psi':'ψ','\\omega':'ω',
-          '\\Alpha':'Α','\\Beta':'Β','\\Gamma':'Γ','\\Delta':'Δ','\\Epsilon':'Ε','\\Theta':'Θ','\\Lambda':'Λ','\\Mu':'Μ','\\Pi':'Π','\\Sigma':'Σ','\\Phi':'Φ','\\Psi':'Ψ','\\Omega':'Ω',
-          '\\sum':'∑','\\prod':'∏','\\int':'∫','\\oint':'∮',
-          '\\subset':'⊂','\\supset':'⊃','\\subseteq':'⊆','\\supseteq':'⊇','\\in':'∈','\\notin':'∉','\\cup':'∪','\\cap':'∩','\\setminus':'∖','\\emptyset':'∅',
-          '\\forall':'∀','\\exists':'∃','\\nexists':'∄','\\land':'∧','\\lor':'∨','\\lnot':'¬','\\neg':'¬',
-          '\\circ':'°','\\deg':'°','\\degree':'°','\\bullet':'•','\\star':'★','\\dagger':'†','\\ddagger':'‡','\\ldots':'…','\\dots':'…','\\cdots':'⋯','\\vdots':'⋮','\\ddots':'⋱',
-          '\\%':'%','\\$':'$','\\#':'#','\\&':'&','\\_':'_','\\{':'{','\\}':'}','\\\\':' '
-        };
-        // (a) LaTeX 指令 → Unicode（單字邊界，已知指令才換，不知道的保留原樣）
-        md = md.replace(/\\[A-Za-z]+|\\[%$#&_{}\\]/g, (m) => _LATEX_MAP[m] != null ? _LATEX_MAP[m] : m);
-        // (b) 剝 $...$（多半 LaTeX 指令已換成 Unicode，剩下純算式/純文字）
-        //     要求內含英數字或常見數學符號才剝（避免誤動到金額「$50」這類）
-        md = md.replace(/\$([^$\n]*[A-Za-z0-9≥≤≠±×÷→←°≈∑∏∫√∈∂∇∝π∞αβγδθλμσωΔΩ][^$\n]*)\$/g, '$1');
-        // 7. AI 容錯：整張表擠在一行（少了換行）
-        //    模式：「| A | B | C |---|---|---|---|| row1 | ... || row2 | ... |」
-        //    處理：限定在「含 |---| 的行」內部，補上 separator 前的換行 + 拆掉 ||
-        md = md.split('\n').map(line => {
-          if (!/\|[\-:\s]*-[\-:\s]*\|/.test(line)) return line; // 沒 separator 跳過
-          // a. 在 |---|（separator）前面補「|\n」（讓 header 收尾的 | 補回來）
-          line = line.replace(/([^|\n])(\|(?:[\-:\s]+\|)+)/g, (m, prev, sep) => {
-            if (!/-/.test(sep)) return m;
-            return prev + '|\n' + sep;
-          });
-          // b. 把所有 || 拆成 |\n|（這是被擠在一起的行邊界）
-          line = line.replace(/\|\|/g, '|\n|');
-          return line;
-        }).join('\n');
-        // 5. AI 容錯：粗體 ** 內側帶空白 → 收緊（這樣 ctag/標籤旁的 **才不會被遺漏）
-        //    例：「** [[敏感性]] **」、「**  [[X]]  **」 → 「**[[敏感性]]**」
-        md = md.replace(/\*\*[ \t]+([^*\n]+?)[ \t]+\*\*/g, '**$1**');
-        md = md.replace(/\*\*[ \t]+([^*\n]+?)\*\*/g, '**$1**');
-        md = md.replace(/\*\*([^*\n]+?)[ \t]+\*\*/g, '**$1**');
-        // 6. AI 容錯：粗體跨換行（** \n xxx \n **）→ 收成單行
-        md = md.replace(/\*\*\s*\n\s*([^*]+?)\s*\n\s*\*\*/g, '**$1**');
         let s = escapeHtml(md);
         // tables first (need raw |)
         s = renderMDTables(s);
@@ -8377,31 +7740,28 @@ ${instruction.trim()}
         // 圖片 ![alt](url) — 支援 size 參數
         s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, url) => {
           const cleanUrl = url.replace(/&amp;/g, '&');
-          let imgMaxWidth = '60%'; // default medium
+          let sizeStyle = 'max-width:60%';
           let realAlt = alt;
           if (alt.includes('|')) {
             const parts = alt.split('|');
             realAlt = parts[0];
             const hint = (parts[1] || '').trim().toLowerCase();
-            if (hint === 'small' || hint === 's') imgMaxWidth = '30%';
-            else if (hint === 'medium' || hint === 'm') imgMaxWidth = '60%';
-            else if (hint === 'large' || hint === 'l') imgMaxWidth = '90%';
-            else if (hint === 'full' || hint === 'original') imgMaxWidth = '100%';
-            else if (/^\d+px$/.test(hint)) imgMaxWidth = hint;
-            else if (/^\d+%$/.test(hint)) imgMaxWidth = hint;
-            else if (/^\d+$/.test(hint)) imgMaxWidth = hint + 'px';
+            if (hint === 'small' || hint === 's') sizeStyle = 'max-width:30%';
+            else if (hint === 'medium' || hint === 'm') sizeStyle = 'max-width:60%';
+            else if (hint === 'large' || hint === 'l') sizeStyle = 'max-width:90%';
+            else if (hint === 'full' || hint === 'original') sizeStyle = 'max-width:100%';
+            else if (/^\d+px$/.test(hint)) sizeStyle = 'max-width:' + hint;
+            else if (/^\d+%$/.test(hint)) sizeStyle = 'max-width:' + hint;
+            else if (/^\d+$/.test(hint)) sizeStyle = 'max-width:' + hint + 'px';
           }
-          // 用 CSS 變數而不是 inline max-width on img，這樣並排狀態下 CSS 可以覆蓋成 100%
           // 把 url 做 b64-safe 編碼避免 onclick 字串問題
           const urlEnc = encodeURIComponent(cleanUrl);
-          return `<span class="nb-img-wrap" style="--img-max:${imgMaxWidth}">
-            <img src="${cleanUrl}" alt="${escapeHtml(realAlt)}" loading="lazy" onclick="openImgLightbox('${cleanUrl}')" />
+          return `<span class="nb-img-wrap">
+            <img src="${cleanUrl}" alt="${escapeHtml(realAlt)}" loading="lazy" style="${sizeStyle}" onclick="openImgLightbox('${cleanUrl}')" />
             <span class="nb-img-controls">
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',-10)" title="縮小">−</button>
               <button onclick="event.stopPropagation();resizeImgInChapter('${urlEnc}',+10)" title="放大">+</button>
               <button onclick="event.stopPropagation();resetImgSize('${urlEnc}')" title="重置成中等">⟲</button>
-              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',-1)" title="拉回上一排（跟前一張圖並排）">←</button>
-              <button onclick="event.stopPropagation();moveImgInChapter('${urlEnc}',+1)" title="跳到下一排（自己一排）">→</button>
               <button onclick="event.stopPropagation();removeImgFromChapter('${urlEnc}')" title="刪除這張圖" style="color:#dc2626">✕</button>
             </span>
           </span>`;
@@ -8458,14 +7818,6 @@ ${instruction.trim()}
           if (/^<(h[1-6]|ul|ol|table|blockquote|p)/.test(t)) return t;
           return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
         }).join('\n');
-        // 連續多張圖片自動排成左右並排：把相鄰「只含一張圖的 <p>」合併成 .nb-img-row 容器
-        // 注意：要允許 nb-img-wrap" 後面有額外屬性（如 style="--img-max:60%"）所以用 [^>]*
-        s = s.replace(/(<p><span class="nb-img-wrap"[^>]*>[\s\S]*?<\/span><\/p>\s*){2,}/g, (match) => {
-          const inner = match.replace(/<p>(<span class="nb-img-wrap"[^>]*>[\s\S]*?<\/span>)<\/p>\s*/g, '$1');
-          return '<div class="nb-img-row">' + inner + '</div>\n';
-        });
-        // 把 ROWBREAK 標記換成「看不見但存在的 div」(不能直接刪掉，否則 DOM 兜底會誤把兩圖併排)
-        s = s.replace(/<p>\s*&lt;!--ROWBREAK--&gt;\s*<\/p>\s*/g, '<div class="nb-rowbreak" hidden></div>');
         return s;
       }
       function _renderCellInline(c){
@@ -8489,16 +7841,9 @@ ${instruction.trim()}
           // second line must be alignment row
           if (!/^\|[\s\-:|]+\|$/.test(lines[1])) return block;
           const cells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => _renderCellInline(c.trim()));
-          // 判斷一列是不是「廢列」：全部 cell 是空白 / 全破折號 / 全冒號（AI 偶爾會在 header 後多塞一條這種）
-          const isJunkRow = (l) => {
-            const raw = l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
-            if (raw.length === 0) return true;
-            return raw.every(c => c === '' || /^[\s\-:]+$/.test(c));
-          };
           const out = ['<table class="nb-table">'];
           out.push('<tr>' + cells(lines[0]).map(c => '<th>'+c+'</th>').join('') + '</tr>');
           for (let i = 2; i < lines.length; i++) {
-            if (isJunkRow(lines[i])) continue; // 跳過廢列
             out.push('<tr>' + cells(lines[i]).map(c => '<td>'+c+'</td>').join('') + '</tr>');
           }
           out.push('</table>');
@@ -8676,28 +8021,8 @@ ${instruction.trim()}
       }
 
       // ── Settings modal ──
-      // 多 key UI：render N 列輸入框
-      function renderGeminiKeyInputs(keys){
-        const list = document.getElementById('ai-keys-list');
-        if (!list) return;
-        list.innerHTML = '';
-        const arr = (keys && keys.length) ? keys : [''];
-        arr.forEach((k, i) => addGeminiKeyInputRow(k));
-      }
-      function addGeminiKeyInputRow(value){
-        const list = document.getElementById('ai-keys-list');
-        if (!list) return;
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:.35rem;align-items:center';
-        const showCheck = document.getElementById('ai-key-show');
-        const inputType = (showCheck && showCheck.checked) ? 'text' : 'password';
-        row.innerHTML =
-          '<input type="' + inputType + '" class="ai-key-input" value="' + escapeHtml(value || '') + '" placeholder="AIzaSy..." style="flex:1;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />' +
-          '<button type="button" onclick="this.parentElement.remove()" title="移除這把" style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:.4rem .6rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">✕</button>';
-        list.appendChild(row);
-      }
       function openAISettings(){
-        renderGeminiKeyInputs(getGeminiKeys());
+        document.getElementById('ai-key-input').value = getGeminiKey();
         const sel = document.getElementById('ai-model-select');
         if (sel) sel.value = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
         const ghInp = document.getElementById('gh-token-input');
@@ -8710,10 +8035,8 @@ ${instruction.trim()}
         document.getElementById('ai-settings-overlay').classList.remove('open');
       }
       function saveAISettings(){
-        // 收集所有 key 輸入框
-        const inputs = document.querySelectorAll('.ai-key-input');
-        const keys = Array.from(inputs).map(i => (i.value || '').trim()).filter(Boolean);
-        setGeminiKeys(keys);
+        const k = document.getElementById('ai-key-input').value.trim();
+        setGeminiKey(k);
         const sel = document.getElementById('ai-model-select');
         if (sel) localStorage.setItem(uKey('gemini_model'), sel.value);
         const ghInp = document.getElementById('gh-token-input');
@@ -8721,7 +8044,7 @@ ${instruction.trim()}
         const ghRepo = document.getElementById('gh-repo-input');
         if (ghRepo) setGithubRepo(ghRepo.value.trim());
         if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
-        showToast(keys.length > 1 ? '✓ 已儲存 ' + keys.length + ' 把 key（撞額度會自動輪替）' : '✓ 設定已儲存');
+        showToast('✓ 設定已儲存');
         closeAISettings();
       }
 
@@ -8793,113 +8116,76 @@ ${instruction.trim()}
         const inp = document.getElementById('nb-search-input');
         const clearBtn = document.getElementById('nb-search-clear');
         const q = (inp.value || '').trim().toLowerCase();
-        const qDisplay = (inp.value || '').trim();
         clearBtn.style.display = q ? 'block' : 'none';
 
-        // 沒搜尋字 → 回到正常顯示模式（清掉 TOC 隱藏 + 重畫主內容）
+        // 沒搜尋字 → 顯示全部
         if (!q) {
-          document.querySelectorAll('.nb-toc-item, .nb-toc-group, .nb-toc-subgroup, .nb-toc-subj')
+          document.querySelectorAll('.nb-chapter, .nb-subj-group, .nb-toc-item, .nb-toc-group')
             .forEach(el => el.classList.remove('nb-search-hidden'));
-          if (typeof renderNotebook === 'function') renderNotebook();
+          // 清掉舊的「無結果」提示
+          const empty = document.getElementById('nb-search-empty');
+          if (empty) empty.remove();
           return;
         }
 
-        // 資料層搜尋（搜全部章節 — 名稱 / 領域 / 子主題 / 概念 / 完整內容 / 題號 / 科目）
-        loadNotebook();
-        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
-        const matches = []; // [{ chapter, snippets, nameMatch }]
-        (notebook.chapters || []).forEach(c => {
-          const fields = [
-            c.name || '', c.domain || '', c.subtopic || '',
-            (c.concepts || []).join(' '), c.content || '',
-            (c.qids || []).join(' '),
-            SMAP[c._mainSubj] || '', SMAP[c.subject] || ''
-          ];
-          const lowered = fields.join('\n').toLowerCase();
-          if (!lowered.includes(q)) return;
-          // 抽出 content 裡的關鍵字片段（最多 3 段，前後各 50 字當上下文）
-          const snippets = [];
-          const lcContent = (c.content || '').toLowerCase();
-          let pos = 0;
-          while (snippets.length < 3) {
-            const idx = lcContent.indexOf(q, pos);
-            if (idx < 0) break;
-            const start = Math.max(0, idx - 50);
-            const end = Math.min(c.content.length, idx + q.length + 50);
-            snippets.push({
-              before: c.content.slice(start, idx).replace(/\s+/g, ' '),
-              match: c.content.slice(idx, idx + q.length),
-              after: c.content.slice(idx + q.length, end).replace(/\s+/g, ' '),
-              isStart: start === 0,
-              isEnd: end === c.content.length
-            });
-            pos = idx + q.length;
+        // 對每章判斷是否命中
+        let hit = 0;
+        document.querySelectorAll('.nb-chapter').forEach(ch => {
+          const text = ch.textContent.toLowerCase();
+          // 抓章節 id 對應的 chapter 物件 (找來源題號也算)
+          const id = ch.id.replace(/^chapter-/, '');
+          const c = (notebook.chapters || []).find(x => x.id === id);
+          let extra = '';
+          if (c) {
+            extra = (c.qids || []).join(' ').toLowerCase();
+            // 也加進科目中文名稱
+            const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+            const sm = SMAP[c._mainSubj];
+            if (sm) extra += ' ' + sm;
           }
-          matches.push({
-            chapter: c,
-            snippets: snippets,
-            nameMatch: (c.name || '').toLowerCase().includes(q)
-          });
+          const match = text.includes(q) || extra.includes(q);
+          if (match) { ch.classList.remove('nb-search-hidden'); hit++; }
+          else { ch.classList.add('nb-search-hidden'); }
         });
 
-        // 同步 TOC sidebar 篩選
-        const matchedIds = new Set(matches.map(m => m.chapter.id));
-        document.querySelectorAll('.nb-toc-item').forEach(item => {
-          const onclickAttr = item.getAttribute('onclick') || '';
-          const mm = onclickAttr.match(/(?:selectChapter|scrollToChapter)\('([^']+)'\)/);
-          if (!mm) return;
-          if (matchedIds.has(mm[1])) item.classList.remove('nb-search-hidden');
-          else item.classList.add('nb-search-hidden');
-        });
-        document.querySelectorAll('.nb-toc-group, .nb-toc-subgroup, .nb-toc-subj').forEach(group => {
-          const visible = group.querySelectorAll('.nb-toc-item:not(.nb-search-hidden)');
-          if (visible.length === 0) group.classList.add('nb-search-hidden');
+        // 科目分組：若該組內所有章節都隱藏，也把整組隱藏
+        document.querySelectorAll('.nb-subj-group').forEach(group => {
+          const visibleChapters = group.querySelectorAll('.nb-chapter:not(.nb-search-hidden)');
+          if (visibleChapters.length === 0) group.classList.add('nb-search-hidden');
           else group.classList.remove('nb-search-hidden');
         });
 
-        // 主內容區顯示搜尋結果清單（取代原本只顯示當前章節）
-        const body = document.getElementById('notebook-body');
-        if (!body) return;
-        const qEsc = escapeHtml(qDisplay);
-        if (matches.length === 0) {
-          body.innerHTML =
-            '<div style="text-align:center;padding:3rem 1rem;color:#9ca3af">' +
-              '<div style="font-size:3rem">🔍</div>' +
-              '<div style="font-weight:700;margin-top:.6rem;color:#374151;font-size:1.05rem">沒找到「' + qEsc + '」</div>' +
-              '<div style="font-size:.85rem;margin-top:.4rem;line-height:1.6">試試別的關鍵字，或按右上 ✕ 清掉搜尋</div>' +
-            '</div>';
-          return;
-        }
-        let html =
-          '<div style="font-size:.9rem;color:#374151;margin-bottom:.8rem;padding:.5rem .8rem;background:#f3e8ff;border-radius:8px;border-left:3px solid #7c3aed">' +
-            '🔍 找到 <strong style="color:#7c3aed">' + matches.length + '</strong> 個章節包含「' + qEsc + '」 ' +
-            '<span style="font-size:.75rem;color:#6b7280">（點下面任一章節打開）</span>' +
-          '</div>';
-        matches.forEach(({ chapter, snippets, nameMatch }) => {
-          const snippetsHtml = snippets.map(s =>
-            '<div style="font-size:.82rem;color:#4b5563;margin-top:.3rem;line-height:1.55;background:#fafafa;padding:.35rem .6rem;border-radius:6px">' +
-              (s.isStart ? '' : '…') +
-              escapeHtml(s.before) +
-              '<mark style="background:#fde047;color:#713f12;padding:0 3px;border-radius:3px;font-weight:700">' + escapeHtml(s.match) + '</mark>' +
-              escapeHtml(s.after) +
-              (s.isEnd ? '' : '…') +
-            '</div>'
-          ).join('');
-          const nameTag = nameMatch
-            ? '<span style="font-size:.7rem;color:#15803d;background:#dcfce7;padding:1px 8px;border-radius:8px;margin-left:.3rem">✓ 標題符合</span>'
-            : '';
-          const concepts = (chapter.concepts || []).slice(0, 4).map(c => '<span style="background:#e9d5ff;color:#6b21a8;padding:1px 8px;border-radius:8px;font-size:.7rem;margin-right:.2rem">' + escapeHtml(c) + '</span>').join('');
-          html +=
-            '<div onclick="selectChapter(\'' + chapter.id + '\');clearNotebookSearch()" style="background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:.7rem 1rem;margin-bottom:.6rem;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'#c084fc\';this.style.background=\'#faf5ff\'" onmouseout="this.style.borderColor=\'#e5e7eb\';this.style.background=\'white\'">' +
-              '<div style="display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap">' +
-                '<strong style="color:#7c3aed;font-size:1rem">' + escapeHtml(chapter.name) + '</strong>' +
-                '<span style="font-size:.7rem;color:#9ca3af">' + (chapter.qids||[]).length + ' 題</span>' +
-              '</div>' +
-              (concepts || nameTag ? '<div style="margin-top:.3rem">' + concepts + nameTag + '</div>' : '') +
-              snippetsHtml +
-            '</div>';
+        // 目錄：跟內容區同步
+        document.querySelectorAll('.nb-toc-item').forEach(item => {
+          const onclickAttr = item.getAttribute('onclick') || '';
+          const m = onclickAttr.match(/scrollToChapter\('([^']+)'\)/);
+          if (!m) return;
+          const chEl = document.getElementById('chapter-' + m[1]);
+          if (chEl && chEl.classList.contains('nb-search-hidden')) item.classList.add('nb-search-hidden');
+          else item.classList.remove('nb-search-hidden');
         });
-        body.innerHTML = html;
+        document.querySelectorAll('.nb-toc-group').forEach(group => {
+          const visibleItems = group.querySelectorAll('.nb-toc-item:not(.nb-search-hidden)');
+          if (visibleItems.length === 0) group.classList.add('nb-search-hidden');
+          else group.classList.remove('nb-search-hidden');
+        });
+
+        // 無結果提示
+        const body = document.getElementById('notebook-body');
+        let empty = document.getElementById('nb-search-empty');
+        if (hit === 0) {
+          if (!empty) {
+            empty = document.createElement('div');
+            empty.id = 'nb-search-empty';
+            empty.className = 'nb-search-empty';
+            empty.innerHTML = '<div style="font-size:2.5rem">🔍</div><div style="margin-top:.5rem;color:#374151;font-weight:700">沒找到符合「' + escapeHtml(q) + '」的章節</div><div style="font-size:.85rem;margin-top:.4rem">試試其他關鍵字、或點 ✕ 清除搜尋</div>';
+            body.appendChild(empty);
+          } else {
+            empty.querySelector('div:nth-child(2)').textContent = '沒找到符合「' + q + '」的章節';
+          }
+        } else if (empty) {
+          empty.remove();
+        }
       }
       function clearNotebookSearch(){
         const inp = document.getElementById('nb-search-input');
@@ -8908,81 +8194,6 @@ ${instruction.trim()}
       }
 
       // ── Peek Notebook：在練習中查看相關章節 ──
-      // 找出跟一題相關的章節（給偷看筆記用）
-      // 用「分數制」避免太發散：每個 signal 加分，分數高才顯示，最多 5 章
-      function findRelatedChapters(q, chapters){
-        const directHit = [];
-        const scored = [];
-
-        const qTopic = (q.topic || '').toLowerCase().trim();
-        // 題目「核心字串」（窄）：只看題目+選項+topic，不含詳解/臨床（這兩個太發散）
-        const qCoreText = [
-          q.topic || '',
-          q.question || '',
-          (q.options || []).join(' ')
-        ].join(' ').toLowerCase();
-        // 題目「延伸字串」（寬）：含詳解，只給弱訊號加分
-        const qExtText = qCoreText + ' ' + (
-          (q.explanation || '').slice(0, 300) + ' ' +
-          (q.explanation_notebooklm || '').slice(0, 300)
-        ).toLowerCase();
-
-        // 題目這邊的 token：
-        //   - topic 拆字（≥3 字，避免「牙髓」這種太泛的 2 字詞瘋狂亂中）
-        //   - 英文首字母大寫的詞或縮寫（≥3 字母）— 通常是專有名詞 / 學術用語
-        const topicTokens = qTopic.split(/[,，、 \/]+/).filter(s => s.length >= 3);
-        const qTextForTokens = (q.question || '') + ' ' + (q.options || []).join(' ');
-        const engTokens = Array.from(new Set(
-          (qTextForTokens.match(/\b[A-Z][A-Za-z0-9\-]{2,}\b/g) || []).map(s => s.toLowerCase())
-        ));
-
-        chapters.forEach(c => {
-          if ((c.qids || []).includes(q.id)) {
-            directHit.push(c);
-            return;
-          }
-          const cName = (c.name || '').toLowerCase();
-          const cSubtopic = (c.subtopic || '').toLowerCase();
-          const cConcepts = (c.concepts || []).map(s => (s || '').toLowerCase().trim()).filter(s => s);
-          const cContent = (c.content || '').slice(0, 1500).toLowerCase();
-          const cHaystack = cName + ' ' + cSubtopic + ' ' + cConcepts.join(' ') + ' ' + cContent;
-
-          let score = 0;
-          const reasons = [];
-
-          // (1) 章節 name / subtopic 整字串含 topic（最強訊號）
-          if (qTopic.length >= 3 && (cName.includes(qTopic) || cSubtopic.includes(qTopic))) {
-            score += 25;
-            reasons.push('name~topic');
-          }
-          // (2) 章節 concept 出現在題目核心字串（高訊號，但要求 concept 夠具體）
-          cConcepts.forEach(con => {
-            if (!con || con.length < 3) return; // 太短跳過（避免「牙髓」「細胞」這種泛詞）
-            if (qCoreText.includes(con)) { score += 10; reasons.push('core~' + con); }
-            else if (qExtText.includes(con)) { score += 3; reasons.push('ext~' + con); }
-          });
-          // (3) topic 的拆字 token 在章節 haystack（中訊號）
-          topicTokens.forEach(t => {
-            if (cHaystack.includes(t)) { score += 5; reasons.push('topT~' + t); }
-          });
-          // (4) 英文專有名詞 token 在章節 haystack（中訊號）
-          engTokens.forEach(t => {
-            if (t.length >= 3 && cHaystack.includes(t)) { score += 4; reasons.push('eng~' + t); }
-          });
-
-          // 門檻：要 ≥ 8 分才視為相關（單一弱訊號不夠，需要至少 1 個強訊號或多個弱訊號疊加）
-          if (score >= 8) {
-            scored.push({ ch: c, score: score, reasons: reasons });
-          }
-        });
-
-        // 高分優先，最多 5 章（避免列一大堆讓人眼花）
-        scored.sort((a, b) => b.score - a.score);
-        const topicHit = scored.slice(0, 5).map(x => x.ch);
-
-        return { directHit, topicHit };
-      }
-
       function peekNotebook(){
         const q = practiceList[practiceIdx];
         if (!q) { showToast('找不到當前題目'); return; }
@@ -8990,8 +8201,26 @@ ${instruction.trim()}
         const body = document.getElementById('peek-body');
         const overlay = document.getElementById('peek-overlay');
 
-        const { directHit, topicHit } = findRelatedChapters(q, notebook.chapters);
+        // 找相關章節：
+        // 1) qids 已經包含這題的
+        // 2) concepts 跟題目 topic 相關的
+        // 3) 章節名稱包含題目 topic 關鍵字
         const topic = (q.topic || '').trim();
+        const topicTokens = topic ? topic.split(/[,，、 \/]+/).filter(s => s.length >= 2) : [];
+
+        const directHit = [];
+        const topicHit = [];
+        notebook.chapters.forEach(c => {
+          if ((c.qids || []).includes(q.id)) {
+            directHit.push(c);
+            return;
+          }
+          if (!topic) return;
+          const haystack = (c.name + ' ' + (c.concepts||[]).join(' ') + ' ' + (c.content||'').slice(0,500));
+          if (topicTokens.some(t => haystack.includes(t)) || haystack.includes(topic)) {
+            topicHit.push(c);
+          }
+        });
 
         overlay.style.display = 'flex';
 
@@ -9048,14 +8277,8 @@ ${instruction.trim()}
         document.getElementById('peek-overlay').style.display = 'none';
       }
 
-      // 啟動時把 notebook 載進記憶體 + 自動清待整理裡已整理的 + 啟動背景重試
-      try {
-        loadNotebook();
-        _cleanupAlreadyOrganizedPending();
-        updatePendingBadge();
-        // 若還有 pending，啟動背景自動重試（70 秒一題）
-        if (getPendingQueue().length > 0) startPendingAutoRetry();
-      } catch(e) {}
+      // 啟動時把 notebook 載進記憶體
+      try { loadNotebook(); } catch(e) {}
 
       // ════════════════════════════════════════════
       //  Reset All Marks

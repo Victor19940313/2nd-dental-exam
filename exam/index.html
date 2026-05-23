@@ -8497,6 +8497,11 @@ ${instruction.trim()}
         md = md.replace(/\*\*([^*\n]+?)[ \t]+\*\*/g, '**$1**');
         // 6. AI 容錯：粗體跨換行（** \n xxx \n **）→ 收成單行
         md = md.replace(/\*\*\s*\n\s*([^*]+?)\s*\n\s*\*\*/g, '**$1**');
+        // 8. AI 容錯：整行只有 `---`（或更多 dash）的孤立水平線 → 移除
+        //    AI 整理時常在區塊之間塞一條，但實際渲染突兀；表格的 `|---|...` 開頭有 `|`，不會被誤動
+        md = md.replace(/^[-—–_]{3,}\s*$/gm, '');
+        // 連帶清掉因此產生的「連續多個空行」
+        md = md.replace(/\n{3,}/g, '\n\n');
         let s = escapeHtml(md);
         // 還原使用者用螢光工具加的 <mark class="hl-y/g/p">（escapeHtml 把它變成 &lt;mark...&gt;）
         s = s.replace(/&lt;mark class=&quot;(hl-[ygp])&quot;&gt;([\s\S]*?)&lt;\/mark&gt;/g,

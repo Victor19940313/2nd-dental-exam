@@ -6293,16 +6293,42 @@
           const { topicHit } = findRelatedChapters(q, chapters);
           candidateIds = new Set((topicHit || []).map(c => c.id));
         } catch(e) { /* 找不到也沒關係 */ }
-        // 候選看更多內容（1000 字）讓 AI 有足夠資訊判斷；其他只看摘要（200 字）省 token
-        const buildEntry = (c) => ({
-          id: c.id,
-          name: c.name,
-          domain: c.domain || '',
-          subtopic: c.subtopic || '',
-          concepts: c.concepts || [],
-          summary: (c.content || '').slice(0, candidateIds.has(c.id) ? 1000 : 200),
-          source_qids: (c.qids || []).slice(0, 5)
-        });
+        // 抽章節結構大綱（## 標題列表）+ 關鍵字（粗體、[[ ]] 概念）給 AI 看
+        // 這樣 AI 不用看全文就知道每章在講什麼，更容易判斷相關性
+        const _extractMeta = (content) => {
+          if (!content) return { outline: '', keywords: [] };
+          const outline = [];
+          content.split('\n').forEach(line => {
+            const m = line.match(/^(#{2,4})\s+(.+)$/);
+            if (m) outline.push('H' + m[1].length + ': ' + m[2].trim());
+          });
+          const kws = new Set();
+          (content.match(/\*\*([^*\n]+?)\*\*/g) || []).forEach(s => {
+            const t = s.replace(/\*\*/g, '').trim();
+            if (t.length >= 2 && t.length <= 25) kws.add(t);
+          });
+          (content.match(/\[\[([^\]]+?)\]\]/g) || []).forEach(s => {
+            const t = s.replace(/\[\[|\]\]/g, '').trim();
+            if (t.length >= 2 && t.length <= 25) kws.add(t);
+          });
+          return { outline: outline.join(' | '), keywords: Array.from(kws).slice(0, 25) };
+        };
+        // 候選 600 字 + 完整 outline/keywords；其他 150 字 + 完整 outline/keywords
+        // 重點是 outline + keywords 不省略，因為這是判斷相關性最有用的訊號
+        const buildEntry = (c) => {
+          const meta = _extractMeta(c.content || '');
+          return {
+            id: c.id,
+            name: c.name,
+            domain: c.domain || '',
+            subtopic: c.subtopic || '',
+            concepts: c.concepts || [],
+            outline: meta.outline,
+            keywords: meta.keywords,
+            summary: (c.content || '').slice(0, candidateIds.has(c.id) ? 600 : 150),
+            source_qids: (c.qids || []).slice(0, 5)
+          };
+        };
         const candidates = chapters.filter(c => candidateIds.has(c.id)).map(buildEntry);
         const others = chapters.filter(c => !candidateIds.has(c.id)).map(buildEntry);
         return `你是一位專業的牙醫國考筆記整理員。
@@ -6311,9 +6337,15 @@
 把這題納入我的「核心概念筆記本」。**不是寫題目詳解**，是整理「將來再遇到同概念題目都能答對」的核心重點。同概念多題之間要**合併、去重、累積**，不要每題重寫。
 
 ⚠️【最高指導原則：優先 append、避免開新章】
-新章只要可以併進舊章，**一律 append**。下面「強烈推薦候選章節」是 JS 預先用關鍵字/概念比對找出的高相似章節，**只要任一候選的 concept / subtopic / 內容跟新題有重疊，就 append 到那一章**。
+新章只要可以併進舊章，**一律 append**。下面「強烈推薦候選章節」是 JS 預先用關鍵字/概念比對找出的高相似章節，**只要任一候選的 concept / subtopic / outline / keywords / 內容跟新題有重疊，就 append 到那一章**。
 不要因為「章節名稱不完全一樣」就開新章 — 章節名可以維持原樣，內容用 append 合併擴充。
 **除非完全沒有任何候選章節跟這題有關**，才用 new_chapter。
+
+【判斷相關性時請優先看這幾個欄位】
+- **outline**：章節的所有 ## 小標題列表（最能反映章節在講什麼）
+- **keywords**：章節內所有粗體詞 + [[概念]] 標籤（章節重視的關鍵字）
+- **concepts / subtopic / name**
+- summary 只是內容前段摘要，**outline 跟 keywords 比 summary 更能反映章節主題**
 
 【🎯 強烈推薦候選章節（${candidates.length} 章；按相似度排序，內容看到 1000 字）】
 ${candidates.length === 0 ? '（無 — 但仍要從下面「其他章節」找最接近的；找不到才開新章）' : JSON.stringify(candidates, null, 2)}
@@ -9121,12 +9153,15 @@ ${instruction.trim()}
 
         // 題目這邊的 token：
         //   - topic 拆字（≥3 字，避免「牙髓」這種太泛的 2 字詞瘋狂亂中）
-        //   - 英文首字母大寫的詞或縮寫（≥3 字母）— 通常是專有名詞 / 學術用語
+        //   - 英文詞（≥3 字母）— 大小寫都認（題目寫 "metal post" 小寫也要抓）
         const topicTokens = qTopic.split(/[,，、 \/]+/).filter(s => s.length >= 3);
         const qTextForTokens = (q.question || '') + ' ' + (q.options || []).join(' ');
         const engTokens = Array.from(new Set(
-          (qTextForTokens.match(/\b[A-Z][A-Za-z0-9\-]{2,}\b/g) || []).map(s => s.toLowerCase())
+          (qTextForTokens.match(/[A-Za-z][A-Za-z0-9\-]{2,}/g) || []).map(s => s.toLowerCase())
         ));
+        // 題目全文（含詳解）的小寫版，用於跟 chapter 的關鍵字反向比對
+        const qFullLower = (qTextForTokens + ' ' + (q.topic||'') + ' ' +
+          (q.explanation||'').slice(0,300) + ' ' + (q.explanation_notebooklm||'').slice(0,300)).toLowerCase();
 
         chapters.forEach(c => {
           if ((c.qids || []).includes(q.id)) {
@@ -9157,9 +9192,38 @@ ${instruction.trim()}
           topicTokens.forEach(t => {
             if (cHaystack.includes(t)) { score += 5; reasons.push('topT~' + t); }
           });
-          // (4) 英文專有名詞 token 在章節 haystack（中訊號）
+          // (4) 英文 token 在章節 haystack（中訊號；大小寫都認）
           engTokens.forEach(t => {
-            if (t.length >= 3 && cHaystack.includes(t)) { score += 4; reasons.push('eng~' + t); }
+            if (t.length >= 3 && cHaystack.includes(t)) { score += 5; reasons.push('eng~' + t); }
+          });
+          // (5) 反向：章節 name / subtopic 的關鍵詞出現在題目全文（中訊號）
+          //     抽 chapter name 的英文詞 + 中文 2-6 字短語
+          const cNameEng = ((c.name||'') + ' ' + (c.subtopic||''))
+            .match(/[A-Za-z][A-Za-z0-9\-]{2,}/g) || [];
+          cNameEng.forEach(t => {
+            const tl = t.toLowerCase();
+            if (qFullLower.includes(tl)) { score += 5; reasons.push('cNm~' + tl); }
+          });
+          // (6) 反向：章節 concepts 詞出現在題目全文
+          cConcepts.forEach(con => {
+            if (con && con.length >= 2 && qFullLower.includes(con)) {
+              score += 4; reasons.push('cCon~' + con);
+            }
+          });
+          // (7) 章節 content 內的粗體 / 概念標籤抽出來看題目有沒有提到（強訊號）
+          //     例：章節寫了 **Metal post**、[[根柱]]，題目含 "metal post"、"釘柱" 就加分
+          const cKws = new Set();
+          const contentSample = (c.content || '').slice(0, 3000);
+          (contentSample.match(/\*\*([^*\n]+?)\*\*/g) || []).forEach(s => {
+            const t = s.replace(/\*\*/g, '').trim().toLowerCase();
+            if (t.length >= 2 && t.length <= 20) cKws.add(t);
+          });
+          (contentSample.match(/\[\[([^\]]+?)\]\]/g) || []).forEach(s => {
+            const t = s.replace(/\[\[|\]\]/g, '').trim().toLowerCase();
+            if (t.length >= 2 && t.length <= 20) cKws.add(t);
+          });
+          cKws.forEach(t => {
+            if (qFullLower.includes(t)) { score += 6; reasons.push('cKw~' + t); }
           });
 
           // 門檻：≥ 5 分視為相關（放寬以涵蓋更多相似章節；單純看 score 排序時最差的會排後面）

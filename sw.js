@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v77-strip-hr';
+const CACHE_NAME = 'dental-all-v78-smart-merge';
 const PRECACHE = [
   './',
   './index.html',

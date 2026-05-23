@@ -6287,22 +6287,39 @@
         const LETTERS = ['A','B','C','D','E'];
         const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
         const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
-        const index = chapters.map(c => ({
+        // 用 findRelatedChapters 預先排序找出最相似章節，當「強候選」推薦給 AI
+        let candidateIds = new Set();
+        try {
+          const { topicHit } = findRelatedChapters(q, chapters);
+          candidateIds = new Set((topicHit || []).map(c => c.id));
+        } catch(e) { /* 找不到也沒關係 */ }
+        // 候選看更多內容（1000 字）讓 AI 有足夠資訊判斷；其他只看摘要（200 字）省 token
+        const buildEntry = (c) => ({
           id: c.id,
           name: c.name,
           domain: c.domain || '',
           subtopic: c.subtopic || '',
           concepts: c.concepts || [],
-          summary: (c.content || '').slice(0, 300),
+          summary: (c.content || '').slice(0, candidateIds.has(c.id) ? 1000 : 200),
           source_qids: (c.qids || []).slice(0, 5)
-        }));
+        });
+        const candidates = chapters.filter(c => candidateIds.has(c.id)).map(buildEntry);
+        const others = chapters.filter(c => !candidateIds.has(c.id)).map(buildEntry);
         return `你是一位專業的牙醫國考筆記整理員。
 
 【任務】
 把這題納入我的「核心概念筆記本」。**不是寫題目詳解**，是整理「將來再遇到同概念題目都能答對」的核心重點。同概念多題之間要**合併、去重、累積**，不要每題重寫。
 
-【現有章節索引】
-${chapters.length === 0 ? '（筆記本是空的，這是第一題）' : JSON.stringify(index, null, 2)}
+⚠️【最高指導原則：優先 append、避免開新章】
+新章只要可以併進舊章，**一律 append**。下面「強烈推薦候選章節」是 JS 預先用關鍵字/概念比對找出的高相似章節，**只要任一候選的 concept / subtopic / 內容跟新題有重疊，就 append 到那一章**。
+不要因為「章節名稱不完全一樣」就開新章 — 章節名可以維持原樣，內容用 append 合併擴充。
+**除非完全沒有任何候選章節跟這題有關**，才用 new_chapter。
+
+【🎯 強烈推薦候選章節（${candidates.length} 章；按相似度排序，內容看到 1000 字）】
+${candidates.length === 0 ? '（無 — 但仍要從下面「其他章節」找最接近的；找不到才開新章）' : JSON.stringify(candidates, null, 2)}
+
+【其他既有章節（摘要 200 字；如果上面候選都不適合再看這邊）】
+${others.length === 0 ? (chapters.length === 0 ? '（筆記本是空的，這是第一題）' : '（無）') : JSON.stringify(others, null, 2)}
 
 【新題目】
 題目 ID: ${q.id}
@@ -6328,13 +6345,16 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
    * **盡量沿用現有章節已有的 subtopic**（看現有索引），同主題的章節應該 group 在同一 subtopic
    * 例：「Pulp 牙髓」「Cementum 牙骨質」「Dentin 牙本質」「Microbiology 微生物」「Diagnosis 診斷」「Periodontitis 牙周炎」「Major connectors 主連接體」「Clasp 牙鈎」
    * **不要每章一個 subtopic** — 一個 subtopic 應該能涵蓋 2-5 章
-4. 行動三選一：
-   - new_chapter: 沒有適合章節 → 新建一章
+4. 行動三選一（**重要：預設 append，new_chapter 是最後選擇**）：
+   - **append**: 屬於某現有章節但有新重點 → 整段重寫該章（合併舊內容+新重點，去重）
+     * 只要強候選章節有**任一個 concept / subtopic / 內容**跟新題重疊 → 一律 append 到那章
+     * **不確定哪章最相符 → 選最相近那章 append**（寧可併到稍微不完全相同的章也比開新章好）
+     * 章節名可以**保持原樣**或在 content 裡加新小標題擴充（不需要為了新題改章節名）
+   - new_chapter: **只有當所有候選章節 + 其他章節都跟這題完全無關時才用**
      * 章節名要**精確概念**：英文 + 中文，比 subtopic 更具體
      * 例：subtopic="Pulp 牙髓"，chapter_name="Normal pulp immune cells 正常牙髓免疫細胞"
-   - append: 屬於某現有章節但有新重點 → 整段重寫該章（合併舊內容+新重點，去重）
    - skip: 現有章節已**完整涵蓋**這題重點 → 不改筆記
-5. 類似概念積極合併到同一章
+5. **判斷 append 還是 new_chapter 時，往 append 那邊靠** — 寧可併章太雜也不要開過多重複概念的章
 
 【內容寫作規範（極重要，不照做就是失敗）】
 排版要求：
@@ -9142,15 +9162,15 @@ ${instruction.trim()}
             if (t.length >= 3 && cHaystack.includes(t)) { score += 4; reasons.push('eng~' + t); }
           });
 
-          // 門檻：要 ≥ 8 分才視為相關（單一弱訊號不夠，需要至少 1 個強訊號或多個弱訊號疊加）
-          if (score >= 8) {
+          // 門檻：≥ 5 分視為相關（放寬以涵蓋更多相似章節；單純看 score 排序時最差的會排後面）
+          if (score >= 5) {
             scored.push({ ch: c, score: score, reasons: reasons });
           }
         });
 
-        // 高分優先，最多 5 章（避免列一大堆讓人眼花）
+        // 高分優先，最多 8 章（給 AI / 偷看 看更多候選）
         scored.sort((a, b) => b.score - a.score);
-        const topicHit = scored.slice(0, 5).map(x => x.ch);
+        const topicHit = scored.slice(0, 8).map(x => x.ch);
 
         return { directHit, topicHit };
       }

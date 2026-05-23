@@ -8326,6 +8326,27 @@ ${instruction.trim()}
           line = line.replace(/\|\|/g, '|\n|');
           return line;
         }).join('\n');
+        // 7b. AI 容錯：表格中間多塞了空白行，把整張表切成兩段
+        //     處理：從 |---| separator 行開始，後續連續的「|」行之間若插入空行，移除空行；
+        //     遇到非 | 也非空白行才結束「表格延續」狀態
+        md = (function _fixTableBlankGaps(text){
+          const lines = text.split('\n');
+          const out = [];
+          let inTable = false;
+          for (let i = 0; i < lines.length; i++){
+            const line = lines[i];
+            if (/^\|[\s\-:|]+\|\s*$/.test(line)) { inTable = true; out.push(line); continue; }
+            if (inTable && /^\s*$/.test(line)) {
+              let j = i + 1;
+              while (j < lines.length && /^\s*$/.test(lines[j])) j++;
+              if (j < lines.length && /^\|/.test(lines[j])) { i = j - 1; continue; }
+              inTable = false; out.push(line); continue;
+            }
+            if (inTable && !/^\|/.test(line)) inTable = false;
+            out.push(line);
+          }
+          return out.join('\n');
+        })(md);
         // 5. AI 容錯：粗體 ** 內側帶空白 → 收緊（這樣 ctag/標籤旁的 **才不會被遺漏）
         //    例：「** [[敏感性]] **」、「**  [[X]]  **」 → 「**[[敏感性]]**」
         md = md.replace(/\*\*[ \t]+([^*\n]+?)[ \t]+\*\*/g, '**$1**');

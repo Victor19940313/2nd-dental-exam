@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v72-zoom-wrap';
+const CACHE_NAME = 'dental-all-v73-table-gap';
 const PRECACHE = [
   './',
   './index.html',

@@ -8327,9 +8327,8 @@ ${instruction.trim()}
           return line;
         }).join('\n');
         // 7b. AI 容錯：表格中間多塞了空白行、或把表格列誤寫成 `- | ... |` 條列
-        //     1. |---| separator 之後若遇到空白行 + 下一行是表格列 → 移除空白行
-        //     2. 「- | xxx |」開頭的「假條列」其實是表格列被誤加 dash → 剝掉前綴 `- `
-        //     遇到非表格列也非空白行才結束「表格延續」狀態
+        //     SEP_RE 同時接受 `-` `—` `–` `－` 各種 dash 字元當 separator
+        const SEP_RE = /^\|[\s\-—–－:|]+\|\s*$/;
         md = (function _fixTableContinuity(text){
           const isCont = (l) => /^\|/.test(l) || /^-\s+\|/.test(l);
           const strip  = (l) => l.replace(/^-\s+(?=\|)/, '');
@@ -8338,7 +8337,7 @@ ${instruction.trim()}
           let inTable = false;
           for (let i = 0; i < lines.length; i++){
             const line = lines[i];
-            if (/^\|[\s\-:|]+\|\s*$/.test(line)) { inTable = true; out.push(line); continue; }
+            if (SEP_RE.test(line)) { inTable = true; out.push(line); continue; }
             if (inTable && /^\s*$/.test(line)) {
               let j = i + 1;
               while (j < lines.length && /^\s*$/.test(lines[j])) j++;
@@ -8351,6 +8350,21 @@ ${instruction.trim()}
           }
           return out.join('\n');
         })(md);
+        // 7c. AI 容錯：表格 header 結尾沒收 `|`（內容太長被自動換行截斷）
+        //     行 1：`|...` 開頭、結尾不是 `|`；行 2：純 separator 行 → 在行 1 補上 `|`
+        //     同時若行 1 內容含被斷掉的下一行（沒以 | 開頭），把下一行併回去
+        md = md.replace(/^(\|[^\n]*[^|\s])\n([^\|\n][^\n]*)\n(\|[\s\-—–－:|]+\|\s*)$/gm,
+          (m, h1, h2, sep) => h1 + ' ' + h2 + '|\n' + sep);
+        md = md.replace(/^(\|[^\n]*[^|\s])\n(\|[\s\-—–－:|]+\|\s*)$/gm,
+          (m, h1, sep) => h1 + '|\n' + sep);
+        // 7d. AI 容錯：連續多個 separator 行（AI 偶爾在 header 後寫兩條 `|---|` 加 `|---|---|---|`）
+        //     合併成 cell 數最多的那一條
+        md = md.replace(/((?:^\|[\s\-—–－:|]+\|\s*\n){2,})/gm, (m) => {
+          const ls = m.split('\n').filter(l => l.trim());
+          let best = ls[0]; let bn = best.split('|').length;
+          for (const l of ls) { const n = l.split('|').length; if (n > bn) { best = l; bn = n; } }
+          return best + '\n';
+        });
         // 5. AI 容錯：粗體 ** 內側帶空白 → 收緊（這樣 ctag/標籤旁的 **才不會被遺漏）
         //    例：「** [[敏感性]] **」、「**  [[X]]  **」 → 「**[[敏感性]]**」
         md = md.replace(/\*\*[ \t]+([^*\n]+?)[ \t]+\*\*/g, '**$1**');
@@ -8511,14 +8525,14 @@ ${instruction.trim()}
         return s.replace(re, (block) => {
           const lines = block.trim().split('\n');
           if (lines.length < 2) return block;
-          // second line must be alignment row
-          if (!/^\|[\s\-:|]+\|$/.test(lines[1])) return block;
+          // second line must be alignment row（支援 - — – － 各種 dash 字元）
+          if (!/^\|[\s\-—–－:|]+\|$/.test(lines[1])) return block;
           const cells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => _renderCellInline(c.trim()));
           // 判斷一列是不是「廢列」：全部 cell 是空白 / 全破折號 / 全冒號（AI 偶爾會在 header 後多塞一條這種）
           const isJunkRow = (l) => {
             const raw = l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
             if (raw.length === 0) return true;
-            return raw.every(c => c === '' || /^[\s\-:]+$/.test(c));
+            return raw.every(c => c === '' || /^[\s\-—–－:]+$/.test(c));
           };
           const out = ['<table class="nb-table">'];
           out.push('<tr>' + cells(lines[0]).map(c => '<th>'+c+'</th>').join('') + '</tr>');

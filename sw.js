@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v74-table-dash';
+const CACHE_NAME = 'dental-all-v75-table-fixes';
 const PRECACHE = [
   './',
   './index.html',

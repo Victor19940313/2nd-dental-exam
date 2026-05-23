@@ -8326,10 +8326,13 @@ ${instruction.trim()}
           line = line.replace(/\|\|/g, '|\n|');
           return line;
         }).join('\n');
-        // 7b. AI 容錯：表格中間多塞了空白行，把整張表切成兩段
-        //     處理：從 |---| separator 行開始，後續連續的「|」行之間若插入空行，移除空行；
-        //     遇到非 | 也非空白行才結束「表格延續」狀態
-        md = (function _fixTableBlankGaps(text){
+        // 7b. AI 容錯：表格中間多塞了空白行、或把表格列誤寫成 `- | ... |` 條列
+        //     1. |---| separator 之後若遇到空白行 + 下一行是表格列 → 移除空白行
+        //     2. 「- | xxx |」開頭的「假條列」其實是表格列被誤加 dash → 剝掉前綴 `- `
+        //     遇到非表格列也非空白行才結束「表格延續」狀態
+        md = (function _fixTableContinuity(text){
+          const isCont = (l) => /^\|/.test(l) || /^-\s+\|/.test(l);
+          const strip  = (l) => l.replace(/^-\s+(?=\|)/, '');
           const lines = text.split('\n');
           const out = [];
           let inTable = false;
@@ -8339,10 +8342,11 @@ ${instruction.trim()}
             if (inTable && /^\s*$/.test(line)) {
               let j = i + 1;
               while (j < lines.length && /^\s*$/.test(lines[j])) j++;
-              if (j < lines.length && /^\|/.test(lines[j])) { i = j - 1; continue; }
+              if (j < lines.length && isCont(lines[j])) { i = j - 1; continue; }
               inTable = false; out.push(line); continue;
             }
-            if (inTable && !/^\|/.test(line)) inTable = false;
+            if (inTable && isCont(line)) { out.push(strip(line)); continue; }
+            if (inTable) inTable = false;
             out.push(line);
           }
           return out.join('\n');

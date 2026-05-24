@@ -5112,7 +5112,7 @@
         return `${subjLbl} / ${yearLbl}`;
       }
 
-      function saveExamHistory(correct, total, mode) {
+      function saveExamHistory(correct, total, mode, wrongQs) {
         try {
           const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
           const now = new Date();
@@ -5129,6 +5129,14 @@
             correct: correct,
             score: +(correct * 1.25).toFixed(2),
             fullScore: +(total * 1.25).toFixed(2),
+            wrongs: (wrongQs || []).map(w => ({
+              qid: w.q.id,
+              meta: w.q.meta || '',
+              subject: w.q.subject || '',
+              question: (w.q.question || '').slice(0, 120),
+              userAns: w.userIdx,
+              correctAns: w.correctArr,
+            })),
           });
           // 只保留最近 100 筆
           localStorage.setItem('examHistory', JSON.stringify(hist.slice(0, 100)));
@@ -5140,16 +5148,45 @@
         if (!el) return;
         const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
         if (!hist.length) { el.innerHTML = ''; return; }
+        const LETTERS = ['A','B','C','D','E'];
 
-        const rows = hist.slice(0, 10).map((h) => {
+        const rows = hist.slice(0, 10).map((h, i) => {
           const pct = h.total > 0 ? Math.round((h.correct / h.total) * 100) : 0;
           const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
-          return `<div class="exam-hist-row">
-            <div class="exam-hist-date">${h.date}</div>
+          const wrongs = h.wrongs || [];
+          const hasWrongs = wrongs.length > 0;
+          const detailId = `eh-detail-${containerId}-${i}`;
+
+          let detailHtml = '';
+          if (hasWrongs) {
+            const items = wrongs.map(w => {
+              const userL = (w.userAns != null) ? (LETTERS[w.userAns] || '?') : '—';
+              const corrL = Array.isArray(w.correctAns)
+                ? w.correctAns.map(c => LETTERS[c] || '?').join('/')
+                : (LETTERS[w.correctAns] || '?');
+              return `<div style="background:#fff;border:1px solid #fecaca;border-radius:8px;padding:.6rem .8rem;margin-bottom:.5rem;font-size:.85rem;line-height:1.55">
+                <div style="font-size:.75rem;color:#9ca3af;margin-bottom:.2rem">${escapeHtml(w.meta || w.qid || '')}</div>
+                <div style="color:#374151;margin-bottom:.3rem">${escapeHtml(w.question || '')}${w.question && w.question.length >= 120 ? '…' : ''}</div>
+                <div>你答 <strong style="color:#dc2626">${userL}</strong>　·　正解 <strong style="color:#059669">${corrL}</strong></div>
+              </div>`;
+            }).join('');
+            detailHtml = `<div id="${detailId}" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.6rem;margin:.2rem 0 .6rem">${items}</div>`;
+          }
+
+          const clickAttr = hasWrongs
+            ? `style="cursor:pointer" onclick="(function(el){el.style.display=(el.style.display==='none'?'block':'none')})(document.getElementById('${detailId}'))"`
+            : '';
+          const wrongBadge = hasWrongs
+            ? `<span style="color:#dc2626;font-size:.72rem;margin-left:.4rem">▼ ${wrongs.length} 錯</span>`
+            : '';
+
+          return `<div class="exam-hist-row" ${clickAttr}>
+            <div class="exam-hist-date">${h.date}${wrongBadge}</div>
             <div class="exam-hist-label">${h.label}</div>
             <div class="exam-hist-score" style="color:${color}">${h.score} / ${h.fullScore}</div>
             <div class="exam-hist-meta">${h.correct}/${h.total} 題 · ${pct}%</div>
-          </div>`;
+          </div>
+          ${detailHtml}`;
         }).join('');
 
         const more = hist.length > 10 ? `<div style="text-align:center;color:#888;font-size:.8rem;margin-top:.4rem">最近 10 筆 / 共 ${hist.length} 筆</div>` : '';
@@ -5228,7 +5265,7 @@
         const score = (correct * 1.25).toFixed(2);
         const fullScore = (total * 1.25).toFixed(2);
         // 只在實際有作答時記錄到歷史成績
-        if (answered > 0) saveExamHistory(correct, total, modeLabel);
+        if (answered > 0) saveExamHistory(correct, total, modeLabel, wrongQs);
         document.getElementById("exam-res-score").textContent =
           `${score} 分 / ${fullScore}`;
         let subParts = [`答對 ${correct}/${total} 題`];

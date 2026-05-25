@@ -3058,6 +3058,28 @@
       </div>
     </div>
 
+    <!-- ═══════════════ EXAM REVIEW MODAL（重看試卷）═══════════════ -->
+    <div id="exam-review-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:10000;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeExamReview()">
+      <div style="background:#fff;border-radius:14px;width:100%;max-width:920px;margin-top:1.5rem;box-shadow:0 12px 40px rgba(0,0,0,.3);overflow:hidden">
+        <div style="background:#7c3aed;color:#fff;padding:.9rem 1.2rem;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:800;font-size:1.05rem">📋 重看試卷</div>
+            <div id="exam-review-meta" style="font-size:.82rem;opacity:.92;margin-top:.15rem">—</div>
+          </div>
+          <button onclick="closeExamReview()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.2rem;cursor:pointer">×</button>
+        </div>
+        <div style="padding:1rem 1.2rem">
+          <div id="exam-review-grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:.35rem;margin-bottom:1rem"></div>
+          <div style="display:flex;gap:1rem;font-size:.78rem;color:#6b7280;margin-bottom:.8rem;flex-wrap:wrap">
+            <span><span style="display:inline-block;width:14px;height:14px;background:#dcfce7;border:1px solid #86efac;border-radius:3px;vertical-align:middle"></span> 答對</span>
+            <span><span style="display:inline-block;width:14px;height:14px;background:#fee2e2;border:1px solid #fca5a5;border-radius:3px;vertical-align:middle"></span> 答錯</span>
+            <span><span style="display:inline-block;width:14px;height:14px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:3px;vertical-align:middle"></span> 未作答</span>
+          </div>
+          <div id="exam-review-detail" style="border-top:1px solid #e5e7eb;padding-top:1rem;min-height:200px"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ═══════════════ SCROLL EXAM SCREEN ═══════════════ -->
     <div id="screen-scroll-exam">
       <div class="scroll-exam-topbar">
@@ -5118,6 +5140,13 @@
           const now = new Date();
           const pad = (n) => String(n).padStart(2, '0');
           const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+          // 快照：所有題目 qid 順序 + 使用者作答（含對的、錯的、跳過的）
+          const ansSrc = examMode ? examAnswers : practiceAnswers;
+          const qids = (practiceList || []).map(q => q.id);
+          const userAnswers = {};
+          qids.forEach(qid => {
+            if (ansSrc[qid] !== undefined) userAnswers[qid] = ansSrc[qid];
+          });
           hist.unshift({
             ts: now.getTime(),
             date: dateStr,
@@ -5129,6 +5158,8 @@
             correct: correct,
             score: +(correct * 1.25).toFixed(2),
             fullScore: +(total * 1.25).toFixed(2),
+            qids: qids,
+            userAnswers: userAnswers,
             wrongs: (wrongQs || []).map(w => ({
               qid: w.q.id,
               meta: w.q.meta || '',
@@ -5173,6 +5204,10 @@
             detailHtml = `<div id="${detailId}" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.6rem;margin:.2rem 0 .6rem">${items}</div>`;
           }
 
+          const hasSnapshot = Array.isArray(h.qids) && h.qids.length > 0;
+          const reviewBtn = hasSnapshot
+            ? `<button class="start-btn secondary" style="padding:.25rem .6rem;font-size:.74rem;margin:0 0 0 .4rem;color:#7c3aed;border-color:#c4b5fd" onclick="event.stopPropagation();openExamReview(${i})">📋 重看試卷</button>`
+            : '';
           const clickAttr = hasWrongs
             ? `style="cursor:pointer" onclick="(function(el){el.style.display=(el.style.display==='none'?'block':'none')})(document.getElementById('${detailId}'))"`
             : '';
@@ -5181,7 +5216,7 @@
             : '';
 
           return `<div class="exam-hist-row" ${clickAttr}>
-            <div class="exam-hist-date">${h.date}${wrongBadge}</div>
+            <div class="exam-hist-date">${h.date}${wrongBadge}${reviewBtn}</div>
             <div class="exam-hist-label">${h.label}</div>
             <div class="exam-hist-score" style="color:${color}">${h.score} / ${h.fullScore}</div>
             <div class="exam-hist-meta">${h.correct}/${h.total} 題 · ${pct}%</div>
@@ -5218,6 +5253,89 @@
       function closeExamHistModal() {
         const m = document.getElementById('exam-hist-modal');
         if (m) m.style.display = 'none';
+      }
+
+      // ── 重看試卷：點歷史記錄後跳出 modal，顯示題號 grid + 點題看詳情 ──
+      let _reviewEntry = null;
+      let _reviewIdx = 0;
+      function openExamReview(histIdx){
+        const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
+        const entry = hist[histIdx];
+        if (!entry || !Array.isArray(entry.qids)) { showToast('這筆紀錄沒有完整快照'); return; }
+        _reviewEntry = entry;
+        _reviewIdx = 0;
+        document.getElementById('exam-review-modal').style.display = 'flex';
+        const meta = `${entry.date}　·　${entry.label}　·　${entry.score} / ${entry.fullScore} 分　·　${entry.correct}/${entry.total} 題`;
+        document.getElementById('exam-review-meta').textContent = meta;
+        renderReviewGrid();
+        renderReviewQ(0);
+      }
+      function closeExamReview(){
+        document.getElementById('exam-review-modal').style.display = 'none';
+        _reviewEntry = null;
+      }
+      function renderReviewGrid(){
+        const el = document.getElementById('exam-review-grid');
+        if (!el || !_reviewEntry) return;
+        const LETTERS = ['A','B','C','D','E'];
+        const cells = _reviewEntry.qids.map((qid, i) => {
+          const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+          const userIdx = _reviewEntry.userAnswers ? _reviewEntry.userAnswers[qid] : undefined;
+          let bg = '#f3f4f6', bd = '#d1d5db', fg = '#9ca3af';
+          let label = (i+1);
+          if (userIdx !== undefined && q) {
+            const arr = Array.isArray(q.answer) ? q.answer : [q.answer];
+            const ok = arr.includes(userIdx);
+            if (ok) { bg = '#dcfce7'; bd = '#86efac'; fg = '#166534'; }
+            else { bg = '#fee2e2'; bd = '#fca5a5'; fg = '#991b1b'; }
+          }
+          const ring = (i === _reviewIdx) ? 'box-shadow:0 0 0 2px #7c3aed' : '';
+          return `<div onclick="renderReviewQ(${i})" style="background:${bg};border:1px solid ${bd};color:${fg};border-radius:5px;text-align:center;padding:.35rem 0;font-size:.82rem;font-weight:700;cursor:pointer;${ring}">${label}</div>`;
+        }).join('');
+        el.innerHTML = cells;
+      }
+      function renderReviewQ(idx){
+        if (!_reviewEntry) return;
+        _reviewIdx = idx;
+        renderReviewGrid();
+        const qid = _reviewEntry.qids[idx];
+        const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+        const el = document.getElementById('exam-review-detail');
+        if (!q) {
+          el.innerHTML = `<div style="color:#9ca3af;text-align:center;padding:2rem">找不到題目資料 (${escapeHtml(qid||'')})</div>`;
+          return;
+        }
+        const LETTERS = ['A','B','C','D','E'];
+        const userIdx = _reviewEntry.userAnswers ? _reviewEntry.userAnswers[qid] : undefined;
+        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const userL = (userIdx != null) ? (LETTERS[userIdx] || '?') : '未答';
+        const corrL = correctArr.map(c => LETTERS[c] || '?').join('/');
+        const isCorrect = userIdx != null && correctArr.includes(userIdx);
+        const status = userIdx == null ? '未作答' : isCorrect ? '答對' : '答錯';
+        const statusColor = userIdx == null ? '#9ca3af' : isCorrect ? '#059669' : '#dc2626';
+        const optionsHtml = (q.options || []).map((opt, i) => {
+          const isCorrectOpt = correctArr.includes(i);
+          const isUserPick = i === userIdx;
+          let bg = '#f9fafb', bd = '#e5e7eb', mark = '';
+          if (isCorrectOpt) { bg = '#dcfce7'; bd = '#86efac'; mark = ' ✓ 正解'; }
+          if (isUserPick && !isCorrectOpt) { bg = '#fee2e2'; bd = '#fca5a5'; mark = ' ✗ 你選的'; }
+          else if (isUserPick && isCorrectOpt) { mark = ' ✓ 你選的（正確）'; }
+          return `<div style="background:${bg};border:1.5px solid ${bd};border-radius:8px;padding:.5rem .8rem;margin-bottom:.4rem;font-size:.9rem;line-height:1.55">${escapeHtml(opt)}<strong style="color:${isCorrectOpt?'#059669':'#dc2626'};font-size:.78rem;margin-left:.3rem">${mark}</strong></div>`;
+        }).join('');
+        const imgHtml = q.image ? `<img src="images/${q.image}" style="max-width:100%;border-radius:8px;margin:.6rem 0" />` : '';
+        const expl = q.explanation || '';
+        const explHtml = expl ? `<details style="margin-top:.8rem;background:#f9fafb;border-radius:8px;padding:.6rem .8rem"><summary style="cursor:pointer;color:#7c3aed;font-weight:700">📖 詳解</summary><div style="margin-top:.5rem;font-size:.88rem;line-height:1.75;color:#374151;white-space:pre-wrap">${escapeHtml(expl)}</div></details>` : '';
+
+        el.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+            <div style="font-size:.85rem;color:#6b7280">第 ${idx+1} 題　·　${escapeHtml(q.meta||q.id)}</div>
+            <div style="font-weight:800;color:${statusColor}">${status}　·　你答 ${userL}　·　正解 ${corrL}</div>
+          </div>
+          <div style="font-size:.95rem;line-height:1.7;color:#1f2937;margin-bottom:.8rem">${escapeHtml(q.question||'')}</div>
+          ${imgHtml}
+          ${optionsHtml}
+          ${explHtml}
+        `;
       }
 
       function showExamResults() {

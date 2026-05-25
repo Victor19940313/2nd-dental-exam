@@ -5147,6 +5147,15 @@
           qids.forEach(qid => {
             if (ansSrc[qid] !== undefined) userAnswers[qid] = ansSrc[qid];
           });
+          // Debug 提示：考完會看到這個 toast 確認有沒有存到快照
+          try {
+            const n = qids.length;
+            const m = Object.keys(userAnswers).length;
+            if (typeof showToast === 'function') {
+              showToast(`✓ 已存試卷快照（${n} 題、${m} 答）`);
+            }
+            console.log('[saveExamHistory]', { qids_len: n, answers_len: m, version: 'v84' });
+          } catch (e) {}
           hist.unshift({
             ts: now.getTime(),
             date: dateStr,

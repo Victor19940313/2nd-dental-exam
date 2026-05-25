@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v84-debug-toast';
+const CACHE_NAME = 'dental-all-v85-review-actions';
 const PRECACHE = [
   './',
   './index.html',

@@ -3393,7 +3393,7 @@
     </div>
 
     <!-- PEEK NOTEBOOK MODAL -->
-    <div id="peek-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closePeekNotebook()">
+    <div id="peek-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10500;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closePeekNotebook()">
       <div style="background:white;border-radius:14px;max-width:780px;width:100%;margin:2rem auto;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-height:90vh;display:flex;flex-direction:column">
         <div style="padding:.85rem 1.2rem;border-bottom:1.5px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f0f9ff;border-radius:14px 14px 0 0">
           <strong style="font-size:1.05rem;color:#0369a1">📖 偷看筆記</strong>
@@ -5336,15 +5336,35 @@
         const explHtml = expl ? `<details style="margin-top:.8rem;background:#f9fafb;border-radius:8px;padding:.6rem .8rem"><summary style="cursor:pointer;color:#7c3aed;font-weight:700">📖 詳解</summary><div style="margin-top:.5rem;font-size:.88rem;line-height:1.75;color:#374151;white-space:pre-wrap">${escapeHtml(expl)}</div></details>` : '';
 
         el.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem">
             <div style="font-size:.85rem;color:#6b7280">第 ${idx+1} 題　·　${escapeHtml(q.meta||q.id)}</div>
             <div style="font-weight:800;color:${statusColor}">${status}　·　你答 ${userL}　·　正解 ${corrL}</div>
+          </div>
+          <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap">
+            <button onclick="reviewAddToNotebook()" style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;cursor:pointer">📒 加入筆記</button>
+            <button onclick="reviewPeekNotebook()" style="background:#ecfeff;color:#0369a1;border:1.5px solid #7dd3fc;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;cursor:pointer">📖 偷看筆記</button>
           </div>
           <div style="font-size:.95rem;line-height:1.7;color:#1f2937;margin-bottom:.8rem">${escapeHtml(q.question||'')}</div>
           ${imgHtml}
           ${optionsHtml}
           ${explHtml}
         `;
+      }
+      // 重看試卷內按「加入筆記」「偷看筆記」— 拿當前 review 題傳給原本函數
+      function _currentReviewQ(){
+        if (!_reviewEntry) return null;
+        const qid = _reviewEntry.qids[_reviewIdx];
+        return (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+      }
+      function reviewAddToNotebook(){
+        const q = _currentReviewQ();
+        if (!q) { showToast('找不到題目'); return; }
+        if (typeof addQToNotebook === 'function') addQToNotebook(q);
+      }
+      function reviewPeekNotebook(){
+        const q = _currentReviewQ();
+        if (!q) { showToast('找不到題目'); return; }
+        if (typeof peekNotebook === 'function') peekNotebook(q);
       }
 
       function showExamResults() {
@@ -9417,8 +9437,8 @@ ${instruction.trim()}
         return { directHit, topicHit };
       }
 
-      function peekNotebook(){
-        const q = practiceList[practiceIdx];
+      function peekNotebook(qParam){
+        const q = qParam || practiceList[practiceIdx];
         if (!q) { showToast('找不到當前題目'); return; }
         loadNotebook();
         const body = document.getElementById('peek-body');

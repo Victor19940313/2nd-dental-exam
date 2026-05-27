@@ -18,7 +18,8 @@
 
   var SYNC_KEYS = [
     "wrongbook_state", "daily_log", "wrongbook_lastpos",
-    "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo", "gemini_model"
+    "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo", "gemini_model",
+    "examHistory"
   ];
 
   var _db = null;

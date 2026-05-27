@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v88-review-fallback';
+const CACHE_NAME = 'dental-all-v89-history-sync';
 const PRECACHE = [
   './',
   './index.html',

@@ -3505,6 +3505,18 @@
       // ════════════════════════════════════════════
       const _curUserId = localStorage.getItem('dental_cur_user') || 'default';
       function uKey(key){ return _curUserId + '_' + key; }
+      // 把舊版 global 'examHistory' 搬到 per-user key（只跑一次）
+      let _examHistMigrated = false;
+      function _maybeMigrateExamHistory(){
+        if (_examHistMigrated || !_curUserId) return;
+        _examHistMigrated = true;
+        try {
+          const ukey = _curUserId + '_examHistory';
+          if (localStorage.getItem(ukey) !== null) return;
+          const old = localStorage.getItem('examHistory');
+          if (old && old !== '[]') localStorage.setItem(ukey, old);
+        } catch(e){}
+      }
 
       // ════════════════════════════════════════════
       //  Supabase config
@@ -5164,7 +5176,7 @@
 
       function saveExamHistory(correct, total, mode, wrongQs) {
         try {
-          const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
+          const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
           const now = new Date();
           const pad = (n) => String(n).padStart(2, '0');
           const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -5207,14 +5219,14 @@
             })),
           });
           // 只保留最近 100 筆
-          localStorage.setItem('examHistory', JSON.stringify(hist.slice(0, 100)));
+          localStorage.setItem(uKey('examHistory'), JSON.stringify(hist.slice(0, 100)));
         } catch (e) { console.error('saveExamHistory:', e); }
       }
 
       function renderExamHistory(containerId) {
         const el = document.getElementById(containerId);
         if (!el) return;
-        const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
+        const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
         if (!hist.length) { el.innerHTML = ''; return; }
         const LETTERS = ['A','B','C','D','E'];
 
@@ -5280,7 +5292,7 @@
 
       function clearExamHistory() {
         if (!confirm('確定要清空所有歷次成績紀錄嗎？此動作無法復原。')) return;
-        localStorage.removeItem('examHistory');
+        localStorage.removeItem(uKey('examHistory'));
         renderExamHistory('exam-res-history');
         const m = document.getElementById('exam-hist-modal-list');
         if (m) renderExamHistory('exam-hist-modal-list');
@@ -5302,7 +5314,7 @@
       let _reviewEntry = null;
       let _reviewIdx = 0;
       function openExamReview(histIdx){
-        const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
+        const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
         const entry = hist[histIdx];
         if (!entry) { showToast('找不到紀錄'); return; }
         // 沒 qids 但有 wrongs → 降級：用 wrongs 重建一個「只有錯題」的快照

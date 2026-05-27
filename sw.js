@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v89-history-sync';
+const CACHE_NAME = 'dental-all-v90-table-squash';
 const PRECACHE = [
   './',
   './index.html',

@@ -8801,6 +8801,55 @@ ${instruction.trim()}
           for (const l of ls) { const n = l.split('|').length; if (n > bn) { best = l; bn = n; } }
           return best + '\n';
         });
+        // 7e. AI 容錯：表格 separator 跟所有資料 row 全部擠在同一行
+        //     例：「|---|---| A1 | A2 | A3 | B1 | B2 | B3 |」(資料行接在 separator 後沒換行)
+        //     用上方 header 的 cell 數來把擠在一起的 cells 切成多 row
+        md = (function _fixSquashedTableData(text){
+          const lines = text.split('\n');
+          const out = [];
+          function countCells(line) {
+            const t = line.trim().replace(/^\||\|$/g, '');
+            if (!t) return 0;
+            return t.split('|').length;
+          }
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            // 偵測：以 separator pattern (|---|...|) 開頭，後面緊接 |xxx|...
+            const m = line.match(/^(\|(?:[\s\-—–－:]+\|)+)\s*(\|[^\n]+)$/);
+            if (!m) { out.push(line); continue; }
+            const sep = m[1];
+            const rest = m[2];
+            // 找上方最近的「真正 header 行」（以 | 開頭、不是 separator、不是空行）
+            let headerN = 0;
+            for (let j = out.length - 1; j >= 0; j--) {
+              const prev = out[j];
+              if (!prev.trim()) continue;
+              if (/^\|[\s\-—–－:|]+\|\s*$/.test(prev)) continue;
+              if (/^\|/.test(prev)) { headerN = countCells(prev); break; }
+              break;
+            }
+            if (headerN < 2) {
+              // 找不到 header 用 separator 的 cell 數
+              headerN = (sep.match(/\|/g) || []).length - 1;
+            }
+            if (headerN < 2) { out.push(line); continue; }
+            // 用 header cell 數重建 separator
+            out.push('|' + '---|'.repeat(headerN));
+            // 拆 rest cells，每 headerN 個一組
+            const cells = rest.split('|').map(c => c.trim()).filter(c => c.length > 0);
+            let k = 0;
+            while (k + headerN <= cells.length) {
+              out.push('| ' + cells.slice(k, k + headerN).join(' | ') + ' |');
+              k += headerN;
+            }
+            if (k < cells.length) {
+              const rowCells = cells.slice(k);
+              while (rowCells.length < headerN) rowCells.push('');
+              out.push('| ' + rowCells.join(' | ') + ' |');
+            }
+          }
+          return out.join('\n');
+        })(md);
         // 5. AI 容錯：粗體 ** 內側帶空白 → 收緊（這樣 ctag/標籤旁的 **才不會被遺漏）
         //    例：「** [[敏感性]] **」、「**  [[X]]  **」 → 「**[[敏感性]]**」
         md = md.replace(/\*\*[ \t]+([^*\n]+?)[ \t]+\*\*/g, '**$1**');

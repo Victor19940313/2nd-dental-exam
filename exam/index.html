@@ -8432,6 +8432,9 @@ ${JSON.stringify(candidates, null, 2)}
         const tipBg = hasGH ? '#f0f9ff' : '#fffbeb';
         return `<div class="nb-editor-wrap">
           <div class="nb-editor-toolbar">
+            <button onclick="editorUndo()" title="復原 (Ctrl+Z)">↶ 復原</button>
+            <button onclick="editorRedo()" title="取消復原 (Ctrl+Y)">↷ 取消復原</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
             <button onclick="document.getElementById('ch-file-input').click()" ${hasGH?'':'disabled'} title="選圖檔/拍照">📎 選圖</button>
             <button onclick="insertImageURL()" title="貼網路圖片網址">🔗 從 URL</button>
             <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
@@ -8453,43 +8456,58 @@ ${JSON.stringify(candidates, null, 2)}
           </div>
         </div>`;
       }
-      // 在游標處包前後字串（有選取就包選取、沒選取就插入後游標放中間）
+      // 用瀏覽器內建 insertText 插入，這樣 Ctrl+Z 可以正常復原（不要直接設 .value）
+      function _editorInsert(text, caretOffset){
+        const ta = document.getElementById('ch-editor');
+        if (!ta) return;
+        ta.focus();
+        const s0 = ta.selectionStart;
+        if (!document.execCommand || !document.execCommand('insertText', false, text)) {
+          // fallback：execCommand 不支援 → 直接設 value（會清掉 undo stack 但至少有效）
+          const v = ta.value;
+          ta.value = v.slice(0, ta.selectionStart) + text + v.slice(ta.selectionEnd);
+        }
+        if (typeof caretOffset === 'number') {
+          ta.selectionStart = ta.selectionEnd = s0 + caretOffset;
+        }
+        ta.dispatchEvent(new Event('input'));
+      }
       function editorInsertWrap(before, after){
         const ta = document.getElementById('ch-editor');
         if (!ta) return;
+        ta.focus();
         const s = ta.selectionStart, e = ta.selectionEnd;
-        const v = ta.value;
-        const sel = v.slice(s, e);
+        const sel = ta.value.slice(s, e);
+        _editorInsert(before + sel + after);
         if (sel) {
-          ta.value = v.slice(0, s) + before + sel + after + v.slice(e);
           ta.selectionStart = s + before.length;
-          ta.selectionEnd = e + before.length;
+          ta.selectionEnd = s + before.length + sel.length;
         } else {
-          ta.value = v.slice(0, s) + before + after + v.slice(e);
           ta.selectionStart = ta.selectionEnd = s + before.length;
         }
-        ta.focus();
-        ta.dispatchEvent(new Event('input'));
       }
       function editorInsertList(){
         const ta = document.getElementById('ch-editor');
         if (!ta) return;
         const s = ta.selectionStart, v = ta.value;
         const lineStart = v.lastIndexOf('\n', s - 1) + 1;
-        const prefix = (s === lineStart) ? '- ' : '\n- ';
-        ta.value = v.slice(0, s) + prefix + v.slice(s);
-        ta.selectionStart = ta.selectionEnd = s + prefix.length;
-        ta.focus();
-        ta.dispatchEvent(new Event('input'));
+        _editorInsert((s === lineStart) ? '- ' : '\n- ');
       }
       function editorInsertTable(){
+        _editorInsert('\n\n| 欄1 | 欄2 | 欄3 |\n|---|---|---|\n| 內容 | 內容 | 內容 |\n| 內容 | 內容 | 內容 |\n\n');
+      }
+      function editorUndo(){
         const ta = document.getElementById('ch-editor');
         if (!ta) return;
-        const tmpl = '\n\n| 欄1 | 欄2 | 欄3 |\n|---|---|---|\n| 內容 | 內容 | 內容 |\n| 內容 | 內容 | 內容 |\n\n';
-        const s = ta.selectionStart, v = ta.value;
-        ta.value = v.slice(0, s) + tmpl + v.slice(s);
-        ta.selectionStart = ta.selectionEnd = s + tmpl.length;
         ta.focus();
+        document.execCommand('undo');
+        ta.dispatchEvent(new Event('input'));
+      }
+      function editorRedo(){
+        const ta = document.getElementById('ch-editor');
+        if (!ta) return;
+        ta.focus();
+        document.execCommand('redo');
         ta.dispatchEvent(new Event('input'));
       }
       let splitPreviewOff = false;
@@ -8898,11 +8916,14 @@ ${instruction.trim()}
           }
           for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-            // 偵測：以 separator pattern (|---|...|) 開頭，後面緊接 |xxx|...
-            const m = line.match(/^(\|(?:[\s\-—–－:]+\|)+)\s*(\|[^\n]+)$/);
+            // 偵測：以 separator pattern (|---|...|) 開頭，後面接資料
+            // 兩種寫法都要抓：「|---|---||...|」(有 |) 跟「|---|---| 牙髓腔...|」(沒 |)
+            const m = line.match(/^(\|(?:[\s\-—–－:]+\|)+)\s*([^\s\-—–－:][^\n]*\|)\s*$/);
             if (!m) { out.push(line); continue; }
             const sep = m[1];
-            const rest = m[2];
+            // rest 可能不以 | 開頭，補上
+            let rest = m[2];
+            if (!rest.startsWith('|')) rest = '| ' + rest;
             // 找上方最近的「真正 header 行」（以 | 開頭、不是 separator、不是空行）
             let headerN = 0;
             for (let j = out.length - 1; j >= 0; j--) {

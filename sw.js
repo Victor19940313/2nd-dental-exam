@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v91-editor-split';
+const CACHE_NAME = 'dental-all-v92-undo-table';
 const PRECACHE = [
   './',
   './index.html',

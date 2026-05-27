@@ -2324,6 +2324,21 @@
       }
       .nb-editor-textarea:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
       .nb-editor-preview{min-height:55vh;background:white;padding:1rem 1.2rem;border:1.5px solid #e9d5ff;border-radius:10px}
+      /* 分屏編輯：左 textarea 右即時預覽 */
+      .nb-editor-split{display:flex;gap:.8rem;align-items:stretch}
+      .nb-editor-split > .nb-editor-textarea{flex:1;min-width:0}
+      .nb-editor-split > .nb-editor-preview-live{
+        flex:1;min-width:0;
+        background:#fafafa;border:1.5px solid #e5e7eb;border-radius:10px;
+        padding:1rem 1.2rem;overflow-y:auto;max-height:75vh;min-height:55vh;
+      }
+      .nb-editor-split.no-preview > .nb-editor-preview-live{display:none}
+      .nb-editor-split.no-preview > .nb-editor-textarea{flex:1 1 100%}
+      @media (max-width:900px){
+        .nb-editor-split{flex-direction:column}
+        .nb-editor-split > .nb-editor-textarea{min-height:30vh}
+        .nb-editor-split > .nb-editor-preview-live{max-height:45vh;min-height:25vh}
+      }
       .nb-img-wrap{
         position:relative;display:inline-block;max-width:100%;margin:.6rem 0;
       }
@@ -8411,30 +8426,99 @@ ${JSON.stringify(candidates, null, 2)}
       function renderEditorView(ch){
         const hasGH = !!getGithubToken() && !!getGithubRepo();
         const tip = hasGH
-          ? '✅ GitHub 圖床已設定 — 可 Ctrl+V 貼圖、拖檔、或按下方 📎 選檔'
-          : '⚠️ 沒設定 GitHub 圖床 — 貼圖會 disable，請到 ⚙️ 設定貼 token+repo';
+          ? '✅ 可以 Ctrl+V 貼圖、拖檔、或按 📎 選圖'
+          : '⚠️ 沒設定 GitHub 圖床 — 貼圖會無法用';
         const tipColor = hasGH ? '#0369a1' : '#92400e';
         const tipBg = hasGH ? '#f0f9ff' : '#fffbeb';
         return `<div class="nb-editor-wrap">
           <div class="nb-editor-toolbar">
             <button onclick="document.getElementById('ch-file-input').click()" ${hasGH?'':'disabled'} title="選圖檔/拍照">📎 選圖</button>
             <button onclick="insertImageURL()" title="貼網路圖片網址">🔗 從 URL</button>
-            <button onclick="toggleEditorPreview()">${editPreviewMode ? '✏️ 編輯' : '👁 預覽'}</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="editorInsertWrap('**','**')" title="粗體（選文字後再按）"><strong>B</strong> 粗體</button>
+            <button onclick="editorInsertWrap('[[',']]')" title="概念標籤（彩色框）">🏷 標籤</button>
+            <button onclick="editorInsertList()" title="條列項目">• 項目</button>
+            <button onclick="editorInsertTable()" title="插入表格">⊞ 表格</button>
+            <button onclick="editorInsertWrap('&lt;mark class=&quot;hl-y&quot;&gt;','&lt;/mark&gt;')" title="黃色螢光" style="background:#fef08a;color:#7c5b00;border-color:#fde68a">黃</button>
+            <button onclick="editorInsertWrap('&lt;mark class=&quot;hl-g&quot;&gt;','&lt;/mark&gt;')" title="綠色螢光" style="background:#bbf7d0;color:#065f46;border-color:#86efac">綠</button>
+            <button onclick="editorInsertWrap('&lt;mark class=&quot;hl-p&quot;&gt;','&lt;/mark&gt;')" title="紫色螢光" style="background:#e9d5ff;color:#6b21a8;border-color:#c4b5fd">紫</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="toggleSplitPreview()" title="${splitPreviewOff ? '顯示即時預覽' : '收起即時預覽'}">${splitPreviewOff ? '👁 顯示預覽' : '🚫 收起預覽'}</button>
             <input type="file" id="ch-file-input" accept="image/*" style="display:none" onchange="handleFileInputChange(event)" />
           </div>
           <div style="background:${tipBg};color:${tipColor};font-size:.78rem;padding:.4rem .7rem;border-radius:6px;margin-bottom:.5rem;line-height:1.5">${tip}</div>
-          ${editPreviewMode
-            ? `<div class="nb-chapter-content nb-editor-preview">${renderMarkdown(document.getElementById('ch-editor') ? document.getElementById('ch-editor').value : ch.content)}</div>`
-            : `<textarea id="ch-editor" class="nb-editor-textarea" spellcheck="false">${escapeHtml(ch.content || '')}</textarea>`}
-          <div style="font-size:.75rem;color:#9ca3af;margin-top:.4rem;line-height:1.6">
-            支援 Markdown：## 標題、**粗體**、- 條列、| 表格 |、&gt; 💡 callout、[[概念]] 標籤<br>
-            <strong>圖片大小</strong>：上傳的圖預設中等。要改 → 把 <code>![|medium](url)</code> 的 <code>medium</code> 改成 <code>small</code> / <code>large</code> / <code>full</code> / 或數字（例 <code>300px</code>、<code>50%</code>）
+          <div class="nb-editor-split ${splitPreviewOff ? 'no-preview' : ''}">
+            <textarea id="ch-editor" class="nb-editor-textarea" spellcheck="false">${escapeHtml(ch.content || '')}</textarea>
+            <div id="ch-editor-preview" class="nb-chapter-content nb-editor-preview-live">${renderMarkdown(ch.content || '')}</div>
           </div>
         </div>`;
+      }
+      // 在游標處包前後字串（有選取就包選取、沒選取就插入後游標放中間）
+      function editorInsertWrap(before, after){
+        const ta = document.getElementById('ch-editor');
+        if (!ta) return;
+        const s = ta.selectionStart, e = ta.selectionEnd;
+        const v = ta.value;
+        const sel = v.slice(s, e);
+        if (sel) {
+          ta.value = v.slice(0, s) + before + sel + after + v.slice(e);
+          ta.selectionStart = s + before.length;
+          ta.selectionEnd = e + before.length;
+        } else {
+          ta.value = v.slice(0, s) + before + after + v.slice(e);
+          ta.selectionStart = ta.selectionEnd = s + before.length;
+        }
+        ta.focus();
+        ta.dispatchEvent(new Event('input'));
+      }
+      function editorInsertList(){
+        const ta = document.getElementById('ch-editor');
+        if (!ta) return;
+        const s = ta.selectionStart, v = ta.value;
+        const lineStart = v.lastIndexOf('\n', s - 1) + 1;
+        const prefix = (s === lineStart) ? '- ' : '\n- ';
+        ta.value = v.slice(0, s) + prefix + v.slice(s);
+        ta.selectionStart = ta.selectionEnd = s + prefix.length;
+        ta.focus();
+        ta.dispatchEvent(new Event('input'));
+      }
+      function editorInsertTable(){
+        const ta = document.getElementById('ch-editor');
+        if (!ta) return;
+        const tmpl = '\n\n| 欄1 | 欄2 | 欄3 |\n|---|---|---|\n| 內容 | 內容 | 內容 |\n| 內容 | 內容 | 內容 |\n\n';
+        const s = ta.selectionStart, v = ta.value;
+        ta.value = v.slice(0, s) + tmpl + v.slice(s);
+        ta.selectionStart = ta.selectionEnd = s + tmpl.length;
+        ta.focus();
+        ta.dispatchEvent(new Event('input'));
+      }
+      let splitPreviewOff = false;
+      function toggleSplitPreview(){
+        // 切之前先保留 textarea 內容到 ch._tempContent，避免 renderNotebook 重渲染時丟失
+        const ta = document.getElementById('ch-editor');
+        if (ta) {
+          const ch = notebook.chapters.find(c => c.id === editingChapterId);
+          if (ch) ch._tempContent = ta.value;
+        }
+        splitPreviewOff = !splitPreviewOff;
+        renderNotebook();
+        // 還原 textarea 內容
+        const ch2 = notebook.chapters.find(c => c.id === editingChapterId);
+        const ta2 = document.getElementById('ch-editor');
+        if (ta2 && ch2 && ch2._tempContent != null) ta2.value = ch2._tempContent;
       }
       function setupEditorListeners(){
         const ta = document.getElementById('ch-editor');
         if (!ta) return;
+        // 打字時即時更新右側預覽
+        let _previewTimer = null;
+        ta.addEventListener('input', () => {
+          if (_previewTimer) clearTimeout(_previewTimer);
+          _previewTimer = setTimeout(() => {
+            const preview = document.getElementById('ch-editor-preview');
+            if (preview) preview.innerHTML = renderMarkdown(ta.value);
+          }, 150);
+        });
         // paste 圖片
         ta.addEventListener('paste', (e) => {
           if (!e.clipboardData || !e.clipboardData.items) return;

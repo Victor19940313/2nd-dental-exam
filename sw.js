@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v90-table-squash';
+const CACHE_NAME = 'dental-all-v91-editor-split';
 const PRECACHE = [
   './',
   './index.html',

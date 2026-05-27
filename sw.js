@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v86-label-fix';
+const CACHE_NAME = 'dental-all-v87-qgrid-status';
 const PRECACHE = [
   './',
   './index.html',

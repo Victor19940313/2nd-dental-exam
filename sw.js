@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v87-qgrid-status';
+const CACHE_NAME = 'dental-all-v88-review-fallback';
 const PRECACHE = [
   './',
   './index.html',

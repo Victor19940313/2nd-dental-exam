@@ -5242,9 +5242,15 @@
           }
 
           const hasSnapshot = Array.isArray(h.qids) && h.qids.length > 0;
-          const reviewBtn = hasSnapshot
-            ? `<button class="start-btn secondary" style="padding:.25rem .6rem;font-size:.74rem;margin:0 0 0 .4rem;color:#7c3aed;border-color:#c4b5fd" onclick="event.stopPropagation();openExamReview(${i})">📋 重看試卷</button>`
-            : `<button class="start-btn secondary" style="padding:.25rem .6rem;font-size:.74rem;margin:0 0 0 .4rem;color:#9ca3af;border-color:#e5e7eb;cursor:not-allowed" onclick="event.stopPropagation();alert('這筆是 v82（2026/05/24）之前的紀錄，當時沒存完整作答快照所以無法重看。\\n\\n之後新做的試卷會有完整重看功能。')">📋 重看（舊紀錄無資料）</button>`;
+          const hasWrongList = hasWrongs;  // 至少有錯題資料 → 降級重看
+          let reviewBtn;
+          if (hasSnapshot) {
+            reviewBtn = `<button class="start-btn secondary" style="padding:.25rem .6rem;font-size:.74rem;margin:0 0 0 .4rem;color:#7c3aed;border-color:#c4b5fd" onclick="event.stopPropagation();openExamReview(${i})">📋 重看試卷</button>`;
+          } else if (hasWrongList) {
+            reviewBtn = `<button class="start-btn secondary" style="padding:.25rem .6rem;font-size:.74rem;margin:0 0 0 .4rem;color:#7c3aed;border-color:#c4b5fd;background:#faf5ff" onclick="event.stopPropagation();openExamReview(${i})" title="只能重看錯題（完整作答順序資料缺失）">📋 重看錯題</button>`;
+          } else {
+            reviewBtn = `<button class="start-btn secondary" style="padding:.25rem .6rem;font-size:.74rem;margin:0 0 0 .4rem;color:#9ca3af;border-color:#e5e7eb;cursor:not-allowed" onclick="event.stopPropagation();alert('這筆紀錄沒有作答資料，無法重看。')">📋 重看（無資料）</button>`;
+          }
           const clickAttr = hasWrongs
             ? `style="cursor:pointer" onclick="(function(el){el.style.display=(el.style.display==='none'?'block':'none')})(document.getElementById('${detailId}'))"`
             : '';
@@ -5298,11 +5304,26 @@
       function openExamReview(histIdx){
         const hist = JSON.parse(localStorage.getItem('examHistory') || '[]');
         const entry = hist[histIdx];
-        if (!entry || !Array.isArray(entry.qids)) { showToast('這筆紀錄沒有完整快照'); return; }
-        _reviewEntry = entry;
+        if (!entry) { showToast('找不到紀錄'); return; }
+        // 沒 qids 但有 wrongs → 降級：用 wrongs 重建一個「只有錯題」的快照
+        let working = entry;
+        let isFallback = false;
+        if (!Array.isArray(entry.qids) || entry.qids.length === 0) {
+          if (Array.isArray(entry.wrongs) && entry.wrongs.length > 0) {
+            const fakeQids = entry.wrongs.map(w => w.qid);
+            const fakeAns = {};
+            entry.wrongs.forEach(w => { if (w.userAns != null) fakeAns[w.qid] = w.userAns; });
+            working = Object.assign({}, entry, { qids: fakeQids, userAnswers: fakeAns });
+            isFallback = true;
+          } else {
+            showToast('這筆紀錄沒有作答資料'); return;
+          }
+        }
+        _reviewEntry = working;
         _reviewIdx = 0;
         document.getElementById('exam-review-modal').style.display = 'flex';
-        const meta = `${entry.date}　·　${entry.label}　·　${entry.score} / ${entry.fullScore} 分　·　${entry.correct}/${entry.total} 題`;
+        const fallbackTag = isFallback ? '　·　⚠️ 僅錯題（完整資料缺失）' : '';
+        const meta = `${entry.date}　·　${entry.label}　·　${entry.score} / ${entry.fullScore} 分　·　${entry.correct}/${entry.total} 題${fallbackTag}`;
         document.getElementById('exam-review-meta').textContent = meta;
         renderReviewGrid();
         renderReviewQ(0);

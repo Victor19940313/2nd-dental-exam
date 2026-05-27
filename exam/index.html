@@ -5123,14 +5123,25 @@
       // ════════════════════════════════════════════
       function buildExamLabel() {
         const SUBJ_NAMES = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
-        const subjs = [...(homeSubjs || [])];
-        const years = [...(homeYears || [])];
+        // 優先從 practiceList 動態算 — homeSubjs/homeYears 只是首頁挑的，
+        // 從錯題本/隨機等模式進入時可能跟實際題目不符
+        const list = (typeof practiceList !== 'undefined' && practiceList) ? practiceList : [];
+        let subjs, yearSesses;
+        if (list.length > 0) {
+          subjs = Array.from(new Set(list.map(q => q.subject).filter(Boolean)));
+          yearSesses = Array.from(new Set(list.map(q =>
+            (q && q.year != null && q.session != null) ? `${q.year}-${q.session}` : null
+          ).filter(Boolean)));
+        } else {
+          subjs = [...(homeSubjs || [])];
+          yearSesses = [...(homeYears || [])];
+        }
         let subjLbl = subjs.length === 1 ? SUBJ_NAMES[subjs[0]] || subjs[0]
                     : subjs.length === 4 || subjs.length === 0 ? "全部科目"
                     : `${subjs.length} 科`;
-        let yearLbl = years.length === 1 ? `${years[0].split('-')[0]} 年第 ${years[0].split('-')[1]} 次`
-                    : years.length === 0 ? "—"
-                    : `${years.length} 個年次`;
+        let yearLbl = yearSesses.length === 1 ? `${yearSesses[0].split('-')[0]} 年第 ${yearSesses[0].split('-')[1]} 次`
+                    : yearSesses.length === 0 ? "—"
+                    : `${yearSesses.length} 個年次`;
         return `${subjLbl} / ${yearLbl}`;
       }
 

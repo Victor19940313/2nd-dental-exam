@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v100-squashed-guard';
+const CACHE_NAME = 'dental-all-v101-dashdash-strict';
 const PRECACHE = [
   './',
   './index.html',

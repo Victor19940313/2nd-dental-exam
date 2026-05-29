@@ -8974,10 +8974,12 @@ ${instruction.trim()}
         //    模式：「| A | B | C |---|---|---|---|| row1 | ... || row2 | ... |」
         //    處理：限定在「含 |---| 的行」內部，補上 separator 前的換行 + 拆掉 ||
         md = md.split('\n').map(line => {
-          if (!/\|[\-:\s]*-[\-:\s]*\|/.test(line)) return line; // 沒 separator 跳過
+          // 必須要有「--」(兩個連續 dash)才算真的 separator
+          // 真分隔線是「|---|---|」,不會是「| - | - |」(資料 cell 的單 dash)
+          if (!/\|[\-:\s]*--[\-:\s]*\|/.test(line)) return line;
           // a. 在 |---|（separator）前面補「|\n」（讓 header 收尾的 | 補回來）
           line = line.replace(/([^|\n])(\|(?:[\-:\s]+\|)+)/g, (m, prev, sep) => {
-            if (!/-/.test(sep)) return m;
+            if (!/--/.test(sep)) return m;
             return prev + '|\n' + sep;
           });
           // b. 把所有 || 拆成 |\n|（這是被擠在一起的行邊界）
@@ -9108,9 +9110,11 @@ ${instruction.trim()}
             // 兩種寫法都要抓：「|---|---||...|」(有 |) 跟「|---|---| 牙髓腔...|」(沒 |)
             const m = line.match(/^(\|(?:[\s\-—–－:]+\|)+)\s*([^\s\-—–－:][^\n]*\|)\s*$/);
             if (!m) { out.push(line); continue; }
-            // 防呆:group 1(被當 separator 的部分)必須真的有 dash/colon
-            // 否則「| | 內容 | | | |」這種「開頭空白格的續行列」會被誤判成 squashed table
-            if (!/[-—–－:]/.test(m[1])) { out.push(line); continue; }
+            // 防呆:group 1(被當 separator 的部分)必須有「--」(連續 dash) 才算真的 separator
+            // 排除兩種誤判:
+            //   1.「| | 內容 | | | |」(開頭空白格的續行列) ← 完全沒 dash
+            //   2.「| - | - | 內容 |」(資料列有單 dash 占位符) ← 只有單 dash 不是分隔線
+            if (!/--/.test(m[1])) { out.push(line); continue; }
             const sep = m[1];
             // rest 可能不以 | 開頭，補上
             let rest = m[2];

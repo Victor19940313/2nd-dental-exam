@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 2A — 章節相容性測試</title>
+<style>
+  :root {
+    --primary: #7d61b8;
+    --primary-light: #a489d6;
+    --primary-dark: #5d4694;
+    --bg-page: #faf6fd;
+    --bg-content: #ffffff;
+    --bg-soft: #ebe0f7;
+    --bg-zebra: #f3eafa;
+    --border: #cdb8e8;
+    --border-soft: #ddc9ef;
+    --text: #2e2a3a;
+    --text-muted: #7a7290;
+    --strong-color: #5d4694;
+    --strong-bg: #fcd97b;
+    --em-color: #4a7a99;
+    --tag-bg: #d8c4ef;
+    --tag-color: #5d4694;
+    --tip-bg: #faecc0;
+    --tip-border: #d4a83f;
+    --tip-color: #6b522a;
+    --warn-bg: #f5cdc8;
+    --warn-border: #b56258;
+    --warn-color: #6b3a35;
+    --clinical-bg: #d8e5cb;
+    --clinical-border: #7da064;
+    --clinical-color: #3d5530;
+    --exam-bg: #e0d2f0;
+    --exam-border: #7d61b8;
+    --exam-color: #5d4694;
+  }
+
+  /* === 暖色：peach skin（拉開對比、避免全部桃色黏在一起）=== */
+  body.theme-warm {
+    --primary: #c97a52; --primary-light: #e09a78; --primary-dark: #9d5a35;
+    --bg-page: #fceadb;       /* 頁面底,淡奶油桃 */
+    --bg-content: #fffaf5;    /* 內容卡片底,接近白色 */
+    --bg-soft: #fae0c8;       /* 工具列/sidebar 底 */
+    --bg-zebra: #fbe7d2;      /* 表格隔列底 */
+    --border: #e6a98a; --border-soft: #f0c8b0;
+    --text: #4a2e1a; --text-muted: #8a6850;
+    --strong-color: #9d5a35; --strong-bg: #fcd97b; --em-color: #6e8a3a;  /* em 改成橄欖綠對比 */
+    --tag-bg: #f5e3b0; --tag-color: #7d5026;                              /* 概念標籤改成奶油黃 */
+    --tip-bg: #fdf2c4; --tip-border: #d4a83f; --tip-color: #6b522a;
+    --warn-bg: #f5b39e; --warn-border: #a8483a; --warn-color: #5d2a1f;
+    --clinical-bg: #d8e0c0; --clinical-border: #7d9858; --clinical-color: #3d4f25;
+    --exam-bg: #e8d4f0; --exam-border: #a78bc5; --exam-color: #5d3a73;    /* 易考 callout 改淡薰衣草紫 */
+  }
+  /* === 大地：caramel === */
+  body.theme-earth {
+    --primary: #a3814f; --primary-light: #c4a070; --primary-dark: #7d5e35;
+    --bg-page: #fbf6ec; --bg-content: #ffffff; --bg-soft: #ecd7b3; --bg-zebra: #f5e9c9;
+    --border: #d4b683; --border-soft: #e0c89a;
+    --text: #3a2e1e; --text-muted: #8a7558;
+    --strong-color: #7d5e35; --strong-bg: #f4cb70; --em-color: #5d7a4a;
+    --tag-bg: #dec39a; --tag-color: #7d5e35;
+    --tip-bg: #fbe5a3; --tip-border: #c9a043; --tip-color: #5d4720;
+    --warn-bg: #efc6b3; --warn-border: #a8654a; --warn-color: #5d3520;
+    --clinical-bg: #d2e0b8; --clinical-border: #7a9658; --clinical-color: #3d4f25;
+    --exam-bg: #e6cc99; --exam-border: #a3814f; --exam-color: #7d5e35;
+  }
+  /* === 海洋：slate sky === */
+  body.theme-ocean {
+    --primary: #5a85a8; --primary-light: #86abc5; --primary-dark: #3f6584;
+    --bg-page: #f5fafd; --bg-content: #ffffff; --bg-soft: #d9e7f0; --bg-zebra: #e7f0f5;
+    --border: #b0c8da; --border-soft: #c8d9e5;
+    --text: #2a3540; --text-muted: #6e8090;
+    --strong-color: #3f6584; --strong-bg: #fcd97b; --em-color: #5d8275;
+    --tag-bg: #c0d5e2; --tag-color: #3f6584;
+    --tip-bg: #faecc0; --tip-border: #d4a83f; --tip-color: #6b522a;
+    --warn-bg: #f0c5be; --warn-border: #a8625a; --warn-color: #5d2e28;
+    --clinical-bg: #cee0c0; --clinical-border: #7a9858; --clinical-color: #3d5230;
+    --exam-bg: #c8dce8; --exam-border: #5a85a8; --exam-color: #3f6584;
+  }
+  /* === 森林：moss === */
+  body.theme-forest {
+    --primary: #6b9560; --primary-light: #92b387; --primary-dark: #4f7547;
+    --bg-page: #f6faf3; --bg-content: #ffffff; --bg-soft: #d8e6d0; --bg-zebra: #e7eedd;
+    --border: #b0c9a3; --border-soft: #c5d8b8;
+    --text: #2a3527; --text-muted: #6e826a;
+    --strong-color: #4f7547; --strong-bg: #fcd97b; --em-color: #7d5a8a;
+    --tag-bg: #c0d5b0; --tag-color: #4f7547;
+    --tip-bg: #fae5a3; --tip-border: #c9a043; --tip-color: #5d4720;
+    --warn-bg: #f0c5be; --warn-border: #a8625a; --warn-color: #5d2e28;
+    --clinical-bg: #cee0b8; --clinical-border: #7a9858; --clinical-color: #3d5230;
+    --exam-bg: #d0dec0; --exam-border: #6b9560; --exam-color: #4f7547;
+  }
+  /* === 深色：warm dark === */
+  body.theme-dark {
+    --primary: #b094e0; --primary-light: #c9b5ee; --primary-dark: #9576d0;
+    --bg-page: #1c1a23; --bg-content: #28252f; --bg-soft: #3a3445; --bg-zebra: #2f2c37;
+    --border: #524a60; --border-soft: #3f3850;
+    --text: #ebe5f0; --text-muted: #b0a8c0;
+    --strong-color: #e8c870; --strong-bg: rgba(232, 200, 112, .2); --em-color: #95b8d6;
+    --tag-bg: #534570; --tag-color: #d4c4f0;
+    --tip-bg: #423825; --tip-border: #c9a043; --tip-color: #f4d99a;
+    --warn-bg: #422a2a; --warn-border: #b56258; --warn-color: #f0a5a0;
+    --clinical-bg: #2a3825; --clinical-border: #7a9858; --clinical-color: #b8d6a3;
+    --exam-bg: #352a4a; --exam-border: #b094e0; --exam-color: #cebde6;
+  }
+
+  /* 主題選擇 pills */
+  .theme-pills { display: inline-flex; gap: .3rem; margin-left: 1rem; }
+  .theme-pills button {
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: .2rem .65rem;
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: white;
+  }
+  .theme-pills button.is-active {
+    border-color: white;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.2);
+  }
+  .theme-pills .t-default { background: linear-gradient(135deg, #7d61b8, #a489d6); }
+  .theme-pills .t-warm    { background: linear-gradient(135deg, #d99474, #f5cead); }
+  .theme-pills .t-earth   { background: linear-gradient(135deg, #a3814f, #c4a070); }
+  .theme-pills .t-ocean   { background: linear-gradient(135deg, #5a85a8, #86abc5); }
+  .theme-pills .t-forest  { background: linear-gradient(135deg, #6b9560, #92b387); }
+  .theme-pills .t-dark    { background: linear-gradient(135deg, #28252f, #524a60); }
+
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0; padding: 0;
+    background: var(--bg-page);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: .8rem 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .header h1 { margin: 0; font-size: 1.1rem; }
+  .header .desc { font-size: .8rem; opacity: .9; }
+  .header .stats { margin-left: auto; font-size: .82rem; }
+  .header .stats b { background: rgba(255,255,255,.2); padding: 2px 8px; border-radius: 10px; margin: 0 4px; }
+
+  .upload-wrap {
+    background: var(--bg-soft);
+    padding: 1rem 1.2rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .upload-wrap input[type=file] {
+    background: var(--bg-content);
+    border: 1.5px solid var(--border);
+    padding: .4rem .6rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .upload-wrap .tip { display: inline-block; margin-left: .8rem; color: var(--text-muted); font-size: .82rem; }
+
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  .sidebar {
+    width: 280px;
+    background: var(--bg-content);
+    border-right: 2px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar .section-title {
+    padding: .7rem .9rem .4rem;
+    font-size: .78rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .ch-list { padding: .3rem 0; }
+  .ch-item {
+    padding: .55rem .9rem;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    font-size: .88rem;
+    line-height: 1.4;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .ch-item:hover { background: var(--bg-zebra); }
+  .ch-item.active {
+    background: var(--bg-soft);
+    border-left-color: var(--primary);
+    color: var(--primary-dark);
+    font-weight: 700;
+  }
+  .ch-item .num {
+    display: inline-block;
+    background: var(--bg-zebra);
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: .75rem;
+    margin-right: 6px;
+  }
+  .ch-item.active .num { background: var(--primary); color: white; }
+  .ch-item .badges {
+    margin-top: 4px;
+    font-size: .7rem;
+    color: var(--text-muted);
+  }
+  .ch-item .badges .b {
+    display: inline-block;
+    margin-right: 8px;
+  }
+  .ch-item.has-warning { background: #fff8e1; }
+  .ch-item.has-warning .num { background: #f59e0b; color: white; }
+
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .tabs {
+    background: var(--bg-content);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    padding: 0 1rem;
+  }
+  .tab {
+    background: none;
+    border: none;
+    padding: .7rem 1.2rem;
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+  }
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .tab-count {
+    background: var(--bg-soft);
+    color: var(--primary-dark);
+    padding: 1px 7px;
+    border-radius: 8px;
+    font-size: .7rem;
+    margin-left: 6px;
+  }
+
+  .pane {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.2rem 1.5rem;
+    display: none;
+  }
+  .pane.active { display: block; }
+
+  .pane-header {
+    color: var(--text-muted);
+    font-size: .8rem;
+    padding: .3rem .6rem;
+    background: var(--bg-soft);
+    border-radius: 6px;
+    margin-bottom: 1rem;
+  }
+
+  /* === 原版渲染樣式（從主網站拷貝） === */
+  .render-pane h2 {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: .7rem 1rem;
+    border-radius: 10px;
+    font-size: 1.15rem;
+    margin: 1.2rem 0 .8rem;
+  }
+  .render-pane h3 {
+    background: var(--bg-soft);
+    color: var(--strong-color);
+    padding: .55rem .9rem;
+    border-radius: 8px;
+    font-size: 1.02rem;
+    margin: 1rem 0 .6rem;
+  }
+  .render-pane h4 { color: var(--primary); font-size: .98rem; margin: .8rem 0 .4rem; }
+  .render-pane p { margin: .6rem 0; line-height: 1.8; }
+  .render-pane strong {
+    color: var(--strong-color);
+    font-weight: 900;
+    background: linear-gradient(180deg, transparent 52%, var(--strong-bg) 52%);
+    padding: 0 4px;
+  }
+  .render-pane em { color: var(--em-color); font-style: normal; font-weight: 600; }
+  .render-pane code {
+    background: var(--bg-soft);
+    color: var(--strong-color);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: .9em;
+  }
+  .render-pane mark { padding: 1px 3px; border-radius: 3px; }
+  .render-pane mark.hl-y { background: #fde047; }
+  .render-pane mark.hl-g { background: #bbf7d0; }
+  .render-pane mark.hl-p { background: #e9d5ff; }
+  .render-pane .ctag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-color);
+    padding: 1px 9px;
+    border-radius: 10px;
+    font-size: .85em;
+    font-weight: 700;
+    margin: 0 2px;
+  }
+  .render-pane .md-label {
+    color: #4b5563;
+    font-weight: 700;
+    font-size: .92em;
+  }
+  .render-pane .md-colon { color: #6b7280; margin-right: 4px; }
+  .render-pane .li-sublabel { list-style: none; margin-left: -1.4rem; }
+  .render-pane .nb-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: .9rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .render-pane .nb-table th, .render-pane .nb-table td {
+    border: 1px solid var(--border);
+    padding: .55rem .7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .render-pane .nb-table th {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    font-weight: 700;
+  }
+  .render-pane .nb-table tr:nth-child(even) td { background: var(--bg-zebra); }
+  .render-pane blockquote {
+    margin: .9rem 0;
+    padding: .7rem .95rem;
+    border-radius: 10px;
+    background: var(--bg-soft);
+    border-left: 4px solid var(--text-muted);
+    color: var(--text);
+  }
+  .render-pane blockquote.callout-tip { background: var(--tip-bg); border-color: var(--tip-border); color: var(--tip-color); }
+  .render-pane blockquote.callout-warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-color); }
+  .render-pane blockquote.callout-clinical { background: var(--clinical-bg); border-color: var(--clinical-border); color: var(--clinical-color); }
+  .render-pane blockquote.callout-exam { background: var(--exam-bg); border-color: var(--exam-border); color: var(--exam-color); }
+  .render-pane ul, .render-pane ol { margin: .5rem 0 .8rem 1.4rem; padding: 0; }
+  .render-pane li { margin-bottom: .4rem; line-height: 1.75; }
+  .render-pane .nb-img-wrap {
+    display: inline-block;
+    max-width: var(--img-max, 60%);
+    margin: .5rem;
+    vertical-align: top;
+  }
+  .render-pane .nb-img-wrap img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  }
+  .render-pane .nb-img-wrap .nb-img-controls { display: none; }
+  .render-pane .nb-img-row {
+    display: flex;
+    gap: .5rem;
+    align-items: flex-start;
+    margin: .8rem 0;
+  }
+  .render-pane .nb-img-row .nb-img-wrap { max-width: 48%; }
+
+  /* === TipTap pane 樣式 === */
+  .tiptap-pane .ProseMirror { outline: none; min-height: 350px; }
+  .tiptap-pane .ProseMirror h2 {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    padding: .7rem 1rem;
+    border-radius: 10px;
+    font-size: 1.15rem;
+    margin: 1.2rem 0 .8rem;
+  }
+  .tiptap-pane .ProseMirror h3 {
+    background: var(--bg-soft);
+    color: var(--strong-color);
+    padding: .55rem .9rem;
+    border-radius: 8px;
+    font-size: 1.02rem;
+    margin: 1rem 0 .6rem;
+  }
+  .tiptap-pane .ProseMirror h4 { color: var(--primary); font-size: .98rem; margin: .8rem 0 .4rem; }
+  .tiptap-pane .ProseMirror p { margin: .6rem 0; line-height: 1.8; }
+  .tiptap-pane .ProseMirror strong {
+    color: var(--strong-color);
+    font-weight: 900;
+    background: linear-gradient(180deg, transparent 52%, var(--strong-bg) 52%);
+    padding: 0 4px;
+  }
+  .tiptap-pane .ProseMirror em { color: var(--em-color); font-style: normal; font-weight: 600; }
+  /* 底線:預設紅色粗體 */
+  .tiptap-pane .ProseMirror u {
+    text-decoration: underline;
+    text-decoration-color: #ef4444;
+    text-decoration-thickness: 2.5px;
+    text-underline-offset: 3px;
+    font-weight: 700;
+  }
+  .tiptap-pane .ProseMirror s {
+    text-decoration: line-through;
+    text-decoration-color: #ef4444;
+    text-decoration-thickness: 2.5px;
+    font-weight: 600;
+  }
+  .tiptap-pane .ProseMirror code {
+    background: var(--bg-soft);
+    color: var(--strong-color);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: .9em;
+  }
+  .tiptap-pane .ProseMirror mark { padding: 1px 3px; border-radius: 3px; }
+  .tiptap-pane .ProseMirror mark.hl-y { background: #fde047; }
+  .tiptap-pane .ProseMirror mark.hl-g { background: #bbf7d0; }
+  .tiptap-pane .ProseMirror mark.hl-p { background: #e9d5ff; }
+  .tiptap-pane .ProseMirror .ctag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-color);
+    padding: 1px 9px;
+    border-radius: 10px;
+    font-size: .85em;
+    font-weight: 700;
+    margin: 0 2px;
+  }
+  .tiptap-pane .ProseMirror table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: .9rem;
+  }
+  .tiptap-pane .ProseMirror th, .tiptap-pane .ProseMirror td {
+    border: 1px solid var(--border);
+    padding: .55rem .7rem;
+    text-align: left;
+    vertical-align: top;
+    position: relative;
+  }
+  .tiptap-pane .ProseMirror th {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    font-weight: 700;
+  }
+  .tiptap-pane .ProseMirror tr:nth-child(even) td { background: var(--bg-zebra); }
+  /* 表格欄寬拖拽:滑鼠移到欄邊框會變雙箭頭 */
+  .tiptap-pane .ProseMirror th, .tiptap-pane .ProseMirror td {
+    position: relative;
+  }
+  .tiptap-pane .ProseMirror .column-resize-handle {
+    position: absolute;
+    right: -2px;
+    top: 0;
+    bottom: -2px;
+    width: 4px;
+    background-color: var(--primary);
+    pointer-events: none;
+  }
+  .tiptap-pane .ProseMirror.resize-cursor {
+    cursor: col-resize;
+  }
+  .tiptap-pane .ProseMirror .selectedCell::after {
+    z-index: 2;
+    position: absolute;
+    content: '';
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: rgba(124, 58, 237, .12);
+    pointer-events: none;
+  }
+  /* 表格 cell 內的 <p> 不要有 margin,跟原版渲染對齊 */
+  .tiptap-pane .ProseMirror td > p,
+  .tiptap-pane .ProseMirror th > p { margin: 0; line-height: 1.55; }
+  .tiptap-pane .ProseMirror td > p + p,
+  .tiptap-pane .ProseMirror th > p + p { margin-top: .3rem; }
+  .tiptap-pane .ProseMirror blockquote {
+    margin: .9rem 0;
+    padding: .7rem .95rem;
+    border-radius: 10px;
+    background: var(--bg-soft);
+    border-left: 4px solid var(--text-muted);
+  }
+  .tiptap-pane .ProseMirror blockquote.callout-tip { background: var(--tip-bg); border-color: var(--tip-border); color: var(--tip-color); }
+  .tiptap-pane .ProseMirror blockquote.callout-warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-color); }
+  .tiptap-pane .ProseMirror blockquote.callout-clinical { background: var(--clinical-bg); border-color: var(--clinical-border); color: var(--clinical-color); }
+  .tiptap-pane .ProseMirror blockquote.callout-exam { background: var(--exam-bg); border-color: var(--exam-border); color: var(--exam-color); }
+  /* callout 內第一個/最後一個子元素的 margin 拿掉,跟原版渲染對齊高度 */
+  .tiptap-pane .ProseMirror blockquote > *:first-child { margin-top: 0 !important; }
+  .tiptap-pane .ProseMirror blockquote > *:last-child { margin-bottom: 0 !important; }
+  /* TipTap 自動加在 callout 尾端的空 <p><br></p> 隱藏 */
+  .tiptap-pane .ProseMirror blockquote > p:last-child:has(> br:only-child) {
+    display: none;
+  }
+  /* TipTap 在每個 <p> 尾端加的 trailing break (游標定位用) 視覺上不要佔空間 */
+  .tiptap-pane .ProseMirror blockquote br.ProseMirror-trailingBreak {
+    display: none;
+  }
+  /* TipTap 在 <li> 裡面會自動包 <p>,把這個 <p> 的 margin 拿掉,避免 bullet 之間間距過大 */
+  .tiptap-pane .ProseMirror li > p { margin: 0 !important; }
+  /* callout 內的 ul/ol 收緊一點 */
+  .tiptap-pane .ProseMirror blockquote > ul,
+  .tiptap-pane .ProseMirror blockquote > ol { margin: .3rem 0 .3rem 1.4rem; }
+  .tiptap-pane .ProseMirror ul, .tiptap-pane .ProseMirror ol { margin: .5rem 0 .8rem 1.4rem; padding: 0; }
+  .tiptap-pane .ProseMirror li { margin-bottom: .4rem; line-height: 1.75; }
+  .tiptap-pane .ProseMirror img {
+    max-width: 60%;
+    height: auto;
+    margin: .5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    cursor: pointer;
+  }
+  /* 同段落 2 張以上圖片 → 並排,每張平均 48% 寬,跟原版 nb-img-row 同邏輯 */
+  .tiptap-pane .ProseMirror p:has(img + img) {
+    display: flex;
+    gap: .5rem;
+    align-items: flex-start;
+    margin: .8rem 0;
+  }
+  .tiptap-pane .ProseMirror p:has(img + img) > img {
+    width: 48% !important;
+    max-width: 48% !important;
+    margin: 0 !important;
+    flex: 0 1 auto;
+  }
+  .tiptap-pane .ProseMirror img.ProseMirror-selectednode {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+  }
+  /* 編輯時工具列要黏在頂端,捲動內容不會被推走 */
+  .tiptap-pane .sticky-toolbars {
+    position: sticky;
+    top: -1.2rem; /* 對齊 pane 的 padding-top,讓上邊緣貼齊 */
+    background: var(--bg-page);
+    z-index: 50;
+    margin: 0 -1.5rem .8rem; /* 延伸到 pane 左右邊緣 */
+    padding: .5rem 1.5rem .2rem;
+    border-bottom: 1.5px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+  }
+  /* TipTap 主工具列 */
+  .tt-toolbar {
+    background: var(--bg-content);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: .4rem .5rem;
+    margin-bottom: .5rem;
+    display: flex;
+    gap: .25rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .tt-toolbar button {
+    background: var(--bg-soft);
+    border: 1.5px solid var(--border);
+    color: var(--strong-color);
+    padding: .3rem .55rem;
+    font-size: .82rem;
+    font-weight: 700;
+    border-radius: 5px;
+    cursor: pointer;
+    min-width: 28px;
+  }
+  .tt-toolbar button:hover { background: var(--border); }
+  .tt-toolbar .sep { width: 1px; background: var(--border); margin: 0 .25rem; align-self: stretch; }
+  /* 分裂式按鈕(主按鈕 + 旁邊小箭頭視覺合一) */
+  .tt-toolbar .split-btn { display: inline-flex; }
+  .tt-toolbar .split-btn > button { margin: 0; }
+  .tt-toolbar .split-btn > button:first-of-type {
+    border-radius: 5px 0 0 5px;
+    border-right: 1px solid var(--border-soft);
+    padding-right: .5rem;
+  }
+  .tt-toolbar .split-btn > button:last-of-type {
+    border-radius: 0 5px 5px 0;
+    padding: .3rem .35rem;
+    min-width: 14px;
+    font-size: .6rem;
+    border-left: none;
+    color: var(--text-muted);
+  }
+  .tt-toolbar .split-btn > button:hover { background: var(--border); }
+  .tt-toolbar .split-btn > button:last-of-type:hover { color: var(--strong-color); }
+  /* 顏色 popup */
+  .color-pop-wrap { position: relative; display: inline-block; }
+  .color-pop {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    background: var(--bg-content);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    padding: .5rem;
+    display: none;
+    z-index: 100;
+    min-width: 180px;
+  }
+  .color-pop.open { display: block; }
+  .color-pop .row { display: flex; gap: .25rem; }
+  .color-pop .sw {
+    width: 22px; height: 22px;
+    border: 2px solid var(--border-soft);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .color-pop .sw:hover { transform: scale(1.15); }
+  .color-pop .clear {
+    margin-top: .4rem;
+    width: 100%;
+    background: none;
+    border: 1.5px solid var(--border);
+    padding: .2rem;
+    font-size: .75rem;
+    color: var(--text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  /* 圖片小工具列 */
+  .img-toolbar {
+    background: var(--bg-soft);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: .35rem .55rem;
+    margin-bottom: .5rem;
+    display: flex;
+    gap: .25rem;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: .82rem;
+  }
+  .img-toolbar .label { color: var(--text-muted); font-weight: 700; margin-right: .3rem; }
+  .img-toolbar button {
+    background: var(--bg-content);
+    border: 1.5px solid var(--border);
+    color: var(--strong-color);
+    padding: .22rem .55rem;
+    font-size: .8rem;
+    font-weight: 700;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  .img-toolbar button:hover { background: var(--bg-zebra); }
+  .img-toolbar .status { color: var(--text-muted); font-size: .76rem; margin-left: auto; }
+
+  .empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 4rem 1rem;
+    font-size: .95rem;
+  }
+  .compat-summary {
+    background: #fef3c7;
+    border: 1.5px solid #fcd34d;
+    border-radius: 8px;
+    padding: .8rem 1rem;
+    margin: 1rem 0;
+    font-size: .88rem;
+    color: #78350f;
+  }
+  .compat-summary.ok {
+    background: #d1fae5;
+    border-color: #6ee7b7;
+    color: #065f46;
+  }
+  .compat-summary h4 { margin: 0 0 .4rem; }
+  .compat-summary ul { margin: .3rem 0 0 1.2rem; padding: 0; }
+
+  .nav-bar {
+    background: var(--bg-content);
+    padding: .5rem 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .82rem;
+    color: var(--text-muted);
+  }
+  .nav-bar button {
+    background: var(--bg-soft);
+    border: 1.5px solid var(--border);
+    color: var(--strong-color);
+    padding: .35rem .8rem;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .85rem;
+  }
+  .nav-bar button:hover { background: var(--border); }
+  .nav-bar button:disabled { opacity: .4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🦷 Phase 2A — 章節相容性測試</h1>
+  <span class="desc">獨立測試頁，不會碰到主網站資料</span>
+  <span class="theme-pills" id="theme-pills">
+    <button class="t-default is-active" data-theme="">預設紫</button>
+    <button class="t-warm" data-theme="theme-warm">暖色</button>
+    <button class="t-earth" data-theme="theme-earth">大地</button>
+    <button class="t-ocean" data-theme="theme-ocean">海洋</button>
+    <button class="t-forest" data-theme="theme-forest">森林</button>
+    <button class="t-dark" data-theme="theme-dark">深色</button>
+  </span>
+  <span class="stats" id="stats"></span>
+</div>
+
+<div class="upload-wrap">
+  <label>
+    📁 載入匯出的 markdown：
+    <input type="file" id="file-input" accept=".md,.markdown,.txt">
+  </label>
+  <span class="tip">直接上傳主網站「📥 匯出」下載的 .md 檔，所有處理都在這個分頁完成、不會上傳</span>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="section-title">章節列表</div>
+    <div class="ch-list" id="ch-list">
+      <div class="empty">尚未載入檔案</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="tabs">
+      <button class="tab active" data-pane="render-pane">📖 原版渲染（跟主網站一樣）</button>
+      <button class="tab" data-pane="tiptap-pane">✏️ TipTap 編輯版</button>
+      <button class="tab" data-pane="compat-pane">🔍 相容性檢查</button>
+    </div>
+
+    <div class="pane render-pane active" id="render-pane">
+      <div class="empty">左邊選一章節開始測試</div>
+    </div>
+    <div class="pane tiptap-pane" id="tiptap-pane">
+      <div class="empty">左邊選一章節開始測試</div>
+    </div>
+    <div class="pane" id="compat-pane">
+      <div class="empty">載入檔案後會自動掃描</div>
+    </div>
+
+    <div class="nav-bar">
+      <button id="btn-prev" disabled>← 上一章</button>
+      <span id="cur-info">尚未選章</span>
+      <button id="btn-reset" style="background:#fef3c7;border-color:#fcd34d;color:#78350f">↺ 重置這一章</button>
+      <button id="btn-next" disabled>下一章 →</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { Editor, Mark } from 'https://esm.sh/@tiptap/core@2'
+import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2'
+import Table from 'https://esm.sh/@tiptap/extension-table@2'
+import TableRow from 'https://esm.sh/@tiptap/extension-table-row@2'
+import TableHeader from 'https://esm.sh/@tiptap/extension-table-header@2'
+import TableCell from 'https://esm.sh/@tiptap/extension-table-cell@2'
+import Underline from 'https://esm.sh/@tiptap/extension-underline@2'
+import Strike from 'https://esm.sh/@tiptap/extension-strike@2'
+import Blockquote from 'https://esm.sh/@tiptap/extension-blockquote@2'
+import TextStyle from 'https://esm.sh/@tiptap/extension-text-style@2'
+import Color from 'https://esm.sh/@tiptap/extension-color@2'
+import Highlight from 'https://esm.sh/@tiptap/extension-highlight@2'
+import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@2'
+import Image from 'https://esm.sh/@tiptap/extension-image@2'
+
+// ============================================================
+// 主網站 renderMarkdown 全套(包括所有 sanitizer / table fix)
+// ============================================================
+function escapeHtml(s){
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function _renderCellInline(c){
+  c = c.replace(/&lt;br\s*\/?\s*&gt;/gi, '<br>');
+  c = c.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  c = c.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+  c = c.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  c = c.replace(/\[\[([^\]]+)\]\]/g, '<span class="ctag">$1</span>');
+  return c;
+}
+function renderMDTables(s){
+  const re = /((?:^\|[^\n]+\|\n)+)/gm;
+  return s.replace(re, (block) => {
+    const lines = block.trim().split('\n');
+    if (lines.length < 2) return block;
+    if (!/^\|[\s\-—–－:|]+\|$/.test(lines[1])) return block;
+    const parseCells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
+    const renderCells = (cs) => cs.map(c => _renderCellInline(c));
+    const isJunkCells = (cs) => {
+      if (cs.length === 0) return true;
+      return cs.every(c => c === '' || /^[\s\-—–－:]+$/.test(c));
+    };
+    const headerCells = parseCells(lines[0]);
+    const colN = headerCells.length;
+    const dataRows = [];
+    for (let i = 2; i < lines.length; i++) {
+      const cs = parseCells(lines[i]);
+      if (isJunkCells(cs)) continue;
+      const prev = dataRows[dataRows.length - 1];
+      if (cs.length === colN - 1 && prev && prev.cells[0] !== '') {
+        cs.unshift('');
+      }
+      while (cs.length < colN) cs.push('');
+      if (cs.length > colN) cs.length = colN;
+      dataRows.push({ cells: cs, merged: false, skipCol0: false, rowspanCol0: 1 });
+    }
+    let anchor = dataRows[0] || null;
+    for (let r = 1; r < dataRows.length; r++) {
+      const cs = dataRows[r].cells;
+      if (cs[0] !== '') { anchor = dataRows[r]; continue; }
+      if (!anchor) { anchor = dataRows[r]; continue; }
+      const filledIdx = cs.map((c, i) => c !== '' ? i : -1).filter(i => i > 0);
+      if (filledIdx.length === 0) { dataRows[r].merged = true; continue; }
+      if (filledIdx.length === 1) {
+        const idx = filledIdx[0];
+        anchor.cells[idx] = anchor.cells[idx] + '<br>' + cs[idx];
+        dataRows[r].merged = true;
+      } else {
+        anchor.rowspanCol0 = (anchor.rowspanCol0 || 1) + 1;
+        dataRows[r].skipCol0 = true;
+      }
+    }
+    const out = ['<table class="nb-table">'];
+    out.push('<tr>' + renderCells(headerCells).map(c => '<th>'+c+'</th>').join('') + '</tr>');
+    for (const row of dataRows) {
+      if (row.merged) continue;
+      const rendered = renderCells(row.cells);
+      const tds = [];
+      for (let i = 0; i < rendered.length; i++) {
+        if (i === 0 && row.skipCol0) continue;
+        const rs = (i === 0 && row.rowspanCol0 > 1) ? ` rowspan="${row.rowspanCol0}"` : '';
+        tds.push('<td' + rs + '>' + rendered[i] + '</td>');
+      }
+      out.push('<tr>' + tds.join('') + '</tr>');
+    }
+    out.push('</table>');
+    return out.join('');
+  });
+}
+
+function renderMarkdown(md){
+  if (!md) return '<p style="color:#9ca3af">（章節內容是空的）</p>';
+  md = md.split('\n').map(line => {
+    if (/^\|/.test(line)) return line;
+    line = line.replace(/([^\n])\s+-\s+(\*\*)/g, '$1\n\n- $2');
+    line = line.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
+    return line;
+  }).join('\n');
+  md = md.replace(/^>[ \t]*$/gm, '');
+  md = md.replace(/([^\n])\n[ \t]*(!\[[^\]]*\]\([^)\s]+\))/g, '$1\n\n$2');
+  md = md.replace(/(!\[[^\]]*\]\([^)\s]+\))\n(?!\n)([^\n])/g, '$1\n\n$2');
+  md = md.replace(/(!\[[^\]]*\]\([^)\s]+\))[ \t]*\n[ \t]*(?=!\[[^\]]*\]\([^)\s]+\))/g, '$1\n\n');
+  const _LATEX_MAP = {
+    '\\ge':'≥','\\geq':'≥','\\le':'≤','\\leq':'≤','\\neq':'≠','\\ne':'≠',
+    '\\approx':'≈','\\equiv':'≡','\\propto':'∝','\\sim':'~',
+    '\\pm':'±','\\mp':'∓','\\times':'×','\\div':'÷','\\cdot':'·','\\ast':'∗',
+    '\\to':'→','\\rightarrow':'→','\\leftarrow':'←','\\Rightarrow':'⇒','\\Leftarrow':'⇐','\\leftrightarrow':'↔','\\Leftrightarrow':'⇔',
+    '\\infty':'∞','\\partial':'∂','\\nabla':'∇','\\sqrt':'√',
+    '\\alpha':'α','\\beta':'β','\\gamma':'γ','\\delta':'δ','\\epsilon':'ε','\\zeta':'ζ','\\eta':'η','\\theta':'θ','\\iota':'ι','\\kappa':'κ','\\lambda':'λ','\\mu':'μ','\\nu':'ν','\\xi':'ξ','\\pi':'π','\\rho':'ρ','\\sigma':'σ','\\tau':'τ','\\upsilon':'υ','\\phi':'φ','\\chi':'χ','\\psi':'ψ','\\omega':'ω',
+    '\\Alpha':'Α','\\Beta':'Β','\\Gamma':'Γ','\\Delta':'Δ','\\Epsilon':'Ε','\\Theta':'Θ','\\Lambda':'Λ','\\Mu':'Μ','\\Pi':'Π','\\Sigma':'Σ','\\Phi':'Φ','\\Psi':'Ψ','\\Omega':'Ω',
+    '\\sum':'∑','\\prod':'∏','\\int':'∫','\\oint':'∮',
+    '\\subset':'⊂','\\supset':'⊃','\\subseteq':'⊆','\\supseteq':'⊇','\\in':'∈','\\notin':'∉','\\cup':'∪','\\cap':'∩','\\setminus':'∖','\\emptyset':'∅',
+    '\\forall':'∀','\\exists':'∃','\\nexists':'∄','\\land':'∧','\\lor':'∨','\\lnot':'¬','\\neg':'¬',
+    '\\circ':'°','\\deg':'°','\\degree':'°','\\bullet':'•','\\star':'★','\\dagger':'†','\\ddagger':'‡','\\ldots':'…','\\dots':'…','\\cdots':'⋯','\\vdots':'⋮','\\ddots':'⋱',
+    '\\%':'%','\\$':'$','\\#':'#','\\&':'&','\\_':'_','\\{':'{','\\}':'}','\\\\':' '
+  };
+  md = md.replace(/\\[A-Za-z]+|\\[%$#&_{}\\]/g, (m) => _LATEX_MAP[m] != null ? _LATEX_MAP[m] : m);
+  md = md.replace(/\$([^$\n]*[A-Za-z0-9≥≤≠±×÷→←°≈∑∏∫√∈∂∇∝π∞αβγδθλμσωΔΩ][^$\n]*)\$/g, '$1');
+  md = (function _padTablePipes(text){
+    const SEP = /^\|[\s\-—–－:|]+\|?\s*$/;
+    const PIPE = /^\|/;
+    const lines = text.split('\n');
+    const out = lines.slice();
+    for (let i = 0; i < lines.length; i++) {
+      if (!SEP.test(lines[i])) continue;
+      let start = i;
+      while (start > 0 && PIPE.test(lines[start - 1])) start--;
+      for (let k = start; k <= i; k++) {
+        let l = out[k].replace(/\s+$/, '');
+        if (!l.endsWith('|')) l = l + ' |';
+        out[k] = l;
+      }
+    }
+    return out.join('\n');
+  })(md);
+  md = md.split('\n').map(line => {
+    if (!/\|[\-:\s]*-[\-:\s]*\|/.test(line)) return line;
+    line = line.replace(/([^|\n])(\|(?:[\-:\s]+\|)+)/g, (m, prev, sep) => {
+      if (!/-/.test(sep)) return m;
+      return prev + '|\n' + sep;
+    });
+    line = line.replace(/\|\|/g, '|\n|');
+    return line;
+  }).join('\n');
+  const SEP_RE = /^\|[\s\-—–－:|]+\|\s*$/;
+  md = (function _fixTableContinuity(text){
+    const isCont = (l) => /^\|/.test(l) || /^-\s+\|/.test(l);
+    const strip  = (l) => l.replace(/^-\s+(?=\|)/, '');
+    const lines = text.split('\n');
+    const out = [];
+    let inTable = false;
+    for (let i = 0; i < lines.length; i++){
+      const line = lines[i];
+      if (SEP_RE.test(line)) { inTable = true; out.push(line); continue; }
+      if (inTable && /^\s*$/.test(line)) {
+        let j = i + 1;
+        while (j < lines.length && /^\s*$/.test(lines[j])) j++;
+        if (j < lines.length && isCont(lines[j])) { i = j - 1; continue; }
+        inTable = false; out.push(line); continue;
+      }
+      if (inTable && isCont(line)) { out.push(strip(line)); continue; }
+      if (inTable) inTable = false;
+      out.push(line);
+    }
+    return out.join('\n');
+  })(md);
+  md = md.replace(/^(\|[^\n]*[^|\s])\n([^\|\n][^\n]*)\n(\|[\s\-—–－:|]+\|\s*)$/gm,
+    (m, h1, h2, sep) => h1 + ' ' + h2 + '|\n' + sep);
+  md = md.replace(/^(\|[^\n]*[^|\s])\n(\|[\s\-—–－:|]+\|\s*)$/gm,
+    (m, h1, sep) => h1 + '|\n' + sep);
+  md = md.replace(/((?:^\|[\s\-—–－:|]+\|\s*\n){2,})/gm, (m) => {
+    const ls = m.split('\n').filter(l => l.trim());
+    let best = ls[0]; let bn = best.split('|').length;
+    for (const l of ls) { const n = l.split('|').length; if (n > bn) { best = l; bn = n; } }
+    return best + '\n';
+  });
+  md = (function _mergeMultiLineTableRows(text){
+    const lines = text.split('\n');
+    const out = [];
+    let buf = null;
+    let inTable = false;
+    function flush() {
+      if (!buf) return;
+      let merged = buf.join('<br>');
+      if (!/\|\s*$/.test(merged)) merged = merged + ' |';
+      out.push(merged);
+      buf = null;
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (/^\|[\s\-—–－:|]+\|\s*$/.test(line)) {
+        flush(); inTable = true; out.push(line); continue;
+      }
+      if (!inTable) { out.push(line); continue; }
+      if (/^\s*$/.test(line)) {
+        let j = i + 1;
+        while (j < lines.length && /^\s*$/.test(lines[j])) j++;
+        if (j < lines.length) {
+          const next = lines[j];
+          const nextIsPipe = /^\|/.test(next);
+          const nextIsBulletInBuf = buf && /^-\s/.test(next);
+          if (nextIsPipe || nextIsBulletInBuf) {
+            i = j - 1; continue;
+          }
+        }
+        flush(); inTable = false; out.push(line); continue;
+      }
+      const startsP = /^\|/.test(line);
+      const endsP = /\|\s*$/.test(line);
+      if (startsP && endsP) {
+        const next = (i + 1 < lines.length) ? lines[i+1] : '';
+        if (/^-\s.+\|\s*$/.test(next)) {
+          flush();
+          let merged = line.replace(/\s*\|\s*$/, '') + ' | ' + next;
+          let k = i + 1;
+          while (k + 1 < lines.length && /^-\s.+\|\s*$/.test(lines[k+1])) {
+            merged = merged.replace(/\s*\|\s*$/, '') + ' | ' + lines[k+1];
+            k++;
+          }
+          out.push(merged);
+          i = k;
+          continue;
+        }
+        flush(); out.push(line);
+      }
+      else if (startsP && !endsP) { flush(); buf = [line]; }
+      else if (!startsP && buf) { buf.push(line); if (endsP) flush(); }
+      else { flush(); inTable = false; out.push(line); }
+    }
+    flush();
+    return out.join('\n');
+  })(md);
+  md = (function _fixSquashedTableData(text){
+    const lines = text.split('\n');
+    const out = [];
+    function countCells(line) {
+      const t = line.trim().replace(/^\||\|$/g, '');
+      if (!t) return 0;
+      return t.split('|').length;
+    }
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const m = line.match(/^(\|(?:[\s\-—–－:]+\|)+)\s*([^\s\-—–－:][^\n]*\|)\s*$/);
+      if (!m) { out.push(line); continue; }
+      const sep = m[1];
+      let rest = m[2];
+      if (!rest.startsWith('|')) rest = '| ' + rest;
+      let headerN = 0;
+      for (let j = out.length - 1; j >= 0; j--) {
+        const prev = out[j];
+        if (!prev.trim()) continue;
+        if (/^\|[\s\-—–－:|]+\|\s*$/.test(prev)) continue;
+        if (/^\|/.test(prev)) { headerN = countCells(prev); break; }
+        break;
+      }
+      if (headerN < 2) {
+        headerN = (sep.match(/\|/g) || []).length - 1;
+      }
+      if (headerN < 2) { out.push(line); continue; }
+      out.push('|' + '---|'.repeat(headerN));
+      const cells = rest.split('|').map(c => c.trim()).filter(c => c.length > 0);
+      let k = 0;
+      while (k + headerN <= cells.length) {
+        out.push('| ' + cells.slice(k, k + headerN).join(' | ') + ' |');
+        k += headerN;
+      }
+      if (k < cells.length) {
+        const rowCells = cells.slice(k);
+        while (rowCells.length < headerN) rowCells.push('');
+        out.push('| ' + rowCells.join(' | ') + ' |');
+      }
+    }
+    return out.join('\n');
+  })(md);
+  md = md.replace(/\*\*[ \t]+([^*\n]+?)[ \t]+\*\*/g, '**$1**');
+  md = md.replace(/\*\*[ \t]+([^*\n]+?)\*\*/g, '**$1**');
+  md = md.replace(/\*\*([^*\n]+?)[ \t]+\*\*/g, '**$1**');
+  md = md.replace(/\*\*\s*\n\s*([^*]+?)\s*\n\s*\*\*/g, '**$1**');
+  md = md.replace(/\*\*\s*(\[\[[^\]]+\]\])\s*([:：]?)\s*\*\*/g, '$1$2');
+  md = md.replace(/^[-—–_]{3,}\s*$/gm, '');
+  md = md.replace(/\n{3,}/g, '\n\n');
+  let s = escapeHtml(md);
+  s = s.replace(/&lt;mark class=&quot;(hl-[ygp])&quot;&gt;([\s\S]*?)&lt;\/mark&gt;/g,
+    '<mark class="$1">$2</mark>');
+  s = renderMDTables(s);
+  s = s.replace(/((?:^&gt;[ \t]?.*(?:\n|$))+)/gm, (m) => {
+    const text = m.split(/\n/).map(l => l.replace(/^&gt;[ \t]?/, '')).join('\n').trim();
+    if (!text) return '';
+    let cls = '';
+    if (/^(💡|⭐|🌟|🔑)/.test(text)) cls = 'callout-tip';
+    else if (/^(⚠️|❗|🚨)/.test(text)) cls = 'callout-warn';
+    else if (/^(🏥|💊|🩺)/.test(text)) cls = 'callout-clinical';
+    else if (/^(📝|📌|🎯)/.test(text)) cls = 'callout-exam';
+    let inner = text;
+    inner = inner.replace(/\*\*\s*([^*\n:：]+?)\s*[:：]\s*\*\*/g, '<span class="md-label">$1</span><span class="md-colon">:</span>');
+    inner = inner.replace(/\*\*([^*\n]+)\*\*(?=\s*[:：])/g, '<span class="md-label">$1</span>');
+    inner = inner.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    inner = inner.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    inner = inner.replace(/\[\[([^\]]+)\]\]/g, '<span class="ctag">$1</span>');
+    inner = inner.replace(/((?:^- .+(?:\n|$))+)/gm, (mm) => {
+      const items = mm.trim().split(/\n/).map(l => l.replace(/^- /, ''));
+      return '<ul>' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+    });
+    inner = inner.split(/\n\n+/).map(p => {
+      const t = p.trim();
+      if (!t) return '';
+      if (/^<(h[1-6]|ul|ol|table|p)/.test(t)) return t;
+      return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+    return '<blockquote' + (cls?' class="'+cls+'"':'') + '>' + inner + '</blockquote>';
+  });
+  s = s.replace(/^&gt;[ \t]*$/gm, '');
+  s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+  s = s.replace(/([^\n])\n(!\[[^\]]*\]\([^)\s]+\))/g, '$1\n\n$2');
+  s = s.replace(/(!\[[^\]]*\]\([^)\s]+\))\n([^\n])/g, '$1\n\n$2');
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (m, alt, url) => {
+    const cleanUrl = url.replace(/&amp;/g, '&');
+    let imgMaxWidth = '60%';
+    let realAlt = alt;
+    if (alt.includes('|')) {
+      const parts = alt.split('|');
+      realAlt = parts[0];
+      const hint = (parts[1] || '').trim().toLowerCase();
+      if (hint === 'small' || hint === 's') imgMaxWidth = '30%';
+      else if (hint === 'medium' || hint === 'm') imgMaxWidth = '60%';
+      else if (hint === 'large' || hint === 'l') imgMaxWidth = '90%';
+      else if (hint === 'full' || hint === 'original') imgMaxWidth = '100%';
+      else if (/^\d+px$/.test(hint)) imgMaxWidth = hint;
+      else if (/^\d+%$/.test(hint)) imgMaxWidth = hint;
+      else if (/^\d+$/.test(hint)) imgMaxWidth = hint + 'px';
+    }
+    return `<span class="nb-img-wrap" style="--img-max:${imgMaxWidth}"><img src="${cleanUrl}" alt="${escapeHtml(realAlt)}" loading="lazy" /></span>`;
+  });
+  s = s.replace(/\[\[([^\]]+)\]\]/g, '<span class="ctag">$1</span>');
+  const SUBLABEL_WORDS = new Set([
+    '特點','特性','特徵','功能','機制','原理','臨床','臨床意義','臨床特徵','臨床表現',
+    '注意','警告','禁忌','適應症','適應證','併發症','風險','預後',
+    '定義','分類','類型','種類','構造','組成','成分','結構',
+    '症狀','體徵','病因','病理','病程','診斷','鑑別診斷','治療','處置','處理',
+    '作用','效果','影響','關係','差異','對照','比較',
+    '流程','步驟','方法','技術','操作',
+    '補充','重點','說明','概念','理論','背景','例如','範例','備註','關鍵','摘要',
+    '來源','備考','參考'
+  ]);
+  function _renderBoldOrLabel(word, hasColon){
+    const trimmed = word.trim();
+    if (SUBLABEL_WORDS.has(trimmed)) {
+      return '<span class="md-label">' + word + '</span>' + (hasColon ? '<span class="md-colon">:</span>' : '');
+    }
+    return '<strong>' + word + '</strong>' + (hasColon ? ':' : '');
+  }
+  s = s.replace(/\*\*\s*([^*\n:：]+?)\s*[:：]\s*\*\*/g, (m, word) => _renderBoldOrLabel(word, true));
+  s = s.replace(/\*\*([^*\n]+)\*\*(?=\s*[:：])/g, (m, word) => {
+    const trimmed = word.trim();
+    if (SUBLABEL_WORDS.has(trimmed)) return '<span class="md-label">' + word + '</span>';
+    return '<strong>' + word + '</strong>';
+  });
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(?<![*\w])\*([^*\n]+)\*(?!\w)/g, '<em>$1</em>');
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  s = s.replace(/((?:^- .+(?:\n|$))+)/gm, (m) => {
+    const items = m.trim().split(/\n/).map(l => l.replace(/^- /, ''));
+    return '<ul>' + items.map(i => {
+      const cls = /^\s*<span class="md-label">/.test(i) ? ' class="li-sublabel"' : '';
+      return '<li' + cls + '>' + i + '</li>';
+    }).join('') + '</ul>';
+  });
+  s = s.replace(/((?:^\d+\. .+(?:\n|$))+)/gm, (m) => {
+    const items = m.trim().split(/\n/).map(l => l.replace(/^\d+\. /, ''));
+    return '<ol>' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>';
+  });
+  s = s.split(/\n\n+/).map(p => {
+    const t = p.trim();
+    if (!t) return '';
+    if (/^<(h[1-6]|ul|ol|table|blockquote|p)/.test(t)) return t;
+    return '<p>' + t.replace(/\n/g, '<br>') + '</p>';
+  }).join('\n');
+  s = s.replace(/(<p><span class="nb-img-wrap"[^>]*>[\s\S]*?<\/span><\/p>\s*){2,}/g, (match) => {
+    const inner = match.replace(/<p>(<span class="nb-img-wrap"[^>]*>[\s\S]*?<\/span>)<\/p>\s*/g, '$1');
+    return '<div class="nb-img-row">' + inner + '</div>\n';
+  });
+  return s;
+}
+
+// ============================================================
+// 章節解析、UI 控制
+// ============================================================
+let chapters = [];
+let currentIdx = -1;
+let tiptapEditor = null;
+
+// 主網站「載入舊章節」時用的 unescape:處理 AI 雙重編碼 bug(ch51/96 那種)
+function unescapeIfNeeded(s){
+  if (!s || typeof s !== 'string') return s;
+  const literalN = (s.match(/\\n/g) || []).length;
+  const realN = (s.match(/\n/g) || []).length;
+  if (literalN >= 5 && realN < literalN / 3) {
+    return s.replace(/\\r\\n/g, '\n')
+            .replace(/\\n/g, '\n')
+            .replace(/\\t/g, '\t')
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\');
+  }
+  return s;
+}
+
+function parseChapters(md){
+  const lines = md.split('\n');
+  const out = [];
+  let current = null;
+  for (const line of lines) {
+    const m = line.match(/^## (\d+)\.\s+(.+)$/);
+    if (m) {
+      if (current) out.push(current);
+      current = { num: parseInt(m[1]), title: m[2].trim(), lines: [], content: '' };
+    } else if (current) {
+      current.lines.push(line);
+    }
+  }
+  if (current) out.push(current);
+  // 把內文整理出來
+  for (const ch of out) {
+    let body = ch.lines.join('\n').trim();
+    // 去掉 trailing `---` 章節分隔線
+    body = body.replace(/\n---\s*$/m, '').replace(/^---\s*$/m, '');
+    // 跳過匯出時自動加的 metadata 行(主網站不顯示這些,我們也別顯示)
+    //  ** 概念 **:...
+    //  ** 來源題 **:...
+    body = body.split('\n').filter(l => {
+      const t = l.trim();
+      if (/^\*\*概念\*\*\s*[:：]/.test(t)) return false;
+      if (/^\*\*來源題\*\*\s*[:：]/.test(t)) return false;
+      return true;
+    }).join('\n');
+    // 處理 AI 雙重編碼(ch51/96 那種「整章變成一坨字串」的狀況)
+    body = unescapeIfNeeded(body);
+    // 去除開頭多餘空白行
+    body = body.replace(/^\s*\n+/, '');
+    ch.content = body;
+    ch.stats = analyzeChapter(body);
+  }
+  return out;
+}
+
+function analyzeChapter(md){
+  return {
+    images: (md.match(/!\[[^\]]*\]\([^)]+\)/g) || []).length,
+    tables: (md.match(/^\|[\s\-—–－:|]+\|\s*$/gm) || []).length,
+    callouts: (md.match(/^> /gm) || []).length,
+    ctags: (md.match(/\[\[[^\]]+\]\]/g) || []).length,
+    marks: (md.match(/<mark class="hl-[ygp]"/g) || []).length,
+    lines: md.split('\n').length,
+    chars: md.length,
+    // 風險訊號
+    literalNewline: (md.match(/\\n/g) || []).length, // 雙重編碼殘留
+    longSingleLine: md.split('\n').some(l => l.length > 1000),
+  };
+}
+
+function detectIssues(ch){
+  const issues = [];
+  if (ch.stats.literalNewline >= 5) issues.push('看到 ' + ch.stats.literalNewline + ' 個文字 \\n（雙重編碼?）');
+  if (ch.stats.longSingleLine) issues.push('有單行超過 1000 字');
+  if (ch.content.length < 50) issues.push('內容極短(<50 字)');
+  // 表格 row 數量不平衡
+  const tableBlocks = ch.content.match(/(?:^\|[^\n]+\|\n)+/gm) || [];
+  for (const blk of tableBlocks) {
+    const ls = blk.trim().split('\n');
+    if (ls.length < 2) continue;
+    const sepIdx = ls.findIndex(l => /^\|[\s\-—–－:|]+\|$/.test(l));
+    if (sepIdx < 0) continue;
+    const headerN = ls[0].split('|').length - 2;
+    let rowMismatch = 0;
+    for (let i = sepIdx + 1; i < ls.length; i++) {
+      const n = ls[i].split('|').length - 2;
+      if (n !== headerN && n !== headerN - 1) rowMismatch++;
+    }
+    if (rowMismatch >= 2) issues.push('表格欄數不一致 (' + rowMismatch + ' 列偏離 header)');
+  }
+  return issues;
+}
+
+function renderChapterList(){
+  const wrap = document.getElementById('ch-list');
+  if (!chapters.length) {
+    wrap.innerHTML = '<div class="empty">尚未載入檔案</div>';
+    return;
+  }
+  wrap.innerHTML = chapters.map((ch, i) => {
+    const issues = detectIssues(ch);
+    const cls = 'ch-item' + (i === currentIdx ? ' active' : '') + (issues.length ? ' has-warning' : '');
+    const badges = [];
+    if (ch.stats.tables) badges.push('📊 ' + ch.stats.tables);
+    if (ch.stats.images) badges.push('🖼 ' + ch.stats.images);
+    if (ch.stats.callouts) badges.push('💬 ' + ch.stats.callouts);
+    if (ch.stats.ctags) badges.push('🏷 ' + ch.stats.ctags);
+    return `<div class="${cls}" data-idx="${i}">
+      <div><span class="num">${ch.num}</span>${escapeHtmlText(ch.title)}</div>
+      <div class="badges">${badges.map(b => '<span class="b">'+b+'</span>').join('')}</div>
+    </div>`;
+  }).join('');
+  for (const el of wrap.querySelectorAll('.ch-item')) {
+    el.addEventListener('click', () => selectChapter(parseInt(el.dataset.idx)));
+  }
+}
+
+function escapeHtmlText(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// 工具:取得當前選到的 image node(如果有)
+function getSelectedImage(editor){
+  if (!editor) return null;
+  const { state } = editor;
+  const { selection } = state;
+  const node = state.doc.nodeAt(selection.from);
+  if (node && node.type.name === 'image') return { node, pos: selection.from };
+  return null;
+}
+function updateImgStatus(editor){
+  const status = document.getElementById('img-status');
+  if (!status) return;
+  const sel = getSelectedImage(editor);
+  if (sel) {
+    const w = sel.node.attrs.width || '(預設)';
+    status.textContent = '已選圖片 · 當前寬度: ' + w;
+  } else {
+    status.textContent = '先點選圖片才會作用';
+  }
+}
+function setImgSize(width){
+  if (!tiptapEditor) return;
+  const sel = getSelectedImage(tiptapEditor);
+  if (!sel) { alert('請先點一張圖片再按按鈕'); return; }
+  // 先改寬度,再用 setNodeSelection 把圖片繼續選取(避免每次按完都要重點)
+  tiptapEditor.chain()
+    .updateAttributes('image', { width })
+    .setNodeSelection(sel.pos)
+    .focus()
+    .run();
+  updateImgStatus(tiptapEditor);
+}
+function stepImgSize(delta){
+  if (!tiptapEditor) return;
+  const sel = getSelectedImage(tiptapEditor);
+  if (!sel) { alert('請先點一張圖片再按按鈕'); return; }
+  const cur = sel.node.attrs.width || '60%';
+  const m = cur.match(/^(\d+)(%|px)?$/);
+  let n = m ? parseInt(m[1]) : 60;
+  const unit = m && m[2] ? m[2] : '%';
+  n = Math.max(10, Math.min(100, n + delta));
+  tiptapEditor.chain()
+    .updateAttributes('image', { width: n + unit })
+    .setNodeSelection(sel.pos)
+    .focus()
+    .run();
+  updateImgStatus(tiptapEditor);
+}
+
+function selectChapter(idx){
+  if (idx < 0 || idx >= chapters.length) return;
+  currentIdx = idx;
+  const ch = chapters[idx];
+  // 更新列表 active
+  document.querySelectorAll('.ch-item').forEach((el, i) => {
+    el.classList.toggle('active', i === idx);
+  });
+  // 渲染兩個 pane
+  let html;
+  try {
+    html = renderMarkdown(ch.content);
+  } catch (e) {
+    html = '<p style="color:red">渲染失敗: ' + escapeHtmlText(e.message) + '</p>';
+  }
+  document.getElementById('render-pane').innerHTML =
+    '<div class="pane-header">原版渲染 — 跟主網站「閱讀模式」一模一樣</div>' + html;
+  // 把原版渲染的圖片 wrapper 改寫成 TipTap 能吃的格式:
+  //   <span class="nb-img-wrap" style="--img-max:30%"><img ... /></span>
+  //   → <img ... style="width: 30%; max-width: 30%" />
+  // 並把 nb-img-row 容器降成 paragraph(讓 TipTap 可以放並排圖片)
+  let tiptapHtml = html
+    .replace(/<span class="nb-img-wrap"[^>]*style="--img-max:([^";]+)"[^>]*>\s*(<img[^>]*?)\s*\/?>\s*<\/span>/g,
+      (m, size, imgTag) => imgTag + ` style="width: ${size}; max-width: ${size};" />`)
+    .replace(/<div class="nb-img-row">/g, '<p>')
+    .replace(/<\/div>/g, '</p>');
+  // TipTap
+  if (tiptapEditor) tiptapEditor.destroy();
+  const tiptapWrap = document.getElementById('tiptap-pane');
+  tiptapWrap.innerHTML = `<div class="pane-header">TipTap 編輯版 — 可以直接編輯試試看</div>
+    <div class="sticky-toolbars">
+    <div class="tt-toolbar">
+      <button id="tt-bold" title="畫重點 (Ctrl+B) — 跟筆記本「**粗體**」一樣的紫字黃底"><span style="color:#5d4694;font-weight:900;background:linear-gradient(180deg,transparent 52%,#fcd97b 52%);padding:0 4px">重點</span></button>
+      <button id="tt-italic" title="強調 (Ctrl+I) — 跟筆記本「*斜體*」一樣的藍色加粗"><span style="color:#4a7a99;font-weight:700">強調</span></button>
+      <div class="color-pop-wrap split-btn">
+        <button id="tt-underline" title="底線 Ctrl+U (預設紅色粗體)"><u>U</u></button>
+        <button id="tt-u-color" title="底線顏色">▾</button>
+        <div class="color-pop" id="u-pop">
+          <div class="row">
+            <div class="sw" style="background:#ef4444" data-uc="#ef4444" title="紅(預設)"></div>
+            <div class="sw" style="background:#f59e0b" data-uc="#f59e0b" title="橘"></div>
+            <div class="sw" style="background:#22c55e" data-uc="#22c55e" title="綠"></div>
+            <div class="sw" style="background:#0ea5e9" data-uc="#0ea5e9" title="藍"></div>
+            <div class="sw" style="background:#a855f7" data-uc="#a855f7" title="紫"></div>
+            <div class="sw" style="background:#1f2937" data-uc="#1f2937" title="黑"></div>
+          </div>
+        </div>
+      </div>
+      <div class="color-pop-wrap split-btn">
+        <button id="tt-strike" title="刪除線 (預設紅色)"><s>S</s></button>
+        <button id="tt-s-color" title="刪除線顏色">▾</button>
+        <div class="color-pop" id="s-pop">
+          <div class="row">
+            <div class="sw" style="background:#ef4444" data-sc="#ef4444" title="紅(預設)"></div>
+            <div class="sw" style="background:#f59e0b" data-sc="#f59e0b" title="橘"></div>
+            <div class="sw" style="background:#22c55e" data-sc="#22c55e" title="綠"></div>
+            <div class="sw" style="background:#0ea5e9" data-sc="#0ea5e9" title="藍"></div>
+            <div class="sw" style="background:#a855f7" data-sc="#a855f7" title="紫"></div>
+            <div class="sw" style="background:#1f2937" data-sc="#1f2937" title="黑"></div>
+          </div>
+        </div>
+      </div>
+      <span class="sep"></span>
+      <div class="color-pop-wrap">
+        <button id="tt-color" title="字體顏色">🎨 字體顏色</button>
+        <div class="color-pop" id="color-pop">
+          <div class="row">
+            <div class="sw" style="background:#ef4444" data-c="#ef4444"></div>
+            <div class="sw" style="background:#f59e0b" data-c="#f59e0b"></div>
+            <div class="sw" style="background:#22c55e" data-c="#22c55e"></div>
+            <div class="sw" style="background:#0ea5e9" data-c="#0ea5e9"></div>
+            <div class="sw" style="background:#a855f7" data-c="#a855f7"></div>
+            <div class="sw" style="background:#1f2937" data-c="#1f2937"></div>
+          </div>
+          <input type="color" id="tt-color-custom" style="width:100%;height:26px;margin-top:.4rem;border:1.5px solid var(--border);border-radius:4px">
+          <button class="clear" id="tt-color-clear">清除顏色</button>
+        </div>
+      </div>
+      <div class="color-pop-wrap">
+        <button id="tt-highlight" title="螢光筆">🖍 螢光</button>
+        <div class="color-pop" id="hl-pop">
+          <div class="row">
+            <div class="sw" style="background:#fde047" data-hl="#fde047"></div>
+            <div class="sw" style="background:#bbf7d0" data-hl="#bbf7d0"></div>
+            <div class="sw" style="background:#fbcfe8" data-hl="#fbcfe8"></div>
+            <div class="sw" style="background:#bae6fd" data-hl="#bae6fd"></div>
+            <div class="sw" style="background:#e9d5ff" data-hl="#e9d5ff"></div>
+            <div class="sw" style="background:#fed7aa" data-hl="#fed7aa"></div>
+          </div>
+          <button class="clear" id="tt-hl-clear">清除螢光</button>
+        </div>
+      </div>
+      <button id="tt-ctag" title="概念標籤 (跟筆記本「[[xxx]]」一樣)"><span style="color:var(--tag-color);background:var(--tag-bg);padding:1px 7px;border-radius:8px;font-size:.8em;font-weight:700">概念</span></button>
+      <span class="sep"></span>
+      <button id="tt-align-left" title="置左">⫷</button>
+      <button id="tt-align-center" title="置中">≡</button>
+      <button id="tt-align-right" title="置右">⫸</button>
+      <span class="sep"></span>
+      <button id="tt-h2" title="大標題">H2</button>
+      <button id="tt-h3" title="小標題">H3</button>
+      <span class="sep"></span>
+      <button id="tt-bullet" title="條列">• 條列</button>
+      <button id="tt-order" title="編號">1. 編號</button>
+      <span class="sep"></span>
+      <button id="tt-table" title="插入表格">⊞ 表格</button>
+      <button id="tt-row" title="加一列">+Row</button>
+      <button id="tt-col" title="加一欄">+Col</button>
+      <button id="tt-del-row" title="刪這列">−Row</button>
+      <button id="tt-del-col" title="刪這欄">−Col</button>
+      <span class="sep"></span>
+      <button id="tt-quote" title="引用框">＂ 框</button>
+      <button id="tt-image" title="插入圖片">📷 圖片</button>
+      <button id="tt-undo" title="復原 Ctrl+Z" style="font-size:1.15rem;line-height:1;padding:.2rem .55rem;">↶</button>
+      <button id="tt-redo" title="重做 Ctrl+Y" style="font-size:1.15rem;line-height:1;padding:.2rem .55rem;">↷</button>
+    </div>
+    <div class="img-toolbar">
+      <span class="label">🖼 圖片大小:</span>
+      <button data-size="30%">小</button>
+      <button data-size="60%">中</button>
+      <button data-size="90%">大</button>
+      <button data-size="100%">全寬</button>
+      <button data-step="-10">縮小 −10%</button>
+      <button data-step="+10">放大 +10%</button>
+      <span class="status" id="img-status">先點選圖片才會作用</span>
+    </div>
+    </div>
+    <div id="tiptap-editor"></div>`;
+  // 通用「text-decoration-color 屬性 mark」工廠:給 Underline / Strike 共用
+  function withColorAttr(MarkExt){
+    return MarkExt.extend({
+      addAttributes(){
+        return {
+          ...this.parent?.(),
+          color: {
+            default: null,
+            parseHTML: el => {
+              const style = el.getAttribute('style') || '';
+              const m = style.match(/text-decoration-color\s*:\s*([^;]+)/);
+              return m ? m[1].trim() : null;
+            },
+            renderHTML: attrs => {
+              if (!attrs.color) return {};
+              return { style: `text-decoration-color: ${attrs.color}` };
+            },
+          },
+        };
+      },
+    });
+  }
+  const ColoredUnderline = withColorAttr(Underline);
+  const ColoredStrike = withColorAttr(Strike);
+  // 概念標籤 [[xxx]] → <span class="ctag">xxx</span>
+  // TipTap 預設會吃掉不認識的 span,自訂 Mark 讓它保留
+  const CTag = Mark.create({
+    name: 'ctag',
+    inclusive: false,
+    parseHTML(){ return [{ tag: 'span.ctag' }]; },
+    renderHTML(){ return ['span', { class: 'ctag' }, 0]; },
+  });
+  // 保留 blockquote 的 class(讓 callout-tip/warn/clinical/exam 不被 TipTap 吃掉)
+  const CalloutBlockquote = Blockquote.extend({
+    addAttributes(){
+      return {
+        ...this.parent?.(),
+        class: {
+          default: null,
+          parseHTML: el => el.getAttribute('class'),
+          renderHTML: attrs => attrs.class ? { class: attrs.class } : {},
+        },
+      };
+    },
+  });
+  // 自訂 Image extension:加 width 屬性、支援 inline style 寬度
+  const ResizableImage = Image.extend({
+    addAttributes(){
+      return {
+        ...this.parent?.(),
+        width: {
+          default: null,
+          parseHTML: el => {
+            const style = el.getAttribute('style') || '';
+            const m = style.match(/width\s*:\s*([^;]+)/);
+            if (m) return m[1].trim();
+            return el.getAttribute('width') || null;
+          },
+          renderHTML: attrs => {
+            if (!attrs.width) return {};
+            return { style: `width: ${attrs.width}; max-width: ${attrs.width}` };
+          },
+        },
+      };
+    },
+  });
+  tiptapEditor = new Editor({
+    element: document.querySelector('#tiptap-editor'),
+    extensions: [
+      StarterKit.configure({ strike: false, blockquote: false }),
+      CalloutBlockquote,
+      Table.configure({ resizable: true }),
+      TableRow, TableHeader, TableCell,
+      ColoredUnderline, ColoredStrike, CTag, TextStyle, Color,
+      Highlight.configure({ multicolor: true }),
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      ResizableImage.configure({ inline: true, allowBase64: true }),
+    ],
+    content: tiptapHtml,
+    onSelectionUpdate: ({ editor }) => updateImgStatus(editor),
+  });
+  window.tiptapEditor = tiptapEditor;
+  // 圖片大小按鈕(用 mousedown 阻止按鈕搶焦點,圖片就不會被取消選取)
+  tiptapWrap.querySelectorAll('.img-toolbar button[data-size]').forEach(btn => {
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => setImgSize(btn.dataset.size));
+  });
+  tiptapWrap.querySelectorAll('.img-toolbar button[data-step]').forEach(btn => {
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => stepImgSize(parseInt(btn.dataset.step)));
+  });
+  updateImgStatus(tiptapEditor);
+
+  // ── 主工具列綁定 ──
+  const bind = (id, fn) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', fn);
+  };
+  bind('tt-bold', () => tiptapEditor.chain().focus().toggleBold().run());
+  bind('tt-italic', () => tiptapEditor.chain().focus().toggleItalic().run());
+  bind('tt-underline', () => tiptapEditor.chain().focus().toggleUnderline().run());
+  bind('tt-strike', () => tiptapEditor.chain().focus().toggleStrike().run());
+  bind('tt-h2', () => tiptapEditor.chain().focus().toggleHeading({ level: 2 }).run());
+  bind('tt-h3', () => tiptapEditor.chain().focus().toggleHeading({ level: 3 }).run());
+  bind('tt-bullet', () => tiptapEditor.chain().focus().toggleBulletList().run());
+  bind('tt-order', () => tiptapEditor.chain().focus().toggleOrderedList().run());
+  bind('tt-quote', () => tiptapEditor.chain().focus().toggleBlockquote().run());
+  bind('tt-ctag', () => tiptapEditor.chain().focus().toggleMark('ctag').run());
+  bind('tt-undo', () => tiptapEditor.chain().focus().undo().run());
+  bind('tt-redo', () => tiptapEditor.chain().focus().redo().run());
+  bind('tt-table', () => tiptapEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run());
+  bind('tt-row', () => tiptapEditor.chain().focus().addRowAfter().run());
+  bind('tt-col', () => tiptapEditor.chain().focus().addColumnAfter().run());
+  bind('tt-del-row', () => tiptapEditor.chain().focus().deleteRow().run());
+  bind('tt-del-col', () => tiptapEditor.chain().focus().deleteColumn().run());
+  bind('tt-align-left', () => tiptapEditor.chain().focus().setTextAlign('left').run());
+  bind('tt-align-center', () => tiptapEditor.chain().focus().setTextAlign('center').run());
+  bind('tt-align-right', () => tiptapEditor.chain().focus().setTextAlign('right').run());
+  bind('tt-image', () => {
+    const url = prompt('貼上圖片網址(http/https):');
+    if (url && url.trim()) tiptapEditor.chain().focus().setImage({ src: url.trim() }).run();
+  });
+  // 底線色 popup
+  const uColorBtn = document.getElementById('tt-u-color');
+  const uPop = document.getElementById('u-pop');
+  if (uColorBtn && uPop) {
+    uColorBtn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.color-pop').forEach(p => p !== uPop && p.classList.remove('open')); uPop.classList.toggle('open'); });
+    uPop.addEventListener('click', e => e.stopPropagation());
+    uPop.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', () => {
+      tiptapEditor.chain().focus().setMark('underline', { color: sw.dataset.uc }).run();
+      uPop.classList.remove('open');
+    }));
+  }
+  // 刪除線色 popup
+  const sColorBtn = document.getElementById('tt-s-color');
+  const sPop = document.getElementById('s-pop');
+  if (sColorBtn && sPop) {
+    sColorBtn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.color-pop').forEach(p => p !== sPop && p.classList.remove('open')); sPop.classList.toggle('open'); });
+    sPop.addEventListener('click', e => e.stopPropagation());
+    sPop.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', () => {
+      tiptapEditor.chain().focus().setMark('strike', { color: sw.dataset.sc }).run();
+      sPop.classList.remove('open');
+    }));
+  }
+  // 顏色 popup
+  const colorBtn = document.getElementById('tt-color');
+  const colorPop = document.getElementById('color-pop');
+  if (colorBtn && colorPop) {
+    colorBtn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.color-pop').forEach(p => p !== colorPop && p.classList.remove('open')); colorPop.classList.toggle('open'); });
+    colorPop.addEventListener('click', e => e.stopPropagation());
+    colorPop.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', () => {
+      tiptapEditor.chain().focus().setColor(sw.dataset.c).run();
+      colorPop.classList.remove('open');
+    }));
+    document.getElementById('tt-color-custom')?.addEventListener('input', e => tiptapEditor.chain().focus().setColor(e.target.value).run());
+    document.getElementById('tt-color-clear')?.addEventListener('click', () => { tiptapEditor.chain().focus().unsetColor().run(); colorPop.classList.remove('open'); });
+  }
+  // 螢光 popup
+  const hlBtn = document.getElementById('tt-highlight');
+  const hlPop = document.getElementById('hl-pop');
+  if (hlBtn && hlPop) {
+    hlBtn.addEventListener('click', e => { e.stopPropagation(); document.querySelectorAll('.color-pop').forEach(p => p !== hlPop && p.classList.remove('open')); hlPop.classList.toggle('open'); });
+    hlPop.addEventListener('click', e => e.stopPropagation());
+    hlPop.querySelectorAll('.sw').forEach(sw => sw.addEventListener('click', () => {
+      tiptapEditor.chain().focus().toggleHighlight({ color: sw.dataset.hl }).run();
+      hlPop.classList.remove('open');
+    }));
+    document.getElementById('tt-hl-clear')?.addEventListener('click', () => { tiptapEditor.chain().focus().unsetHighlight().run(); hlPop.classList.remove('open'); });
+  }
+  // 點外面關掉 popup
+  document.addEventListener('click', () => document.querySelectorAll('.color-pop').forEach(p => p.classList.remove('open')));
+  // 貼上圖片(Ctrl+V)
+  tiptapEditor.view.dom.addEventListener('paste', (event) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type && item.type.startsWith('image/')) {
+        event.preventDefault();
+        const blob = item.getAsFile();
+        if (!blob) return;
+        const reader = new FileReader();
+        reader.onload = (e) => tiptapEditor.chain().focus().setImage({ src: e.target.result }).run();
+        reader.readAsDataURL(blob);
+        return;
+      }
+    }
+  });
+  // 相容性檢查
+  renderCompat(ch);
+  // 導覽列
+  document.getElementById('cur-info').textContent = '第 ' + (idx+1) + ' / ' + chapters.length + ' 章:' + ch.title;
+  document.getElementById('btn-prev').disabled = (idx === 0);
+  document.getElementById('btn-next').disabled = (idx === chapters.length - 1);
+}
+
+function renderCompat(ch){
+  const issues = detectIssues(ch);
+  const pane = document.getElementById('compat-pane');
+  const summaryClass = issues.length === 0 ? 'ok' : '';
+  let html = `<div class="pane-header">這一章的內容統計、相容性檢查</div>`;
+  html += `<div class="compat-summary ${summaryClass}">
+    <h4>${issues.length === 0 ? '✓ 沒發現問題' : '⚠ 發現 ' + issues.length + ' 個訊號'}</h4>`;
+  if (issues.length) {
+    html += '<ul>' + issues.map(s => '<li>' + escapeHtmlText(s) + '</li>').join('') + '</ul>';
+  }
+  html += '</div>';
+  html += `<h3>內容統計</h3>
+    <table class="nb-table" style="margin-top:.5rem">
+      <tr><th>項目</th><th>數量</th></tr>
+      <tr><td>段落行數</td><td>${ch.stats.lines}</td></tr>
+      <tr><td>總字數</td><td>${ch.stats.chars}</td></tr>
+      <tr><td>表格</td><td>${ch.stats.tables}</td></tr>
+      <tr><td>圖片</td><td>${ch.stats.images}</td></tr>
+      <tr><td>Callout 框</td><td>${ch.stats.callouts}</td></tr>
+      <tr><td>概念標籤 [[xxx]]</td><td>${ch.stats.ctags}</td></tr>
+      <tr><td>螢光標記</td><td>${ch.stats.marks}</td></tr>
+    </table>`;
+  pane.innerHTML = html;
+}
+
+function renderGlobalStats(){
+  const total = chapters.length;
+  const withIssues = chapters.filter(ch => detectIssues(ch).length > 0).length;
+  document.getElementById('stats').innerHTML =
+    '<b>' + total + ' 章</b>' +
+    (withIssues ? '<b style="background:#fbbf24;color:#78350f">' + withIssues + ' 章有訊號</b>' : '<b style="background:#86efac;color:#065f46">全乾淨</b>');
+}
+
+// ============================================================
+// 事件
+// ============================================================
+// 主題切換
+document.querySelectorAll('#theme-pills button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.body.className = btn.dataset.theme;
+    document.querySelectorAll('#theme-pills button').forEach(b => b.classList.toggle('is-active', b === btn));
+  });
+});
+
+document.getElementById('file-input').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const md = ev.target.result;
+    chapters = parseChapters(md);
+    currentIdx = -1;
+    renderChapterList();
+    renderGlobalStats();
+    if (chapters.length) selectChapter(0);
+  };
+  reader.readAsText(file, 'utf-8');
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.pane;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+    document.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.id === target));
+  });
+});
+
+document.getElementById('btn-prev').addEventListener('click', () => {
+  if (currentIdx > 0) selectChapter(currentIdx - 1);
+});
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (currentIdx < chapters.length - 1) selectChapter(currentIdx + 1);
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (currentIdx < 0) return;
+  if (confirm('確定要把這一章恢復成原本載入時的內容嗎?(你剛剛在編輯模式做的所有改動都會消失)')) {
+    selectChapter(currentIdx);
+  }
+});
+
+// 鍵盤快速鍵
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('.ProseMirror')) return; // 不要在編輯器內亂搶
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowLeft' && currentIdx > 0) selectChapter(currentIdx - 1);
+  if (e.key === 'ArrowRight' && currentIdx < chapters.length - 1) selectChapter(currentIdx + 1);
+});
+</script>
+
+</body>
+</html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v96-img-blank-pad';
+const CACHE_NAME = 'dental-all-v97-unescape-chapter';
 const PRECACHE = [
   './',
   './index.html',

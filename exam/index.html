@@ -6736,6 +6736,16 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 - Aspirin 不需停藥
 - 諮詢內科 |
 \`\`\`
+- **禁止「row 中途收 \`|\` 把剩餘 cell 丟到下一行」**（會讓後面整張表崩）
+  * ❌
+\`\`\`
+| SCTG | - cell2 | - cell3 |       ← 提早收 |
+- cell4 |                          ← cell 4 跑到下一行
+\`\`\`
+  * ✅（整個 row 寫在同一行，不管多長都不要中途換行）
+\`\`\`
+| SCTG | - cell2 | - cell3 | - cell4 |
+\`\`\`
 - **表格不要塞「廢列」**：header 後的 \`|---|---|\` 分隔符只能有一條；後面**直接接資料列**，不要再插一條「全是 \`---\` 或空白」的占位列
   * ❌
   \`\`\`
@@ -6922,6 +6932,9 @@ ${dec.reasoning || ''}
   * ✅ \`| A | B | C |\`、\`| :--- | :--- | :--- |\`
 - **同一格 cell 內的 bullet 之間禁止插空白行**（會被誤判表格結束）
   * ❌ bullet 之間有空白行  ✅ bullet 之間直接連續
+- **禁止把同一個 row 拆成多行**（提早收 \`|\` 然後把剩餘 cell 丟到下一行 → 後面整張表會崩）
+  * ❌ \`| A | - c2 | - c3 |\\n- c4 |\`（提早收 \`|\`、c4 跑去下一行）
+  * ✅ \`| A | - c2 | - c3 | - c4 |\`（整個 row 一行寫完，不管多長）
 - **表格 header 後的 \`|---|---|\` 只能一條**，不要再插「全是 --- 或空白」的廢列
 
 【回傳】
@@ -9006,7 +9019,27 @@ ${instruction.trim()}
             }
             const startsP = /^\|/.test(line);
             const endsP = /\|\s*$/.test(line);
-            if (startsP && endsP) { flush(); out.push(line); }
+            if (startsP && endsP) {
+              // AI 容錯：拆行情境 — 當前 row 提早收 `|`，緊接著的下一行 `-` 開頭以 `|` 結尾
+              // 視為「剩下的 cells 被丟到下一行」，合併成同一個 row
+              // 例：「| A | - c2 |\n- c3 |」→「| A | - c2 | - c3 |」
+              // 限制：必須緊鄰下一行（中間沒空白行），避免把表格之後的 bullet list 誤併
+              const next = (i + 1 < lines.length) ? lines[i+1] : '';
+              if (/^-\s.+\|\s*$/.test(next)) {
+                flush();
+                let merged = line.replace(/\s*\|\s*$/, '') + ' | ' + next;
+                let k = i + 1;
+                // 連續多行 `- ...|` 都一起併入
+                while (k + 1 < lines.length && /^-\s.+\|\s*$/.test(lines[k+1])) {
+                  merged = merged.replace(/\s*\|\s*$/, '') + ' | ' + lines[k+1];
+                  k++;
+                }
+                out.push(merged);
+                i = k;
+                continue;
+              }
+              flush(); out.push(line);
+            }
             else if (startsP && !endsP) { flush(); buf = [line]; }
             else if (!startsP && buf) { buf.push(line); if (endsP) flush(); }
             else { flush(); inTable = false; out.push(line); }

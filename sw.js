@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v94-table-pad-marks';
+const CACHE_NAME = 'dental-all-v95-row-split';
 const PRECACHE = [
   './',
   './index.html',

@@ -8903,6 +8903,40 @@ ${instruction.trim()}
           for (const l of ls) { const n = l.split('|').length; if (n > bn) { best = l; bn = n; } }
           return best + '\n';
         });
+        // 7f. AI 容錯：表格 row 跨多行（AI 在 cell 內塞了 - 項目 換行）
+        //     例：| A | B | - 項目1
+        //         - 項目2
+        //         - 項目3 |
+        //     合併成單行：| A | B | - 項目1<br>- 項目2<br>- 項目3 |
+        md = (function _mergeMultiLineTableRows(text){
+          const lines = text.split('\n');
+          const out = [];
+          let buf = null;
+          let inTable = false;
+          function flush() {
+            if (!buf) return;
+            let merged = buf.join('<br>');
+            if (!/\|\s*$/.test(merged)) merged = merged + ' |';
+            out.push(merged);
+            buf = null;
+          }
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (/^\|[\s\-—–－:|]+\|\s*$/.test(line)) {
+              flush(); inTable = true; out.push(line); continue;
+            }
+            if (!inTable) { out.push(line); continue; }
+            if (/^\s*$/.test(line)) { flush(); inTable = false; out.push(line); continue; }
+            const startsP = /^\|/.test(line);
+            const endsP = /\|\s*$/.test(line);
+            if (startsP && endsP) { flush(); out.push(line); }
+            else if (startsP && !endsP) { flush(); buf = [line]; }
+            else if (!startsP && buf) { buf.push(line); if (endsP) flush(); }
+            else { flush(); inTable = false; out.push(line); }
+          }
+          flush();
+          return out.join('\n');
+        })(md);
         // 7e. AI 容錯：表格 separator 跟所有資料 row 全部擠在同一行
         //     例：「|---|---| A1 | A2 | A3 | B1 | B2 | B3 |」(資料行接在 separator 後沒換行)
         //     用上方 header 的 cell 數來把擠在一起的 cells 切成多 row

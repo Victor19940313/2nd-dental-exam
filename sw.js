@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v92-undo-table';
+const CACHE_NAME = 'dental-all-v93-multiline-row';
 const PRECACHE = [
   './',
   './index.html',

@@ -9338,6 +9338,12 @@ ${instruction.trim()}
           for (let i = 2; i < lines.length; i++) {
             const cs = parseCells(lines[i]);
             if (isJunkCells(cs)) continue;
+            // 缺欄時優先補在「開頭」:處理「續行列開頭空白被吃掉」的情境
+            // 條件:剛好少 1 格、前列開頭格有內容(視為續行)
+            const prev = dataRows[dataRows.length - 1];
+            if (cs.length === colN - 1 && prev && prev.cells[0] !== '') {
+              cs.unshift('');
+            }
             while (cs.length < colN) cs.push('');
             if (cs.length > colN) cs.length = colN;
             dataRows.push({ cells: cs, merged: false, skipCol0: false, rowspanCol0: 1 });

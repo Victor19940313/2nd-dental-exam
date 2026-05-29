@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v95-row-split';
+const CACHE_NAME = 'dental-all-v96-img-blank-pad';
 const PRECACHE = [
   './',
   './index.html',

@@ -8911,9 +8911,14 @@ ${instruction.trim()}
         if (!md) return '<p style="color:#9ca3af">（章節內容是空的）</p>';
         // 預處理：
         // 1. AI 偶爾把「- **A**：xxx - **B**：yyy」寫在同一行，強制拆成各自一行
-        md = md.replace(/([^\n])\s+-\s+(\*\*)/g, '$1\n\n- $2');
         // 2. 中文清單也拆行
-        md = md.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
+        // 注意：表格列（以 | 開頭）整列跳過，否則會把 cell 內含「- **」的 row 從中間切斷
+        md = md.split('\n').map(line => {
+          if (/^\|/.test(line)) return line;
+          line = line.replace(/([^\n])\s+-\s+(\*\*)/g, '$1\n\n- $2');
+          line = line.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
+          return line;
+        }).join('\n');
         // 3. 移除「只有 >」或「> 後面只有空白」的孤立行（AI 偶爾這樣寫，渲染會留裸 > 字符）
         md = md.replace(/^>[ \t]*$/gm, '');
         // 3b. 確保每張圖片獨立成段（前後都補空行，這樣 image-only <p> 才會成立、並排才會啟動）
@@ -9318,18 +9323,60 @@ ${instruction.trim()}
           if (lines.length < 2) return block;
           // second line must be alignment row（支援 - — – － 各種 dash 字元）
           if (!/^\|[\s\-—–－:|]+\|$/.test(lines[1])) return block;
-          const cells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => _renderCellInline(c.trim()));
-          // 判斷一列是不是「廢列」：全部 cell 是空白 / 全破折號 / 全冒號（AI 偶爾會在 header 後多塞一條這種）
-          const isJunkRow = (l) => {
-            const raw = l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
-            if (raw.length === 0) return true;
-            return raw.every(c => c === '' || /^[\s\-—–－:]+$/.test(c));
+          const parseCells = (l) => l.replace(/^\||\|$/g,'').split('|').map(c => c.trim());
+          const renderCells = (cs) => cs.map(c => _renderCellInline(c));
+          // 判斷一列是不是「廢列」：全部 cell 是空白 / 全破折號 / 全冒號
+          const isJunkCells = (cs) => {
+            if (cs.length === 0) return true;
+            return cs.every(c => c === '' || /^[\s\-—–－:]+$/.test(c));
           };
-          const out = ['<table class="nb-table">'];
-          out.push('<tr>' + cells(lines[0]).map(c => '<th>'+c+'</th>').join('') + '</tr>');
+          // 表頭欄數決定後續每列補齊
+          const headerCells = parseCells(lines[0]);
+          const colN = headerCells.length;
+          // 解析所有資料列、補齊欄數
+          const dataRows = [];
           for (let i = 2; i < lines.length; i++) {
-            if (isJunkRow(lines[i])) continue; // 跳過廢列
-            out.push('<tr>' + cells(lines[i]).map(c => '<td>'+c+'</td>').join('') + '</tr>');
+            const cs = parseCells(lines[i]);
+            if (isJunkCells(cs)) continue;
+            while (cs.length < colN) cs.push('');
+            if (cs.length > colN) cs.length = colN;
+            dataRows.push({ cells: cs, merged: false, skipCol0: false, rowspanCol0: 1 });
+          }
+          // 續行處理：第一格空白
+          //  - 只有一格有內容 → 併入 anchor 列對應欄位（<br> 接續）
+          //  - 多格有內容 → anchor 第一格 rowspan++,本列不渲染第一格（rowspan 視覺合併）
+          let anchor = dataRows[0] || null;
+          for (let r = 1; r < dataRows.length; r++) {
+            const cs = dataRows[r].cells;
+            if (cs[0] !== '') { anchor = dataRows[r]; continue; }
+            if (!anchor) { anchor = dataRows[r]; continue; }
+            const filledIdx = cs.map((c, i) => c !== '' ? i : -1).filter(i => i > 0);
+            if (filledIdx.length === 0) {
+              dataRows[r].merged = true;
+              continue;
+            }
+            if (filledIdx.length === 1) {
+              const idx = filledIdx[0];
+              anchor.cells[idx] = anchor.cells[idx] + '<br>' + cs[idx];
+              dataRows[r].merged = true;
+            } else {
+              anchor.rowspanCol0 = (anchor.rowspanCol0 || 1) + 1;
+              dataRows[r].skipCol0 = true;
+            }
+          }
+          // 輸出
+          const out = ['<table class="nb-table">'];
+          out.push('<tr>' + renderCells(headerCells).map(c => '<th>'+c+'</th>').join('') + '</tr>');
+          for (const row of dataRows) {
+            if (row.merged) continue;
+            const rendered = renderCells(row.cells);
+            const tds = [];
+            for (let i = 0; i < rendered.length; i++) {
+              if (i === 0 && row.skipCol0) continue;
+              const rs = (i === 0 && row.rowspanCol0 > 1) ? ` rowspan="${row.rowspanCol0}"` : '';
+              tds.push('<td' + rs + '>' + rendered[i] + '</td>');
+            }
+            out.push('<tr>' + tds.join('') + '</tr>');
           }
           out.push('</table>');
           return out.join('');

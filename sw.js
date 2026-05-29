@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v97-unescape-chapter';
+const CACHE_NAME = 'dental-all-v98-table-cont-rowspan';
 const PRECACHE = [
   './',
   './index.html',

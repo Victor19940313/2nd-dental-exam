@@ -5363,6 +5363,7 @@
         const el = document.getElementById('exam-review-grid');
         if (!el || !_reviewEntry) return;
         const LETTERS = ['A','B','C','D','E'];
+        const STATUS_COLOR = { understood:'#22c55e', guessed:'#a78bfa', learning:'#eab308', give_up:'#ef4444' };
         const cells = _reviewEntry.qids.map((qid, i) => {
           const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
           const userIdx = _reviewEntry.userAnswers ? _reviewEntry.userAnswers[qid] : undefined;
@@ -5375,7 +5376,16 @@
             else { bg = '#fee2e2'; bd = '#fca5a5'; fg = '#991b1b'; }
           }
           const ring = (i === _reviewIdx) ? 'box-shadow:0 0 0 2px #7c3aed' : '';
-          return `<div onclick="renderReviewQ(${i})" style="background:${bg};border:1px solid ${bd};color:${fg};border-radius:5px;text-align:center;padding:.35rem 0;font-size:.82rem;font-weight:700;cursor:pointer;${ring}">${label}</div>`;
+          // 從 qState 讀使用者標記（沿用主畫面相同視覺：左上小色點=狀態、右上橘點=收藏）
+          const st = (typeof qState !== 'undefined' && qState[qid]) ? qState[qid] : {};
+          const stColor = STATUS_COLOR[st.status];
+          const stDot = stColor
+            ? `<span style="position:absolute;top:-3px;left:-3px;width:8px;height:8px;border-radius:50%;background:${stColor};border:1.5px solid white;z-index:2"></span>`
+            : '';
+          const flagDot = st.flagged
+            ? `<span style="position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:#f59e0b;border:1.5px solid white;z-index:2"></span>`
+            : '';
+          return `<div onclick="renderReviewQ(${i})" style="position:relative;background:${bg};border:1px solid ${bd};color:${fg};border-radius:5px;text-align:center;padding:.35rem 0;font-size:.82rem;font-weight:700;cursor:pointer;${ring}">${label}${stDot}${flagDot}</div>`;
         }).join('');
         el.innerHTML = cells;
       }
@@ -6680,6 +6690,10 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 - **何時用條列**：列舉、步驟、特性（≥ 3 點），每點 ≤ 25 字
 - **概念標籤**：重要名詞用 \`[[概念名]]\` 包起來會被渲染成彩色標籤
 - **粗體** 只用在最關鍵的字詞（會被反白醒目顯示）
+- **絕對禁止：\`[[ ]]\` 跟 \`**\` 同時包同一個詞**
+  * ❌ \`**[[起始病灶]]**\`、\`**[[INR]]**\`、\`**[[Aspirin]]**\`
+  * ✅ \`[[起始病灶]]\`（已經是彩色標籤了，不需要再加粗體）
+  * 規則：一個詞**要嘛**用 \`[[ ]]\` 變彩色標籤、**要嘛**用 \`**\` 變反白粗體，**二選一不重疊**
 - **斜體 *英文* 標英文專有名詞
 - 中英對照：首次出現帶英文原文
 - **絕對不要長段落解釋**！能用表格就用表格，能用條列就用條列
@@ -6691,8 +6705,8 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
   * ❌ \`\\ge 0.5\`、\`x \\times y\`、\`30 \\degree\`、\`\\alpha\` 角
   * ✅ \`≥ 0.5\`、\`x × y\`、\`30°\`、\`α\` 角
 - **粗體符號 \`**\` 兩側不要留空格**（否則無法正確顯示）
-  * ❌ \`** 敏感性 **\`、\`** [[特異性]] **\`
-  * ✅ \`**敏感性**\`、\`**[[特異性]]**\`
+  * ❌ \`** 敏感性 **\`、\`** 機制 **\`
+  * ✅ \`**敏感性**\`、\`**機制**\`
 - **表格每一行必須各自獨佔一行**，禁止把整張表擠在同一行
   * 換行 = 真的 \\n（不是空格），header / separator / row1 / row2 都要在自己的行
   * ❌ \`| A | B |---|---|| row1 | x || row2 | y |\`（全部擠在一行）
@@ -6702,6 +6716,25 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 |---|---|
 | row1 | x |
 | row2 | y |
+\`\`\`
+- **表格每一行（包含 header、separator、資料列）結尾必須以 \`|\` 收尾**（少了會解析失敗整張表崩）
+  * ❌ \`| A | B | C\`（少結尾 \`|\`）、\`| :--- | :--- | :---\`（分隔線少結尾 \`|\`）
+  * ✅ \`| A | B | C |\`、\`| :--- | :--- | :--- |\`
+- **同一格 cell 內塞多個 bullet 時，bullet 之間禁止插空白行**（會被誤判成表格結束）
+  * ❌
+\`\`\`
+| 抗凝血劑 | 風險 | - 術前評估 INR
+- 控制在 1.5～2.0
+
+- Aspirin 不需停藥
+- 諮詢內科 |
+\`\`\`
+  * ✅（bullet 之間直接連續，不要空白行）
+\`\`\`
+| 抗凝血劑 | 風險 | - 術前評估 INR
+- 控制在 1.5～2.0
+- Aspirin 不需停藥
+- 諮詢內科 |
 \`\`\`
 - **表格不要塞「廢列」**：header 後的 \`|---|---|\` 分隔符只能有一條；後面**直接接資料列**，不要再插一條「全是 \`---\` 或空白」的占位列
   * ❌
@@ -6868,6 +6901,10 @@ ${dec.reasoning || ''}
 - 單一概念的多項描述 → 用條列或 callout，**不要硬塞表格**
 - 重要名詞用 \`[[概念名]]\` 包起來
 - **粗體** 只用在最關鍵的字詞
+- **絕對禁止：\`[[ ]]\` 跟 \`**\` 同時包同一個詞**
+  * ❌ \`**[[起始病灶]]**\`、\`**[[INR]]**\`
+  * ✅ \`[[起始病灶]]\`（彩色標籤已夠醒目，不需再加粗體）
+  * 規則：一個詞**要嘛**用 \`[[ ]]\` 變彩色標籤、**要嘛**用 \`**\` 變反白粗體，**二選一不重疊**
 - 必須保留 \`### 🔗 延伸補充（國考相關必知）\` 區塊（並補上新題帶來的延伸點）
 - **🖼 圖片必須完整保留**：舊章節中所有 \`![alt](url)\` 圖片 markdown，**一張都不可刪除**
   * 可以重新調整圖片位置（換到更合適的段落下方），但**禁止省略**
@@ -6880,6 +6917,11 @@ ${dec.reasoning || ''}
 - **表格每一行各自獨佔一行**（header、separator、各 row 都要分行）
   * ❌ 全部擠在一行：\`| A | B |---|---|| x | y |\`
   * ✅ 標準多行 markdown 表格
+- **表格每一行（header、separator、資料列）結尾必須以 \`|\` 收尾**
+  * ❌ \`| A | B | C\`、\`| :--- | :--- | :---\`（少結尾 \`|\` 整張表會崩）
+  * ✅ \`| A | B | C |\`、\`| :--- | :--- | :--- |\`
+- **同一格 cell 內的 bullet 之間禁止插空白行**（會被誤判表格結束）
+  * ❌ bullet 之間有空白行  ✅ bullet 之間直接連續
 - **表格 header 後的 \`|---|---|\` 只能一條**，不要再插「全是 --- 或空白」的廢列
 
 【回傳】
@@ -8850,6 +8892,27 @@ ${instruction.trim()}
         // (b) 剝 $...$（多半 LaTeX 指令已換成 Unicode，剩下純算式/純文字）
         //     要求內含英數字或常見數學符號才剝（避免誤動到金額「$50」這類）
         md = md.replace(/\$([^$\n]*[A-Za-z0-9≥≤≠±×÷→←°≈∑∏∫√∈∂∇∝π∞αβγδθλμσωΔΩ][^$\n]*)\$/g, '$1');
+        // 7. AI 容錯（前置）：separator 行結尾忘記收 `|`
+        //    AI 很常生成「| :--- | :--- | :---」這種沒收尾的格式，導致 separator 偵測失敗、整張表崩
+        //    處理：只補 separator 行 + 它上方連續的 pipe-start 表頭行的結尾 `|`
+        //    （資料行不動，讓 7f 處理跨多行 cell 的情況）
+        md = (function _padTablePipes(text){
+          const SEP = /^\|[\s\-—–－:|]+\|?\s*$/;
+          const PIPE = /^\|/;
+          const lines = text.split('\n');
+          const out = lines.slice();
+          for (let i = 0; i < lines.length; i++) {
+            if (!SEP.test(lines[i])) continue;
+            let start = i;
+            while (start > 0 && PIPE.test(lines[start - 1])) start--;
+            for (let k = start; k <= i; k++) {
+              let l = out[k].replace(/\s+$/, '');
+              if (!l.endsWith('|')) l = l + ' |';
+              out[k] = l;
+            }
+          }
+          return out.join('\n');
+        })(md);
         // 7. AI 容錯：整張表擠在一行（少了換行）
         //    模式：「| A | B | C |---|---|---|---|| row1 | ... || row2 | ... |」
         //    處理：限定在「含 |---| 的行」內部，補上 separator 前的換行 + 拆掉 ||
@@ -8926,7 +8989,21 @@ ${instruction.trim()}
               flush(); inTable = true; out.push(line); continue;
             }
             if (!inTable) { out.push(line); continue; }
-            if (/^\s*$/.test(line)) { flush(); inTable = false; out.push(line); continue; }
+            if (/^\s*$/.test(line)) {
+              // AI 容錯：表格內部的空白行 → 看下一個非空白行是否還是表格內容，是就跳過空白行
+              //   涵蓋兩種情境：(1) row 跟 row 之間的空白行 (2) cell 內 bullet 之間的空白行（buf 存在）
+              let j = i + 1;
+              while (j < lines.length && /^\s*$/.test(lines[j])) j++;
+              if (j < lines.length) {
+                const next = lines[j];
+                const nextIsPipe = /^\|/.test(next);
+                const nextIsBulletInBuf = buf && /^-\s/.test(next);
+                if (nextIsPipe || nextIsBulletInBuf) {
+                  i = j - 1; continue;
+                }
+              }
+              flush(); inTable = false; out.push(line); continue;
+            }
             const startsP = /^\|/.test(line);
             const endsP = /\|\s*$/.test(line);
             if (startsP && endsP) { flush(); out.push(line); }
@@ -8996,6 +9073,10 @@ ${instruction.trim()}
         md = md.replace(/\*\*([^*\n]+?)[ \t]+\*\*/g, '**$1**');
         // 6. AI 容錯：粗體跨換行（** \n xxx \n **）→ 收成單行
         md = md.replace(/\*\*\s*\n\s*([^*]+?)\s*\n\s*\*\*/g, '**$1**');
+        // 6b. AI 容錯：`**[[xxx]]**` 跟 `**[[xxx]]:**` 已有彩色標籤就不要再加粗
+        //     ❌ **[[牙根覆蓋術]]** → ✅ [[牙根覆蓋術]]
+        //     ❌ **[[INR]]：** → ✅ [[INR]]：
+        md = md.replace(/\*\*\s*(\[\[[^\]]+\]\])\s*([:：]?)\s*\*\*/g, '$1$2');
         // 8. AI 容錯：整行只有 `---`（或更多 dash）的孤立水平線 → 移除
         //    AI 整理時常在區塊之間塞一條，但實際渲染突兀；表格的 `|---|...` 開頭有 `|`，不會被誤動
         md = md.replace(/^[-—–_]{3,}\s*$/gm, '');

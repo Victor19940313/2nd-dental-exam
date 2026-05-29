@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v93-multiline-row';
+const CACHE_NAME = 'dental-all-v94-table-pad-marks';
 const PRECACHE = [
   './',
   './index.html',

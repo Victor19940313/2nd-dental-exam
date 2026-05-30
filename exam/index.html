@@ -10517,9 +10517,13 @@ ${instruction.trim()}
         const sat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
         if (sat !== 100) applyThemeSat(sat);
       })();
-      // 飽和度
+      // 飽和度(套在 screen-* 上,不要套 body 否則會破壞 modal 定位)
       function applyThemeSat(pct){
-        document.body.style.filter = pct === 100 ? '' : `saturate(${pct}%)`;
+        const fil = pct === 100 ? '' : `saturate(${pct}%)`;
+        document.body.style.filter = ''; // 清掉舊版可能殘留在 body 上的 filter
+        document.querySelectorAll('#screen-notebook, #screen-exam, #screen-wrongbook, #screen-exam-results, #screen-home').forEach(el => {
+          el.style.filter = fil;
+        });
         const valEl = document.getElementById('theme-sat-value');
         if (valEl) valEl.textContent = pct + '%';
         const slider = document.getElementById('theme-sat-slider');

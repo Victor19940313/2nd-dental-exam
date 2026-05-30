@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v128-theme-peruser';
+const CACHE_NAME = 'dental-all-v129-theme-gstr-cleanup';
 const PRECACHE = [
   './',
   './index.html',

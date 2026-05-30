@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v148-abstract';
+const CACHE_NAME = 'dental-all-v149-hua-pin-and-sync';
 const PRECACHE = [
   './',
   './index.html',

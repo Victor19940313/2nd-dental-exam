@@ -392,7 +392,53 @@ footer{
     selectUser(id);
   }
 
-  function selectUser(id){
+  // HUA 的 PIN 鎖(其他 user 不影響)
+  async function _hashPin(pin){
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('dental-pin-v1:' + pin));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  async function _verifyOrSetupHuaPin(){
+    // 1) 拿 cloud / local 任一已存在的 hash(優先 cloud)
+    let cloudHash = null;
+    try {
+      if (window.DentalSync && DentalSync.getPinHash) cloudHash = await DentalSync.getPinHash('hua');
+    } catch(e){}
+    const localHash = localStorage.getItem('hua_pin_hash');
+    const knownHash = cloudHash || localHash;
+
+    if (!knownHash) {
+      // 第一次設 PIN
+      const p1 = prompt('第一次使用 HUA。請設定 PIN(4-6 位數字):');
+      if (p1 == null) return false;
+      if (!/^\d{4,6}$/.test(p1)) { alert('PIN 必須是 4-6 位數字'); return false; }
+      const p2 = prompt('再輸入一次 PIN 確認:');
+      if (p2 == null) return false;
+      if (p1 !== p2) { alert('兩次輸入不一致'); return false; }
+      const h = await _hashPin(p1);
+      localStorage.setItem('hua_pin_hash', h);
+      try { if (window.DentalSync && DentalSync.setPinHash) await DentalSync.setPinHash('hua', h); } catch(e){}
+      alert('PIN 已設定。下次登入這個帳號時需要輸入 PIN。');
+      return true;
+    }
+    // 驗證 PIN
+    const pin = prompt('請輸入 HUA 的 PIN:');
+    if (pin == null) return false;
+    const h = await _hashPin(pin);
+    if (h === knownHash) {
+      // 同步:若 cloud 有但本機沒,寫回本機;反之亦然
+      if (cloudHash && !localHash) localStorage.setItem('hua_pin_hash', cloudHash);
+      if (!cloudHash && localHash) { try { if (window.DentalSync && DentalSync.setPinHash) await DentalSync.setPinHash('hua', localHash); } catch(e){} }
+      return true;
+    }
+    alert('PIN 錯誤');
+    return false;
+  }
+
+  async function selectUser(id){
+    if (id === 'hua') {
+      const ok = await _verifyOrSetupHuaPin();
+      if (!ok) return;
+    }
     setCurUser(id);
     if(typeof DentalSync !== 'undefined') DentalSync.switchUser(id);
     showMain();

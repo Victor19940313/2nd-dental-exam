@@ -19,7 +19,9 @@
   var SYNC_KEYS = [
     "wrongbook_state", "daily_log", "wrongbook_lastpos",
     "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo", "gemini_model",
-    "examHistory"
+    "examHistory",
+    "nb_theme", "nb_theme_sat", "nb_theme_opa", "nb_theme_gstr",
+    "nb_toc_mono", "nb_bg_style", "nb_font_style"
   ];
 
   var _db = null;
@@ -294,6 +296,16 @@
     getRemoteSnapshot: getRemoteSnapshot,
     countMarks: countMarks,
     getUserId: function() { return _userId; },
+
+    /** PIN 鎖:讀寫 users/{id}/auth/pin_hash */
+    getPinHash: function(userId) {
+      if (!_db) return Promise.reject(new Error("尚未連線"));
+      return _db.ref("users/" + userId + "/auth/pin_hash").once("value").then(function(snap){ return snap.val(); });
+    },
+    setPinHash: function(userId, hash) {
+      if (!_db) return Promise.reject(new Error("尚未連線"));
+      return _db.ref("users/" + userId + "/auth/pin_hash").set(hash);
+    },
 
     getStatus: function () {
       return {

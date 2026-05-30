@@ -10045,10 +10045,11 @@ ${instruction.trim()}
           );
           if (hasWidths) {
             const clone = table.cloneNode(true);
-            // 清掉 TipTap 拖拽過程的殘留 widget,避免存進 markdown
+            // 1. 清掉 TipTap 拖拽過程留下的 widget 跟 placeholder
             clone.querySelectorAll('.column-resize-handle, .ProseMirror-widget').forEach(el => el.remove());
+            clone.querySelectorAll('br.ProseMirror-trailingBreak').forEach(br => br.remove());
             clone.querySelectorAll('.column-resize-dragging').forEach(el => el.classList.remove('column-resize-dragging'));
-            // 把 colwidth 屬性轉成 inline width
+            // 2. 把 colwidth 屬性轉成 inline width
             clone.querySelectorAll('[colwidth]').forEach(cell => {
               const cw = cell.getAttribute('colwidth');
               const widths = cw.split(',').map(n => parseInt(n)).filter(n => !isNaN(n) && n > 0);
@@ -10059,7 +10060,27 @@ ${instruction.trim()}
               }
               cell.removeAttribute('colwidth');
             });
-            // 清掉空 class 屬性
+            // 3. 移除預設的 colspan="1" rowspan="1"
+            clone.querySelectorAll('th, td').forEach(cell => {
+              if (cell.getAttribute('colspan') === '1') cell.removeAttribute('colspan');
+              if (cell.getAttribute('rowspan') === '1') cell.removeAttribute('rowspan');
+            });
+            // 4. 拆掉 cell 內單獨的 <p> 包裝(TipTap 會幫每個 cell 內容加 <p>,我們不需要)
+            clone.querySelectorAll('th, td').forEach(cell => {
+              if (cell.children.length === 1 && cell.firstElementChild.tagName === 'P') {
+                const p = cell.firstElementChild;
+                while (p.firstChild) cell.appendChild(p.firstChild);
+                p.remove();
+              }
+            });
+            // 5. 移除 <colgroup>(資訊已經在 cell 的 style 上)
+            clone.querySelectorAll('colgroup').forEach(cg => cg.remove());
+            // 6. 移除 <tbody> 包裝(瀏覽器會自動加,不需要存)
+            clone.querySelectorAll('tbody').forEach(tb => {
+              while (tb.firstChild) tb.parentNode.insertBefore(tb.firstChild, tb);
+              tb.remove();
+            });
+            // 7. 清掉空 class 屬性
             clone.querySelectorAll('[class=""]').forEach(el => el.removeAttribute('class'));
             return clone.outerHTML;
           }

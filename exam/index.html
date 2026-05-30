@@ -2378,7 +2378,7 @@
         background: white; padding: 1rem 1.2rem;
         border: 1.5px solid #e9d5ff; border-radius: 10px;
       }
-      .nb-editor-tiptap .ProseMirror { outline: none; min-height: 50vh; line-height: 1.65; color: #374151; }
+      .nb-editor-tiptap .ProseMirror { outline: none; min-height: 50vh; line-height: 1.5; color: #374151; }
       .nb-editor-tiptap .ProseMirror h2 {
         background: linear-gradient(135deg, #7c3aed, #a855f7); color: white;
         padding: .7rem 1rem; border-radius: 10px; font-size: 1.15rem; margin: 1.2rem 0 .8rem;
@@ -10029,25 +10029,30 @@ ${instruction.trim()}
           return s;
         }
         function tableToMD(table) {
-          // 如果表格有自訂欄寬(TipTap 拖過),直接用 HTML 格式存,不要拆成 markdown
-          // 因為 markdown 表格不支援欄寬指定,拆掉就丟失了
-          const hasWidths = !!table.querySelector('[colwidth]');
+          // 偵測表格是否有自訂欄寬(從 colwidth 屬性 或 inline style 或 colgroup)
+          const hasWidths = !!(
+            table.querySelector('[colwidth]') ||
+            table.querySelector('th[style*="width"], td[style*="width"]') ||
+            table.querySelector('colgroup col[style]')
+          );
           if (hasWidths) {
-            // 把 TipTap 的 colwidth="100" 屬性轉成 inline style="width: 100px" 才能在閱讀模式生效
             const clone = table.cloneNode(true);
+            // 清掉 TipTap 拖拽過程的殘留 widget,避免存進 markdown
+            clone.querySelectorAll('.column-resize-handle, .ProseMirror-widget').forEach(el => el.remove());
+            clone.querySelectorAll('.column-resize-dragging').forEach(el => el.classList.remove('column-resize-dragging'));
+            // 把 colwidth 屬性轉成 inline width
             clone.querySelectorAll('[colwidth]').forEach(cell => {
               const cw = cell.getAttribute('colwidth');
               const widths = cw.split(',').map(n => parseInt(n)).filter(n => !isNaN(n) && n > 0);
-              if (widths.length === 1) {
-                cell.style.width = widths[0] + 'px';
-                cell.style.minWidth = widths[0] + 'px';
-              } else if (widths.length > 1) {
-                const sum = widths.reduce((a, b) => a + b, 0);
-                if (sum) cell.style.minWidth = sum + 'px';
+              const total = widths.reduce((a, b) => a + b, 0);
+              if (total) {
+                cell.style.minWidth = total + 'px';
+                if (widths.length === 1) cell.style.width = total + 'px';
               }
+              cell.removeAttribute('colwidth');
             });
-            // 清除 colwidth 屬性,只留 inline style
-            clone.querySelectorAll('[colwidth]').forEach(c => c.removeAttribute('colwidth'));
+            // 清掉空 class 屬性
+            clone.querySelectorAll('[class=""]').forEach(el => el.removeAttribute('class'));
             return clone.outerHTML;
           }
           const matrix = [];
@@ -11379,6 +11384,22 @@ ${instruction.trim()}
             content: initialHTML || '',
             onUpdate: opts.onUpdate,
             editorProps: {
+              // Enter 改成「同段落內換行」(<br>),不換段落
+              // 不然每按 Enter 都會多一個空段落,使用者覺得「中間多一行」
+              handleKeyDown(view, event){
+                if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+                  const { state, dispatch } = view;
+                  const { $from } = state.selection;
+                  // 在 list / heading / table cell / blockquote 等特殊位置時保留預設行為
+                  const parentType = $from.parent.type.name;
+                  if (parentType === 'paragraph') {
+                    const tr = state.tr.replaceSelectionWith(state.schema.nodes.hardBreak.create());
+                    dispatch(tr);
+                    return true;
+                  }
+                }
+                return false;
+              },
               // 圖片貼上:攔截、上傳、插入 URL(失敗就什麼都不做)
               handlePaste(view, event){
                 const items = event.clipboardData?.items;

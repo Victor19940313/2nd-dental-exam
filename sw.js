@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v138-toc-mono-toggle';
+const CACHE_NAME = 'dental-all-v139-nippon-colors';
 const PRECACHE = [
   './',
   './index.html',

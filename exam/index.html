@@ -163,6 +163,54 @@
       }
       body.theme-hh17 { background: #fef6e4; }
       body.theme-hh17 .nb-chapter-content, body.theme-hh17 .nb-toc-pane, body.theme-hh17 .nb-editor-tiptap { background: #fffaf0; }
+
+      /* === 日本傳統色 1: 桜 sakura(淡櫻粉) === */
+      body.theme-jp-sakura {
+        --purple: #d24e58; --purple-light: #fef4f4; --purple-dark: #8a1d2a; --purple-soft: #f5b1aa;
+        --strong-bg: #f9c0c0; --strong-color: #8a1d2a; --em-color: #767676;
+        --tag-bg: #fef4f4; --tag-color: #8a1d2a;
+      }
+      body.theme-jp-sakura { background: #fef4f4; }
+
+      /* === 日本傳統色 2: 抹茶 matcha(茶綠) === */
+      body.theme-jp-matcha {
+        --purple: #6f7d3a; --purple-light: #f0eed7; --purple-dark: #3a4625; --purple-soft: #aab578;
+        --strong-bg: #d3d56e; --strong-color: #3a4625; --em-color: #5a5a3a;
+        --tag-bg: #f0eed7; --tag-color: #3a4625;
+      }
+      body.theme-jp-matcha { background: #faf8e8; }
+
+      /* === 日本傳統色 3: 浅葱 asagi(水藍) === */
+      body.theme-jp-asagi {
+        --purple: #008b94; --purple-light: #d6ecea; --purple-dark: #00484f; --purple-soft: #5dbdc6;
+        --strong-bg: #aee0db; --strong-color: #00484f; --em-color: #4a6c6a;
+        --tag-bg: #d6ecea; --tag-color: #00484f;
+      }
+      body.theme-jp-asagi { background: #f0f7f6; }
+
+      /* === 日本傳統色 4: 白鼠 shironezumi(灰白護眼) === */
+      body.theme-jp-shironezumi {
+        --purple: #6e6962; --purple-light: #e8e1dc; --purple-dark: #3a3631; --purple-soft: #b9a8a6;
+        --strong-bg: #d3c8c0; --strong-color: #3a3631; --em-color: #6b6258;
+        --tag-bg: #e8e1dc; --tag-color: #3a3631;
+      }
+      body.theme-jp-shironezumi { background: #f5f1ee; }
+
+      /* === 日本傳統色 5: 鳩羽紫 hatoba(灰紫雅致) === */
+      body.theme-jp-hatoba {
+        --purple: #7a6d85; --purple-light: #ede9f0; --purple-dark: #3f3548; --purple-soft: #b3a3bc;
+        --strong-bg: #d0c2d6; --strong-color: #3f3548; --em-color: #6f5f7a;
+        --tag-bg: #ede9f0; --tag-color: #3f3548;
+      }
+      body.theme-jp-hatoba { background: #f6f3f7; }
+
+      /* === 日本傳統色 6: 黄丹 oudan(暖橙) === */
+      body.theme-jp-oudan {
+        --purple: #cd5d2a; --purple-light: #fceddb; --purple-dark: #7a3712; --purple-soft: #f3a06f;
+        --strong-bg: #f8c89c; --strong-color: #7a3712; --em-color: #815e3b;
+        --tag-bg: #fceddb; --tag-color: #7a3712;
+      }
+      body.theme-jp-oudan { background: #fdf6ec; }
       /* 深色主題:全域背景與字色 */
       body.theme-dark { background: #1c1a23; color: #ebe5f0; }
       body.theme-dark .nb-chapter-content,
@@ -280,6 +328,12 @@
       .theme-pills .t-hh15 { background: linear-gradient(135deg, #28666e, #faae2b); }
       .theme-pills .t-hh16 { background: linear-gradient(135deg, #004643, #f9bc60); }
       .theme-pills .t-hh17 { background: linear-gradient(135deg, #f582ae, #8bd3dd); color: #001858; }
+      .theme-pills .t-jp-sakura      { background: linear-gradient(135deg, #fef4f4, #f5b1aa); color: #8a1d2a; }
+      .theme-pills .t-jp-matcha      { background: linear-gradient(135deg, #f0eed7, #aab578); color: #3a4625; }
+      .theme-pills .t-jp-asagi       { background: linear-gradient(135deg, #d6ecea, #5dbdc6); color: #00484f; }
+      .theme-pills .t-jp-shironezumi { background: linear-gradient(135deg, #e8e1dc, #b9a8a6); color: #3a3631; }
+      .theme-pills .t-jp-hatoba      { background: linear-gradient(135deg, #ede9f0, #b3a3bc); color: #3f3548; }
+      .theme-pills .t-jp-oudan       { background: linear-gradient(135deg, #fceddb, #f3a06f); color: #7a3712; }
       * {
         box-sizing: border-box;
         margin: 0;
@@ -3788,6 +3842,15 @@
             <button class="t-hh14" data-theme="theme-hh14" title="黃白藍">#14</button>
             <button class="t-hh15" data-theme="theme-hh15" title="海綠檸黃">#15</button>
             <button class="t-hh17" data-theme="theme-hh17" title="奶油派粉薄荷">#17</button>
+          </div>
+          <label style="display:block;font-size:.78rem;font-weight:700;color:#6b7280;margin:.7rem 0 .3rem">🎌 日本傳統色(雅致護眼)</label>
+          <div id="theme-pills-japanese" class="theme-pills">
+            <button class="t-jp-sakura" data-theme="theme-jp-sakura" title="桜 sakura 淡櫻粉">桜</button>
+            <button class="t-jp-matcha" data-theme="theme-jp-matcha" title="抹茶 matcha 茶綠">抹茶</button>
+            <button class="t-jp-asagi" data-theme="theme-jp-asagi" title="浅葱 asagi 水藍">浅葱</button>
+            <button class="t-jp-shironezumi" data-theme="theme-jp-shironezumi" title="白鼠 shironezumi 灰白">白鼠</button>
+            <button class="t-jp-hatoba" data-theme="theme-jp-hatoba" title="鳩羽紫 hatoba 灰紫">鳩羽紫</button>
+            <button class="t-jp-oudan" data-theme="theme-jp-oudan" title="黄丹 oudan 暖橙">黄丹</button>
           </div>
           <div style="margin-top:.7rem;display:flex;align-items:center;gap:.6rem">
             <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🎚 飽和度</label>
@@ -10656,7 +10719,7 @@ ${instruction.trim()}
         if (ghRepo) ghRepo.value = getGithubRepo();
         // 主題切換 pills(同時處理基本色 + 漸層)
         const curTheme = localStorage.getItem(uKey('nb_theme')) || '';
-        document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(btn => {
+        document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button, #theme-pills-japanese button').forEach(btn => {
           btn.classList.toggle('is-active', (btn.dataset.theme || '') === curTheme);
           if (!btn._themeBound) {
             btn._themeBound = true;
@@ -10704,7 +10767,7 @@ ${instruction.trim()}
         document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
         if (themeClass) document.body.classList.add(themeClass);
         try { localStorage.setItem(uKey('nb_theme'), themeClass); } catch(e){}
-        document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(b => {
+        document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button, #theme-pills-japanese button').forEach(b => {
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
       }

@@ -2427,10 +2427,7 @@
       }
       .nb-editor-tiptap .ProseMirror tr:nth-child(even) td { background: #faf5ff; }
       .nb-editor-tiptap .ProseMirror td > p, .nb-editor-tiptap .ProseMirror th > p { margin: 0; line-height: 1.55; }
-      .nb-editor-tiptap .ProseMirror .column-resize-handle {
-        position: absolute; right: -2px; top: 0; bottom: -2px;
-        width: 4px; background-color: #7c3aed; pointer-events: none;
-      }
+      /* 不要客製 column-resize-handle 樣式,讓 TipTap 自己處理,避免拖拽狀態卡住 */
       .nb-editor-tiptap .ProseMirror.resize-cursor { cursor: col-resize; }
       .nb-editor-tiptap .ProseMirror .selectedCell::after {
         z-index: 2; position: absolute; content: '';
@@ -8930,6 +8927,17 @@ ${JSON.stringify(candidates, null, 2)}
         const tiptapHtml = transformHtmlForTipTap(html);
         window.NotebookTipTap.mount(el, tiptapHtml);
         window.NotebookTipTap.focus();
+        // 安全網:點任何地方時清掉殘留的拖拽狀態(避免 TipTap 拖一次就卡住)
+        if (!window._tiptapClickSafetyNet) {
+          window._tiptapClickSafetyNet = true;
+          document.addEventListener('mouseup', () => {
+            setTimeout(() => {
+              document.querySelectorAll('.nb-editor-tiptap .column-resize-dragging').forEach(c => c.classList.remove('column-resize-dragging'));
+              const pm = document.querySelector('.nb-editor-tiptap .ProseMirror');
+              if (pm && pm.classList.contains('resize-cursor')) pm.classList.remove('resize-cursor');
+            }, 100);
+          }, true);
+        }
       }
       // 把原版渲染出的 HTML 轉成 TipTap 友善版本:
       //  - 拆掉 <span class="nb-img-wrap"> 外層,保留 <img> 並把 --img-max 搬到 style="width:..."
@@ -11372,14 +11380,14 @@ ${instruction.trim()}
             onUpdate: opts.onUpdate,
             editorProps: {
               // Enter 改成「同段落內換行」(<br>),不換段落
-              // 不然每按 Enter 都會多一個空段落,使用者覺得「中間多一行」
               handleKeyDown(view, event){
                 if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
                   const { state, dispatch } = view;
                   const { $from } = state.selection;
-                  // 在 list / heading / table cell / blockquote 等特殊位置時保留預設行為
                   const parentType = $from.parent.type.name;
                   if (parentType === 'paragraph') {
+                    event.preventDefault();
+                    event.stopPropagation();
                     const tr = state.tr.replaceSelectionWith(state.schema.nodes.hardBreak.create());
                     dispatch(tr);
                     return true;

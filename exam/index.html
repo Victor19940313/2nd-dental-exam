@@ -66,79 +66,148 @@
         --tag-bg: #534570; --tag-color: #d4c4f0;
         --bg: #1c1a23;
       }
-      /* === 漸層:黃昏(粉橘) === */
-      body.theme-sunset {
-        --purple: #ec4899; --purple-light: #fce7f3; --purple-dark: #be185d; --purple-soft: #f97316;
-        --strong-bg: #fed7aa; --strong-color: #c2410c;
-        --em-color: #db2777;
-        --tag-bg: #fbcfe8; --tag-color: #9d174d;
+      /* === HappyHues 1: 海軍藍 + 珊瑚 + 天空藍 === */
+      body.theme-hh1 {
+        --purple: #3da9fc; --purple-light: #d8eefe; --purple-dark: #094067; --purple-soft: #90b4ce;
+        --strong-bg: #ef4565; --strong-color: #fffffe; --em-color: #5f6c7b;
+        --tag-bg: #d8eefe; --tag-color: #094067;
       }
-      body.theme-sunset { background: linear-gradient(135deg, #fce7f3, #ffedd5) fixed; }
-      /* === 漸層:深海(藍綠) === */
-      body.theme-deepsea {
-        --purple: #0ea5e9; --purple-light: #e0f2fe; --purple-dark: #0369a1; --purple-soft: #14b8a6;
-        --strong-bg: #99f6e4; --strong-color: #0f766e;
-        --em-color: #0891b2;
-        --tag-bg: #bae6fd; --tag-color: #075985;
-      }
-      body.theme-deepsea { background: linear-gradient(135deg, #e0f2fe, #ccfbf1) fixed; }
-      /* === 漸層:夜空(深藍紫) === */
-      body.theme-nightsky {
-        --purple: #a78bfa; --purple-light: #312e81; --purple-dark: #7c3aed; --purple-soft: #c084fc;
-        --strong-bg: rgba(196, 181, 253, .25); --strong-color: #ddd6fe;
-        --em-color: #93c5fd;
-        --tag-bg: #4338ca; --tag-color: #e0e7ff;
-        --bg: #1e1b4b;
-      }
-      body.theme-nightsky {
-        background: linear-gradient(135deg, #1e1b4b, #312e81) fixed;
-        color: #e0e7ff;
-      }
-      body.theme-nightsky .nb-chapter-content,
-      body.theme-nightsky .nb-toc-pane,
-      body.theme-nightsky .nb-editor-tiptap,
-      body.theme-nightsky .nb-editor-textarea,
-      body.theme-nightsky .nb-editor-preview-live { background: #1e1b4b; color: #e0e7ff; }
+      body.theme-hh1 { background: #fffffe; }
 
-      /* === 奶油派(HappyHues 17 風格:奶油+粉+薄荷) === */
-      body.theme-creampie {
+      /* === HappyHues 2: 黑底 + 紫綠(深色) === */
+      body.theme-hh2 {
+        --purple: #7f5af0; --purple-light: #242629; --purple-dark: #6a45ea; --purple-soft: #2cb67d;
+        --strong-bg: rgba(127,90,240,.25); --strong-color: #fffffe; --em-color: #94a1b2;
+        --tag-bg: #2cb67d; --tag-color: #16161a;
+      }
+      body.theme-hh2 { background: #16161a; color: #fffffe; }
+      body.theme-hh2 .nb-chapter-content, body.theme-hh2 .nb-toc-pane, body.theme-hh2 .nb-editor-tiptap { background: #242629; color: #fffffe; }
+
+      /* === HappyHues 3: 簡潔藍灰 === */
+      body.theme-hh3 {
+        --purple: #3da9fc; --purple-light: #d8eefe; --purple-dark: #094067; --purple-soft: #94d2e7;
+        --strong-bg: #ffd803; --strong-color: #094067; --em-color: #5f6c7b;
+        --tag-bg: #d8eefe; --tag-color: #094067;
+      }
+      body.theme-hh3 { background: linear-gradient(135deg, #fffffe, #d8eefe) fixed; }
+
+      /* === HappyHues 4: 靛藍 + 嫩珊瑚 === */
+      body.theme-hh4 {
+        --purple: #6246ea; --purple-light: #d1d1e9; --purple-dark: #4631b8; --purple-soft: #e45858;
+        --strong-bg: #e45858; --strong-color: #fffffe; --em-color: #2b2c34;
+        --tag-bg: #d1d1e9; --tag-color: #2b2c34;
+      }
+      body.theme-hh4 { background: #fffffe; }
+
+      /* === HappyHues 5: 純白靛 === */
+      body.theme-hh5 {
+        --purple: #6246ea; --purple-light: #d1d1e9; --purple-dark: #4631b8; --purple-soft: #a3a1de;
+        --strong-bg: #d1d1e9; --strong-color: #6246ea; --em-color: #2b2c34;
+        --tag-bg: #d1d1e9; --tag-color: #6246ea;
+      }
+      body.theme-hh5 { background: #fffffe; }
+
+      /* === HappyHues 6: 海軍深 + 粉雪(深色) === */
+      body.theme-hh6 {
+        --purple: #eebbc3; --purple-light: #232946; --purple-dark: #d99ba6; --purple-soft: #b8c1ec;
+        --strong-bg: #eebbc3; --strong-color: #232946; --em-color: #b8c1ec;
+        --tag-bg: #b8c1ec; --tag-color: #232946;
+      }
+      body.theme-hh6 { background: #232946; color: #fffffe; }
+      body.theme-hh6 .nb-chapter-content, body.theme-hh6 .nb-toc-pane, body.theme-hh6 .nb-editor-tiptap { background: #2d3457; color: #fffffe; }
+
+      /* === HappyHues 7: 暖橙 + 焦糖 === */
+      body.theme-hh7 {
+        --purple: #ff8e3c; --purple-light: #fef6e4; --purple-dark: #d96f1c; --purple-soft: #d9376e;
+        --strong-bg: #ffd803; --strong-color: #20272f; --em-color: #5e503f;
+        --tag-bg: #fef6e4; --tag-color: #d9376e;
+      }
+      body.theme-hh7 { background: linear-gradient(135deg, #fffffe, #fef6e4) fixed; }
+
+      /* === HappyHues 8: 大地系 === */
+      body.theme-hh8 {
+        --purple: #ff8e3c; --purple-light: #fef6e4; --purple-dark: #d96f1c; --purple-soft: #ffc6ac;
+        --strong-bg: #ffc6ac; --strong-color: #20272f; --em-color: #5e503f;
+        --tag-bg: #ffc6ac; --tag-color: #20272f;
+      }
+      body.theme-hh8 { background: #fffffe; }
+
+      /* === HappyHues 9: 活力珊瑚橙 === */
+      body.theme-hh9 {
+        --purple: #f25f4c; --purple-light: #fcfcfc; --purple-dark: #c54430; --purple-soft: #ff8906;
+        --strong-bg: #ff8906; --strong-color: #fffffe; --em-color: #e53170;
+        --tag-bg: #fcfcfc; --tag-color: #00214d;
+      }
+      body.theme-hh9 { background: linear-gradient(135deg, #fcfcfc, #ffe9d4) fixed; }
+
+      /* === HappyHues 10: 深夜薰衣(深色) === */
+      body.theme-hh10 {
+        --purple: #b8c1ec; --purple-light: #232946; --purple-dark: #a3a8d4; --purple-soft: #eebbc3;
+        --strong-bg: #eebbc3; --strong-color: #232946; --em-color: #b8c1ec;
+        --tag-bg: #b8c1ec; --tag-color: #232946;
+      }
+      body.theme-hh10 { background: linear-gradient(135deg, #232946, #2d3457) fixed; color: #fffffe; }
+      body.theme-hh10 .nb-chapter-content, body.theme-hh10 .nb-toc-pane, body.theme-hh10 .nb-editor-tiptap { background: #2d3457; color: #fffffe; }
+
+      /* === HappyHues 11: 檸檬亮粉 === */
+      body.theme-hh11 {
+        --purple: #d9376e; --purple-light: #fcfaf9; --purple-dark: #a82754; --purple-soft: #ffd803;
+        --strong-bg: #ffd803; --strong-color: #1b1c1e; --em-color: #d9376e;
+        --tag-bg: #ffd803; --tag-color: #1b1c1e;
+      }
+      body.theme-hh11 { background: #fffffe; }
+
+      /* === HappyHues 12: 酒紅深(深色) === */
+      body.theme-hh12 {
+        --purple: #e16162; --purple-light: #242629; --purple-dark: #b54546; --purple-soft: #ffc6ac;
+        --strong-bg: rgba(225,97,98,.3); --strong-color: #fffffe; --em-color: #ffc6ac;
+        --tag-bg: #ffc6ac; --tag-color: #16161a;
+      }
+      body.theme-hh12 { background: #16161a; color: #fffffe; }
+      body.theme-hh12 .nb-chapter-content, body.theme-hh12 .nb-toc-pane, body.theme-hh12 .nb-editor-tiptap { background: #242629; color: #fffffe; }
+
+      /* === HappyHues 13: 金黃深紫(深色) === */
+      body.theme-hh13 {
+        --purple: #e2c044; --purple-light: #2a2c3e; --purple-dark: #c4a532; --purple-soft: #aaabb8;
+        --strong-bg: rgba(226,192,68,.25); --strong-color: #e2c044; --em-color: #aaabb8;
+        --tag-bg: #e2c044; --tag-color: #1f2235;
+      }
+      body.theme-hh13 { background: linear-gradient(135deg, #1f2235, #2a2c3e) fixed; color: #fffffe; }
+      body.theme-hh13 .nb-chapter-content, body.theme-hh13 .nb-toc-pane, body.theme-hh13 .nb-editor-tiptap { background: #2a2c3e; color: #fffffe; }
+
+      /* === HappyHues 14: 黃白藍 === */
+      body.theme-hh14 {
+        --purple: #faae2b; --purple-light: #cee3f8; --purple-dark: #d68b15; --purple-soft: #cee3f8;
+        --strong-bg: #faae2b; --strong-color: #1f2235; --em-color: #2c698d;
+        --tag-bg: #cee3f8; --tag-color: #1f2235;
+      }
+      body.theme-hh14 { background: linear-gradient(135deg, #fffffe, #cee3f8) fixed; }
+
+      /* === HappyHues 15: 海綠檸黃 === */
+      body.theme-hh15 {
+        --purple: #28666e; --purple-light: #cee3f8; --purple-dark: #1a4d54; --purple-soft: #faae2b;
+        --strong-bg: #faae2b; --strong-color: #28666e; --em-color: #2c698d;
+        --tag-bg: #cee3f8; --tag-color: #28666e;
+      }
+      body.theme-hh15 { background: linear-gradient(135deg, #fffffe, #cee3f8) fixed; }
+
+      /* === HappyHues 16: 森林金(深色) === */
+      body.theme-hh16 {
+        --purple: #f9bc60; --purple-light: #005d59; --purple-dark: #e09844; --purple-soft: #abd1c6;
+        --strong-bg: #f9bc60; --strong-color: #004643; --em-color: #abd1c6;
+        --tag-bg: #abd1c6; --tag-color: #004643;
+      }
+      body.theme-hh16 { background: linear-gradient(135deg, #004643, #005d59) fixed; color: #fffffe; }
+      body.theme-hh16 .nb-chapter-content, body.theme-hh16 .nb-toc-pane, body.theme-hh16 .nb-editor-tiptap { background: #005d59; color: #fffffe; }
+
+      /* === HappyHues 17: 奶油派(粉+薄荷) === */
+      body.theme-hh17 {
         --purple: #f582ae; --purple-light: #fef6e4; --purple-dark: #001858; --purple-soft: #8bd3dd;
-        --strong-bg: #f3d2c1; --strong-color: #001858;
-        --em-color: #5b21b6;
+        --strong-bg: #f3d2c1; --strong-color: #001858; --em-color: #5b21b6;
         --tag-bg: #8bd3dd; --tag-color: #001858;
-        --bg: #fef6e4;
       }
-      body.theme-creampie { background: #fef6e4; }
-      body.theme-creampie .nb-chapter-content,
-      body.theme-creampie .nb-toc-pane,
-      body.theme-creampie .nb-editor-tiptap { background: #fffaf0; }
-
-      /* === 藍莓(柔紫+米白) === */
-      body.theme-blueberry {
-        --purple: #8d72e1; --purple-light: #f3f0ff; --purple-dark: #5b3eb8; --purple-soft: #b0aaff;
-        --strong-bg: #fde68a; --strong-color: #5b3eb8;
-        --em-color: #db2777;
-        --tag-bg: #ddd6fe; --tag-color: #5b21b6;
-      }
-      body.theme-blueberry { background: linear-gradient(135deg, #f3f0ff, #ffe4e6) fixed; }
-
-      /* === 薄荷糖(薄荷綠+奶白) === */
-      body.theme-mint {
-        --purple: #10b981; --purple-light: #ecfdf5; --purple-dark: #047857; --purple-soft: #6ee7b7;
-        --strong-bg: #fef3c7; --strong-color: #047857;
-        --em-color: #be185d;
-        --tag-bg: #d1fae5; --tag-color: #064e3b;
-      }
-      body.theme-mint { background: linear-gradient(135deg, #ecfdf5, #fefce8) fixed; }
-
-      /* === 蜜桃可(粉+鵝黃) === */
-      body.theme-peachy {
-        --purple: #ec4899; --purple-light: #fdf2f8; --purple-dark: #9d174d; --purple-soft: #fcd34d;
-        --strong-bg: #fde68a; --strong-color: #9d174d;
-        --em-color: #be185d;
-        --tag-bg: #fce7f3; --tag-color: #831843;
-      }
-      body.theme-peachy { background: linear-gradient(135deg, #fdf2f8, #fef3c7) fixed; }
+      body.theme-hh17 { background: #fef6e4; }
+      body.theme-hh17 .nb-chapter-content, body.theme-hh17 .nb-toc-pane, body.theme-hh17 .nb-editor-tiptap { background: #fffaf0; }
       /* 深色主題:全域背景與字色 */
       body.theme-dark { background: #1c1a23; color: #ebe5f0; }
       body.theme-dark .nb-chapter-content,
@@ -210,13 +279,23 @@
       .theme-pills .t-ocean    { background: linear-gradient(135deg, #5a85a8, #86abc5); }
       .theme-pills .t-forest   { background: linear-gradient(135deg, #6b9560, #92b387); }
       .theme-pills .t-dark     { background: linear-gradient(135deg, #28252f, #524a60); }
-      .theme-pills .t-sunset    { background: linear-gradient(135deg, #ec4899, #f97316); }
-      .theme-pills .t-deepsea   { background: linear-gradient(135deg, #0ea5e9, #14b8a6); }
-      .theme-pills .t-nightsky  { background: linear-gradient(135deg, #1e1b4b, #a78bfa); }
-      .theme-pills .t-creampie  { background: linear-gradient(135deg, #f582ae, #8bd3dd); color: #001858; }
-      .theme-pills .t-blueberry { background: linear-gradient(135deg, #8d72e1, #b0aaff); }
-      .theme-pills .t-mint      { background: linear-gradient(135deg, #10b981, #6ee7b7); }
-      .theme-pills .t-peachy    { background: linear-gradient(135deg, #ec4899, #fcd34d); }
+      .theme-pills .t-hh1  { background: linear-gradient(135deg, #094067, #3da9fc); }
+      .theme-pills .t-hh2  { background: linear-gradient(135deg, #16161a, #7f5af0); }
+      .theme-pills .t-hh3  { background: linear-gradient(135deg, #3da9fc, #d8eefe); color: #094067; }
+      .theme-pills .t-hh4  { background: linear-gradient(135deg, #6246ea, #e45858); }
+      .theme-pills .t-hh5  { background: linear-gradient(135deg, #6246ea, #d1d1e9); }
+      .theme-pills .t-hh6  { background: linear-gradient(135deg, #232946, #eebbc3); }
+      .theme-pills .t-hh7  { background: linear-gradient(135deg, #ff8e3c, #d9376e); }
+      .theme-pills .t-hh8  { background: linear-gradient(135deg, #ff8e3c, #ffc6ac); color: #20272f; }
+      .theme-pills .t-hh9  { background: linear-gradient(135deg, #f25f4c, #ff8906); }
+      .theme-pills .t-hh10 { background: linear-gradient(135deg, #232946, #b8c1ec); }
+      .theme-pills .t-hh11 { background: linear-gradient(135deg, #d9376e, #ffd803); }
+      .theme-pills .t-hh12 { background: linear-gradient(135deg, #16161a, #e16162); }
+      .theme-pills .t-hh13 { background: linear-gradient(135deg, #1f2235, #e2c044); }
+      .theme-pills .t-hh14 { background: linear-gradient(135deg, #faae2b, #cee3f8); color: #1f2235; }
+      .theme-pills .t-hh15 { background: linear-gradient(135deg, #28666e, #faae2b); }
+      .theme-pills .t-hh16 { background: linear-gradient(135deg, #004643, #f9bc60); }
+      .theme-pills .t-hh17 { background: linear-gradient(135deg, #f582ae, #8bd3dd); color: #001858; }
       * {
         box-sizing: border-box;
         margin: 0;
@@ -3711,15 +3790,25 @@
             <button class="t-forest" data-theme="theme-forest">森林</button>
             <button class="t-dark" data-theme="theme-dark">深色</button>
           </div>
-          <p style="font-size:.72rem;color:#9ca3af;margin:.7rem 0 .3rem">✨ 漸層 / 可愛配色:</p>
+          <p style="font-size:.72rem;color:#9ca3af;margin:.7rem 0 .3rem">✨ HappyHues 17 配色 (參考 happyhues.co):</p>
           <div class="theme-pills" id="theme-pills-gradient">
-            <button class="t-creampie" data-theme="theme-creampie">奶油派</button>
-            <button class="t-blueberry" data-theme="theme-blueberry">藍莓</button>
-            <button class="t-mint" data-theme="theme-mint">薄荷糖</button>
-            <button class="t-peachy" data-theme="theme-peachy">蜜桃可</button>
-            <button class="t-sunset" data-theme="theme-sunset">黃昏</button>
-            <button class="t-deepsea" data-theme="theme-deepsea">深海</button>
-            <button class="t-nightsky" data-theme="theme-nightsky">夜空</button>
+            <button class="t-hh1" data-theme="theme-hh1" title="珊瑚天空藍">#1</button>
+            <button class="t-hh2" data-theme="theme-hh2" title="深色紫綠">#2</button>
+            <button class="t-hh3" data-theme="theme-hh3" title="天空藍簡潔">#3</button>
+            <button class="t-hh4" data-theme="theme-hh4" title="靛藍珊瑚">#4</button>
+            <button class="t-hh5" data-theme="theme-hh5" title="純白靛">#5</button>
+            <button class="t-hh6" data-theme="theme-hh6" title="深夜柔粉">#6</button>
+            <button class="t-hh7" data-theme="theme-hh7" title="焦糖橙">#7</button>
+            <button class="t-hh8" data-theme="theme-hh8" title="大地橙">#8</button>
+            <button class="t-hh9" data-theme="theme-hh9" title="活力珊瑚">#9</button>
+            <button class="t-hh10" data-theme="theme-hh10" title="深夜薰衣">#10</button>
+            <button class="t-hh11" data-theme="theme-hh11" title="檸檬亮粉">#11</button>
+            <button class="t-hh12" data-theme="theme-hh12" title="酒紅深">#12</button>
+            <button class="t-hh13" data-theme="theme-hh13" title="金黃深紫">#13</button>
+            <button class="t-hh14" data-theme="theme-hh14" title="黃白藍">#14</button>
+            <button class="t-hh15" data-theme="theme-hh15" title="海綠檸黃">#15</button>
+            <button class="t-hh16" data-theme="theme-hh16" title="森林金">#16</button>
+            <button class="t-hh17" data-theme="theme-hh17" title="奶油派粉薄荷">#17</button>
           </div>
           <div style="margin-top:.7rem;display:flex;align-items:center;gap:.6rem">
             <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🎚 飽和度</label>
@@ -3727,7 +3816,13 @@
             <span id="theme-sat-value" style="font-size:.75rem;color:#6b7280;width:46px;text-align:right">100%</span>
             <button type="button" onclick="resetThemeSat()" style="background:#f3e8ff;border:1px solid #c084fc;color:#6b21a8;padding:.2rem .55rem;border-radius:5px;font-size:.72rem;cursor:pointer">重置</button>
           </div>
-          <p style="font-size:.72rem;color:#9ca3af;margin:.4rem 0 0;line-height:1.4">提示:會影響整頁顏色濃度(圖片也會跟著變淡/濃)</p>
+          <div style="margin-top:.5rem;display:flex;align-items:center;gap:.6rem">
+            <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">👻 透明度</label>
+            <input type="range" id="theme-opa-slider" min="60" max="100" value="100" style="flex:1;accent-color:#7c3aed">
+            <span id="theme-opa-value" style="font-size:.75rem;color:#6b7280;width:46px;text-align:right">100%</span>
+            <button type="button" onclick="resetThemeOpa()" style="background:#f3e8ff;border:1px solid #c084fc;color:#6b21a8;padding:.2rem .55rem;border-radius:5px;font-size:.72rem;cursor:pointer">重置</button>
+          </div>
+          <p style="font-size:.72rem;color:#9ca3af;margin:.4rem 0 0;line-height:1.4">提示:飽和度=顏色濃度;透明度=讓整頁看起來「淡淡的」效果</p>
         </details>
 
         <p style="font-size:.82rem;color:var(--gray);margin:.8rem 0 .5rem;line-height:1.55">
@@ -10581,11 +10676,16 @@ ${instruction.trim()}
           const curSat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
           satSlider.value = curSat;
           document.getElementById('theme-sat-value').textContent = curSat + '%';
-          satSlider.addEventListener('input', () => {
-            const v = parseInt(satSlider.value);
-            applyThemeSat(v);
-            localStorage.setItem('nb_theme_sat', String(v));
-          });
+          satSlider.addEventListener('input', () => applyThemeSat(parseInt(satSlider.value)));
+        }
+        // 透明度 slider
+        const opaSlider = document.getElementById('theme-opa-slider');
+        if (opaSlider && !opaSlider._opaBound) {
+          opaSlider._opaBound = true;
+          const curOpa = parseInt(localStorage.getItem('nb_theme_opa') || '100');
+          opaSlider.value = curOpa;
+          document.getElementById('theme-opa-value').textContent = curOpa + '%';
+          opaSlider.addEventListener('input', () => applyThemeOpa(parseInt(opaSlider.value)));
         }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
@@ -10598,29 +10698,43 @@ ${instruction.trim()}
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
       }
-      // 頁面載入時套用儲存的主題 + 飽和度
+      // 頁面載入時套用儲存的主題 + 飽和度 + 透明度
       (function loadNotebookThemeOnInit(){
         const saved = localStorage.getItem('nb_theme');
         if (saved) document.body.classList.add(saved);
-        const sat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
-        if (sat !== 100) applyThemeSat(sat);
+        applyThemeFilters();
       })();
-      // 飽和度(套在 screen-* 上,不要套 body 否則會破壞 modal 定位)
-      function applyThemeSat(pct){
-        const fil = pct === 100 ? '' : `saturate(${pct}%)`;
-        document.body.style.filter = ''; // 清掉舊版可能殘留在 body 上的 filter
+      // 飽和度 + 透明度 (合併為一個 filter 套在 screen-* 上)
+      function applyThemeFilters(){
+        const sat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
+        const opa = parseInt(localStorage.getItem('nb_theme_opa') || '100');
+        const parts = [];
+        if (sat !== 100) parts.push(`saturate(${sat}%)`);
+        if (opa !== 100) parts.push(`opacity(${opa}%)`);
+        const fil = parts.join(' ');
+        document.body.style.filter = '';
         document.querySelectorAll('#screen-notebook, #screen-exam, #screen-wrongbook, #screen-exam-results, #screen-home').forEach(el => {
           el.style.filter = fil;
         });
+      }
+      function applyThemeSat(pct){
+        localStorage.setItem('nb_theme_sat', String(pct));
+        applyThemeFilters();
         const valEl = document.getElementById('theme-sat-value');
         if (valEl) valEl.textContent = pct + '%';
         const slider = document.getElementById('theme-sat-slider');
         if (slider) slider.value = pct;
       }
-      function resetThemeSat(){
-        applyThemeSat(100);
-        localStorage.setItem('nb_theme_sat', '100');
+      function applyThemeOpa(pct){
+        localStorage.setItem('nb_theme_opa', String(pct));
+        applyThemeFilters();
+        const valEl = document.getElementById('theme-opa-value');
+        if (valEl) valEl.textContent = pct + '%';
+        const slider = document.getElementById('theme-opa-slider');
+        if (slider) slider.value = pct;
       }
+      function resetThemeSat(){ applyThemeSat(100); }
+      function resetThemeOpa(){ applyThemeOpa(100); }
       function closeAISettings(){
         document.getElementById('ai-settings-overlay').classList.remove('open');
       }

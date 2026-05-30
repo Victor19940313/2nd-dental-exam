@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v125-gradient-themes';
+const CACHE_NAME = 'dental-all-v126-happyhues17';
 const PRECACHE = [
   './',
   './index.html',

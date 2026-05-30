@@ -9047,9 +9047,9 @@ ${JSON.stringify(candidates, null, 2)}
         renderNotebook();
         showToast('✓ 已儲存');
       }
-      // 編輯器模式:'markdown'(舊版,穩定) | 'tiptap'(新版,Phase 2B)
+      // 編輯器模式:'tiptap'(預設,WYSIWYG) | 'markdown'(舊版)
       function getEditorMode(){
-        return localStorage.getItem('nb_editor_mode') === 'tiptap' ? 'tiptap' : 'markdown';
+        return localStorage.getItem('nb_editor_mode') === 'markdown' ? 'markdown' : 'tiptap';
       }
       function switchEditorMode(mode){
         const cur = getEditorMode();
@@ -9072,8 +9072,8 @@ ${JSON.stringify(candidates, null, 2)}
       function _editorModePill(){
         const mode = getEditorMode();
         return `<div class="nb-editor-mode-pill">
+          <button class="${mode === 'tiptap' ? 'is-active' : ''}" onclick="switchEditorMode('tiptap')" title="所見即所得 TipTap 編輯器(預設)">✨ TipTap 版</button>
           <button class="${mode === 'markdown' ? 'is-active' : ''}" onclick="switchEditorMode('markdown')" title="原本的 markdown 編輯器">📝 Markdown 版</button>
-          <button class="${mode === 'tiptap' ? 'is-active' : ''}" onclick="switchEditorMode('tiptap')" title="所見即所得 TipTap 編輯器">✨ TipTap 版 <span class="badge-new">新</span></button>
         </div>`;
       }
       function renderEditorView(ch){

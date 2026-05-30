@@ -2378,7 +2378,7 @@
         background: white; padding: 1rem 1.2rem;
         border: 1.5px solid #e9d5ff; border-radius: 10px;
       }
-      .nb-editor-tiptap .ProseMirror { outline: none; min-height: 50vh; line-height: 1.75; color: #374151; }
+      .nb-editor-tiptap .ProseMirror { outline: none; min-height: 50vh; line-height: 1.65; color: #374151; }
       .nb-editor-tiptap .ProseMirror h2 {
         background: linear-gradient(135deg, #7c3aed, #a855f7); color: white;
         padding: .7rem 1rem; border-radius: 10px; font-size: 1.15rem; margin: 1.2rem 0 .8rem;
@@ -2388,7 +2388,7 @@
         padding: .55rem .9rem; border-radius: 8px; font-size: 1.02rem; margin: 1rem 0 .6rem;
       }
       .nb-editor-tiptap .ProseMirror h4 { color: #7c3aed; font-size: .98rem; margin: .8rem 0 .4rem; }
-      .nb-editor-tiptap .ProseMirror p { margin: .6rem 0; }
+      .nb-editor-tiptap .ProseMirror p { margin: .25rem 0; }
       .nb-editor-tiptap .ProseMirror strong {
         color: #5b21b6; font-weight: 900;
         background: linear-gradient(180deg, transparent 52%, #fcd97b 52%);
@@ -9947,12 +9947,12 @@ ${instruction.trim()}
             }
             case 'img': {
               const src = node.getAttribute('src') || '';
-              // 沒 src 的空圖片直接略過,絕對不輸出「![]()」
               if (!src.trim()) return '';
               const alt = node.getAttribute('alt') || '';
               const style = node.getAttribute('style') || '';
               const m = style.match(/width:\s*([^;]+)/);
-              const size = m ? m[1].trim() : '';
+              // 存回 markdown 時去掉 !important,只留純尺寸值(避免下次載入時尺寸 hint 變怪)
+              const size = m ? m[1].replace(/\s*!important\s*/g, '').trim() : '';
               return size ? `![${alt}|${size}](${src})` : `![${alt}](${src})`;
             }
             case 'h1': case 'h2': case 'h3': case 'h4': {
@@ -11273,7 +11273,7 @@ ${instruction.trim()}
           };
         },
       });
-      // 可改寬度的圖片(用 !important 保證 inline style 一定贏 CSS)
+      // 可改寬度的圖片(parseHTML 嚴格只抓乾淨百分比、像素值)
       const ResizableImage = Image.extend({
         addAttributes(){
           return {
@@ -11283,11 +11283,14 @@ ${instruction.trim()}
               parseHTML: el => {
                 const style = el.getAttribute('style') || '';
                 const m = style.match(/width\s*:\s*([^;]+)/);
-                if (m) return m[1].trim();
+                if (m) {
+                  // 去掉 !important 跟前後空白,只保留純粹的尺寸值
+                  return m[1].replace(/\s*!important\s*/g, '').trim();
+                }
                 return el.getAttribute('width') || null;
               },
               renderHTML: attrs => attrs.width ? {
-                style: `width: ${attrs.width} !important; max-width: ${attrs.width} !important;`
+                style: `width: ${attrs.width}; max-width: ${attrs.width};`
               } : {},
             },
           };

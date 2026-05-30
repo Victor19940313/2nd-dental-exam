@@ -3631,6 +3631,13 @@
             <button class="t-forest" data-theme="theme-forest">森林</button>
             <button class="t-dark" data-theme="theme-dark">深色</button>
           </div>
+          <div style="margin-top:.7rem;display:flex;align-items:center;gap:.6rem">
+            <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🎚 飽和度</label>
+            <input type="range" id="theme-sat-slider" min="40" max="160" value="100" style="flex:1;accent-color:#7c3aed">
+            <span id="theme-sat-value" style="font-size:.75rem;color:#6b7280;width:46px;text-align:right">100%</span>
+            <button type="button" onclick="resetThemeSat()" style="background:#f3e8ff;border:1px solid #c084fc;color:#6b21a8;padding:.2rem .55rem;border-radius:5px;font-size:.72rem;cursor:pointer">重置</button>
+          </div>
+          <p style="font-size:.72rem;color:#9ca3af;margin:.4rem 0 0;line-height:1.4">提示:會影響整頁顏色濃度(圖片也會跟著變淡/濃)</p>
         </details>
 
         <p style="font-size:.82rem;color:var(--gray);margin:.8rem 0 .5rem;line-height:1.55">
@@ -10477,6 +10484,19 @@ ${instruction.trim()}
             btn.addEventListener('click', () => setNotebookTheme(btn.dataset.theme || ''));
           }
         });
+        // 飽和度 slider
+        const satSlider = document.getElementById('theme-sat-slider');
+        if (satSlider && !satSlider._satBound) {
+          satSlider._satBound = true;
+          const curSat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
+          satSlider.value = curSat;
+          document.getElementById('theme-sat-value').textContent = curSat + '%';
+          satSlider.addEventListener('input', () => {
+            const v = parseInt(satSlider.value);
+            applyThemeSat(v);
+            localStorage.setItem('nb_theme_sat', String(v));
+          });
+        }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
       // 主題切換
@@ -10490,11 +10510,25 @@ ${instruction.trim()}
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
       }
-      // 頁面載入時套用儲存的主題
+      // 頁面載入時套用儲存的主題 + 飽和度
       (function loadNotebookThemeOnInit(){
         const saved = localStorage.getItem('nb_theme');
         if (saved) document.body.classList.add(saved);
+        const sat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
+        if (sat !== 100) applyThemeSat(sat);
       })();
+      // 飽和度
+      function applyThemeSat(pct){
+        document.body.style.filter = pct === 100 ? '' : `saturate(${pct}%)`;
+        const valEl = document.getElementById('theme-sat-value');
+        if (valEl) valEl.textContent = pct + '%';
+        const slider = document.getElementById('theme-sat-slider');
+        if (slider) slider.value = pct;
+      }
+      function resetThemeSat(){
+        applyThemeSat(100);
+        localStorage.setItem('nb_theme_sat', '100');
+      }
       function closeAISettings(){
         document.getElementById('ai-settings-overlay').classList.remove('open');
       }

@@ -11261,18 +11261,6 @@ ${instruction.trim()}
       import Highlight from 'https://esm.sh/@tiptap/extension-highlight@2';
       import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@2';
       import Image from 'https://esm.sh/@tiptap/extension-image@2';
-      import Paragraph from 'https://esm.sh/@tiptap/extension-paragraph@2';
-
-      // 把 Enter 改成「同一段內換行」(<br>),不換段落
-      // 不然每按 Enter 就會跑出一個空段落,使用者覺得「中間多了一行」
-      const SoftEnterParagraph = Paragraph.extend({
-        addKeyboardShortcuts(){
-          return {
-            ...this.parent?.(),
-            Enter: () => this.editor.commands.setHardBreak(),
-          };
-        },
-      });
 
       // 通用「保留 text-decoration-color 屬性」mark factory
       function withColorAttr(MarkExt){
@@ -11371,8 +11359,7 @@ ${instruction.trim()}
           _tt = new Editor({
             element: domEl,
             extensions: [
-              StarterKit.configure({ strike: false, blockquote: false, paragraph: false }),
-              SoftEnterParagraph,
+              StarterKit.configure({ strike: false, blockquote: false }),
               CalloutBlockquote,
               Table.configure({ resizable: true }),
               TableRow, TableHeader, TableCell,

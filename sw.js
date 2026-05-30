@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v117-table-clean';
+const CACHE_NAME = 'dental-all-v118-plugin-reset';
 const PRECACHE = [
   './',
   './index.html',

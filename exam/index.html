@@ -8927,15 +8927,30 @@ ${JSON.stringify(candidates, null, 2)}
         const tiptapHtml = transformHtmlForTipTap(html);
         window.NotebookTipTap.mount(el, tiptapHtml);
         window.NotebookTipTap.focus();
-        // 安全網:點任何地方時清掉殘留的拖拽狀態(避免 TipTap 拖一次就卡住)
+        // 安全網:點任何地方時直接重置 TipTap 內部的 column resizing plugin state
+        // (光清 DOM class 沒用,plugin state 沒清就會以為還在拖拽,滑鼠一動就加回 class)
         if (!window._tiptapClickSafetyNet) {
           window._tiptapClickSafetyNet = true;
           document.addEventListener('mouseup', () => {
             setTimeout(() => {
+              const editor = window.NotebookTipTap?.getEditor();
+              if (!editor) return;
+              try {
+                // 找 columnResizing plugin 並重置其 state
+                for (const p of editor.state.plugins) {
+                  const keyStr = p.spec && p.spec.key ? String(p.spec.key) : '';
+                  if (keyStr.includes('columnResizing') || keyStr.includes('tableColumnResizing')) {
+                    const tr = editor.state.tr.setMeta(p.spec.key, { setHandle: -1, setDragging: null });
+                    editor.view.dispatch(tr);
+                  }
+                }
+              } catch (e) { /* 失靜默 */ }
+              // 同時清 DOM 殘留
               document.querySelectorAll('.nb-editor-tiptap .column-resize-dragging').forEach(c => c.classList.remove('column-resize-dragging'));
+              document.querySelectorAll('.nb-editor-tiptap .column-resize-handle').forEach(h => h.remove());
               const pm = document.querySelector('.nb-editor-tiptap .ProseMirror');
               if (pm && pm.classList.contains('resize-cursor')) pm.classList.remove('resize-cursor');
-            }, 100);
+            }, 150);
           }, true);
         }
       }

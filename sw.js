@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v124-sat-scope';
+const CACHE_NAME = 'dental-all-v125-gradient-themes';
 const PRECACHE = [
   './',
   './index.html',

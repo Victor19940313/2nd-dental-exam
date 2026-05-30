@@ -66,6 +66,79 @@
         --tag-bg: #534570; --tag-color: #d4c4f0;
         --bg: #1c1a23;
       }
+      /* === 漸層:黃昏(粉橘) === */
+      body.theme-sunset {
+        --purple: #ec4899; --purple-light: #fce7f3; --purple-dark: #be185d; --purple-soft: #f97316;
+        --strong-bg: #fed7aa; --strong-color: #c2410c;
+        --em-color: #db2777;
+        --tag-bg: #fbcfe8; --tag-color: #9d174d;
+      }
+      body.theme-sunset { background: linear-gradient(135deg, #fce7f3, #ffedd5) fixed; }
+      /* === 漸層:深海(藍綠) === */
+      body.theme-deepsea {
+        --purple: #0ea5e9; --purple-light: #e0f2fe; --purple-dark: #0369a1; --purple-soft: #14b8a6;
+        --strong-bg: #99f6e4; --strong-color: #0f766e;
+        --em-color: #0891b2;
+        --tag-bg: #bae6fd; --tag-color: #075985;
+      }
+      body.theme-deepsea { background: linear-gradient(135deg, #e0f2fe, #ccfbf1) fixed; }
+      /* === 漸層:夜空(深藍紫) === */
+      body.theme-nightsky {
+        --purple: #a78bfa; --purple-light: #312e81; --purple-dark: #7c3aed; --purple-soft: #c084fc;
+        --strong-bg: rgba(196, 181, 253, .25); --strong-color: #ddd6fe;
+        --em-color: #93c5fd;
+        --tag-bg: #4338ca; --tag-color: #e0e7ff;
+        --bg: #1e1b4b;
+      }
+      body.theme-nightsky {
+        background: linear-gradient(135deg, #1e1b4b, #312e81) fixed;
+        color: #e0e7ff;
+      }
+      body.theme-nightsky .nb-chapter-content,
+      body.theme-nightsky .nb-toc-pane,
+      body.theme-nightsky .nb-editor-tiptap,
+      body.theme-nightsky .nb-editor-textarea,
+      body.theme-nightsky .nb-editor-preview-live { background: #1e1b4b; color: #e0e7ff; }
+
+      /* === 奶油派(HappyHues 17 風格:奶油+粉+薄荷) === */
+      body.theme-creampie {
+        --purple: #f582ae; --purple-light: #fef6e4; --purple-dark: #001858; --purple-soft: #8bd3dd;
+        --strong-bg: #f3d2c1; --strong-color: #001858;
+        --em-color: #5b21b6;
+        --tag-bg: #8bd3dd; --tag-color: #001858;
+        --bg: #fef6e4;
+      }
+      body.theme-creampie { background: #fef6e4; }
+      body.theme-creampie .nb-chapter-content,
+      body.theme-creampie .nb-toc-pane,
+      body.theme-creampie .nb-editor-tiptap { background: #fffaf0; }
+
+      /* === 藍莓(柔紫+米白) === */
+      body.theme-blueberry {
+        --purple: #8d72e1; --purple-light: #f3f0ff; --purple-dark: #5b3eb8; --purple-soft: #b0aaff;
+        --strong-bg: #fde68a; --strong-color: #5b3eb8;
+        --em-color: #db2777;
+        --tag-bg: #ddd6fe; --tag-color: #5b21b6;
+      }
+      body.theme-blueberry { background: linear-gradient(135deg, #f3f0ff, #ffe4e6) fixed; }
+
+      /* === 薄荷糖(薄荷綠+奶白) === */
+      body.theme-mint {
+        --purple: #10b981; --purple-light: #ecfdf5; --purple-dark: #047857; --purple-soft: #6ee7b7;
+        --strong-bg: #fef3c7; --strong-color: #047857;
+        --em-color: #be185d;
+        --tag-bg: #d1fae5; --tag-color: #064e3b;
+      }
+      body.theme-mint { background: linear-gradient(135deg, #ecfdf5, #fefce8) fixed; }
+
+      /* === 蜜桃可(粉+鵝黃) === */
+      body.theme-peachy {
+        --purple: #ec4899; --purple-light: #fdf2f8; --purple-dark: #9d174d; --purple-soft: #fcd34d;
+        --strong-bg: #fde68a; --strong-color: #9d174d;
+        --em-color: #be185d;
+        --tag-bg: #fce7f3; --tag-color: #831843;
+      }
+      body.theme-peachy { background: linear-gradient(135deg, #fdf2f8, #fef3c7) fixed; }
       /* 深色主題:全域背景與字色 */
       body.theme-dark { background: #1c1a23; color: #ebe5f0; }
       body.theme-dark .nb-chapter-content,
@@ -131,12 +204,19 @@
         border-color: #1f2937;
         box-shadow: 0 0 0 1px white inset;
       }
-      .theme-pills .t-default { background: linear-gradient(135deg, #7c3aed, #a855f7); }
-      .theme-pills .t-warm    { background: linear-gradient(135deg, #c97a52, #e09a78); }
-      .theme-pills .t-earth   { background: linear-gradient(135deg, #a3814f, #c4a070); }
-      .theme-pills .t-ocean   { background: linear-gradient(135deg, #5a85a8, #86abc5); }
-      .theme-pills .t-forest  { background: linear-gradient(135deg, #6b9560, #92b387); }
-      .theme-pills .t-dark    { background: linear-gradient(135deg, #28252f, #524a60); }
+      .theme-pills .t-default  { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+      .theme-pills .t-warm     { background: linear-gradient(135deg, #c97a52, #e09a78); }
+      .theme-pills .t-earth    { background: linear-gradient(135deg, #a3814f, #c4a070); }
+      .theme-pills .t-ocean    { background: linear-gradient(135deg, #5a85a8, #86abc5); }
+      .theme-pills .t-forest   { background: linear-gradient(135deg, #6b9560, #92b387); }
+      .theme-pills .t-dark     { background: linear-gradient(135deg, #28252f, #524a60); }
+      .theme-pills .t-sunset    { background: linear-gradient(135deg, #ec4899, #f97316); }
+      .theme-pills .t-deepsea   { background: linear-gradient(135deg, #0ea5e9, #14b8a6); }
+      .theme-pills .t-nightsky  { background: linear-gradient(135deg, #1e1b4b, #a78bfa); }
+      .theme-pills .t-creampie  { background: linear-gradient(135deg, #f582ae, #8bd3dd); color: #001858; }
+      .theme-pills .t-blueberry { background: linear-gradient(135deg, #8d72e1, #b0aaff); }
+      .theme-pills .t-mint      { background: linear-gradient(135deg, #10b981, #6ee7b7); }
+      .theme-pills .t-peachy    { background: linear-gradient(135deg, #ec4899, #fcd34d); }
       * {
         box-sizing: border-box;
         margin: 0;
@@ -3630,6 +3710,16 @@
             <button class="t-ocean" data-theme="theme-ocean">海洋</button>
             <button class="t-forest" data-theme="theme-forest">森林</button>
             <button class="t-dark" data-theme="theme-dark">深色</button>
+          </div>
+          <p style="font-size:.72rem;color:#9ca3af;margin:.7rem 0 .3rem">✨ 漸層 / 可愛配色:</p>
+          <div class="theme-pills" id="theme-pills-gradient">
+            <button class="t-creampie" data-theme="theme-creampie">奶油派</button>
+            <button class="t-blueberry" data-theme="theme-blueberry">藍莓</button>
+            <button class="t-mint" data-theme="theme-mint">薄荷糖</button>
+            <button class="t-peachy" data-theme="theme-peachy">蜜桃可</button>
+            <button class="t-sunset" data-theme="theme-sunset">黃昏</button>
+            <button class="t-deepsea" data-theme="theme-deepsea">深海</button>
+            <button class="t-nightsky" data-theme="theme-nightsky">夜空</button>
           </div>
           <div style="margin-top:.7rem;display:flex;align-items:center;gap:.6rem">
             <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🎚 飽和度</label>
@@ -10475,9 +10565,9 @@ ${instruction.trim()}
         if (ghInp) ghInp.value = getGithubToken();
         const ghRepo = document.getElementById('gh-repo-input');
         if (ghRepo) ghRepo.value = getGithubRepo();
-        // 主題切換 pills
+        // 主題切換 pills(同時處理基本色 + 漸層)
         const curTheme = localStorage.getItem('nb_theme') || '';
-        document.querySelectorAll('#theme-pills-settings button').forEach(btn => {
+        document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(btn => {
           btn.classList.toggle('is-active', (btn.dataset.theme || '') === curTheme);
           if (!btn._themeBound) {
             btn._themeBound = true;
@@ -10501,12 +10591,10 @@ ${instruction.trim()}
       }
       // 主題切換
       function setNotebookTheme(themeClass){
-        // 移除所有 theme- 開頭的 class
         document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
         if (themeClass) document.body.classList.add(themeClass);
         localStorage.setItem('nb_theme', themeClass);
-        // 更新 pill 的 active 狀態
-        document.querySelectorAll('#theme-pills-settings button').forEach(b => {
+        document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(b => {
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
       }

@@ -5877,8 +5877,13 @@
           return `<div style="background:${bg};border:1.5px solid ${bd};border-radius:8px;padding:.5rem .8rem;margin-bottom:.4rem;font-size:.9rem;line-height:1.55">${escapeHtml(opt)}<strong style="color:${isCorrectOpt?'#059669':'#dc2626'};font-size:.78rem;margin-left:.3rem">${mark}</strong></div>`;
         }).join('');
         const imgHtml = q.image ? `<img src="images/${q.image}" style="max-width:100%;border-radius:8px;margin:.6rem 0" />` : '';
-        const expl = q.explanation || '';
-        const explHtml = expl ? `<details style="margin-top:.8rem;background:#f9fafb;border-radius:8px;padding:.6rem .8rem"><summary style="cursor:pointer;color:#7c3aed;font-weight:700">📖 詳解</summary><div style="margin-top:.5rem;font-size:.88rem;line-height:1.75;color:#374151;white-space:pre-wrap">${escapeHtml(expl)}</div></details>` : '';
+        const st = (typeof getS === 'function') ? getS(q.id) : {};
+        const expl = (st.expl_override ?? q.explanation) || '';
+        const src = (st.src_override ?? q.explanation_source) || '';
+        const hasAnyExpl = expl || q.explanation_notebooklm || q.clinical;
+        const explHtml = hasAnyExpl
+          ? `<div style="margin-top:.8rem">${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}</div>`
+          : '<div style="margin-top:.8rem;color:#9ca3af;font-size:.85rem;text-align:center;padding:.8rem">尚無詳解</div>';
 
         el.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem">

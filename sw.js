@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v132-grid-no-important';
+const CACHE_NAME = 'dental-all-v133-review-full-expl';
 const PRECACHE = [
   './',
   './index.html',

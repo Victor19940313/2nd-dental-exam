@@ -2219,6 +2219,20 @@
         font-size:1.02em;
       }
       .nb-chapter-content em{color:#0369a1;font-style:normal;font-weight:600}
+      /* Phase 2B:底線/刪除線(TipTap 編輯後 round-trip 用,粗一點顏色看得清楚) */
+      .nb-chapter-content u {
+        text-decoration: underline;
+        text-decoration-color: #ef4444;
+        text-decoration-thickness: 2.5px;
+        text-underline-offset: 3px;
+        font-weight: 700;
+      }
+      .nb-chapter-content s {
+        text-decoration: line-through;
+        text-decoration-color: #ef4444;
+        text-decoration-thickness: 2.5px;
+        font-weight: 600;
+      }
       .nb-chapter-content .nb-table{
         border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;
         box-shadow:0 1px 3px rgba(0,0,0,.06);border-radius:8px;overflow:hidden;
@@ -9626,6 +9640,8 @@ ${instruction.trim()}
         s = s.replace(/&lt;mark class=&quot;(hl-[ygp])&quot;&gt;([\s\S]*?)&lt;\/mark&gt;/g,
           '<mark class="$1">$2</mark>');
         // Phase 2B:TipTap 儲存後產生的 inline style HTML 也要還原
+        // 段落對齊 <p style="text-align:...">
+        s = s.replace(/&lt;p style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/p&gt;/g, '<p style="$1">$2</p>');
         // 字體顏色 <span style="color:...">
         s = s.replace(/&lt;span style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="$1">$2</span>');
         // TipTap 螢光 <mark style="background-color:...">
@@ -9891,10 +9907,11 @@ ${instruction.trim()}
               return style ? `<u style="${style}">${inner}</u>` : `<u>${inner}</u>`;
             }
             case 's': {
+              // 一律輸出 <s> HTML(無論有沒有 style),因為 renderMarkdown 不認 ~~text~~ 語法
               const style = node.getAttribute('style');
               const inner = childrenMD(node);
               if (!inner.trim()) return '';
-              return style ? `<s style="${style}">${inner}</s>` : '~~' + inner + '~~';
+              return style ? `<s style="${style}">${inner}</s>` : `<s>${inner}</s>`;
             }
             case 'mark': {
               const cls = node.getAttribute('class') || '';
@@ -9933,12 +9950,24 @@ ${instruction.trim()}
               const size = m ? m[1].trim() : '';
               return size ? `![${alt}|${size}](${src})` : `![${alt}](${src})`;
             }
-            case 'h1': case 'h2': return '\n\n## ' + childrenMD(node).trim() + '\n\n';
-            case 'h3': return '\n\n### ' + childrenMD(node).trim() + '\n\n';
-            case 'h4': return '\n\n#### ' + childrenMD(node).trim() + '\n\n';
+            case 'h1': case 'h2': case 'h3': case 'h4': {
+              const lv = tag === 'h1' || tag === 'h2' ? '##' : (tag === 'h3' ? '###' : '####');
+              const inner = childrenMD(node).trim();
+              const style = node.getAttribute('style') || '';
+              // 標題若有 text-align,用 HTML <p style="text-align:..."> 包(因為 markdown ## 不支援對齊)
+              if (style.includes('text-align')) {
+                return `\n\n<p style="${style}">${lv} ${inner}</p>\n\n`;
+              }
+              return '\n\n' + lv + ' ' + inner + '\n\n';
+            }
             case 'p': {
               const inner = childrenMD(node).trim();
               if (!inner) return '';
+              const style = node.getAttribute('style') || '';
+              // 保留 text-align 等對齊 style
+              if (style.includes('text-align')) {
+                return `\n\n<p style="${style}">${inner}</p>\n\n`;
+              }
               return '\n\n' + inner + '\n\n';
             }
             case 'ul': case 'ol': {
@@ -11264,6 +11293,28 @@ ${instruction.trim()}
         // 掛載編輯器到指定 DOM 節點。initialHTML 是 markdown 先 renderMarkdown 後再轉成 TipTap 友善格式的 HTML
         mount(domEl, initialHTML, opts = {}){
           if (_tt) { try { _tt.destroy(); } catch(e) {} _tt = null; }
+          // 用 editorProps.handlePaste/handleDrop 在 TipTap 的 prosemirror 層攔截
+          // 這比 view.dom.addEventListener 早跑,避免 TipTap 預設 base64 嵌入先觸發
+          function tryUploadAndInsert(blob){
+            if (!blob || !blob.type || !blob.type.startsWith('image/')) return;
+            if (typeof window.uploadImageToGithub === 'function') {
+              window.uploadImageToGithub(blob, (url) => {
+                if (url && typeof url === 'string') {
+                  try { _tt?.chain().focus().setImage({ src: url }).run(); }
+                  catch (e) { console.error('insert image fail', e); }
+                }
+                // 失敗就什麼都不做,絕對不插入空 img
+              });
+            } else {
+              // 沒設 GitHub 圖床 → base64 嵌入(暫時方案)
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                try { _tt?.chain().focus().setImage({ src: e.target.result }).run(); }
+                catch (err) { console.error('insert base64 fail', err); }
+              };
+              reader.readAsDataURL(blob);
+            }
+          }
           _tt = new Editor({
             element: domEl,
             extensions: [
@@ -11278,53 +11329,35 @@ ${instruction.trim()}
             ],
             content: initialHTML || '',
             onUpdate: opts.onUpdate,
-          });
-          // 貼上圖片:呼叫外部 upload handler(主網站既有的 GitHub 圖床流程)
-          _tt.view.dom.addEventListener('paste', (event) => {
-            const items = event.clipboardData?.items;
-            if (!items) return;
-            for (const item of items) {
-              if (item.type && item.type.startsWith('image/')) {
-                event.preventDefault();
-                const blob = item.getAsFile();
-                if (!blob) return;
-                if (typeof window.uploadImageToGithub === 'function') {
-                  window.uploadImageToGithub(blob, (url, width) => {
-                    if (url) {
-                      const attrs = { src: url };
-                      if (width) attrs.width = width;
-                      _tt.chain().focus().setImage(attrs).run();
-                    }
-                  });
-                } else {
-                  // fallback:沒設 GitHub 圖床 → 用 base64 嵌入(留下訊息提醒)
-                  const reader = new FileReader();
-                  reader.onload = (e) => _tt.chain().focus().setImage({ src: e.target.result }).run();
-                  reader.readAsDataURL(blob);
+            editorProps: {
+              // 圖片貼上:攔截、上傳、插入 URL(失敗就什麼都不做)
+              handlePaste(view, event){
+                const items = event.clipboardData?.items;
+                if (!items) return false;
+                for (const item of items) {
+                  if (item.type && item.type.startsWith('image/')) {
+                    event.preventDefault();
+                    const blob = item.getAsFile();
+                    if (blob) tryUploadAndInsert(blob);
+                    return true; // 告訴 TipTap 我們處理了
+                  }
                 }
-                return;
-              }
-            }
-          });
-          // 拖檔上傳
-          _tt.view.dom.addEventListener('drop', (event) => {
-            const files = event.dataTransfer?.files;
-            if (!files || !files.length) return;
-            for (const file of files) {
-              if (file.type && file.type.startsWith('image/')) {
-                event.preventDefault();
-                if (typeof window.uploadImageToGithub === 'function') {
-                  window.uploadImageToGithub(file, (url, width) => {
-                    if (url) {
-                      const attrs = { src: url };
-                      if (width) attrs.width = width;
-                      _tt.chain().focus().setImage(attrs).run();
-                    }
-                  });
+                return false;
+              },
+              // 圖片拖檔:同上
+              handleDrop(view, event){
+                const files = event.dataTransfer?.files;
+                if (!files || !files.length) return false;
+                for (const file of files) {
+                  if (file.type && file.type.startsWith('image/')) {
+                    event.preventDefault();
+                    tryUploadAndInsert(file);
+                    return true;
+                  }
                 }
-                return;
-              }
-            }
+                return false;
+              },
+            },
           });
           return _tt;
         },

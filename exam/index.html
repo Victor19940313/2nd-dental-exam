@@ -211,6 +211,27 @@
         --tag-bg: #fceddb; --tag-color: #7a3712;
       }
       body.theme-jp-oudan { background-color: #fffaf2; background-image: linear-gradient(135deg, #fffaf2, rgba(252,237,219,var(--g-strength,1))); background-attachment: fixed; }
+      /* 日本傳統色:章節內容區/sidebar/編輯器也帶主題 tint(不再是純白) */
+      body.theme-jp-sakura      .nb-chapter-content, body.theme-jp-sakura      .nb-toc-pane, body.theme-jp-sakura      .nb-editor-tiptap { background: #fef7f7; }
+      body.theme-jp-matcha      .nb-chapter-content, body.theme-jp-matcha      .nb-toc-pane, body.theme-jp-matcha      .nb-editor-tiptap { background: #f8f6e6; }
+      body.theme-jp-asagi       .nb-chapter-content, body.theme-jp-asagi       .nb-toc-pane, body.theme-jp-asagi       .nb-editor-tiptap { background: #ebf5f3; }
+      body.theme-jp-shironezumi .nb-chapter-content, body.theme-jp-shironezumi .nb-toc-pane, body.theme-jp-shironezumi .nb-editor-tiptap { background: #f1ece8; }
+      body.theme-jp-hatoba      .nb-chapter-content, body.theme-jp-hatoba      .nb-toc-pane, body.theme-jp-hatoba      .nb-editor-tiptap { background: #f3eff5; }
+      body.theme-jp-oudan       .nb-chapter-content, body.theme-jp-oudan       .nb-toc-pane, body.theme-jp-oudan       .nb-editor-tiptap { background: #fbf4e7; }
+      /* 背景樣式選擇:格子 / 純色(預設用 theme 漸層) */
+      body.bg-style-grid {
+        background-image:
+          linear-gradient(color-mix(in srgb, var(--purple-soft, #999) 25%, transparent) 1px, transparent 1px),
+          linear-gradient(90deg, color-mix(in srgb, var(--purple-soft, #999) 25%, transparent) 1px, transparent 1px) !important;
+        background-size: 22px 22px !important;
+      }
+      body.bg-style-solid { background-image: none !important; }
+      /* 紙紋(和紙質感):用 SVG feTurbulence 產生細纖維 noise */
+      body.bg-style-paper {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0.14 0'/></filter><rect width='100%25' height='100%25' filter='url(%23p)'/></svg>") !important;
+        background-size: 300px 300px !important;
+        background-attachment: fixed !important;
+      }
       /* 深色主題:全域背景與字色 */
       body.theme-dark { background: #1c1a23; color: #ebe5f0; }
       body.theme-dark .nb-chapter-content,
@@ -3869,6 +3890,15 @@
             <input type="range" id="theme-gstr-slider" min="0" max="100" value="100" style="flex:1;accent-color:#7c3aed">
             <span id="theme-gstr-value" style="font-size:.75rem;color:#6b7280;width:46px;text-align:right">100%</span>
             <button type="button" onclick="resetThemeGstr()" style="background:#f3e8ff;border:1px solid #c084fc;color:#6b21a8;padding:.2rem .55rem;border-radius:5px;font-size:.72rem;cursor:pointer">重置</button>
+          </div>
+          <div style="margin-top:.5rem;display:flex;align-items:center;gap:.6rem">
+            <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🖼 背景樣式</label>
+            <select id="bg-style-select" style="flex:1;padding:.3rem .5rem;border:1.5px solid #d1d5db;border-radius:5px;font-size:.82rem;background:white">
+              <option value="">漸層(預設)</option>
+              <option value="paper">紙紋(和紙)</option>
+              <option value="grid">格子紋</option>
+              <option value="solid">純色</option>
+            </select>
           </div>
           <label style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;color:#374151">
             <input type="checkbox" id="toc-mono-toggle" style="width:16px;height:16px;cursor:pointer;accent-color:#7c3aed">
@@ -10760,6 +10790,13 @@ ${instruction.trim()}
           tocMonoCB.checked = (localStorage.getItem(uKey('nb_toc_mono')) === '1');
           tocMonoCB.addEventListener('change', () => applyTocMono(tocMonoCB.checked));
         }
+        // 背景樣式 select
+        const bgStyleSel = document.getElementById('bg-style-select');
+        if (bgStyleSel && !bgStyleSel._bgsBound) {
+          bgStyleSel._bgsBound = true;
+          bgStyleSel.value = localStorage.getItem(uKey('nb_bg_style')) || '';
+          bgStyleSel.addEventListener('change', () => applyBgStyle(bgStyleSel.value));
+        }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
       // 主題切換 — 每個使用者完全獨立,只存自己的 key
@@ -10796,12 +10833,12 @@ ${instruction.trim()}
         _reapplyTheme();
         applyThemeFilters();
         applyThemeGstrCss();
-        _applyTocMonoFromStorage();
+        _applyTocMonoFromStorage(); _applyBgStyleFromStorage();
       })();
       // 多時點重試,確保 PWA cold start 也套用得上
       if (document.readyState !== 'complete') {
-        document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); });
-        window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); });
+        document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); _applyBgStyleFromStorage(); });
+        window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); _applyBgStyleFromStorage(); });
       }
       // 跨分頁同步 — 同一個 user 在別的分頁改了主題,這個分頁也跟著變
       window.addEventListener('storage', (e) => {
@@ -10861,6 +10898,17 @@ ${instruction.trim()}
       function _applyTocMonoFromStorage(){
         const on = localStorage.getItem(uKey('nb_toc_mono')) === '1';
         if (document.body) document.body.classList.toggle('nb-toc-mono', on);
+      }
+      function applyBgStyle(style){
+        try { localStorage.setItem(uKey('nb_bg_style'), style || ''); } catch(e){}
+        if (!document.body) return;
+        document.body.classList.remove('bg-style-grid', 'bg-style-solid', 'bg-style-paper');
+        if (style === 'grid') document.body.classList.add('bg-style-grid');
+        else if (style === 'solid') document.body.classList.add('bg-style-solid');
+        else if (style === 'paper') document.body.classList.add('bg-style-paper');
+      }
+      function _applyBgStyleFromStorage(){
+        applyBgStyle(localStorage.getItem(uKey('nb_bg_style')) || '');
       }
       function closeAISettings(){
         document.getElementById('ai-settings-overlay').classList.remove('open');

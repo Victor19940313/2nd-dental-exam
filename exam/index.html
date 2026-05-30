@@ -9666,8 +9666,9 @@ ${instruction.trim()}
         s = s.replace(/&lt;p style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/p&gt;/g, '<p style="$1">$2</p>');
         // 標題對齊 <h1-h4 style="text-align:..."> (TipTap 對齊的標題)
         s = s.replace(/&lt;(h[1-4]) style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/(h[1-4])&gt;/g, '<$1 style="$2">$3</$4>');
-        // 帶欄寬的 HTML 表格(TipTap 拖過寬度)→ 解開整個 <table> 區塊保留寬度
-        s = s.replace(/&lt;table([^&]*)&gt;([\s\S]*?)&lt;\/table&gt;/g, (m, attrs, content) => {
+        // 帶欄寬的 HTML 表格(TipTap 拖過寬度 或 v117 之後的 inline width)→ 解開整個 <table> 區塊
+        // 用 lazy match 抓 attrs(因為 style 屬性編碼後會含 &quot; 等帶 & 的字元)
+        s = s.replace(/&lt;table([\s\S]*?)&gt;([\s\S]*?)&lt;\/table&gt;/g, (m, attrs, content) => {
           const unesc = str => str.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
           return '<table class="nb-table"' + unesc(attrs) + '>' + unesc(content) + '</table>';
         });

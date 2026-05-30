@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v119-disable-resize';
+const CACHE_NAME = 'dental-all-v120-table-restore';
 const PRECACHE = [
   './',
   './index.html',

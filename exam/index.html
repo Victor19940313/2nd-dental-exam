@@ -9804,7 +9804,8 @@ ${instruction.trim()}
         return c;
       }
       function renderMDTables(s){
-        const re = /((?:^\|[^\n]+\|\n)+)/gm;
+        // 最後一列可以沒有 \n(避免章節結尾剛好是表格時最後一列被當文字)
+        const re = /((?:^\|[^\n]+\|(?:\n|$))+)/gm;
         return s.replace(re, (block) => {
           const lines = block.trim().split('\n');
           if (lines.length < 2) return block;

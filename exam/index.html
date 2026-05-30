@@ -10682,25 +10682,18 @@ ${instruction.trim()}
         }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
-      // 主題切換 — 同時存 user key 跟全域 fallback,雙重保險
+      // 主題切換 — 每個使用者完全獨立,只存自己的 key
       function setNotebookTheme(themeClass){
         document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
         if (themeClass) document.body.classList.add(themeClass);
-        try {
-          localStorage.setItem(uKey('nb_theme'), themeClass);
-          localStorage.setItem('nb_theme', themeClass);
-        } catch(e){}
+        try { localStorage.setItem(uKey('nb_theme'), themeClass); } catch(e){}
         document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(b => {
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
       }
-      // 取主題 — user key 優先,沒就讀全域 fallback
+      // 取主題 — 只讀自己的 user key,不跨 user 共用
       function _getSavedTheme(){
-        try {
-          return localStorage.getItem(uKey('nb_theme'))
-              || localStorage.getItem('nb_theme')
-              || '';
-        } catch(e){ return ''; }
+        try { return localStorage.getItem(uKey('nb_theme')) || ''; } catch(e){ return ''; }
       }
       // 重新套主題到 body — 可重複呼叫
       function _reapplyTheme(){
@@ -10714,14 +10707,12 @@ ${instruction.trim()}
       }
       // 頁面載入時套用儲存的主題 + 飽和度 + 透明度 + 漸層深淺
       (function loadNotebookThemeOnInit(){
-        // 一次性 migration:把舊版全域 key 搬到 per-user key
-        ['nb_theme', 'nb_theme_sat', 'nb_theme_opa', 'nb_theme_gstr'].forEach(k => {
-          const userKey = uKey(k);
-          if (localStorage.getItem(userKey) === null) {
-            const old = localStorage.getItem(k);
-            if (old !== null) localStorage.setItem(userKey, old);
-          }
-        });
+        // 一次性清理:v134 之前的全域共用 key 已淘汰,移除避免新 user 繼承到別人的設定
+        try {
+          ['nb_theme', 'nb_theme_sat', 'nb_theme_opa', 'nb_theme_gstr'].forEach(k => {
+            localStorage.removeItem(k);
+          });
+        } catch(e){}
         _reapplyTheme();
         applyThemeFilters();
         applyThemeGstrCss();
@@ -10731,12 +10722,12 @@ ${instruction.trim()}
         document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); });
         window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); });
       }
-      // 跨分頁同步 — 別的分頁改了主題,這個分頁也跟著變
+      // 跨分頁同步 — 同一個 user 在別的分頁改了主題,這個分頁也跟著變
       window.addEventListener('storage', (e) => {
         if (!e.key) return;
-        if (e.key === 'nb_theme' || e.key === uKey('nb_theme')) _reapplyTheme();
-        if (e.key.includes('nb_theme_sat') || e.key.includes('nb_theme_opa')) applyThemeFilters();
-        if (e.key.includes('nb_theme_gstr')) applyThemeGstrCss();
+        if (e.key === uKey('nb_theme')) _reapplyTheme();
+        if (e.key === uKey('nb_theme_sat') || e.key === uKey('nb_theme_opa')) applyThemeFilters();
+        if (e.key === uKey('nb_theme_gstr')) applyThemeGstrCss();
       });
       // 飽和度 + 透明度 (合併為一個 filter 套在 screen-* 上)
       function applyThemeFilters(){

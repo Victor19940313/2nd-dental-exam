@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v136-ctag-border';
+const CACHE_NAME = 'dental-all-v137-theme-strict-peruser';
 const PRECACHE = [
   './',
   './index.html',

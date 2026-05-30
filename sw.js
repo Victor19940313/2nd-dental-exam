@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v151-ipad-edit-visible';
+const CACHE_NAME = 'dental-all-v152-ai-preserve-images';
 const PRECACHE = [
   './',
   './index.html',

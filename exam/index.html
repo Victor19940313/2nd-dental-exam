@@ -2334,6 +2334,179 @@
       }
       .nb-editor-split.no-preview > .nb-editor-preview-live{display:none}
       .nb-editor-split.no-preview > .nb-editor-textarea{flex:1 1 100%}
+
+      /* ── Phase 2B: TipTap 編輯區 ── */
+      .nb-editor-mode-pill {
+        display: inline-flex; gap: .3rem;
+        background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 10px;
+        padding: 3px; margin-bottom: .6rem;
+      }
+      .nb-editor-mode-pill button {
+        background: transparent; border: none; padding: .35rem .8rem;
+        font-weight: 700; font-size: .82rem; color: #6b7280; cursor: pointer;
+        border-radius: 7px; transition: all .15s;
+      }
+      .nb-editor-mode-pill button.is-active {
+        background: #7c3aed; color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,.15);
+      }
+      .nb-editor-mode-pill .badge-new {
+        display: inline-block; background: #fef3c7; color: #92400e;
+        font-size: .65rem; padding: 1px 5px; border-radius: 4px;
+        margin-left: .3rem; vertical-align: middle;
+      }
+      .nb-editor-mode-pill button.is-active .badge-new {
+        background: #fde68a; color: #78350f;
+      }
+
+      .nb-editor-tiptap {
+        min-height: 55vh; max-height: 75vh; overflow-y: auto;
+        background: white; padding: 1rem 1.2rem;
+        border: 1.5px solid #e9d5ff; border-radius: 10px;
+      }
+      .nb-editor-tiptap .ProseMirror { outline: none; min-height: 50vh; line-height: 1.75; color: #374151; }
+      .nb-editor-tiptap .ProseMirror h2 {
+        background: linear-gradient(135deg, #7c3aed, #a855f7); color: white;
+        padding: .7rem 1rem; border-radius: 10px; font-size: 1.15rem; margin: 1.2rem 0 .8rem;
+      }
+      .nb-editor-tiptap .ProseMirror h3 {
+        background: #ede9fe; color: #5b21b6;
+        padding: .55rem .9rem; border-radius: 8px; font-size: 1.02rem; margin: 1rem 0 .6rem;
+      }
+      .nb-editor-tiptap .ProseMirror h4 { color: #7c3aed; font-size: .98rem; margin: .8rem 0 .4rem; }
+      .nb-editor-tiptap .ProseMirror p { margin: .6rem 0; }
+      .nb-editor-tiptap .ProseMirror strong {
+        color: #5b21b6; font-weight: 900;
+        background: linear-gradient(180deg, transparent 52%, #fcd97b 52%);
+        padding: 0 4px;
+      }
+      .nb-editor-tiptap .ProseMirror em { color: #4a7a99; font-style: normal; font-weight: 600; }
+      .nb-editor-tiptap .ProseMirror u {
+        text-decoration: underline; text-decoration-color: #ef4444;
+        text-decoration-thickness: 2.5px; text-underline-offset: 3px; font-weight: 700;
+      }
+      .nb-editor-tiptap .ProseMirror s {
+        text-decoration: line-through; text-decoration-color: #ef4444;
+        text-decoration-thickness: 2.5px; font-weight: 600;
+      }
+      .nb-editor-tiptap .ProseMirror code {
+        background: #ede9fe; color: #5b21b6; padding: 1px 6px;
+        border-radius: 4px; font-family: monospace; font-size: .9em;
+      }
+      .nb-editor-tiptap .ProseMirror mark { padding: 1px 3px; border-radius: 3px; }
+      .nb-editor-tiptap .ProseMirror mark.hl-y { background: #fde047; }
+      .nb-editor-tiptap .ProseMirror mark.hl-g { background: #bbf7d0; }
+      .nb-editor-tiptap .ProseMirror mark.hl-p { background: #e9d5ff; }
+      .nb-editor-tiptap .ProseMirror .ctag {
+        display: inline-block; background: #d8c4ef; color: #5d4694;
+        padding: 1px 9px; border-radius: 10px; font-size: .85em; font-weight: 700; margin: 0 2px;
+      }
+      .nb-editor-tiptap .ProseMirror table {
+        border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .9rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,.06); border-radius: 8px; overflow: hidden;
+      }
+      .nb-editor-tiptap .ProseMirror th, .nb-editor-tiptap .ProseMirror td {
+        border: 1px solid #e9d5ff; padding: .55rem .7rem; text-align: left; vertical-align: top;
+        position: relative;
+      }
+      .nb-editor-tiptap .ProseMirror th {
+        background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; font-weight: 700;
+      }
+      .nb-editor-tiptap .ProseMirror tr:nth-child(even) td { background: #faf5ff; }
+      .nb-editor-tiptap .ProseMirror td > p, .nb-editor-tiptap .ProseMirror th > p { margin: 0; line-height: 1.55; }
+      .nb-editor-tiptap .ProseMirror .column-resize-handle {
+        position: absolute; right: -2px; top: 0; bottom: -2px;
+        width: 4px; background-color: #7c3aed; pointer-events: none;
+      }
+      .nb-editor-tiptap .ProseMirror.resize-cursor { cursor: col-resize; }
+      .nb-editor-tiptap .ProseMirror .selectedCell::after {
+        z-index: 2; position: absolute; content: '';
+        left: 0; right: 0; top: 0; bottom: 0;
+        background: rgba(124, 58, 237, .12); pointer-events: none;
+      }
+      .nb-editor-tiptap .ProseMirror blockquote {
+        margin: .9rem 0; padding: .7rem .95rem; border-radius: 10px;
+        background: #f3f4f6; border-left: 4px solid #9ca3af; color: #374151;
+      }
+      .nb-editor-tiptap .ProseMirror blockquote.callout-tip {
+        background: #fef9c3; border-color: #eab308; color: #713f12;
+      }
+      .nb-editor-tiptap .ProseMirror blockquote.callout-warn {
+        background: #fee2e2; border-color: #ef4444; color: #7f1d1d;
+      }
+      .nb-editor-tiptap .ProseMirror blockquote.callout-clinical {
+        background: #dcfce7; border-color: #22c55e; color: #14532d;
+      }
+      .nb-editor-tiptap .ProseMirror blockquote.callout-exam {
+        background: #e9d5ff; border-color: #7c3aed; color: #581c87;
+      }
+      .nb-editor-tiptap .ProseMirror blockquote > *:first-child { margin-top: 0 !important; }
+      .nb-editor-tiptap .ProseMirror blockquote > *:last-child { margin-bottom: 0 !important; }
+      .nb-editor-tiptap .ProseMirror blockquote > p:last-child:has(> br:only-child) { display: none; }
+      .nb-editor-tiptap .ProseMirror blockquote br.ProseMirror-trailingBreak { display: none; }
+      .nb-editor-tiptap .ProseMirror li > p { margin: 0 !important; }
+      .nb-editor-tiptap .ProseMirror ul, .nb-editor-tiptap .ProseMirror ol {
+        margin: .5rem 0 .8rem 1.4rem; padding: 0;
+      }
+      .nb-editor-tiptap .ProseMirror li { margin-bottom: .4rem; line-height: 1.75; }
+      .nb-editor-tiptap .ProseMirror img {
+        max-width: 60%; height: auto; margin: .5rem;
+        border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); cursor: pointer;
+      }
+      .nb-editor-tiptap .ProseMirror img.ProseMirror-selectednode {
+        outline: 3px solid #7c3aed; outline-offset: 2px;
+      }
+      .nb-editor-tiptap .ProseMirror p:has(img + img) {
+        display: flex; gap: .5rem; align-items: flex-start; margin: .8rem 0;
+      }
+      .nb-editor-tiptap .ProseMirror p:has(img + img) > img {
+        width: 48% !important; max-width: 48% !important; margin: 0 !important; flex: 0 1 auto;
+      }
+
+      /* TipTap 圖片大小小工具列 */
+      .nb-img-toolbar {
+        display: flex; gap: .3rem; align-items: center;
+        background: #faf5ff; border: 1.5px solid #e9d5ff; border-radius: 8px;
+        padding: .35rem .6rem; margin: .4rem 0; font-size: .8rem; flex-wrap: wrap;
+      }
+      .nb-img-toolbar button {
+        background: white; border: 1.5px solid #e9d5ff; color: #5b21b6;
+        padding: .22rem .55rem; font-size: .78rem; font-weight: 700;
+        border-radius: 5px; cursor: pointer;
+      }
+      .nb-img-toolbar button:hover { background: #ede9fe; }
+      .nb-img-toolbar .nb-img-status {
+        margin-left: auto; color: #6b7280; font-size: .72rem;
+      }
+
+      /* 顏色 popup(共用) */
+      .nb-color-pop-wrap { position: relative; display: inline-block; }
+      .nb-color-pop {
+        position: absolute; top: calc(100% + 4px); left: 0;
+        background: white; border: 1.5px solid #e9d5ff; border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.15); padding: .5rem;
+        display: none; z-index: 200; min-width: 180px;
+      }
+      .nb-color-pop.open { display: block; }
+      .nb-color-pop .row { display: flex; gap: .25rem; margin-bottom: .3rem; }
+      .nb-color-pop .sw {
+        width: 22px; height: 22px; border: 2px solid #e5e7eb; border-radius: 4px; cursor: pointer;
+      }
+      .nb-color-pop .sw:hover { transform: scale(1.15); }
+      .nb-color-pop .clear {
+        margin-top: .4rem; width: 100%; background: none; border: 1.5px solid #e5e7eb;
+        padding: .2rem; font-size: .75rem; color: #6b7280; border-radius: 4px; cursor: pointer;
+      }
+      /* 分裂式按鈕(主按鈕 + 旁邊小箭頭) */
+      .nb-editor-toolbar .split-btn { display: inline-flex; }
+      .nb-editor-toolbar .split-btn > button { margin: 0; }
+      .nb-editor-toolbar .split-btn > button:first-of-type {
+        border-radius: 6px 0 0 6px; border-right: 1px solid #d8b4fe; padding-right: .5rem;
+      }
+      .nb-editor-toolbar .split-btn > button:last-of-type {
+        border-radius: 0 6px 6px 0; padding: .4rem .35rem; min-width: 14px;
+        font-size: .6rem; border-left: none; color: #9ca3af;
+      }
       @media (max-width:900px){
         .nb-editor-split{flex-direction:column}
         .nb-editor-split > .nb-editor-textarea{min-height:30vh}
@@ -8482,49 +8655,118 @@ ${JSON.stringify(candidates, null, 2)}
       function cancelChapterEdit(){
         if (!confirm('放棄這次編輯？未儲存的內容會消失。')) return;
         editingChapterId = null;
+        if (window.NotebookTipTap) window.NotebookTipTap.destroy();
         renderNotebook();
       }
       function saveChapterEdit(id){
-        const ta = document.getElementById('ch-editor');
-        if (!ta) return;
         const ch = notebook.chapters.find(c => c.id === id);
         if (!ch) return;
-        // 偵測還沒完成的圖片上傳
-        if (ta.value.includes('![上傳中...]')) {
-          if (!confirm('⚠️ 還有圖片正在上傳中\n\n現在儲存的話「上傳中」的圖會卡在筆記裡，等上傳完成才會自動換成正確圖片。\n\n要先等一下再儲存嗎？\n\n（按確定 = 我等等，按取消 = 不管它直接存）')) {
-            // 使用者選「不管它直接存」
-          } else {
-            return; // 使用者選「等一下」
+        const mode = getEditorMode();
+        let newContent;
+        if (mode === 'tiptap' && window.NotebookTipTap?.getEditor()) {
+          // TipTap 模式:把編輯器內容(HTML)轉回 markdown
+          const editorRootEl = document.querySelector('#ch-tiptap .ProseMirror');
+          if (!editorRootEl) { showToast('找不到編輯器'); return; }
+          try {
+            newContent = htmlToMarkdown(editorRootEl);
+          } catch (e) {
+            console.error('TipTap → markdown 轉換失敗', e);
+            if (!confirm('⚠️ 編輯內容轉換時出錯,可能會儲存錯誤格式。要繼續存嗎?')) return;
+            // 緊急 fallback:直接存 HTML
+            newContent = window.NotebookTipTap.getHTML();
           }
+          // 偵測還沒完成的圖片上傳(圖片 alt 含「上傳中」或 src 是 placeholder)
+          if (newContent.includes('![上傳中...]') || newContent.match(/<img[^>]*alt="?上傳中/)) {
+            if (!confirm('⚠️ 還有圖片正在上傳中\n\n現在儲存的話「上傳中」的圖會卡在筆記裡。\n\n要先等一下再儲存嗎?\n\n(按確定 = 我等等,按取消 = 不管它直接存)')) {
+              // 不管它直接存
+            } else {
+              return;
+            }
+          }
+        } else {
+          // Markdown 模式(舊版,原本邏輯)
+          const ta = document.getElementById('ch-editor');
+          if (!ta) return;
+          if (ta.value.includes('![上傳中...]')) {
+            if (!confirm('⚠️ 還有圖片正在上傳中\n\n現在儲存的話「上傳中」的圖會卡在筆記裡,等上傳完成才會自動換成正確圖片。\n\n要先等一下再儲存嗎?\n\n(按確定 = 我等等,按取消 = 不管它直接存)')) {
+              // 不管它直接存
+            } else {
+              return;
+            }
+          }
+          newContent = ta.value;
         }
-        // 存入歷史（撤銷用）— 拍照舊內容，這樣 undo 才能還原
+        // 存入歷史(撤銷用)
         const _oldName = ch.name;
         const _oldContent = ch.content;
         const _oldQids = [...(ch.qids || [])];
         const _oldConcepts = [...(ch.concepts || [])];
-        ch.content = ta.value;
+        ch.content = newContent;
         ch.updatedAt = Date.now();
         notebook.history.unshift({
           ts: Date.now(),
           action: 'manual_edit',
           chapterId: id,
           snapshot: { name: _oldName, content: _oldContent, qids: _oldQids, concepts: _oldConcepts },
-          note: '手動編輯「' + _oldName + '」'
+          note: '手動編輯「' + _oldName + '」' + (mode === 'tiptap' ? '(TipTap)' : '')
         });
         trimHistory();
         editingChapterId = null;
+        if (window.NotebookTipTap) window.NotebookTipTap.destroy();
         saveNotebook();
         renderNotebook();
         showToast('✓ 已儲存');
       }
+      // 編輯器模式:'markdown'(舊版,穩定) | 'tiptap'(新版,Phase 2B)
+      function getEditorMode(){
+        return localStorage.getItem('nb_editor_mode') === 'tiptap' ? 'tiptap' : 'markdown';
+      }
+      function switchEditorMode(mode){
+        const cur = getEditorMode();
+        if (cur === mode) return;
+        // 切換到 tiptap 前不需要動 ch.content,因為 mount 時會從 ch.content 載入
+        // 切換到 markdown 之前若 tiptap 有編輯過,要把 tiptap HTML 轉回 markdown 存回 ch.content
+        if (cur === 'tiptap' && window.NotebookTipTap?.getEditor()) {
+          // 把目前 TipTap 的內容轉回 markdown 並暫存
+          const html = window.NotebookTipTap.getHTML();
+          const tmpDiv = document.createElement('div');
+          tmpDiv.innerHTML = html;
+          const md = htmlToMarkdown(tmpDiv);
+          const curCh = notebook.chapters.find(c => c.id === editingChapterId);
+          if (curCh) curCh._tiptapDraft = md; // 暫存,避免一切回去就消失
+          window.NotebookTipTap.destroy();
+        }
+        localStorage.setItem('nb_editor_mode', mode);
+        renderNotebook();
+      }
+      function _editorModePill(){
+        const mode = getEditorMode();
+        return `<div class="nb-editor-mode-pill">
+          <button class="${mode === 'markdown' ? 'is-active' : ''}" onclick="switchEditorMode('markdown')" title="原本的 markdown 編輯器">📝 Markdown 版</button>
+          <button class="${mode === 'tiptap' ? 'is-active' : ''}" onclick="switchEditorMode('tiptap')" title="所見即所得 TipTap 編輯器">✨ TipTap 版 <span class="badge-new">新</span></button>
+        </div>`;
+      }
       function renderEditorView(ch){
+        const mode = getEditorMode();
+        if (mode === 'tiptap') {
+          // 排程在 HTML 插入 DOM 之後再 mount TipTap
+          setTimeout(() => mountTipTapEditor(ch), 0);
+          return renderTipTapEditorView(ch);
+        }
+        return renderMarkdownEditorView(ch);
+      }
+      function renderMarkdownEditorView(ch){
         const hasGH = !!getGithubToken() && !!getGithubRepo();
         const tip = hasGH
           ? '✅ 可以 Ctrl+V 貼圖、拖檔、或按 📎 選圖'
           : '⚠️ 沒設定 GitHub 圖床 — 貼圖會無法用';
         const tipColor = hasGH ? '#0369a1' : '#92400e';
         const tipBg = hasGH ? '#f0f9ff' : '#fffbeb';
+        // 切回 markdown 模式時若有 tiptap 暫存草稿則用它
+        const content = (ch._tiptapDraft != null) ? ch._tiptapDraft : (ch.content || '');
+        delete ch._tiptapDraft;
         return `<div class="nb-editor-wrap">
+          ${_editorModePill()}
           <div class="nb-editor-toolbar">
             <button onclick="editorUndo()" title="復原 (Ctrl+Z)">↶ 復原</button>
             <button onclick="editorRedo()" title="取消復原 (Ctrl+Y)">↷ 取消復原</button>
@@ -8545,10 +8787,158 @@ ${JSON.stringify(candidates, null, 2)}
           </div>
           <div style="background:${tipBg};color:${tipColor};font-size:.78rem;padding:.4rem .7rem;border-radius:6px;margin-bottom:.5rem;line-height:1.5">${tip}</div>
           <div class="nb-editor-split ${splitPreviewOff ? 'no-preview' : ''}">
-            <textarea id="ch-editor" class="nb-editor-textarea" spellcheck="false">${escapeHtml(ch.content || '')}</textarea>
-            <div id="ch-editor-preview" class="nb-chapter-content nb-editor-preview-live">${renderMarkdown(ch.content || '')}</div>
+            <textarea id="ch-editor" class="nb-editor-textarea" spellcheck="false">${escapeHtml(content)}</textarea>
+            <div id="ch-editor-preview" class="nb-chapter-content nb-editor-preview-live">${renderMarkdown(content)}</div>
           </div>
         </div>`;
+      }
+      function renderTipTapEditorView(ch){
+        const hasGH = !!getGithubToken() && !!getGithubRepo();
+        const tip = hasGH
+          ? '✅ 可以 Ctrl+V 貼圖、拖檔、或按 📎 選圖'
+          : '⚠️ 沒設定 GitHub 圖床 — 貼圖會無法用';
+        const tipColor = hasGH ? '#0369a1' : '#92400e';
+        const tipBg = hasGH ? '#f0f9ff' : '#fffbeb';
+        return `<div class="nb-editor-wrap">
+          ${_editorModePill()}
+          <div class="nb-editor-toolbar">
+            <button onclick="NotebookTipTap.cmd.undo()" title="復原 Ctrl+Z" style="font-size:1.05rem;padding:.3rem .6rem">↶</button>
+            <button onclick="NotebookTipTap.cmd.redo()" title="重做 Ctrl+Y" style="font-size:1.05rem;padding:.3rem .6rem">↷</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="document.getElementById('ch-file-input').click()" ${hasGH?'':'disabled'} title="選圖檔/拍照">📎 選圖</button>
+            <button onclick="insertImageURL_tiptap()" title="貼網路圖片網址">🔗 從 URL</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="NotebookTipTap.cmd.bold()" title="畫重點 Ctrl+B (跟筆記本「**粗體**」一樣)"><span style="color:#5d4694;font-weight:900;background:linear-gradient(180deg,transparent 52%,#fcd97b 52%);padding:0 4px">重點</span></button>
+            <button onclick="NotebookTipTap.cmd.italic()" title="強調 Ctrl+I (跟筆記本「*斜體*」一樣)"><span style="color:#4a7a99;font-weight:700">強調</span></button>
+            <span class="nb-color-pop-wrap split-btn" style="display:inline-flex">
+              <button onclick="NotebookTipTap.cmd.underline()" title="底線 Ctrl+U (預設紅色粗)"><u>U</u></button>
+              <button onclick="_togglePop('nb-u-pop',event)" title="底線顏色">▾</button>
+              <div class="nb-color-pop" id="nb-u-pop">
+                <div class="row">
+                  <div class="sw" style="background:#ef4444" onclick="NotebookTipTap.cmd.underlineColor('#ef4444');_closePops()"></div>
+                  <div class="sw" style="background:#f59e0b" onclick="NotebookTipTap.cmd.underlineColor('#f59e0b');_closePops()"></div>
+                  <div class="sw" style="background:#22c55e" onclick="NotebookTipTap.cmd.underlineColor('#22c55e');_closePops()"></div>
+                  <div class="sw" style="background:#0ea5e9" onclick="NotebookTipTap.cmd.underlineColor('#0ea5e9');_closePops()"></div>
+                  <div class="sw" style="background:#a855f7" onclick="NotebookTipTap.cmd.underlineColor('#a855f7');_closePops()"></div>
+                  <div class="sw" style="background:#1f2937" onclick="NotebookTipTap.cmd.underlineColor('#1f2937');_closePops()"></div>
+                </div>
+              </div>
+            </span>
+            <span class="nb-color-pop-wrap split-btn" style="display:inline-flex">
+              <button onclick="NotebookTipTap.cmd.strike()" title="刪除線(預設紅)"><s>S</s></button>
+              <button onclick="_togglePop('nb-s-pop',event)" title="刪除線顏色">▾</button>
+              <div class="nb-color-pop" id="nb-s-pop">
+                <div class="row">
+                  <div class="sw" style="background:#ef4444" onclick="NotebookTipTap.cmd.strikeColor('#ef4444');_closePops()"></div>
+                  <div class="sw" style="background:#f59e0b" onclick="NotebookTipTap.cmd.strikeColor('#f59e0b');_closePops()"></div>
+                  <div class="sw" style="background:#22c55e" onclick="NotebookTipTap.cmd.strikeColor('#22c55e');_closePops()"></div>
+                  <div class="sw" style="background:#0ea5e9" onclick="NotebookTipTap.cmd.strikeColor('#0ea5e9');_closePops()"></div>
+                  <div class="sw" style="background:#a855f7" onclick="NotebookTipTap.cmd.strikeColor('#a855f7');_closePops()"></div>
+                  <div class="sw" style="background:#1f2937" onclick="NotebookTipTap.cmd.strikeColor('#1f2937');_closePops()"></div>
+                </div>
+              </div>
+            </span>
+            <span class="nb-color-pop-wrap">
+              <button onclick="_togglePop('nb-c-pop',event)" title="字體顏色">🎨 字體顏色</button>
+              <div class="nb-color-pop" id="nb-c-pop">
+                <div class="row">
+                  <div class="sw" style="background:#ef4444" onclick="NotebookTipTap.cmd.color('#ef4444');_closePops()"></div>
+                  <div class="sw" style="background:#f59e0b" onclick="NotebookTipTap.cmd.color('#f59e0b');_closePops()"></div>
+                  <div class="sw" style="background:#22c55e" onclick="NotebookTipTap.cmd.color('#22c55e');_closePops()"></div>
+                  <div class="sw" style="background:#0ea5e9" onclick="NotebookTipTap.cmd.color('#0ea5e9');_closePops()"></div>
+                  <div class="sw" style="background:#a855f7" onclick="NotebookTipTap.cmd.color('#a855f7');_closePops()"></div>
+                  <div class="sw" style="background:#1f2937" onclick="NotebookTipTap.cmd.color('#1f2937');_closePops()"></div>
+                </div>
+                <button class="clear" onclick="NotebookTipTap.cmd.clearColor();_closePops()">清除顏色</button>
+              </div>
+            </span>
+            <span class="nb-color-pop-wrap">
+              <button onclick="_togglePop('nb-h-pop',event)" title="螢光筆">🖍 螢光</button>
+              <div class="nb-color-pop" id="nb-h-pop">
+                <div class="row">
+                  <div class="sw" style="background:#fde047" onclick="NotebookTipTap.cmd.highlight('#fde047');_closePops()"></div>
+                  <div class="sw" style="background:#bbf7d0" onclick="NotebookTipTap.cmd.highlight('#bbf7d0');_closePops()"></div>
+                  <div class="sw" style="background:#fbcfe8" onclick="NotebookTipTap.cmd.highlight('#fbcfe8');_closePops()"></div>
+                  <div class="sw" style="background:#bae6fd" onclick="NotebookTipTap.cmd.highlight('#bae6fd');_closePops()"></div>
+                  <div class="sw" style="background:#e9d5ff" onclick="NotebookTipTap.cmd.highlight('#e9d5ff');_closePops()"></div>
+                  <div class="sw" style="background:#fed7aa" onclick="NotebookTipTap.cmd.highlight('#fed7aa');_closePops()"></div>
+                </div>
+                <button class="clear" onclick="NotebookTipTap.cmd.clearHighlight();_closePops()">清除螢光</button>
+              </div>
+            </span>
+            <button onclick="NotebookTipTap.cmd.ctag()" title="概念標籤(跟「[[xxx]]」一樣)"><span style="color:#5d4694;background:#d8c4ef;padding:1px 7px;border-radius:8px;font-size:.8em;font-weight:700">概念</span></button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="NotebookTipTap.cmd.alignLeft()" title="置左">⫷</button>
+            <button onclick="NotebookTipTap.cmd.alignCenter()" title="置中">≡</button>
+            <button onclick="NotebookTipTap.cmd.alignRight()" title="置右">⫸</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="NotebookTipTap.cmd.h2()" title="大標題">H2</button>
+            <button onclick="NotebookTipTap.cmd.h3()" title="小標題">H3</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="NotebookTipTap.cmd.bullet()" title="條列">• 條列</button>
+            <button onclick="NotebookTipTap.cmd.order()" title="編號">1. 編號</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="NotebookTipTap.cmd.insertTable()" title="插入表格">⊞ 表格</button>
+            <button onclick="NotebookTipTap.cmd.addRow()" title="加列">+Row</button>
+            <button onclick="NotebookTipTap.cmd.addCol()" title="加欄">+Col</button>
+            <button onclick="NotebookTipTap.cmd.delRow()" title="刪列">−Row</button>
+            <button onclick="NotebookTipTap.cmd.delCol()" title="刪欄">−Col</button>
+            <span style="border-left:1.5px solid #e5e7eb;height:24px;display:inline-block;align-self:center"></span>
+            <button onclick="NotebookTipTap.cmd.quote()" title="引用框">＂ 框</button>
+            <input type="file" id="ch-file-input" accept="image/*" style="display:none" onchange="handleFileInputChange(event)" />
+          </div>
+          <div style="background:${tipBg};color:${tipColor};font-size:.78rem;padding:.4rem .7rem;border-radius:6px;margin-bottom:.5rem;line-height:1.5">${tip}</div>
+          <div class="nb-img-toolbar">
+            <span style="font-weight:700;color:#6b21a8;margin-right:.3rem">🖼 圖片大小:</span>
+            <button onclick="NotebookTipTap.cmd.setImgWidth('30%')">小</button>
+            <button onclick="NotebookTipTap.cmd.setImgWidth('60%')">中</button>
+            <button onclick="NotebookTipTap.cmd.setImgWidth('90%')">大</button>
+            <button onclick="NotebookTipTap.cmd.setImgWidth('100%')">全寬</button>
+            <button onclick="NotebookTipTap.cmd.stepImgWidth(-10)">縮小 −10%</button>
+            <button onclick="NotebookTipTap.cmd.stepImgWidth(10)">放大 +10%</button>
+            <span class="nb-img-status">先點圖片才有作用</span>
+          </div>
+          <div class="nb-editor-tiptap" id="ch-tiptap"></div>
+        </div>`;
+      }
+      function mountTipTapEditor(ch){
+        const el = document.getElementById('ch-tiptap');
+        if (!el || !window.NotebookTipTap) return;
+        // 把 ch.content (markdown) 轉成 HTML,再做圖片格式調整,然後丟給 TipTap
+        const md = (ch._tiptapDraft != null) ? ch._tiptapDraft : (ch.content || '');
+        delete ch._tiptapDraft;
+        let html;
+        try { html = renderMarkdown(md); } catch (e) { html = '<p style="color:red">渲染失敗</p>'; }
+        // 把原版渲染的 <span class="nb-img-wrap" style="--img-max:X"><img></span>
+        // 轉成 TipTap 能保留 width 的 <img style="width:X">
+        const tiptapHtml = html
+          .replace(/<span class="nb-img-wrap"[^>]*style="--img-max:([^";]+)"[^>]*>\s*(<img[^>]*?)\s*\/?>\s*<\/span>/g,
+            (m, size, imgTag) => imgTag + ` style="width: ${size}; max-width: ${size};" />`)
+          .replace(/<div class="nb-img-row">/g, '<p>')
+          .replace(/<\/div>/g, '</p>');
+        window.NotebookTipTap.mount(el, tiptapHtml);
+        window.NotebookTipTap.focus();
+      }
+      // 工具列 popup 開關
+      function _togglePop(id, ev){
+        if (ev) ev.stopPropagation();
+        document.querySelectorAll('.nb-color-pop').forEach(p => {
+          if (p.id !== id) p.classList.remove('open');
+        });
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('open');
+      }
+      function _closePops(){
+        document.querySelectorAll('.nb-color-pop').forEach(p => p.classList.remove('open'));
+      }
+      document.addEventListener('click', (e) => {
+        // 點 popup 外面就關掉
+        if (!e.target.closest('.nb-color-pop, .nb-color-pop-wrap > button')) _closePops();
+      });
+      // TipTap 從 URL 插入圖片
+      function insertImageURL_tiptap(){
+        const url = prompt('貼上圖片網址(http/https):');
+        if (url && url.trim()) NotebookTipTap.cmd.imageURL(url.trim());
       }
       // 用瀏覽器內建 insertText 插入，這樣 Ctrl+Z 可以正常復原（不要直接設 .value）
       function _editorInsert(text, caretOffset){
@@ -8655,10 +9045,40 @@ ${JSON.stringify(candidates, null, 2)}
       function handleFileInputChange(e){
         const file = e.target.files && e.target.files[0];
         if (!file) return;
-        const ta = document.getElementById('ch-editor');
-        if (ta) handleImageUpload(file, ta);
+        if (getEditorMode() === 'tiptap') {
+          handleImageUpload_tiptap(file);
+        } else {
+          const ta = document.getElementById('ch-editor');
+          if (ta) handleImageUpload(file, ta);
+        }
         e.target.value = '';
       }
+      // TipTap 模式專用的圖片上傳:顯示 toast,上傳完直接 setImage 到目前游標
+      async function handleImageUpload_tiptap(file){
+        if (!file || !file.type || !file.type.startsWith('image/')) { showToast('不是圖片檔'); return; }
+        if (file.size > 8 * 1024 * 1024) { showToast('檔案太大(>8MB)'); return; }
+        showToast('📷 圖片上傳中…');
+        try {
+          const url = await uploadImageToGitHub(file);
+          if (window.NotebookTipTap?.cmd) window.NotebookTipTap.cmd.imageURL(url);
+          showToast('✓ 圖已上傳');
+        } catch (err) {
+          showToast('上傳失敗: ' + err.message);
+          alert('上傳失敗:\n\n' + err.message);
+        }
+      }
+      // 暴露給 TipTap 模組 paste/drop handler 用的圖片上傳橋接函式
+      window.uploadImageToGithub = async function(blob, callback){
+        try {
+          showToast('📷 上傳中…');
+          const url = await uploadImageToGitHub(blob);
+          showToast('✓ 圖已上傳');
+          callback(url);
+        } catch (err) {
+          showToast('上傳失敗: ' + err.message);
+          callback(null);
+        }
+      };
       function insertImageURL(){
         const url = prompt('請貼上圖片網址（http/https）：');
         if (!url) return;
@@ -9394,6 +9814,178 @@ ${instruction.trim()}
           out.push('</table>');
           return out.join('');
         });
+      }
+
+      // ── HTML → Markdown 轉換器(TipTap 編輯後存回 markdown 用)──
+      // 設計目標:TipTap 編輯後輸出的 HTML 必須能變回跟筆記本同格式的 markdown
+      //   markdown → HTML(renderMarkdown) → TipTap edit → HTML → markdown(htmlToMarkdown)
+      //   理想上不編輯時 round-trip 完全相同(這個函式跟 renderMarkdown 是反函數)
+      function htmlToMarkdown(rootEl) {
+        function nodeMD(node) {
+          if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+          if (node.nodeType !== Node.ELEMENT_NODE) return '';
+          const tag = node.tagName.toLowerCase();
+          // TipTap 自動加在每個編輯區塊尾巴的隱形游標 br → 略過
+          if (tag === 'br' && node.classList && node.classList.contains('ProseMirror-trailingBreak')) return '';
+          switch (tag) {
+            case 'br': return '\n';
+            case 'strong': case 'b': {
+              const inner = childrenMD(node);
+              if (!inner.trim()) return '';
+              return '**' + inner + '**';
+            }
+            case 'em': case 'i': {
+              const inner = childrenMD(node);
+              if (!inner.trim()) return '';
+              return '*' + inner + '*';
+            }
+            case 'code': return '`' + node.textContent + '`';
+            case 'u': {
+              const style = node.getAttribute('style');
+              const inner = childrenMD(node);
+              if (!inner.trim()) return '';
+              return style ? `<u style="${style}">${inner}</u>` : `<u>${inner}</u>`;
+            }
+            case 's': {
+              const style = node.getAttribute('style');
+              const inner = childrenMD(node);
+              if (!inner.trim()) return '';
+              return style ? `<s style="${style}">${inner}</s>` : '~~' + inner + '~~';
+            }
+            case 'mark': {
+              const cls = node.getAttribute('class') || '';
+              const style = node.getAttribute('style') || '';
+              const attrs = [];
+              if (cls) attrs.push(`class="${cls}"`);
+              if (style) attrs.push(`style="${style}"`);
+              const attrStr = attrs.length ? ' ' + attrs.join(' ') : '';
+              return `<mark${attrStr}>${childrenMD(node)}</mark>`;
+            }
+            case 'span': {
+              const cls = node.getAttribute('class') || '';
+              if (cls.includes('ctag')) return '[[' + node.textContent.trim() + ']]';
+              const style = node.getAttribute('style') || '';
+              if (style.includes('color') || cls.includes('md-label') || cls.includes('md-colon')) {
+                // 字體顏色 / md-label 維持 HTML
+                const inner = childrenMD(node);
+                const attrs = [];
+                if (cls) attrs.push(`class="${cls}"`);
+                if (style) attrs.push(`style="${style}"`);
+                return `<span ${attrs.join(' ')}>${inner}</span>`;
+              }
+              return childrenMD(node);
+            }
+            case 'a': {
+              const href = node.getAttribute('href') || '';
+              const text = childrenMD(node);
+              if (!href) return text;
+              return `[${text}](${href})`;
+            }
+            case 'img': {
+              const src = node.getAttribute('src') || '';
+              const alt = node.getAttribute('alt') || '';
+              const style = node.getAttribute('style') || '';
+              const m = style.match(/width:\s*([^;]+)/);
+              const size = m ? m[1].trim() : '';
+              return size ? `![${alt}|${size}](${src})` : `![${alt}](${src})`;
+            }
+            case 'h1': case 'h2': return '\n\n## ' + childrenMD(node).trim() + '\n\n';
+            case 'h3': return '\n\n### ' + childrenMD(node).trim() + '\n\n';
+            case 'h4': return '\n\n#### ' + childrenMD(node).trim() + '\n\n';
+            case 'p': {
+              const inner = childrenMD(node).trim();
+              if (!inner) return '';
+              return '\n\n' + inner + '\n\n';
+            }
+            case 'ul': case 'ol': {
+              const items = [];
+              const ordered = tag === 'ol';
+              let n = 1;
+              for (const li of node.children) {
+                if (li.tagName.toLowerCase() !== 'li') continue;
+                let txt = childrenMD(li).trim().replace(/\n{2,}/g, '\n');
+                const prefix = ordered ? (n++ + '. ') : '- ';
+                items.push(prefix + txt.replace(/\n/g, '\n' + (ordered ? '   ' : '  ')));
+              }
+              return '\n\n' + items.join('\n') + '\n\n';
+            }
+            case 'li': return '- ' + childrenMD(node).trim();
+            case 'blockquote': {
+              const cls = node.getAttribute('class') || '';
+              let emoji = '';
+              if (cls.includes('callout-tip')) emoji = '💡 ';
+              else if (cls.includes('callout-warn')) emoji = '⚠️ ';
+              else if (cls.includes('callout-clinical')) emoji = '🏥 ';
+              else if (cls.includes('callout-exam')) emoji = '📝 ';
+              const inner = childrenMD(node).trim();
+              if (!inner) return '';
+              const lines = inner.split('\n');
+              // 第一個有內容的行補 emoji(若還沒有)
+              if (emoji) {
+                for (let i = 0; i < lines.length; i++) {
+                  if (lines[i].trim()) {
+                    if (!lines[i].match(/^(💡|⭐|🌟|🔑|⚠️|❗|🚨|🏥|💊|🩺|📝|📌|🎯)/)) {
+                      lines[i] = emoji + lines[i];
+                    }
+                    break;
+                  }
+                }
+              }
+              return '\n\n' + lines.map(l => '> ' + l).join('\n') + '\n\n';
+            }
+            case 'table': return '\n\n' + tableToMD(node) + '\n\n';
+            case 'div': case 'tbody': case 'thead': case 'tr': case 'td': case 'th':
+              // 表格內由 tableToMD 處理,孤立的 div 直接處理子節點
+              return childrenMD(node);
+            default: return childrenMD(node);
+          }
+        }
+        function childrenMD(el) {
+          let s = '';
+          for (const child of el.childNodes) s += nodeMD(child);
+          return s;
+        }
+        function tableToMD(table) {
+          const matrix = [];
+          let maxCols = 0;
+          let headerRowCount = 0;
+          const trs = Array.from(table.querySelectorAll('tr'));
+          trs.forEach((tr, rowIdx) => {
+            if (!matrix[rowIdx]) matrix[rowIdx] = [];
+            let colIdx = 0;
+            for (const cell of tr.children) {
+              while (matrix[rowIdx][colIdx] !== undefined) colIdx++;
+              const isHeader = cell.tagName.toLowerCase() === 'th';
+              if (isHeader) headerRowCount = Math.max(headerRowCount, rowIdx + 1);
+              const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
+              const colspan = parseInt(cell.getAttribute('colspan') || '1');
+              let text = childrenMD(cell).trim().replace(/\|/g, '\\|').replace(/\n+/g, '<br>');
+              for (let r = 0; r < rowspan; r++) {
+                if (!matrix[rowIdx + r]) matrix[rowIdx + r] = [];
+                for (let c = 0; c < colspan; c++) {
+                  matrix[rowIdx + r][colIdx + c] = (r === 0 && c === 0) ? text : '';
+                }
+              }
+              colIdx += colspan;
+            }
+            maxCols = Math.max(maxCols, matrix[rowIdx].length);
+          });
+          if (matrix.length === 0 || maxCols === 0) return '';
+          if (headerRowCount === 0) headerRowCount = 1;
+          let md = '';
+          matrix.forEach((row, i) => {
+            while (row.length < maxCols) row.push('');
+            md += '| ' + row.join(' | ') + ' |\n';
+            if (i === headerRowCount - 1) {
+              md += '|' + Array(maxCols).fill('---').join('|') + '|\n';
+            }
+          });
+          return md;
+        }
+        let result = '';
+        for (const child of rootEl.childNodes) result += nodeMD(child);
+        result = result.replace(/\n{3,}/g, '\n\n').trim();
+        return result;
       }
 
       // ── Onboarding wizard ──
@@ -10542,6 +11134,219 @@ ${instruction.trim()}
           }
         }, 2000);
       })();
+    </script>
+
+    <!-- TipTap 編輯器(Phase 2B 新版編輯器) -->
+    <script type="module">
+      import { Editor, Mark } from 'https://esm.sh/@tiptap/core@2';
+      import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2';
+      import Table from 'https://esm.sh/@tiptap/extension-table@2';
+      import TableRow from 'https://esm.sh/@tiptap/extension-table-row@2';
+      import TableHeader from 'https://esm.sh/@tiptap/extension-table-header@2';
+      import TableCell from 'https://esm.sh/@tiptap/extension-table-cell@2';
+      import Underline from 'https://esm.sh/@tiptap/extension-underline@2';
+      import Strike from 'https://esm.sh/@tiptap/extension-strike@2';
+      import Blockquote from 'https://esm.sh/@tiptap/extension-blockquote@2';
+      import TextStyle from 'https://esm.sh/@tiptap/extension-text-style@2';
+      import Color from 'https://esm.sh/@tiptap/extension-color@2';
+      import Highlight from 'https://esm.sh/@tiptap/extension-highlight@2';
+      import TextAlign from 'https://esm.sh/@tiptap/extension-text-align@2';
+      import Image from 'https://esm.sh/@tiptap/extension-image@2';
+
+      // 通用「保留 text-decoration-color 屬性」mark factory
+      function withColorAttr(MarkExt){
+        return MarkExt.extend({
+          addAttributes(){
+            return {
+              ...this.parent?.(),
+              color: {
+                default: null,
+                parseHTML: el => {
+                  const style = el.getAttribute('style') || '';
+                  const m = style.match(/text-decoration-color\s*:\s*([^;]+)/);
+                  return m ? m[1].trim() : null;
+                },
+                renderHTML: attrs => attrs.color ? { style: `text-decoration-color: ${attrs.color}` } : {},
+              },
+            };
+          },
+        });
+      }
+      const ColoredUnderline = withColorAttr(Underline);
+      const ColoredStrike = withColorAttr(Strike);
+      // 概念標籤 mark:保留 <span class="ctag">
+      const CTag = Mark.create({
+        name: 'ctag',
+        inclusive: false,
+        parseHTML(){ return [{ tag: 'span.ctag' }]; },
+        renderHTML(){ return ['span', { class: 'ctag' }, 0]; },
+      });
+      // Callout blockquote:保留 class 屬性(callout-tip/warn/clinical/exam)
+      const CalloutBlockquote = Blockquote.extend({
+        addAttributes(){
+          return {
+            ...this.parent?.(),
+            class: {
+              default: null,
+              parseHTML: el => el.getAttribute('class'),
+              renderHTML: attrs => attrs.class ? { class: attrs.class } : {},
+            },
+          };
+        },
+      });
+      // 可改寬度的圖片
+      const ResizableImage = Image.extend({
+        addAttributes(){
+          return {
+            ...this.parent?.(),
+            width: {
+              default: null,
+              parseHTML: el => {
+                const style = el.getAttribute('style') || '';
+                const m = style.match(/width\s*:\s*([^;]+)/);
+                if (m) return m[1].trim();
+                return el.getAttribute('width') || null;
+              },
+              renderHTML: attrs => attrs.width ? { style: `width: ${attrs.width}; max-width: ${attrs.width}` } : {},
+            },
+          };
+        },
+      });
+
+      let _tt = null; // 目前掛載中的 editor instance
+
+      // 暴露給一般 <script> 用的 API
+      window.NotebookTipTap = {
+        // 掛載編輯器到指定 DOM 節點。initialHTML 是 markdown 先 renderMarkdown 後再轉成 TipTap 友善格式的 HTML
+        mount(domEl, initialHTML, opts = {}){
+          if (_tt) { try { _tt.destroy(); } catch(e) {} _tt = null; }
+          _tt = new Editor({
+            element: domEl,
+            extensions: [
+              StarterKit.configure({ strike: false, blockquote: false }),
+              CalloutBlockquote,
+              Table.configure({ resizable: true }),
+              TableRow, TableHeader, TableCell,
+              ColoredUnderline, ColoredStrike, CTag, TextStyle, Color,
+              Highlight.configure({ multicolor: true }),
+              TextAlign.configure({ types: ['heading', 'paragraph'] }),
+              ResizableImage.configure({ inline: true, allowBase64: true }),
+            ],
+            content: initialHTML || '',
+            onUpdate: opts.onUpdate,
+          });
+          // 貼上圖片:呼叫外部 upload handler(主網站既有的 GitHub 圖床流程)
+          _tt.view.dom.addEventListener('paste', (event) => {
+            const items = event.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+              if (item.type && item.type.startsWith('image/')) {
+                event.preventDefault();
+                const blob = item.getAsFile();
+                if (!blob) return;
+                if (typeof window.uploadImageToGithub === 'function') {
+                  window.uploadImageToGithub(blob, (url, width) => {
+                    if (url) {
+                      const attrs = { src: url };
+                      if (width) attrs.width = width;
+                      _tt.chain().focus().setImage(attrs).run();
+                    }
+                  });
+                } else {
+                  // fallback:沒設 GitHub 圖床 → 用 base64 嵌入(留下訊息提醒)
+                  const reader = new FileReader();
+                  reader.onload = (e) => _tt.chain().focus().setImage({ src: e.target.result }).run();
+                  reader.readAsDataURL(blob);
+                }
+                return;
+              }
+            }
+          });
+          // 拖檔上傳
+          _tt.view.dom.addEventListener('drop', (event) => {
+            const files = event.dataTransfer?.files;
+            if (!files || !files.length) return;
+            for (const file of files) {
+              if (file.type && file.type.startsWith('image/')) {
+                event.preventDefault();
+                if (typeof window.uploadImageToGithub === 'function') {
+                  window.uploadImageToGithub(file, (url, width) => {
+                    if (url) {
+                      const attrs = { src: url };
+                      if (width) attrs.width = width;
+                      _tt.chain().focus().setImage(attrs).run();
+                    }
+                  });
+                }
+                return;
+              }
+            }
+          });
+          return _tt;
+        },
+        getEditor(){ return _tt; },
+        getHTML(){ return _tt ? _tt.getHTML() : ''; },
+        setHTML(html){ if (_tt) _tt.commands.setContent(html); },
+        focus(){ if (_tt) _tt.commands.focus(); },
+        destroy(){ if (_tt) { try { _tt.destroy(); } catch(e) {} _tt = null; } },
+        // 工具列指令對應(從外部 onclick 呼叫)
+        cmd: {
+          bold(){ _tt?.chain().focus().toggleBold().run(); },
+          italic(){ _tt?.chain().focus().toggleItalic().run(); },
+          underline(){ _tt?.chain().focus().toggleUnderline().run(); },
+          strike(){ _tt?.chain().focus().toggleStrike().run(); },
+          h2(){ _tt?.chain().focus().toggleHeading({ level: 2 }).run(); },
+          h3(){ _tt?.chain().focus().toggleHeading({ level: 3 }).run(); },
+          bullet(){ _tt?.chain().focus().toggleBulletList().run(); },
+          order(){ _tt?.chain().focus().toggleOrderedList().run(); },
+          quote(){ _tt?.chain().focus().toggleBlockquote().run(); },
+          ctag(){ _tt?.chain().focus().toggleMark('ctag').run(); },
+          undo(){ _tt?.chain().focus().undo().run(); },
+          redo(){ _tt?.chain().focus().redo().run(); },
+          insertTable(){ _tt?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(); },
+          addRow(){ _tt?.chain().focus().addRowAfter().run(); },
+          addCol(){ _tt?.chain().focus().addColumnAfter().run(); },
+          delRow(){ _tt?.chain().focus().deleteRow().run(); },
+          delCol(){ _tt?.chain().focus().deleteColumn().run(); },
+          alignLeft(){ _tt?.chain().focus().setTextAlign('left').run(); },
+          alignCenter(){ _tt?.chain().focus().setTextAlign('center').run(); },
+          alignRight(){ _tt?.chain().focus().setTextAlign('right').run(); },
+          color(c){ _tt?.chain().focus().setColor(c).run(); },
+          clearColor(){ _tt?.chain().focus().unsetColor().run(); },
+          highlight(c){ _tt?.chain().focus().toggleHighlight({ color: c }).run(); },
+          clearHighlight(){ _tt?.chain().focus().unsetHighlight().run(); },
+          underlineColor(c){ _tt?.chain().focus().setMark('underline', { color: c }).run(); },
+          strikeColor(c){ _tt?.chain().focus().setMark('strike', { color: c }).run(); },
+          imageURL(url){ if (url) _tt?.chain().focus().setImage({ src: url }).run(); },
+          imageWithWidth(url, width){
+            if (!url) return;
+            const attrs = { src: url };
+            if (width) attrs.width = width;
+            _tt?.chain().focus().setImage(attrs).run();
+          },
+          // 改變目前選取圖片的寬度
+          setImgWidth(width){
+            const sel = _tt?.state.selection;
+            if (!sel) return;
+            const node = _tt?.state.doc.nodeAt(sel.from);
+            if (node && node.type.name === 'image') {
+              _tt.chain().updateAttributes('image', { width }).setNodeSelection(sel.from).focus().run();
+            }
+          },
+          stepImgWidth(delta){
+            const sel = _tt?.state.selection;
+            if (!sel) return;
+            const node = _tt?.state.doc.nodeAt(sel.from);
+            if (!node || node.type.name !== 'image') return;
+            const cur = node.attrs.width || '60%';
+            const m = cur.match(/^(\d+)(%|px)?$/);
+            let n = m ? parseInt(m[1]) : 60;
+            const unit = m && m[2] ? m[2] : '%';
+            n = Math.max(10, Math.min(100, n + delta));
+            _tt.chain().updateAttributes('image', { width: n + unit }).setNodeSelection(sel.from).focus().run();
+          },
+        },
+      };
     </script>
   </body>
 </html>

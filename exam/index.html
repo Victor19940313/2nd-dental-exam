@@ -244,6 +244,11 @@
         background-size: 500px 500px !important;
         background-attachment: fixed !important;
       }
+      /* 字體選擇:每個都接中文 fallback + 希臘符號(α β γ ±)的數學字體 fallback */
+      body.font-serif  { font-family: 'Noto Serif TC', 'Songti TC', '宋體', 'Cambria', 'STIX Two Text', serif !important; }
+      body.font-kai    { font-family: 'LXGW WenKai TC', 'Noto Serif TC', '楷體', 'Kaiti TC', 'STIX Two Text', serif !important; }
+      body.font-maru   { font-family: 'Zen Maru Gothic', 'Noto Sans TC', 'Cambria', sans-serif !important; }
+      body.font-mincho { font-family: 'Shippori Mincho', 'Noto Serif TC', '明朝', '宋體', 'Cambria', serif !important; }
       /* 麻布(linen):兩方向細線交織 */
       body.bg-style-linen {
         background-image:
@@ -3004,10 +3009,12 @@
       .hist-row-btn.force{background:#fdf4ff;color:#6b21a8;border-color:#e9d5ff}
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;700&family=Zen+Maru+Gothic:wght@400;700&family=Shippori+Mincho:wght@400;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css" />
   </head>
   <body>
     <!-- HEADER -->
@@ -3921,6 +3928,16 @@
               <option value="linen">麻布</option>
               <option value="grid">格子紋</option>
               <option value="solid">純色</option>
+            </select>
+          </div>
+          <div style="margin-top:.5rem;display:flex;align-items:center;gap:.6rem">
+            <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🔤 字體</label>
+            <select id="font-style-select" style="flex:1;padding:.3rem .5rem;border:1.5px solid #d1d5db;border-radius:5px;font-size:.82rem;background:white">
+              <option value="">黑體(預設,Noto Sans TC)</option>
+              <option value="serif">宋體(Noto Serif TC,書本感)</option>
+              <option value="kai">楷體(LXGW 文楷,手寫風)</option>
+              <option value="maru">圓體(Zen Maru,溫和)</option>
+              <option value="mincho">明朝(Shippori,日系古典)</option>
             </select>
           </div>
           <label style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;color:#374151">
@@ -10820,6 +10837,13 @@ ${instruction.trim()}
           bgStyleSel.value = localStorage.getItem(uKey('nb_bg_style')) || '';
           bgStyleSel.addEventListener('change', () => applyBgStyle(bgStyleSel.value));
         }
+        // 字體 select
+        const fontSel = document.getElementById('font-style-select');
+        if (fontSel && !fontSel._fsBound) {
+          fontSel._fsBound = true;
+          fontSel.value = localStorage.getItem(uKey('nb_font_style')) || '';
+          fontSel.addEventListener('change', () => applyFontStyle(fontSel.value));
+        }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
       // 主題切換 — 每個使用者完全獨立,只存自己的 key
@@ -10856,12 +10880,12 @@ ${instruction.trim()}
         _reapplyTheme();
         applyThemeFilters();
         applyThemeGstrCss();
-        _applyTocMonoFromStorage(); _applyBgStyleFromStorage();
+        _applyTocMonoFromStorage(); _applyBgStyleFromStorage(); _applyFontStyleFromStorage();
       })();
       // 多時點重試,確保 PWA cold start 也套用得上
       if (document.readyState !== 'complete') {
-        document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); _applyBgStyleFromStorage(); });
-        window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); _applyBgStyleFromStorage(); });
+        document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); _applyBgStyleFromStorage(); _applyFontStyleFromStorage(); });
+        window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); _applyBgStyleFromStorage(); _applyFontStyleFromStorage(); });
       }
       // 跨分頁同步 — 同一個 user 在別的分頁改了主題,這個分頁也跟著變
       window.addEventListener('storage', (e) => {
@@ -10930,6 +10954,15 @@ ${instruction.trim()}
       }
       function _applyBgStyleFromStorage(){
         applyBgStyle(localStorage.getItem(uKey('nb_bg_style')) || '');
+      }
+      function applyFontStyle(style){
+        try { localStorage.setItem(uKey('nb_font_style'), style || ''); } catch(e){}
+        if (!document.body) return;
+        ['font-serif','font-kai','font-maru','font-mincho'].forEach(c => document.body.classList.remove(c));
+        if (style) document.body.classList.add('font-' + style);
+      }
+      function _applyFontStyleFromStorage(){
+        applyFontStyle(localStorage.getItem(uKey('nb_font_style')) || '');
       }
       function closeAISettings(){
         document.getElementById('ai-settings-overlay').classList.remove('open');

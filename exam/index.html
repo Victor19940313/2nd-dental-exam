@@ -13,6 +13,12 @@
         --purple: #7c3aed;
         --purple-light: #ede9fe;
         --purple-dark: #5b21b6;
+        --purple-soft: #a855f7;
+        --strong-bg: #fde047;
+        --strong-color: #6b21a8;
+        --em-color: #0369a1;
+        --tag-bg: #d8c4ef;
+        --tag-color: #5d4694;
         --ya3: #3b82f6;
         --ya4: #7c3aed;
         --ya5: #0d9488;
@@ -23,6 +29,113 @@
         --gray: #64748b;
         --bg: #f1f5f9;
       }
+
+      /* === 暖色:peach skin === */
+      body.theme-warm {
+        --purple: #c97a52; --purple-light: #fceadb; --purple-dark: #9d5a35; --purple-soft: #e09a78;
+        --strong-bg: #fcd97b; --strong-color: #9d5a35;
+        --em-color: #6e8a3a;
+        --tag-bg: #f5e3b0; --tag-color: #7d5026;
+      }
+      /* === 大地:caramel === */
+      body.theme-earth {
+        --purple: #a3814f; --purple-light: #fbf6ec; --purple-dark: #7d5e35; --purple-soft: #c4a070;
+        --strong-bg: #f4cb70; --strong-color: #7d5e35;
+        --em-color: #5d7a4a;
+        --tag-bg: #dec39a; --tag-color: #7d5e35;
+      }
+      /* === 海洋:slate sky === */
+      body.theme-ocean {
+        --purple: #5a85a8; --purple-light: #f5fafd; --purple-dark: #3f6584; --purple-soft: #86abc5;
+        --strong-bg: #fcd97b; --strong-color: #3f6584;
+        --em-color: #5d8275;
+        --tag-bg: #c0d5e2; --tag-color: #3f6584;
+      }
+      /* === 森林:moss === */
+      body.theme-forest {
+        --purple: #6b9560; --purple-light: #f6faf3; --purple-dark: #4f7547; --purple-soft: #92b387;
+        --strong-bg: #fcd97b; --strong-color: #4f7547;
+        --em-color: #7d5a8a;
+        --tag-bg: #c0d5b0; --tag-color: #4f7547;
+      }
+      /* === 深色:warm dark === */
+      body.theme-dark {
+        --purple: #b094e0; --purple-light: #3a3445; --purple-dark: #9576d0; --purple-soft: #c9b5ee;
+        --strong-bg: rgba(232, 200, 112, .2); --strong-color: #e8c870;
+        --em-color: #95b8d6;
+        --tag-bg: #534570; --tag-color: #d4c4f0;
+        --bg: #1c1a23;
+      }
+      /* 深色主題:全域背景與字色 */
+      body.theme-dark { background: #1c1a23; color: #ebe5f0; }
+      body.theme-dark .nb-chapter-content,
+      body.theme-dark .nb-toc-pane,
+      body.theme-dark .nb-editor-tiptap,
+      body.theme-dark .nb-editor-textarea,
+      body.theme-dark .nb-editor-preview-live { background: #28252f; color: #ebe5f0; }
+
+      /* === 主題覆寫:把硬寫死的 #7c3aed 跟相關紫色換成主題色 === */
+      body:not(.theme-default) .nb-chapter-title,
+      body:not(.theme-default) .nb-chapter-content h2,
+      body:not(.theme-default) .nb-table th {
+        background: linear-gradient(135deg, var(--purple), var(--purple-soft)) !important;
+      }
+      body:not(.theme-default) .nb-chapter-content h3 {
+        background: var(--purple-light) !important;
+        color: var(--strong-color) !important;
+      }
+      body:not(.theme-default) .nb-chapter-content h4 { color: var(--purple) !important; }
+      body:not(.theme-default) .nb-chapter-content strong {
+        color: var(--strong-color) !important;
+        background: linear-gradient(180deg, transparent 52%, var(--strong-bg) 52%) !important;
+      }
+      body:not(.theme-default) .nb-chapter-content em { color: var(--em-color) !important; }
+      body:not(.theme-default) .nb-chapter-content .ctag,
+      body:not(.theme-default) .ctag {
+        background: var(--tag-bg) !important;
+        color: var(--tag-color) !important;
+      }
+      body:not(.theme-default) .nb-table tr:nth-child(even) td {
+        background: var(--purple-light) !important;
+      }
+      /* TipTap 編輯區也套主題 */
+      body:not(.theme-default) .nb-editor-tiptap .ProseMirror h2,
+      body:not(.theme-default) .nb-editor-tiptap .ProseMirror th {
+        background: linear-gradient(135deg, var(--purple), var(--purple-soft)) !important;
+      }
+      body:not(.theme-default) .nb-editor-tiptap .ProseMirror h3 {
+        background: var(--purple-light) !important; color: var(--strong-color) !important;
+      }
+      body:not(.theme-default) .nb-editor-tiptap .ProseMirror strong {
+        color: var(--strong-color) !important;
+        background: linear-gradient(180deg, transparent 52%, var(--strong-bg) 52%) !important;
+      }
+      body:not(.theme-default) .nb-editor-tiptap .ProseMirror em { color: var(--em-color) !important; }
+      body:not(.theme-default) .nb-editor-tiptap .ProseMirror .ctag {
+        background: var(--tag-bg) !important; color: var(--tag-color) !important;
+      }
+
+      /* 主題切換 pills */
+      .theme-pills {
+        display: inline-flex; gap: .3rem; flex-wrap: wrap;
+      }
+      .theme-pills button {
+        border: 2px solid transparent;
+        border-radius: 20px; padding: .25rem .7rem;
+        font-size: .78rem; font-weight: 700; cursor: pointer;
+        color: white; transition: all .15s;
+      }
+      .theme-pills button:hover { transform: translateY(-1px); }
+      .theme-pills button.is-active {
+        border-color: #1f2937;
+        box-shadow: 0 0 0 1px white inset;
+      }
+      .theme-pills .t-default { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+      .theme-pills .t-warm    { background: linear-gradient(135deg, #c97a52, #e09a78); }
+      .theme-pills .t-earth   { background: linear-gradient(135deg, #a3814f, #c4a070); }
+      .theme-pills .t-ocean   { background: linear-gradient(135deg, #5a85a8, #86abc5); }
+      .theme-pills .t-forest  { background: linear-gradient(135deg, #6b9560, #92b387); }
+      .theme-pills .t-dark    { background: linear-gradient(135deg, #28252f, #524a60); }
       * {
         box-sizing: border-box;
         margin: 0;
@@ -3505,7 +3618,21 @@
     <div class="overlay" id="ai-settings-overlay" onclick="if(event.target===this)closeAISettings()">
       <div class="modal" style="max-width:580px;max-height:90vh;overflow-y:auto">
         <h3>⚙️ AI / 圖床 設定</h3>
-        <p style="font-size:.82rem;color:var(--gray);margin-bottom:.5rem;line-height:1.55">
+
+        <details open style="margin-top:.6rem;border:1.5px solid #e9d5ff;border-radius:8px;padding:.6rem .8rem;background:#faf5ff">
+          <summary style="cursor:pointer;font-weight:800;color:#6b21a8;font-size:.9rem">🎨 主題色系</summary>
+          <p style="font-size:.78rem;color:#6b7280;margin:.4rem 0 .5rem;line-height:1.5">點選下面任何一個顏色立刻套用,設定會記住,下次打開維持。</p>
+          <div class="theme-pills" id="theme-pills-settings">
+            <button class="t-default" data-theme="">預設紫</button>
+            <button class="t-warm" data-theme="theme-warm">暖色</button>
+            <button class="t-earth" data-theme="theme-earth">大地</button>
+            <button class="t-ocean" data-theme="theme-ocean">海洋</button>
+            <button class="t-forest" data-theme="theme-forest">森林</button>
+            <button class="t-dark" data-theme="theme-dark">深色</button>
+          </div>
+        </details>
+
+        <p style="font-size:.82rem;color:var(--gray);margin:.8rem 0 .5rem;line-height:1.55">
           這些設定<strong>會跟著你的使用者帳號自動同步到雲端</strong>。<br>
           <span style="color:#0369a1;font-weight:700">電腦上設定一次 → 手機上同個 user 自動拿到</span>，不用重設。<br>
           <span style="color:#92400e;font-size:.78rem">⚠️ 不同 user 之間不共用 — 朋友來用你的網站，他要自己貼自己的 key（避免被吃額度）</span>
@@ -10340,8 +10467,33 @@ ${instruction.trim()}
         if (ghInp) ghInp.value = getGithubToken();
         const ghRepo = document.getElementById('gh-repo-input');
         if (ghRepo) ghRepo.value = getGithubRepo();
+        // 主題切換 pills
+        const curTheme = localStorage.getItem('nb_theme') || '';
+        document.querySelectorAll('#theme-pills-settings button').forEach(btn => {
+          btn.classList.toggle('is-active', (btn.dataset.theme || '') === curTheme);
+          if (!btn._themeBound) {
+            btn._themeBound = true;
+            btn.addEventListener('click', () => setNotebookTheme(btn.dataset.theme || ''));
+          }
+        });
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
+      // 主題切換
+      function setNotebookTheme(themeClass){
+        // 移除所有 theme- 開頭的 class
+        document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
+        if (themeClass) document.body.classList.add(themeClass);
+        localStorage.setItem('nb_theme', themeClass);
+        // 更新 pill 的 active 狀態
+        document.querySelectorAll('#theme-pills-settings button').forEach(b => {
+          b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
+        });
+      }
+      // 頁面載入時套用儲存的主題
+      (function loadNotebookThemeOnInit(){
+        const saved = localStorage.getItem('nb_theme');
+        if (saved) document.body.classList.add(saved);
+      })();
       function closeAISettings(){
         document.getElementById('ai-settings-overlay').classList.remove('open');
       }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v120-table-restore';
+const CACHE_NAME = 'dental-all-v121-themes';
 const PRECACHE = [
   './',
   './index.html',

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v141-bg-style-paper';
+const CACHE_NAME = 'dental-all-v142-bg-styles-extended';
 const PRECACHE = [
   './',
   './index.html',

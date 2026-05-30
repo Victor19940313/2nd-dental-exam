@@ -226,10 +226,30 @@
         background-size: 22px 22px !important;
       }
       body.bg-style-solid { background-image: none !important; }
-      /* 紙紋(和紙質感):用 SVG feTurbulence 產生細纖維 noise */
-      body.bg-style-paper {
+      /* 和紙(washi):細纖維 noise,柔和米灰 */
+      body.bg-style-washi, body.bg-style-paper {
         background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0.14 0'/></filter><rect width='100%25' height='100%25' filter='url(%23p)'/></svg>") !important;
         background-size: 300px 300px !important;
+        background-attachment: fixed !important;
+      }
+      /* 粗紙(kraft):粗纖維,暖灰色,更明顯顆粒感 */
+      body.bg-style-kraft {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='k'><feTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.42  0 0 0 0 0.32  0 0 0 0.18 0'/></filter><rect width='100%25' height='100%25' filter='url(%23k)'/></svg>") !important;
+        background-size: 400px 400px !important;
+        background-attachment: fixed !important;
+      }
+      /* 古紙(vintage):大塊雲狀紋,泛黃,像舊書頁 */
+      body.bg-style-vintage {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='500' height='500'><filter id='v'><feTurbulence type='turbulence' baseFrequency='0.05' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.65  0 0 0 0 0.55  0 0 0 0 0.35  0 0 0 0.18 0'/></filter><rect width='100%25' height='100%25' filter='url(%23v)'/></svg>") !important;
+        background-size: 500px 500px !important;
+        background-attachment: fixed !important;
+      }
+      /* 麻布(linen):兩方向細線交織 */
+      body.bg-style-linen {
+        background-image:
+          repeating-linear-gradient(45deg, color-mix(in srgb, var(--purple-soft, #999) 14%, transparent) 0 1px, transparent 1px 6px),
+          repeating-linear-gradient(-45deg, color-mix(in srgb, var(--purple-soft, #999) 14%, transparent) 0 1px, transparent 1px 6px) !important;
+        background-size: 8px 8px !important;
         background-attachment: fixed !important;
       }
       /* 深色主題:全域背景與字色 */
@@ -3895,7 +3915,10 @@
             <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🖼 背景樣式</label>
             <select id="bg-style-select" style="flex:1;padding:.3rem .5rem;border:1.5px solid #d1d5db;border-radius:5px;font-size:.82rem;background:white">
               <option value="">漸層(預設)</option>
-              <option value="paper">紙紋(和紙)</option>
+              <option value="washi">和紙(細纖維)</option>
+              <option value="kraft">粗紙(顆粒)</option>
+              <option value="vintage">古紙(泛黃)</option>
+              <option value="linen">麻布</option>
               <option value="grid">格子紋</option>
               <option value="solid">純色</option>
             </select>
@@ -10902,10 +10925,8 @@ ${instruction.trim()}
       function applyBgStyle(style){
         try { localStorage.setItem(uKey('nb_bg_style'), style || ''); } catch(e){}
         if (!document.body) return;
-        document.body.classList.remove('bg-style-grid', 'bg-style-solid', 'bg-style-paper');
-        if (style === 'grid') document.body.classList.add('bg-style-grid');
-        else if (style === 'solid') document.body.classList.add('bg-style-solid');
-        else if (style === 'paper') document.body.classList.add('bg-style-paper');
+        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen'].forEach(c => document.body.classList.remove(c));
+        if (style) document.body.classList.add('bg-style-' + style);
       }
       function _applyBgStyleFromStorage(){
         applyBgStyle(localStorage.getItem(uKey('nb_bg_style')) || '');

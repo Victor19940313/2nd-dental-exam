@@ -257,6 +257,38 @@
         background-size: 8px 8px !important;
         background-attachment: fixed !important;
       }
+      /* 米紙(rice):超細密 noise,溫暖米白色 */
+      body.bg-style-rice {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='r'><feTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.6  0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0.1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23r)'/></svg>") !important;
+        background-size: 200px 200px !important;
+        background-attachment: fixed !important;
+      }
+      /* 帆布(canvas):中度粗糙,偏冷灰 */
+      body.bg-style-canvas {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='350' height='350'><filter id='c'><feTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.48  0 0 0 0.16 0'/></filter><rect width='100%25' height='100%25' filter='url(%23c)'/></svg>") !important;
+        background-size: 350px 350px !important;
+        background-attachment: fixed !important;
+      }
+      /* 筆記紙(note):橫線筆記本樣式,跟主題色協調 */
+      body.bg-style-note {
+        background-image: repeating-linear-gradient(0deg, transparent 0 27px, color-mix(in srgb, var(--purple-soft, #999) 25%, transparent) 27px 28px) !important;
+        background-size: 100% 28px !important;
+        background-attachment: fixed !important;
+      }
+      /* 點點紙(dot):圓點 grid,輕巧不搶眼 */
+      body.bg-style-dot {
+        background-image: radial-gradient(circle, color-mix(in srgb, var(--purple-soft, #999) 30%, transparent) 1px, transparent 1.5px) !important;
+        background-size: 16px 16px !important;
+        background-attachment: fixed !important;
+      }
+      /* 方格紙(graph):大方格,像數學筆記本 */
+      body.bg-style-graph {
+        background-image:
+          linear-gradient(color-mix(in srgb, var(--purple-soft, #999) 22%, transparent) 1px, transparent 1px),
+          linear-gradient(90deg, color-mix(in srgb, var(--purple-soft, #999) 22%, transparent) 1px, transparent 1px) !important;
+        background-size: 40px 40px !important;
+        background-attachment: fixed !important;
+      }
       /* 深色主題:全域背景與字色 */
       body.theme-dark { background: #1c1a23; color: #ebe5f0; }
       body.theme-dark .nb-chapter-content,
@@ -3922,12 +3954,21 @@
             <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🖼 背景樣式</label>
             <select id="bg-style-select" style="flex:1;padding:.3rem .5rem;border:1.5px solid #d1d5db;border-radius:5px;font-size:.82rem;background:white">
               <option value="">漸層(預設)</option>
-              <option value="washi">和紙(細纖維)</option>
-              <option value="kraft">粗紙(顆粒)</option>
-              <option value="vintage">古紙(泛黃)</option>
-              <option value="linen">麻布</option>
-              <option value="grid">格子紋</option>
-              <option value="solid">純色</option>
+              <optgroup label="紙紋系">
+                <option value="washi">和紙(細纖維)</option>
+                <option value="rice">米紙(超細密)</option>
+                <option value="kraft">粗紙(顆粒)</option>
+                <option value="vintage">古紙(泛黃)</option>
+                <option value="canvas">帆布(冷灰)</option>
+              </optgroup>
+              <optgroup label="圖案系">
+                <option value="note">橫線筆記紙</option>
+                <option value="dot">點點紙</option>
+                <option value="graph">方格紙(大格)</option>
+                <option value="grid">細格紋</option>
+                <option value="linen">麻布交織</option>
+              </optgroup>
+              <option value="solid">純色(最乾淨)</option>
             </select>
           </div>
           <div style="margin-top:.5rem;display:flex;align-items:center;gap:.6rem">
@@ -10949,7 +10990,7 @@ ${instruction.trim()}
       function applyBgStyle(style){
         try { localStorage.setItem(uKey('nb_bg_style'), style || ''); } catch(e){}
         if (!document.body) return;
-        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen'].forEach(c => document.body.classList.remove(c));
+        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph'].forEach(c => document.body.classList.remove(c));
         if (style) document.body.classList.add('bg-style-' + style);
       }
       function _applyBgStyleFromStorage(){

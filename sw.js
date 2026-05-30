@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v144-chapter-font-inherit';
+const CACHE_NAME = 'dental-all-v145-more-bg-styles';
 const PRECACHE = [
   './',
   './index.html',

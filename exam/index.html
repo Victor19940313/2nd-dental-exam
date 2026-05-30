@@ -9944,6 +9944,8 @@ ${instruction.trim()}
             }
             case 'img': {
               const src = node.getAttribute('src') || '';
+              // 沒 src 的空圖片直接略過,絕對不輸出「![]()」
+              if (!src.trim()) return '';
               const alt = node.getAttribute('alt') || '';
               const style = node.getAttribute('style') || '';
               const m = style.match(/width:\s*([^;]+)/);

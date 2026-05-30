@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v104-tiptap-paste-align';
+const CACHE_NAME = 'dental-all-v105-skip-empty-img';
 const PRECACHE = [
   './',
   './index.html',

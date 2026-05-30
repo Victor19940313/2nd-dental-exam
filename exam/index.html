@@ -2209,7 +2209,7 @@
       .nb-chapter-content ul,.nb-chapter-content ol{margin:.55rem 0 .8rem 1.4rem;padding:0}
       .nb-chapter-content li{margin-bottom:.4rem;line-height:1.75}
       .nb-chapter-content li::marker{color:#a855f7}
-      .nb-chapter-content p{margin:.6rem 0;line-height:1.8}
+      .nb-chapter-content p{margin:.25rem 0;line-height:1.65}
       .nb-chapter-content code{background:#fef3c7;padding:1px 7px;border-radius:5px;color:#92400e;font-size:.85em;font-weight:600;font-family:'SF Mono','Cascadia Code',Consolas,monospace}
       /* 主體名詞 / 關鍵字 — 像螢光筆畫過 */
       .nb-chapter-content strong{
@@ -9642,6 +9642,8 @@ ${instruction.trim()}
         // Phase 2B:TipTap 儲存後產生的 inline style HTML 也要還原
         // 段落對齊 <p style="text-align:...">
         s = s.replace(/&lt;p style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/p&gt;/g, '<p style="$1">$2</p>');
+        // 標題對齊 <h1-h4 style="text-align:..."> (TipTap 對齊的標題)
+        s = s.replace(/&lt;(h[1-4]) style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/(h[1-4])&gt;/g, '<$1 style="$2">$3</$4>');
         // 字體顏色 <span style="color:...">
         s = s.replace(/&lt;span style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="$1">$2</span>');
         // TipTap 螢光 <mark style="background-color:...">
@@ -9957,9 +9959,10 @@ ${instruction.trim()}
               const lv = tag === 'h1' || tag === 'h2' ? '##' : (tag === 'h3' ? '###' : '####');
               const inner = childrenMD(node).trim();
               const style = node.getAttribute('style') || '';
-              // 標題若有 text-align,用 HTML <p style="text-align:..."> 包(因為 markdown ## 不支援對齊)
+              // 標題有 text-align 時用 HTML <h2 style="..."> 寫法,renderMarkdown 會還原
+              // (之前用 <p style="..">## XX</p> 包,結果 ## 在 <p> 裡面就不會被當標題)
               if (style.includes('text-align')) {
-                return `\n\n<p style="${style}">${lv} ${inner}</p>\n\n`;
+                return `\n\n<${tag} style="${style}">${inner}</${tag}>\n\n`;
               }
               return '\n\n' + lv + ' ' + inner + '\n\n';
             }
@@ -11270,7 +11273,7 @@ ${instruction.trim()}
           };
         },
       });
-      // 可改寬度的圖片
+      // 可改寬度的圖片(用 !important 保證 inline style 一定贏 CSS)
       const ResizableImage = Image.extend({
         addAttributes(){
           return {
@@ -11283,7 +11286,9 @@ ${instruction.trim()}
                 if (m) return m[1].trim();
                 return el.getAttribute('width') || null;
               },
-              renderHTML: attrs => attrs.width ? { style: `width: ${attrs.width}; max-width: ${attrs.width}` } : {},
+              renderHTML: attrs => attrs.width ? {
+                style: `width: ${attrs.width} !important; max-width: ${attrs.width} !important;`
+              } : {},
             },
           };
         },

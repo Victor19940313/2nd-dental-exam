@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v134-theme-doublesafe-titlegrad';
+const CACHE_NAME = 'dental-all-v135-sidebar-toolbar-theme';
 const PRECACHE = [
   './',
   './index.html',

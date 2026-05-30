@@ -178,7 +178,7 @@
       body:not(.theme-default) .nb-table th {
         background: linear-gradient(135deg, var(--purple), color-mix(in srgb, var(--purple-soft) calc(var(--g-strength, 1) * 100%), var(--purple))) !important;
       }
-      /* 章節 sidebar 章節項目跟著主題色 */
+      /* 章節 sidebar / toolbar 紫色全部換主題色 */
       body:not(.theme-default) .nb-toc-item:hover {
         background: var(--purple-light) !important;
         color: var(--purple-dark) !important;
@@ -191,6 +191,13 @@
         background: white !important;
         color: var(--purple) !important;
       }
+      body:not(.theme-default) .nb-toolbar { background: var(--purple-light) !important; border-bottom-color: var(--purple-soft) !important; }
+      body:not(.theme-default) .nb-toolbar-title { color: var(--purple-dark) !important; }
+      body:not(.theme-default) .nb-tb-btn { color: var(--purple-dark) !important; border-color: var(--purple-soft) !important; }
+      body:not(.theme-default) .nb-tb-btn:hover { background: var(--purple-light) !important; }
+      body:not(.theme-default) .nb-toolbar-search input { border-color: var(--purple-soft) !important; }
+      body:not(.theme-default) .nb-toolbar-search input:focus { border-color: var(--purple) !important; box-shadow: 0 0 0 2px var(--purple-light) !important; }
+      body:not(.theme-default) .nb-toolbar-search button { background: var(--purple-light) !important; color: var(--purple-dark) !important; }
       body:not(.theme-default) .nb-chapter-title:hover { color: var(--purple) !important; }
       body:not(.theme-default) .nb-chapter-content h3 {
         background: var(--purple-light) !important;
@@ -8829,9 +8836,9 @@ ${JSON.stringify(candidates, null, 2)}
               const stOpen = (s === curSubj && d === curDomain && st === curSubtopic) ? ' open' : '';
               tocHtml +=
                 '<details' + stOpen + ' class="nb-toc-subgroup">' +
-                  '<summary style="margin:.2rem 0 .1rem .7rem;padding:.2rem .4rem;background:#f3e8ff;color:#6b21a8;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
+                  '<summary style="margin:.2rem 0 .1rem .7rem;padding:.2rem .4rem;background:var(--purple-light);color:var(--purple-dark);border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.3rem">' +
                     '<span style="flex:1;word-break:break-word;line-height:1.3">📁 ' + escapeHtml(st) + '</span>' +
-                    '<span style="font-size:.62rem;color:#9333ea">' + stList.length + '</span>' +
+                    '<span style="font-size:.62rem;color:var(--purple)">' + stList.length + '</span>' +
                   '</summary>';
               tocHtml += stList.map(c => {
                 const active = c.id === currentChapterId ? ' nb-toc-item-active' : '';

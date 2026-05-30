@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v102-tiptap-phase2b';
+const CACHE_NAME = 'dental-all-v103-tiptap-html-roundtrip';
 const PRECACHE = [
   './',
   './index.html',

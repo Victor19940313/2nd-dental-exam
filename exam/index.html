@@ -8903,21 +8903,56 @@ ${JSON.stringify(candidates, null, 2)}
       }
       function mountTipTapEditor(ch){
         const el = document.getElementById('ch-tiptap');
-        if (!el || !window.NotebookTipTap) return;
+        if (!el || !window.NotebookTipTap) {
+          // 模組還沒載入完成 → 重試一次
+          if (!window.NotebookTipTap) setTimeout(() => mountTipTapEditor(ch), 200);
+          return;
+        }
         // 把 ch.content (markdown) 轉成 HTML,再做圖片格式調整,然後丟給 TipTap
         const md = (ch._tiptapDraft != null) ? ch._tiptapDraft : (ch.content || '');
         delete ch._tiptapDraft;
         let html;
         try { html = renderMarkdown(md); } catch (e) { html = '<p style="color:red">渲染失敗</p>'; }
-        // 把原版渲染的 <span class="nb-img-wrap" style="--img-max:X"><img></span>
-        // 轉成 TipTap 能保留 width 的 <img style="width:X">
-        const tiptapHtml = html
-          .replace(/<span class="nb-img-wrap"[^>]*style="--img-max:([^";]+)"[^>]*>\s*(<img[^>]*?)\s*\/?>\s*<\/span>/g,
-            (m, size, imgTag) => imgTag + ` style="width: ${size}; max-width: ${size};" />`)
-          .replace(/<div class="nb-img-row">/g, '<p>')
-          .replace(/<\/div>/g, '</p>');
+        // 用 DOMParser 處理巢狀結構(原版圖片有 .nb-img-wrap 外層 + .nb-img-controls 內層按鈕)
+        const tiptapHtml = transformHtmlForTipTap(html);
         window.NotebookTipTap.mount(el, tiptapHtml);
         window.NotebookTipTap.focus();
+      }
+      // 把原版渲染出的 HTML 轉成 TipTap 友善版本:
+      //  - 拆掉 <span class="nb-img-wrap"> 外層,保留 <img> 並把 --img-max 搬到 style="width:..."
+      //  - 移除 <span class="nb-img-controls"> 內層按鈕(TipTap 不需要原版的浮動按鈕,有自己的工具列)
+      //  - <div class="nb-img-row"> 降成 <p> 讓 TipTap 接受
+      function transformHtmlForTipTap(html){
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        // 處理每個圖片框
+        tmp.querySelectorAll('span.nb-img-wrap').forEach(wrap => {
+          // 移除控制按鈕
+          wrap.querySelectorAll('.nb-img-controls').forEach(c => c.remove());
+          const img = wrap.querySelector('img');
+          if (!img) { wrap.remove(); return; }
+          // 從 --img-max 抓寬度
+          const wrapStyle = wrap.getAttribute('style') || '';
+          const sm = wrapStyle.match(/--img-max\s*:\s*([^;]+)/);
+          if (sm) {
+            const size = sm[1].trim();
+            img.style.width = size;
+            img.style.maxWidth = size;
+          }
+          // 移除原版的 onclick(TipTap 不需要)
+          img.removeAttribute('onclick');
+          // 用 img 取代整個 wrap
+          wrap.parentNode.replaceChild(img, wrap);
+        });
+        // nb-img-row div → 段落
+        tmp.querySelectorAll('div.nb-img-row').forEach(row => {
+          const p = document.createElement('p');
+          while (row.firstChild) p.appendChild(row.firstChild);
+          row.parentNode.replaceChild(p, row);
+        });
+        // 其他殘留的 nb-img-controls(理論上不應該有)
+        tmp.querySelectorAll('.nb-img-controls').forEach(c => c.remove());
+        return tmp.innerHTML;
       }
       // 工具列 popup 開關
       function _togglePop(id, ev){
@@ -9590,6 +9625,15 @@ ${instruction.trim()}
         // 還原使用者用螢光工具加的 <mark class="hl-y/g/p">（escapeHtml 把它變成 &lt;mark...&gt;）
         s = s.replace(/&lt;mark class=&quot;(hl-[ygp])&quot;&gt;([\s\S]*?)&lt;\/mark&gt;/g,
           '<mark class="$1">$2</mark>');
+        // Phase 2B:TipTap 儲存後產生的 inline style HTML 也要還原
+        // 字體顏色 <span style="color:...">
+        s = s.replace(/&lt;span style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="$1">$2</span>');
+        // TipTap 螢光 <mark style="background-color:...">
+        s = s.replace(/&lt;mark style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/mark&gt;/g, '<mark style="$1">$2</mark>');
+        // 底線 <u> <u style="...">
+        s = s.replace(/&lt;u(?:\s+style=&quot;([^&]+?)&quot;)?&gt;([\s\S]*?)&lt;\/u&gt;/g, (m, style, content) => style ? `<u style="${style}">${content}</u>` : `<u>${content}</u>`);
+        // 刪除線 <s> <s style="...">
+        s = s.replace(/&lt;s(?:\s+style=&quot;([^&]+?)&quot;)?&gt;([\s\S]*?)&lt;\/s&gt;/g, (m, style, content) => style ? `<s style="${style}">${content}</s>` : `<s>${content}</s>`);
         // tables first (need raw |)
         s = renderMDTables(s);
         // callout: 連續 > 開頭的行視為 blockquote（允許 > 後面有空白或無內容）

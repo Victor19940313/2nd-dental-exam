@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v127-tiptap-default';
+const CACHE_NAME = 'dental-all-v128-theme-peruser';
 const PRECACHE = [
   './',
   './index.html',

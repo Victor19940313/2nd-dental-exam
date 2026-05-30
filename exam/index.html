@@ -10661,7 +10661,7 @@ ${instruction.trim()}
         const ghRepo = document.getElementById('gh-repo-input');
         if (ghRepo) ghRepo.value = getGithubRepo();
         // 主題切換 pills(同時處理基本色 + 漸層)
-        const curTheme = localStorage.getItem('nb_theme') || '';
+        const curTheme = localStorage.getItem(uKey('nb_theme')) || '';
         document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(btn => {
           btn.classList.toggle('is-active', (btn.dataset.theme || '') === curTheme);
           if (!btn._themeBound) {
@@ -10673,7 +10673,7 @@ ${instruction.trim()}
         const satSlider = document.getElementById('theme-sat-slider');
         if (satSlider && !satSlider._satBound) {
           satSlider._satBound = true;
-          const curSat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
+          const curSat = parseInt(localStorage.getItem(uKey('nb_theme_sat')) || '100');
           satSlider.value = curSat;
           document.getElementById('theme-sat-value').textContent = curSat + '%';
           satSlider.addEventListener('input', () => applyThemeSat(parseInt(satSlider.value)));
@@ -10682,7 +10682,7 @@ ${instruction.trim()}
         const opaSlider = document.getElementById('theme-opa-slider');
         if (opaSlider && !opaSlider._opaBound) {
           opaSlider._opaBound = true;
-          const curOpa = parseInt(localStorage.getItem('nb_theme_opa') || '100');
+          const curOpa = parseInt(localStorage.getItem(uKey('nb_theme_opa')) || '100');
           opaSlider.value = curOpa;
           document.getElementById('theme-opa-value').textContent = curOpa + '%';
           opaSlider.addEventListener('input', () => applyThemeOpa(parseInt(opaSlider.value)));
@@ -10693,21 +10693,29 @@ ${instruction.trim()}
       function setNotebookTheme(themeClass){
         document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
         if (themeClass) document.body.classList.add(themeClass);
-        localStorage.setItem('nb_theme', themeClass);
+        localStorage.setItem(uKey('nb_theme'), themeClass);
         document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(b => {
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
       }
       // 頁面載入時套用儲存的主題 + 飽和度 + 透明度
       (function loadNotebookThemeOnInit(){
-        const saved = localStorage.getItem('nb_theme');
+        // 一次性 migration:把舊版全域 key 搬到 per-user key
+        ['nb_theme', 'nb_theme_sat', 'nb_theme_opa'].forEach(k => {
+          const userKey = uKey(k);
+          if (localStorage.getItem(userKey) === null) {
+            const old = localStorage.getItem(k);
+            if (old !== null) localStorage.setItem(userKey, old);
+          }
+        });
+        const saved = localStorage.getItem(uKey('nb_theme'));
         if (saved) document.body.classList.add(saved);
         applyThemeFilters();
       })();
       // 飽和度 + 透明度 (合併為一個 filter 套在 screen-* 上)
       function applyThemeFilters(){
-        const sat = parseInt(localStorage.getItem('nb_theme_sat') || '100');
-        const opa = parseInt(localStorage.getItem('nb_theme_opa') || '100');
+        const sat = parseInt(localStorage.getItem(uKey('nb_theme_sat')) || '100');
+        const opa = parseInt(localStorage.getItem(uKey('nb_theme_opa')) || '100');
         const parts = [];
         if (sat !== 100) parts.push(`saturate(${sat}%)`);
         if (opa !== 100) parts.push(`opacity(${opa}%)`);
@@ -10718,7 +10726,7 @@ ${instruction.trim()}
         });
       }
       function applyThemeSat(pct){
-        localStorage.setItem('nb_theme_sat', String(pct));
+        localStorage.setItem(uKey('nb_theme_sat'), String(pct));
         applyThemeFilters();
         const valEl = document.getElementById('theme-sat-value');
         if (valEl) valEl.textContent = pct + '%';
@@ -10726,7 +10734,7 @@ ${instruction.trim()}
         if (slider) slider.value = pct;
       }
       function applyThemeOpa(pct){
-        localStorage.setItem('nb_theme_opa', String(pct));
+        localStorage.setItem(uKey('nb_theme_opa'), String(pct));
         applyThemeFilters();
         const valEl = document.getElementById('theme-opa-value');
         if (valEl) valEl.textContent = pct + '%';

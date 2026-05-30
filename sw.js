@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v109-img-table';
+const CACHE_NAME = 'dental-all-v110-zero-p-margin';
 const PRECACHE = [
   './',
   './index.html',

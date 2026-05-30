@@ -281,6 +281,37 @@
         background-size: 16px 16px !important;
         background-attachment: fixed !important;
       }
+      /* 大理石(marble):低頻 turbulence 產生大漩渦紋,搭主題色像玉石/大理石 — 柔和版 */
+      body.bg-style-marble {
+        background-image:
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'><filter id='m'><feTurbulence type='turbulence' baseFrequency='0.012' numOctaves='5' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.4  0 0 0 0 0.45  0 0 0 0.2 0'/></filter><rect width='100%25' height='100%25' filter='url(%23m)'/></svg>"),
+          linear-gradient(135deg, var(--purple-light, #f0f0f0) 0%, color-mix(in srgb, var(--purple-soft, #999) 35%, transparent) 100%) !important;
+        background-size: 800px 800px, 100% 100% !important;
+        background-attachment: fixed, fixed !important;
+      }
+      /* 大理石紋(marble-vein):紋路較明顯,像真實石材 */
+      body.bg-style-marble-vein {
+        background-image:
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000'><filter id='mv'><feTurbulence type='turbulence' baseFrequency='0.018' numOctaves='6' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2  0 0 0 0 0.22  0 0 0 0 0.25  0 0 0 0.28 0'/></filter><rect width='100%25' height='100%25' filter='url(%23mv)'/></svg>"),
+          linear-gradient(135deg, var(--purple-light, #fafafa) 0%, color-mix(in srgb, var(--purple-soft, #999) 30%, transparent) 100%) !important;
+        background-size: 1000px 1000px, 100% 100% !important;
+        background-attachment: fixed, fixed !important;
+      }
+      /* 復古粗糙(grunge):中頻 noise + 高對比,有歲月痕跡感 */
+      body.bg-style-grunge {
+        background-image:
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.25  0 0 0 0 0.22  0 0 0 0 0.2  0 0 0 0.28 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>") !important;
+        background-size: 600px 600px !important;
+        background-attachment: fixed !important;
+      }
+      /* 漸層紙(grad-paper):主題色斜向漸層 + 細紙紋 noise 疊層,類似 free-paper-texture 那種 */
+      body.bg-style-grad-paper {
+        background-image:
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='gp'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0.1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23gp)'/></svg>"),
+          linear-gradient(135deg, var(--purple-light, #ffffff) 0%, color-mix(in srgb, var(--purple-soft, #999) 45%, transparent) 100%) !important;
+        background-size: 300px 300px, 100% 100% !important;
+        background-attachment: fixed, fixed !important;
+      }
       /* 方格紙(graph):大方格,像數學筆記本 */
       body.bg-style-graph {
         background-image:
@@ -3954,12 +3985,18 @@
             <label style="font-size:.78rem;font-weight:700;color:#6b7280;white-space:nowrap">🖼 背景樣式</label>
             <select id="bg-style-select" style="flex:1;padding:.3rem .5rem;border:1.5px solid #d1d5db;border-radius:5px;font-size:.82rem;background:white">
               <option value="">漸層(預設)</option>
+              <optgroup label="質感系(主題色)">
+                <option value="grad-paper">漸層紙(漸層+紙紋)</option>
+                <option value="marble">大理石(柔和漩渦)</option>
+                <option value="marble-vein">大理石紋(明顯紋路)</option>
+              </optgroup>
               <optgroup label="紙紋系">
                 <option value="washi">和紙(細纖維)</option>
                 <option value="rice">米紙(超細密)</option>
                 <option value="kraft">粗紙(顆粒)</option>
                 <option value="vintage">古紙(泛黃)</option>
                 <option value="canvas">帆布(冷灰)</option>
+                <option value="grunge">復古粗糙(grunge)</option>
               </optgroup>
               <optgroup label="圖案系">
                 <option value="note">橫線筆記紙</option>
@@ -10990,7 +11027,7 @@ ${instruction.trim()}
       function applyBgStyle(style){
         try { localStorage.setItem(uKey('nb_bg_style'), style || ''); } catch(e){}
         if (!document.body) return;
-        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph'].forEach(c => document.body.classList.remove(c));
+        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph','bg-style-grad-paper','bg-style-marble','bg-style-marble-vein','bg-style-grunge'].forEach(c => document.body.classList.remove(c));
         if (style) document.body.classList.add('bg-style-' + style);
       }
       function _applyBgStyleFromStorage(){

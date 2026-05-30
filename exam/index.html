@@ -297,6 +297,18 @@
         background-size: 1000px 1000px, 100% 100% !important;
         background-attachment: fixed, fixed !important;
       }
+      /* 白漆刷塗 橫向(white-paint):baseFrequency 水平低/垂直高 → 模擬橫向刷痕 */
+      body.bg-style-white-paint {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='wp'><feTurbulence type='fractalNoise' baseFrequency='0.005 0.1' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92  0 0 0 0 0.91  0 0 0 0 0.88  0 0 0 0.32 0'/></filter><rect width='100%25' height='100%25' filter='url(%23wp)'/></svg>") !important;
+        background-size: 600px 600px !important;
+        background-attachment: fixed !important;
+      }
+      /* 白漆刷塗 豎向(white-paint-2):baseFrequency 水平高/垂直低 → 模擬豎向刷痕 */
+      body.bg-style-white-paint-2 {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600'><filter id='wp2'><feTurbulence type='fractalNoise' baseFrequency='0.1 0.005' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.94  0 0 0 0 0.93  0 0 0 0 0.9  0 0 0 0.34 0'/></filter><rect width='100%25' height='100%25' filter='url(%23wp2)'/></svg>") !important;
+        background-size: 600px 600px !important;
+        background-attachment: fixed !important;
+      }
       /* 復古粗糙(grunge):中頻 noise + 高對比,有歲月痕跡感 */
       body.bg-style-grunge {
         background-image:
@@ -3997,6 +4009,8 @@
                 <option value="vintage">古紙(泛黃)</option>
                 <option value="canvas">帆布(冷灰)</option>
                 <option value="grunge">復古粗糙(grunge)</option>
+                <option value="white-paint">白漆刷塗(橫向)</option>
+                <option value="white-paint-2">白漆刷塗(豎向)</option>
               </optgroup>
               <optgroup label="圖案系">
                 <option value="note">橫線筆記紙</option>
@@ -11027,7 +11041,7 @@ ${instruction.trim()}
       function applyBgStyle(style){
         try { localStorage.setItem(uKey('nb_bg_style'), style || ''); } catch(e){}
         if (!document.body) return;
-        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph','bg-style-grad-paper','bg-style-marble','bg-style-marble-vein','bg-style-grunge'].forEach(c => document.body.classList.remove(c));
+        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph','bg-style-grad-paper','bg-style-marble','bg-style-marble-vein','bg-style-grunge','bg-style-white-paint','bg-style-white-paint-2'].forEach(c => document.body.classList.remove(c));
         if (style) document.body.classList.add('bg-style-' + style);
       }
       function _applyBgStyleFromStorage(){

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v133-review-full-expl';
+const CACHE_NAME = 'dental-all-v134-theme-doublesafe-titlegrad';
 const PRECACHE = [
   './',
   './index.html',

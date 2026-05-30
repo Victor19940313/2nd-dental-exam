@@ -173,9 +173,23 @@
 
       /* === 主題覆寫:把硬寫死的 #7c3aed 跟相關紫色換成主題色 === */
       /* 注意:不要套到 .nb-chapter-title(那是純文字章節主標,沒有背景) */
+      /* h2 / th 漸層第二色用 color-mix 套 --g-strength,讓漸層深淺 slider 也作用在標題/表頭 */
       body:not(.theme-default) .nb-chapter-content h2,
       body:not(.theme-default) .nb-table th {
-        background: linear-gradient(135deg, var(--purple), var(--purple-soft)) !important;
+        background: linear-gradient(135deg, var(--purple), color-mix(in srgb, var(--purple-soft) calc(var(--g-strength, 1) * 100%), var(--purple))) !important;
+      }
+      /* 章節 sidebar 章節項目跟著主題色 */
+      body:not(.theme-default) .nb-toc-item:hover {
+        background: var(--purple-light) !important;
+        color: var(--purple-dark) !important;
+      }
+      body:not(.theme-default) .nb-toc-item.nb-toc-item-active {
+        background: var(--purple) !important;
+        color: white !important;
+      }
+      body:not(.theme-default) .nb-toc-item.nb-toc-item-active .nb-toc-count {
+        background: white !important;
+        color: var(--purple) !important;
       }
       body:not(.theme-default) .nb-chapter-title:hover { color: var(--purple) !important; }
       body:not(.theme-default) .nb-chapter-content h3 {
@@ -10659,14 +10673,35 @@ ${instruction.trim()}
         }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
-      // 主題切換
+      // 主題切換 — 同時存 user key 跟全域 fallback,雙重保險
       function setNotebookTheme(themeClass){
         document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
         if (themeClass) document.body.classList.add(themeClass);
-        localStorage.setItem(uKey('nb_theme'), themeClass);
+        try {
+          localStorage.setItem(uKey('nb_theme'), themeClass);
+          localStorage.setItem('nb_theme', themeClass);
+        } catch(e){}
         document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button').forEach(b => {
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
+      }
+      // 取主題 — user key 優先,沒就讀全域 fallback
+      function _getSavedTheme(){
+        try {
+          return localStorage.getItem(uKey('nb_theme'))
+              || localStorage.getItem('nb_theme')
+              || '';
+        } catch(e){ return ''; }
+      }
+      // 重新套主題到 body — 可重複呼叫
+      function _reapplyTheme(){
+        const saved = _getSavedTheme();
+        if (!saved) return;
+        if (!document.body) return;
+        if (!document.body.classList.contains(saved)) {
+          document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
+          document.body.classList.add(saved);
+        }
       }
       // 頁面載入時套用儲存的主題 + 飽和度 + 透明度 + 漸層深淺
       (function loadNotebookThemeOnInit(){
@@ -10678,11 +10713,22 @@ ${instruction.trim()}
             if (old !== null) localStorage.setItem(userKey, old);
           }
         });
-        const saved = localStorage.getItem(uKey('nb_theme'));
-        if (saved) document.body.classList.add(saved);
+        _reapplyTheme();
         applyThemeFilters();
         applyThemeGstrCss();
       })();
+      // 多時點重試,確保 PWA cold start 也套用得上
+      if (document.readyState !== 'complete') {
+        document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); });
+        window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); });
+      }
+      // 跨分頁同步 — 別的分頁改了主題,這個分頁也跟著變
+      window.addEventListener('storage', (e) => {
+        if (!e.key) return;
+        if (e.key === 'nb_theme' || e.key === uKey('nb_theme')) _reapplyTheme();
+        if (e.key.includes('nb_theme_sat') || e.key.includes('nb_theme_opa')) applyThemeFilters();
+        if (e.key.includes('nb_theme_gstr')) applyThemeGstrCss();
+      });
       // 飽和度 + 透明度 (合併為一個 filter 套在 screen-* 上)
       function applyThemeFilters(){
         const sat = parseInt(localStorage.getItem(uKey('nb_theme_sat')) || '100');

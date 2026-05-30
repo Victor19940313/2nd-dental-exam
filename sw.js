@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v111-table-revert';
+const CACHE_NAME = 'dental-all-v112-soft-enter';
 const PRECACHE = [
   './',
   './index.html',

@@ -289,6 +289,14 @@
         background-size: 800px 800px, 100% 100% !important;
         background-attachment: fixed, fixed !important;
       }
+      /* 抽象藝術(abstract):大塊不規則 turbulence + 主題色漸層,藝術感 */
+      body.bg-style-abstract {
+        background-image:
+          url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='ab'><feTurbulence type='turbulence' baseFrequency='0.008' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.48  0 0 0 0 0.5  0 0 0 0.22 0'/></filter><rect width='100%25' height='100%25' filter='url(%23ab)'/></svg>"),
+          linear-gradient(135deg, var(--purple-light, #f0f0f0) 0%, color-mix(in srgb, var(--purple-soft, #999) 32%, transparent) 100%) !important;
+        background-size: 700px 700px, 100% 100% !important;
+        background-attachment: fixed, fixed !important;
+      }
       /* 大理石紋(marble-vein):紋路較明顯,像真實石材 */
       body.bg-style-marble-vein {
         background-image:
@@ -3999,6 +4007,7 @@
               <option value="">漸層(預設)</option>
               <optgroup label="質感系(主題色)">
                 <option value="grad-paper">漸層紙(漸層+紙紋)</option>
+                <option value="abstract">抽象藝術(漸層+紋理)</option>
                 <option value="marble">大理石(柔和漩渦)</option>
                 <option value="marble-vein">大理石紋(明顯紋路)</option>
               </optgroup>
@@ -11041,7 +11050,7 @@ ${instruction.trim()}
       function applyBgStyle(style){
         try { localStorage.setItem(uKey('nb_bg_style'), style || ''); } catch(e){}
         if (!document.body) return;
-        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph','bg-style-grad-paper','bg-style-marble','bg-style-marble-vein','bg-style-grunge','bg-style-white-paint','bg-style-white-paint-2'].forEach(c => document.body.classList.remove(c));
+        ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph','bg-style-grad-paper','bg-style-marble','bg-style-marble-vein','bg-style-grunge','bg-style-white-paint','bg-style-white-paint-2','bg-style-abstract'].forEach(c => document.body.classList.remove(c));
         if (style) document.body.classList.add('bg-style-' + style);
       }
       function _applyBgStyleFromStorage(){

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v137-theme-strict-peruser';
+const CACHE_NAME = 'dental-all-v138-toc-mono-toggle';
 const PRECACHE = [
   './',
   './index.html',

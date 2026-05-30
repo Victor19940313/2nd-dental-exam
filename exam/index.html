@@ -198,6 +198,12 @@
       body:not(.theme-default) .nb-toolbar-search input { border-color: var(--purple-soft) !important; }
       body:not(.theme-default) .nb-toolbar-search input:focus { border-color: var(--purple) !important; box-shadow: 0 0 0 2px var(--purple-light) !important; }
       body:not(.theme-default) .nb-toolbar-search button { background: var(--purple-light) !important; color: var(--purple-dark) !important; }
+      /* 章節目錄統一顏色:把各科分類的彩色 inline border/color 用 !important 蓋掉 */
+      body.nb-toc-mono details.nb-toc-group > summary {
+        border-color: var(--purple-soft) !important;
+        color: var(--purple-dark) !important;
+      }
+      body.nb-toc-mono details.nb-toc-group > summary > span { color: var(--purple-dark) !important; }
       body:not(.theme-default) .nb-chapter-title:hover { color: var(--purple) !important; }
       body:not(.theme-default) .nb-chapter-content h3 {
         background: var(--purple-light) !important;
@@ -3801,7 +3807,11 @@
             <span id="theme-gstr-value" style="font-size:.75rem;color:#6b7280;width:46px;text-align:right">100%</span>
             <button type="button" onclick="resetThemeGstr()" style="background:#f3e8ff;border:1px solid #c084fc;color:#6b21a8;padding:.2rem .55rem;border-radius:5px;font-size:.72rem;cursor:pointer">重置</button>
           </div>
-          <p style="font-size:.72rem;color:#9ca3af;margin:.4rem 0 0;line-height:1.4">提示:飽和度=顏色濃度;透明度=讓整頁看起來「淡淡的」效果;漸層深淺=拉小變淡(接近單色),拉滿是完整漸層(只對漸層主題有效)</p>
+          <label style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.8rem;color:#374151">
+            <input type="checkbox" id="toc-mono-toggle" style="width:16px;height:16px;cursor:pointer;accent-color:#7c3aed">
+            <span><strong>📁 章節目錄統一顏色</strong>(避免彩虹色看眼花)</span>
+          </label>
+          <p style="font-size:.72rem;color:#9ca3af;margin:.4rem 0 0;line-height:1.4">提示:飽和度=顏色濃度;透明度=讓整頁看起來「淡淡的」效果;漸層深淺=拉小變淡(接近單色),拉滿是完整漸層(只對漸層主題有效);章節目錄統一色=左側各科分類的彩色邊框都改成主題色</p>
         </details>
 
         <p style="font-size:.82rem;color:var(--gray);margin:.8rem 0 .5rem;line-height:1.55">
@@ -10680,6 +10690,13 @@ ${instruction.trim()}
           document.getElementById('theme-gstr-value').textContent = curGstr + '%';
           gstrSlider.addEventListener('input', () => applyThemeGstr(parseInt(gstrSlider.value)));
         }
+        // 章節目錄統一色 toggle
+        const tocMonoCB = document.getElementById('toc-mono-toggle');
+        if (tocMonoCB && !tocMonoCB._monoBound) {
+          tocMonoCB._monoBound = true;
+          tocMonoCB.checked = (localStorage.getItem(uKey('nb_toc_mono')) === '1');
+          tocMonoCB.addEventListener('change', () => applyTocMono(tocMonoCB.checked));
+        }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
       // 主題切換 — 每個使用者完全獨立,只存自己的 key
@@ -10716,11 +10733,12 @@ ${instruction.trim()}
         _reapplyTheme();
         applyThemeFilters();
         applyThemeGstrCss();
+        _applyTocMonoFromStorage();
       })();
       // 多時點重試,確保 PWA cold start 也套用得上
       if (document.readyState !== 'complete') {
-        document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); });
-        window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); });
+        document.addEventListener('DOMContentLoaded', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); });
+        window.addEventListener('load', () => { _reapplyTheme(); applyThemeFilters(); applyThemeGstrCss(); _applyTocMonoFromStorage(); });
       }
       // 跨分頁同步 — 同一個 user 在別的分頁改了主題,這個分頁也跟著變
       window.addEventListener('storage', (e) => {
@@ -10773,6 +10791,14 @@ ${instruction.trim()}
       function resetThemeSat(){ applyThemeSat(100); }
       function resetThemeOpa(){ applyThemeOpa(100); }
       function resetThemeGstr(){ applyThemeGstr(100); }
+      function applyTocMono(on){
+        try { localStorage.setItem(uKey('nb_toc_mono'), on ? '1' : '0'); } catch(e){}
+        if (document.body) document.body.classList.toggle('nb-toc-mono', !!on);
+      }
+      function _applyTocMonoFromStorage(){
+        const on = localStorage.getItem(uKey('nb_toc_mono')) === '1';
+        if (document.body) document.body.classList.toggle('nb-toc-mono', on);
+      }
       function closeAISettings(){
         document.getElementById('ai-settings-overlay').classList.remove('open');
       }

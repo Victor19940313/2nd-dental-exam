@@ -75,11 +75,12 @@
       body.theme-dark .nb-editor-preview-live { background: #28252f; color: #ebe5f0; }
 
       /* === 主題覆寫:把硬寫死的 #7c3aed 跟相關紫色換成主題色 === */
-      body:not(.theme-default) .nb-chapter-title,
+      /* 注意:不要套到 .nb-chapter-title(那是純文字章節主標,沒有背景) */
       body:not(.theme-default) .nb-chapter-content h2,
       body:not(.theme-default) .nb-table th {
         background: linear-gradient(135deg, var(--purple), var(--purple-soft)) !important;
       }
+      body:not(.theme-default) .nb-chapter-title:hover { color: var(--purple) !important; }
       body:not(.theme-default) .nb-chapter-content h3 {
         background: var(--purple-light) !important;
         color: var(--strong-color) !important;

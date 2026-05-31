@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v152-ai-preserve-images';
+const CACHE_NAME = 'dental-all-v153-inline-bullets-img-block';
 const PRECACHE = [
   './',
   './index.html',

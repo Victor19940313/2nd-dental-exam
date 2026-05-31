@@ -2964,7 +2964,7 @@
         .nb-editor-split > .nb-editor-preview-live{max-height:45vh;min-height:25vh}
       }
       .nb-img-wrap{
-        position:relative;display:inline-block;max-width:100%;margin:.6rem 0;
+        position:relative;display:block;max-width:100%;margin:.6rem 0;
       }
       .nb-chapter-content img{
         display:block;max-width:var(--img-max, 60%);height:auto;
@@ -9977,8 +9977,15 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         // 注意：表格列（以 | 開頭）整列跳過，否則會把 cell 內含「- **」的 row 從中間切斷
         md = md.split('\n').map(line => {
           if (/^\|/.test(line)) return line;
+          // 處理 - 開頭的 inline bullets
           line = line.replace(/([^\n])\s+-\s+(\*\*)/g, '$1\n\n- $2');
           line = line.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
+          // 處理 * 開頭的 inline bullets(AI 常產出「。* **xxx**:」連著沒空白)
+          // 用句末標點當 anchor + lookahead(?=\*\*)避免誤觸粗體本身
+          line = line.replace(/([。！？：、])\s*\*\s+(?=\*\*)/g, '$1\n\n* ');
+          line = line.replace(/([。！？：])\s{2,}\*\s+(?=[一-鿿])/g, '$1\n* ');
+          // 處理 inline 的數字列表「。1. **xxx**:」
+          line = line.replace(/([。！？：])\s*(\d+)\.\s+(?=\*\*)/g, '$1\n\n$2. ');
           return line;
         }).join('\n');
         // 3. 移除「只有 >」或「> 後面只有空白」的孤立行（AI 偶爾這樣寫，渲染會留裸 > 字符）

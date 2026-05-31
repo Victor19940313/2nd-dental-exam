@@ -2893,7 +2893,10 @@
       }
       .nb-editor-tiptap .ProseMirror blockquote > *:first-child { margin-top: 0 !important; }
       .nb-editor-tiptap .ProseMirror blockquote > *:last-child { margin-bottom: 0 !important; }
-      .nb-editor-tiptap .ProseMirror blockquote > p:last-child:has(> br:only-child) { display: none; }
+      /* 注意:不能用 :has(> br:only-child) — CSS :only-child 只看 element 兄弟、不看 text,
+         會把含「text + br + text」的 paragraph 誤判為「只有 br」並整段藏起來,
+         導致 callout 內文消失。改用更精確的方式只藏空的 trailing paragraph。 */
+      .nb-editor-tiptap .ProseMirror blockquote > p:last-child:empty { display: none; }
       .nb-editor-tiptap .ProseMirror blockquote br.ProseMirror-trailingBreak { display: none; }
       .nb-editor-tiptap .ProseMirror li > p { margin: 0 !important; }
       .nb-editor-tiptap .ProseMirror ul, .nb-editor-tiptap .ProseMirror ol {

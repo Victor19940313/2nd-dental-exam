@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v161-paste-force-single';
+const CACHE_NAME = 'dental-all-v162-callout-text-visible';
 const PRECACHE = [
   './',
   './index.html',

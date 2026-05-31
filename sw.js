@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v164-exam-reviewed-checkbox';
+const CACHE_NAME = 'dental-all-v165-exam-count-modal';
 const PRECACHE = [
   './',
   './index.html',

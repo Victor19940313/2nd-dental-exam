@@ -3184,6 +3184,7 @@
               ></div>
             </div>
             <button class="daily-hist-toggle" style="margin-top:.5rem" onclick="openExamHistModal()">📊 歷次試卷成績</button>
+            <button class="daily-hist-toggle" style="margin-top:.4rem" onclick="openExamCountModal()">📚 試卷次數統計</button>
           </div>
           <div class="topic-sidebar-title">🏷 考點分類</div>
           <div class="ts-status-bar">
@@ -3718,6 +3719,18 @@
           <button class="exam-hist-modal-close" onclick="closeExamHistModal()">×</button>
         </div>
         <div id="exam-hist-modal-list"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ EXAM COUNT MODAL(試卷複習次數統計) ═══════════════ -->
+    <div id="exam-count-modal" class="exam-hist-modal" style="display:none" onclick="if(event.target===this)closeExamCountModal()">
+      <div class="exam-hist-modal-box">
+        <div class="exam-hist-modal-head">
+          <span>📚 試卷次數統計</span>
+          <button class="exam-hist-modal-close" onclick="closeExamCountModal()">×</button>
+        </div>
+        <p style="font-size:.78rem;color:#6b7280;margin:.6rem 1rem .4rem;line-height:1.5">每份試卷被寫過幾次,以及每次的成績。次數少的排前面 → 提醒這份還要再複習。</p>
+        <div id="exam-count-list" style="padding:.6rem 1rem 1rem"></div>
       </div>
     </div>
 
@@ -6057,6 +6070,65 @@
           ${more}`;
       }
 
+      // 試卷次數統計 modal
+      function openExamCountModal(){
+        const modal = document.getElementById('exam-count-modal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        renderExamCountList();
+      }
+      function closeExamCountModal(){
+        const m = document.getElementById('exam-count-modal');
+        if (m) m.style.display = 'none';
+      }
+      function renderExamCountList(){
+        const el = document.getElementById('exam-count-list');
+        if (!el) return;
+        const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
+        if (!hist.length) {
+          el.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有任何考試紀錄</div>';
+          return;
+        }
+        // group by label
+        const groups = {};
+        hist.forEach(h => {
+          const label = h.label || '(未知)';
+          if (!groups[label]) groups[label] = { label, runs: [], bestScore: -1, lastDate: '' };
+          groups[label].runs.push(h);
+          if (h.score > groups[label].bestScore) groups[label].bestScore = h.score;
+          if ((h.date || '') > groups[label].lastDate) groups[label].lastDate = h.date || '';
+        });
+        // sort: 次數少的優先,相同次數依最近寫倒序
+        const sorted = Object.values(groups).sort((a, b) => {
+          if (a.runs.length !== b.runs.length) return a.runs.length - b.runs.length;
+          return b.lastDate.localeCompare(a.lastDate);
+        });
+        const reviewedSet = _getReviewedExams();
+        const rows = sorted.map(g => {
+          const runsHtml = g.runs.slice().sort((a,b) => (b.date||'').localeCompare(a.date||'')).map(h => {
+            const examKey = (h.date || '') + '|' + (h.label || '');
+            const reviewed = reviewedSet.has(examKey);
+            const pct = h.total > 0 ? Math.round((h.correct/h.total)*100) : 0;
+            const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.32rem .55rem;border-bottom:1px dashed #f1f5f9;font-size:.82rem;${reviewed?'opacity:.55':''}">
+              <span style="color:#6b7280">${reviewed?'<span style="color:#059669;margin-right:.25rem">✓</span>':''}${h.date}</span>
+              <span style="font-weight:700;color:${color}">${h.score}/${h.fullScore} <span style="font-weight:400;color:#9ca3af;font-size:.74rem">(${h.correct}/${h.total})</span></span>
+            </div>`;
+          }).join('');
+          const cnt = g.runs.length;
+          const countColor = cnt >= 3 ? '#059669' : cnt >= 2 ? '#d97706' : '#dc2626';
+          const countBg = cnt >= 3 ? '#d1fae5' : cnt >= 2 ? '#fef3c7' : '#fee2e2';
+          return `<div style="background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:.7rem .85rem;margin-bottom:.6rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;gap:.5rem;flex-wrap:wrap">
+              <span style="font-weight:800;font-size:.92rem">${escapeHtml(g.label)}</span>
+              <span style="background:${countBg};color:${countColor};padding:.18rem .65rem;border-radius:999px;font-size:.74rem;font-weight:800;white-space:nowrap">寫過 ${cnt} 次</span>
+            </div>
+            <div style="font-size:.72rem;color:#9ca3af;margin-bottom:.4rem">🏆 最高分 ${g.bestScore}　·　🕒 最近 ${g.lastDate}</div>
+            ${runsHtml}
+          </div>`;
+        }).join('');
+        el.innerHTML = rows;
+      }
       function clearExamHistory() {
         if (!confirm('確定要清空所有歷次成績紀錄嗎？此動作無法復原。')) return;
         localStorage.removeItem(uKey('examHistory'));

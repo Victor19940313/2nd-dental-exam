@@ -1981,6 +1981,8 @@
       .exam-hist-row:last-child { border-bottom: none; }
       .exam-hist-row.is-reviewed { background: #f0fdf4; }
       .exam-hist-row.is-reviewed .exam-hist-label { color: #6b7280; }
+      .exam-count-subj summary::-webkit-details-marker { display: none; }
+      .exam-count-subj[open] summary span:last-child > span:last-child { transform: rotate(180deg); display: inline-block; }
       .exam-hist-row:hover { background: #f8fafc; }
       .exam-hist-date {
         grid-area: date;
@@ -6089,45 +6091,68 @@
           el.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有任何考試紀錄</div>';
           return;
         }
-        // group by label
-        const groups = {};
+        // 解析科目:牙三/牙四/牙五/牙六(從 label 抓)
+        const SUBJ_ORDER = ['牙三','牙四','牙五','牙六'];
+        const SUBJ_EMOJI = {'牙三':'🦷','牙四':'🩺','牙五':'🦴','牙六':'👶','其他':'📋'};
+        function _examSubject(label){
+          const m = (label||'').match(/牙[三四五六]/);
+          return m ? m[0] : '其他';
+        }
+        // 第一層:科目;第二層:試卷
+        const subjects = {};
         hist.forEach(h => {
+          const subj = _examSubject(h.label || '');
+          if (!subjects[subj]) subjects[subj] = { subj, groups: {} };
           const label = h.label || '(未知)';
-          if (!groups[label]) groups[label] = { label, runs: [], bestScore: -1, lastDate: '' };
-          groups[label].runs.push(h);
-          if (h.score > groups[label].bestScore) groups[label].bestScore = h.score;
-          if ((h.date || '') > groups[label].lastDate) groups[label].lastDate = h.date || '';
-        });
-        // sort: 次數少的優先,相同次數依最近寫倒序
-        const sorted = Object.values(groups).sort((a, b) => {
-          if (a.runs.length !== b.runs.length) return a.runs.length - b.runs.length;
-          return b.lastDate.localeCompare(a.lastDate);
+          if (!subjects[subj].groups[label]) subjects[subj].groups[label] = { label, runs: [], bestScore: -1, lastDate: '' };
+          const g = subjects[subj].groups[label];
+          g.runs.push(h);
+          if (h.score > g.bestScore) g.bestScore = h.score;
+          if ((h.date || '') > g.lastDate) g.lastDate = h.date || '';
         });
         const reviewedSet = _getReviewedExams();
-        const rows = sorted.map(g => {
-          const runsHtml = g.runs.slice().sort((a,b) => (b.date||'').localeCompare(a.date||'')).map(h => {
-            const examKey = (h.date || '') + '|' + (h.label || '');
-            const reviewed = reviewedSet.has(examKey);
-            const pct = h.total > 0 ? Math.round((h.correct/h.total)*100) : 0;
-            const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
-            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.32rem .55rem;border-bottom:1px dashed #f1f5f9;font-size:.82rem;${reviewed?'opacity:.55':''}">
-              <span style="color:#6b7280">${reviewed?'<span style="color:#059669;margin-right:.25rem">✓</span>':''}${h.date}</span>
-              <span style="font-weight:700;color:${color}">${h.score}/${h.fullScore} <span style="font-weight:400;color:#9ca3af;font-size:.74rem">(${h.correct}/${h.total})</span></span>
+        // 按 SUBJ_ORDER 排序,沒在列表的(其他)放最後
+        const subjKeys = SUBJ_ORDER.filter(s => subjects[s]).concat(Object.keys(subjects).filter(s => !SUBJ_ORDER.includes(s)));
+        const subjHtml = subjKeys.map(subj => {
+          const groups = Object.values(subjects[subj].groups);
+          const totalRuns = groups.reduce((a,g) => a + g.runs.length, 0);
+          // 試卷次數少的優先
+          const sorted = groups.sort((a, b) => {
+            if (a.runs.length !== b.runs.length) return a.runs.length - b.runs.length;
+            return b.lastDate.localeCompare(a.lastDate);
+          });
+          const cards = sorted.map(g => {
+            const runsHtml = g.runs.slice().sort((a,b) => (b.date||'').localeCompare(a.date||'')).map(h => {
+              const examKey = (h.date || '') + '|' + (h.label || '');
+              const reviewed = reviewedSet.has(examKey);
+              const pct = h.total > 0 ? Math.round((h.correct/h.total)*100) : 0;
+              const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
+              return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.32rem .55rem;border-bottom:1px dashed #f1f5f9;font-size:.82rem;${reviewed?'opacity:.55':''}">
+                <span style="color:#6b7280">${reviewed?'<span style="color:#059669;margin-right:.25rem">✓</span>':''}${h.date}</span>
+                <span style="font-weight:700;color:${color}">${h.score}/${h.fullScore} <span style="font-weight:400;color:#9ca3af;font-size:.74rem">(${h.correct}/${h.total})</span></span>
+              </div>`;
+            }).join('');
+            const cnt = g.runs.length;
+            const countColor = cnt >= 3 ? '#059669' : cnt >= 2 ? '#d97706' : '#dc2626';
+            const countBg = cnt >= 3 ? '#d1fae5' : cnt >= 2 ? '#fef3c7' : '#fee2e2';
+            return `<div style="background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:.7rem .85rem;margin-bottom:.55rem">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;gap:.5rem;flex-wrap:wrap">
+                <span style="font-weight:800;font-size:.9rem">${escapeHtml(g.label)}</span>
+                <span style="background:${countBg};color:${countColor};padding:.18rem .65rem;border-radius:999px;font-size:.74rem;font-weight:800;white-space:nowrap">寫過 ${cnt} 次</span>
+              </div>
+              <div style="font-size:.72rem;color:#9ca3af;margin-bottom:.4rem">🏆 最高分 ${g.bestScore}　·　🕒 最近 ${g.lastDate}</div>
+              ${runsHtml}
             </div>`;
           }).join('');
-          const cnt = g.runs.length;
-          const countColor = cnt >= 3 ? '#059669' : cnt >= 2 ? '#d97706' : '#dc2626';
-          const countBg = cnt >= 3 ? '#d1fae5' : cnt >= 2 ? '#fef3c7' : '#fee2e2';
-          return `<div style="background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:.7rem .85rem;margin-bottom:.6rem">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;gap:.5rem;flex-wrap:wrap">
-              <span style="font-weight:800;font-size:.92rem">${escapeHtml(g.label)}</span>
-              <span style="background:${countBg};color:${countColor};padding:.18rem .65rem;border-radius:999px;font-size:.74rem;font-weight:800;white-space:nowrap">寫過 ${cnt} 次</span>
-            </div>
-            <div style="font-size:.72rem;color:#9ca3af;margin-bottom:.4rem">🏆 最高分 ${g.bestScore}　·　🕒 最近 ${g.lastDate}</div>
-            ${runsHtml}
-          </div>`;
+          return `<details class="exam-count-subj" style="margin-bottom:.6rem;background:white;border:1.5px solid #e5e7eb;border-radius:10px">
+            <summary style="cursor:pointer;padding:.7rem .85rem;font-weight:800;font-size:.95rem;display:flex;justify-content:space-between;align-items:center;list-style:none">
+              <span>${SUBJ_EMOJI[subj]||'📋'} ${subj}</span>
+              <span style="font-size:.72rem;color:#6b7280;font-weight:600">${groups.length} 份試卷　·　共寫 ${totalRuns} 次　<span style="font-size:.85rem">▼</span></span>
+            </summary>
+            <div style="padding:.5rem .85rem .8rem">${cards}</div>
+          </details>`;
         }).join('');
-        el.innerHTML = rows;
+        el.innerHTML = subjHtml;
       }
       function clearExamHistory() {
         if (!confirm('確定要清空所有歷次成績紀錄嗎？此動作無法復原。')) return;

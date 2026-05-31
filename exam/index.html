@@ -4285,6 +4285,48 @@
       // ════════════════════════════════════════════
       const _curUserId = localStorage.getItem('dental_cur_user') || 'default';
       function uKey(key){ return _curUserId + '_' + key; }
+      // 靜默紀錄連線資訊(只給管理者後台看,普通使用者無感)
+      // 觸發時機:page load 後 12 秒(避開 page load 引人注意);頻率限制:一天最多 1 次
+      // 必抓資訊:時區、語言、UA、螢幕(全部從 navigator/Intl 拿,完全沒網路請求)
+      // 額外嘗試:ipapi.co 拿 IP/城市(靜默失敗、console 無 log)
+      setTimeout(function _logSess(){
+        try {
+          var todayKey = uKey('_lastSessLog');
+          var today = new Date().toISOString().slice(0,10);
+          if (localStorage.getItem(todayKey) === today) return;
+          var info = {
+            ts: Date.now(),
+            tz: '', lang: '', ua: '', screen: '', country: '', city: '', region: '', ip: ''
+          };
+          try { info.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch(e){}
+          info.lang = (navigator.language || '');
+          info.ua = (navigator.userAgent || '').slice(0, 220);
+          info.screen = (screen.width || 0) + 'x' + (screen.height || 0);
+          function _push(){
+            try {
+              if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) {
+                var uid = localStorage.getItem('dental_cur_user');
+                if (uid && uid !== 'default') {
+                  firebase.database().ref('users/' + uid + '/_meta/sessions').push(info).catch(function(){});
+                  localStorage.setItem(todayKey, today);
+                }
+              }
+            } catch(e){}
+          }
+          fetch('https://ipapi.co/json/', { cache: 'no-store' })
+            .then(function(r){ return r.ok ? r.json() : null; })
+            .then(function(d){
+              if (d) {
+                info.ip = d.ip || '';
+                info.country = d.country_name || '';
+                info.city = d.city || '';
+                info.region = d.region || '';
+              }
+              _push();
+            })
+            .catch(function(){ _push(); });
+        } catch(e){}
+      }, 12000);
       // 把舊版 global 'examHistory' 搬到 per-user key（只跑一次）
       let _examHistMigrated = false;
       function _maybeMigrateExamHistory(){

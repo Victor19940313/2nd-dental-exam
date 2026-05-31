@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v168-exam-record-delete';
+const CACHE_NAME = 'dental-all-v169-silent-session-log';
 const PRECACHE = [
   './',
   './index.html',

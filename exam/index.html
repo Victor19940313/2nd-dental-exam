@@ -6090,6 +6090,30 @@
           ${more}`;
       }
 
+      // 刪除單筆考試紀錄
+      function _deleteExamHistRecord(date, label){
+        if (!confirm('確定要刪除這筆考試紀錄?\n\n' + label + '\n' + date + '\n\n刪了之後沒辦法救。')) return;
+        try {
+          const hist = JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]');
+          const filtered = hist.filter(h => !(h.date === date && h.label === label));
+          localStorage.setItem(uKey('examHistory'), JSON.stringify(filtered));
+          // 也清掉 reviewed 標記
+          const reviewed = _getReviewedExams();
+          const examKey = date + '|' + label;
+          if (reviewed.has(examKey)) {
+            reviewed.delete(examKey);
+            localStorage.setItem(uKey('exam_reviewed'), JSON.stringify(Array.from(reviewed)));
+          }
+        } catch(e){}
+        // re-render 所有有開的列表
+        try {
+          const countModal = document.getElementById('exam-count-modal');
+          if (countModal && countModal.style.display === 'flex') renderExamCountList();
+          const m = document.getElementById('exam-hist-modal-list');
+          if (m) renderExamHistory('exam-hist-modal-list');
+          renderExamHistory('exam-res-history');
+        } catch(e){}
+      }
       // 試卷次數統計 modal
       function openExamCountModal(){
         const modal = document.getElementById('exam-count-modal');
@@ -6152,8 +6176,9 @@
               const pct = h.total > 0 ? Math.round((h.correct/h.total)*100) : 0;
               const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
               return `<div class="exam-count-detail-row" style="${reviewed?'opacity:.5':''}">
-                <span style="color:#6b7280">${reviewed?'<span style="color:#059669;margin-right:.25rem">✓</span>':''}${h.date}</span>
-                <span style="font-weight:700;color:${color}">${h.score}/${h.fullScore} <span style="font-weight:400;color:#9ca3af;font-size:.72rem">(${h.correct}/${h.total})</span></span>
+                <span style="color:#6b7280;flex:1">${reviewed?'<span style="color:#059669;margin-right:.25rem">✓</span>':''}${h.date}</span>
+                <span style="font-weight:700;color:${color};margin-right:.5rem">${h.score}/${h.fullScore} <span style="font-weight:400;color:#9ca3af;font-size:.72rem">(${h.correct}/${h.total})</span></span>
+                <button onclick="event.stopPropagation();_deleteExamHistRecord(this.dataset.date, this.dataset.label)" data-date="${escapeHtml(h.date||'')}" data-label="${escapeHtml(h.label||'')}" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:.95rem;padding:.1rem .3rem;border-radius:4px" title="刪除這筆紀錄">🗑</button>
               </div>`;
             }).join('');
             const detailId = 'ec-detail-' + subj + '-' + gi;

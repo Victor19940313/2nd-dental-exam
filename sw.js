@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v154-list-accept-star';
+const CACHE_NAME = 'dental-all-v155-nested-list-newline';
 const PRECACHE = [
   './',
   './index.html',

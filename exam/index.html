@@ -9982,10 +9982,11 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           line = line.replace(/([^\n])\s{2,}-\s+(?=[一-鿿])/g, '$1\n- ');
           // 處理 * 開頭的 inline bullets(AI 常產出「。* **xxx**:」連著沒空白)
           // 用句末標點當 anchor + lookahead(?=\*\*)避免誤觸粗體本身
-          line = line.replace(/([。！？：、])\s*\*\s+(?=\*\*)/g, '$1\n\n* ');
+          // 注意:用單個 \n 維持 list 連續性(\n\n 會中斷 ul/ol group)
+          line = line.replace(/([。！？：、])\s*\*\s+(?=\*\*)/g, '$1\n* ');
           line = line.replace(/([。！？：])\s{2,}\*\s+(?=[一-鿿])/g, '$1\n* ');
           // 處理 inline 的數字列表「。1. **xxx**:」
-          line = line.replace(/([。！？：])\s*(\d+)\.\s+(?=\*\*)/g, '$1\n\n$2. ');
+          line = line.replace(/([。！？：）)])\s*(\d+)\.\s+(?=\*\*)/g, '$1\n$2. ');
           return line;
         }).join('\n');
         // 3. 移除「只有 >」或「> 後面只有空白」的孤立行（AI 偶爾這樣寫，渲染會留裸 > 字符）
@@ -10369,17 +10370,18 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         s = s.replace(/(?<![*\w])\*([^*\n]+)\*(?!\w)/g, '<em>$1</em>');
         s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
         // lists (group consecutive lines starting with - or * )
+        // 結尾補 \n,避免後面的 list/ol 行因失去行首而 match 失敗
         s = s.replace(/((?:^[-*] .+(?:\n|$))+)/gm, (m) => {
           const items = m.trim().split(/\n/).map(l => l.replace(/^[-*] /, ''));
           return '<ul>' + items.map(i => {
             // li 開頭是子標籤 → 加 class 把圓點拿掉
             const cls = /^\s*<span class="md-label">/.test(i) ? ' class="li-sublabel"' : '';
             return '<li' + cls + '>' + i + '</li>';
-          }).join('') + '</ul>';
+          }).join('') + '</ul>\n';
         });
         s = s.replace(/((?:^\d+\. .+(?:\n|$))+)/gm, (m) => {
           const items = m.trim().split(/\n/).map(l => l.replace(/^\d+\. /, ''));
-          return '<ol>' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>';
+          return '<ol>' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>\n';
         });
         // paragraphs
         s = s.split(/\n\n+/).map(p => {

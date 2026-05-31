@@ -12195,21 +12195,12 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
                 return false;
               },
               // 圖片貼上:攔截、上傳、插入 URL(失敗就什麼都不做)
+              // 純文字:主動 preventDefault + 手動 insertText 確保只插入一次(修 paste 雙重 bug)
               handlePaste(view, event){
                 const cd = event.clipboardData;
                 if (!cd) return false;
-                // 防雙重 paste:相同內容 300ms 內第二次直接吃掉
-                const sig = (cd.getData('text/plain') || '') + '||' + (cd.getData('text/html') || '');
-                const now = Date.now();
-                if (window._lastPasteSig === sig && (now - (window._lastPasteAt||0)) < 300) {
-                  event.preventDefault();
-                  return true;
-                }
-                window._lastPasteSig = sig;
-                window._lastPasteAt = now;
-                const items = cd.items;
-                if (!items) return false;
-                for (const item of items) {
+                // 圖片優先
+                for (const item of cd.items || []) {
                   if (item.type && item.type.startsWith('image/')) {
                     event.preventDefault();
                     const blob = item.getAsFile();
@@ -12217,7 +12208,15 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
                     return true;
                   }
                 }
-                return false;
+                // 純文字 / HTML:強制單一插入
+                event.preventDefault();
+                event.stopPropagation();
+                const text = cd.getData('text/plain') || '';
+                if (text) {
+                  const tr = view.state.tr.insertText(text);
+                  view.dispatch(tr);
+                }
+                return true;
               },
               // 圖片拖檔:同上
               handleDrop(view, event){

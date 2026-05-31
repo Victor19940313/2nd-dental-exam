@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v160-paste-dedupe-300ms';
+const CACHE_NAME = 'dental-all-v161-paste-force-single';
 const PRECACHE = [
   './',
   './index.html',

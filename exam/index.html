@@ -10368,9 +10368,9 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
         s = s.replace(/(?<![*\w])\*([^*\n]+)\*(?!\w)/g, '<em>$1</em>');
         s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-        // lists (group consecutive lines starting with - )
-        s = s.replace(/((?:^- .+(?:\n|$))+)/gm, (m) => {
-          const items = m.trim().split(/\n/).map(l => l.replace(/^- /, ''));
+        // lists (group consecutive lines starting with - or * )
+        s = s.replace(/((?:^[-*] .+(?:\n|$))+)/gm, (m) => {
+          const items = m.trim().split(/\n/).map(l => l.replace(/^[-*] /, ''));
           return '<ul>' + items.map(i => {
             // li 開頭是子標籤 → 加 class 把圓點拿掉
             const cls = /^\s*<span class="md-label">/.test(i) ? ' class="li-sublabel"' : '';

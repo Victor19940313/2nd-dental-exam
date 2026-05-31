@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v153-inline-bullets-img-block';
+const CACHE_NAME = 'dental-all-v154-list-accept-star';
 const PRECACHE = [
   './',
   './index.html',

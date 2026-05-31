@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v158-indented-list-fix';
+const CACHE_NAME = 'dental-all-v159-paste-no-double';
 const PRECACHE = [
   './',
   './index.html',

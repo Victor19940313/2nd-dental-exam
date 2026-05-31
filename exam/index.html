@@ -12139,6 +12139,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         // 掛載編輯器到指定 DOM 節點。initialHTML 是 markdown 先 renderMarkdown 後再轉成 TipTap 友善格式的 HTML
         mount(domEl, initialHTML, opts = {}){
           if (_tt) { try { _tt.destroy(); } catch(e) {} _tt = null; }
+          // 強制清掉 domEl 殘餘節點,避免重複 mount 時舊 ProseMirror instance 還活著 → paste 雙重觸發
+          if (domEl) { while (domEl.firstChild) domEl.removeChild(domEl.firstChild); }
           // 用 editorProps.handlePaste/handleDrop 在 TipTap 的 prosemirror 層攔截
           // 這比 view.dom.addEventListener 早跑,避免 TipTap 預設 base64 嵌入先觸發
           function tryUploadAndInsert(blob){

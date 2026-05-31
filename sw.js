@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v156-exam-sw-autoreload';
+const CACHE_NAME = 'dental-all-v157-ol-start-preserve';
 const PRECACHE = [
   './',
   './index.html',

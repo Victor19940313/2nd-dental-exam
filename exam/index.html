@@ -10380,8 +10380,13 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           }).join('') + '</ul>\n';
         });
         s = s.replace(/((?:^\d+\. .+(?:\n|$))+)/gm, (m) => {
-          const items = m.trim().split(/\n/).map(l => l.replace(/^\d+\. /, ''));
-          return '<ol>' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>\n';
+          const lines = m.trim().split(/\n/);
+          // 取第一行的數字當 ol start,讓使用者寫的 2./3./4. 不會被重置為 1
+          const firstMatch = lines[0].match(/^(\d+)\./);
+          const firstNum = firstMatch ? parseInt(firstMatch[1], 10) : 1;
+          const items = lines.map(l => l.replace(/^\d+\. /, ''));
+          const startAttr = firstNum !== 1 ? ' start="' + firstNum + '"' : '';
+          return '<ol' + startAttr + '>' + items.map(i => '<li>' + i + '</li>').join('') + '</ol>\n';
         });
         // paragraphs
         s = s.split(/\n\n+/).map(p => {

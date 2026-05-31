@@ -19,7 +19,7 @@
   var SYNC_KEYS = [
     "wrongbook_state", "daily_log", "wrongbook_lastpos",
     "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo", "gemini_model",
-    "examHistory",
+    "examHistory", "exam_reviewed",
     "nb_theme", "nb_theme_sat", "nb_theme_opa", "nb_theme_gstr",
     "nb_toc_mono", "nb_bg_style", "nb_font_style"
   ];

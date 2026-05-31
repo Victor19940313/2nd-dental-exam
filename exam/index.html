@@ -1979,6 +1979,8 @@
         font-size: 0.82rem;
       }
       .exam-hist-row:last-child { border-bottom: none; }
+      .exam-hist-row.is-reviewed { background: #f0fdf4; }
+      .exam-hist-row.is-reviewed .exam-hist-label { color: #6b7280; }
       .exam-hist-row:hover { background: #f8fafc; }
       .exam-hist-date {
         grid-area: date;
@@ -5968,12 +5970,29 @@
         } catch (e) { console.error('saveExamHistory:', e); }
       }
 
+      // 已複習試卷的記號(per-user localStorage)
+      function _getReviewedExams(){
+        try { return new Set(JSON.parse(localStorage.getItem(uKey('exam_reviewed')) || '[]')); }
+        catch(e){ return new Set(); }
+      }
+      function _onExamReviewedToggle(input){
+        try {
+          const row = input.closest('.exam-hist-row');
+          const key = row && row.dataset.examKey;
+          if (!key) return;
+          const s = _getReviewedExams();
+          if (input.checked) s.add(key); else s.delete(key);
+          localStorage.setItem(uKey('exam_reviewed'), JSON.stringify(Array.from(s)));
+          row.classList.toggle('is-reviewed', input.checked);
+        } catch(e){}
+      }
       function renderExamHistory(containerId) {
         const el = document.getElementById(containerId);
         if (!el) return;
         const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
         if (!hist.length) { el.innerHTML = ''; return; }
         const LETTERS = ['A','B','C','D','E'];
+        const reviewedSet = _getReviewedExams();
 
         const rows = hist.slice(0, 10).map((h, i) => {
           const pct = h.total > 0 ? Math.round((h.correct / h.total) * 100) : 0;
@@ -6015,8 +6034,11 @@
             ? `<span style="color:#dc2626;font-size:.72rem;margin-left:.4rem">▼ ${wrongs.length} 錯</span>`
             : '';
 
-          return `<div class="exam-hist-row" ${clickAttr}>
-            <div class="exam-hist-date">${h.date}${wrongBadge}${reviewBtn}</div>
+          const examKey = (h.date || '') + '|' + (h.label || '');
+          const isReviewed = reviewedSet.has(examKey);
+          const reviewedCB = `<label class="exam-hist-reviewed" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:.25rem;margin-left:.4rem;font-size:.74rem;color:#059669;cursor:pointer;user-select:none"><input type="checkbox" ${isReviewed?'checked':''} onchange="_onExamReviewedToggle(this)" style="cursor:pointer;width:14px;height:14px;accent-color:#059669">✓ 已複習</label>`;
+          return `<div class="exam-hist-row${isReviewed?' is-reviewed':''}" data-exam-key="${escapeHtml(examKey)}" ${clickAttr}>
+            <div class="exam-hist-date">${h.date}${wrongBadge}${reviewBtn}${reviewedCB}</div>
             <div class="exam-hist-label">${h.label}</div>
             <div class="exam-hist-score" style="color:${color}">${h.score} / ${h.fullScore}</div>
             <div class="exam-hist-meta">${h.correct}/${h.total} 題 · ${pct}%</div>

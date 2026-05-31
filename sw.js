@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v155-nested-list-newline';
+const CACHE_NAME = 'dental-all-v156-exam-sw-autoreload';
 const PRECACHE = [
   './',
   './index.html',

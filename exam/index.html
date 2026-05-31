@@ -10258,6 +10258,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         s = s.replace(/&lt;span style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="$1">$2</span>');
         // TipTap 螢光 <mark style="background-color:...">
         s = s.replace(/&lt;mark style=&quot;([^&]+?)&quot;&gt;([\s\S]*?)&lt;\/mark&gt;/g, '<mark style="$1">$2</mark>');
+        // 純 <mark>(AI 寫的沒屬性版本)→ 預設黃色螢光
+        s = s.replace(/&lt;mark&gt;([\s\S]*?)&lt;\/mark&gt;/g, '<mark class="hl-y">$1</mark>');
         // 底線 <u> <u style="...">
         s = s.replace(/&lt;u(?:\s+style=&quot;([^&]+?)&quot;)?&gt;([\s\S]*?)&lt;\/u&gt;/g, (m, style, content) => style ? `<u style="${style}">${content}</u>` : `<u>${content}</u>`);
         // 刪除線 <s> <s style="...">

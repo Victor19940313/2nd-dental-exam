@@ -12196,14 +12196,25 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               },
               // 圖片貼上:攔截、上傳、插入 URL(失敗就什麼都不做)
               handlePaste(view, event){
-                const items = event.clipboardData?.items;
+                const cd = event.clipboardData;
+                if (!cd) return false;
+                // 防雙重 paste:相同內容 300ms 內第二次直接吃掉
+                const sig = (cd.getData('text/plain') || '') + '||' + (cd.getData('text/html') || '');
+                const now = Date.now();
+                if (window._lastPasteSig === sig && (now - (window._lastPasteAt||0)) < 300) {
+                  event.preventDefault();
+                  return true;
+                }
+                window._lastPasteSig = sig;
+                window._lastPasteAt = now;
+                const items = cd.items;
                 if (!items) return false;
                 for (const item of items) {
                   if (item.type && item.type.startsWith('image/')) {
                     event.preventDefault();
                     const blob = item.getAsFile();
                     if (blob) tryUploadAndInsert(blob);
-                    return true; // 告訴 TipTap 我們處理了
+                    return true;
                   }
                 }
                 return false;

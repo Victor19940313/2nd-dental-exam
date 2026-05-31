@@ -2046,6 +2046,24 @@
         overflow-y: auto;
         padding: 0.8rem 1rem;
       }
+      #exam-count-list { overflow-y: auto; flex: 1; min-height: 0; padding: 0.6rem 1rem 1rem; }
+      .exam-count-subj summary::-webkit-details-marker { display: none; }
+      .exam-count-row {
+        display: flex; align-items: center; gap: .55rem;
+        padding: .45rem .65rem;
+        background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+        margin-bottom: .35rem; font-size: .82rem; cursor: pointer;
+      }
+      .exam-count-row:hover { background: #f9fafb; }
+      .exam-count-row .ec-name { flex: 1; font-weight: 700; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .exam-count-row .ec-cnt { padding: .12rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 800; white-space: nowrap; }
+      .exam-count-row .ec-best { font-size: .75rem; color: #6b7280; min-width: 48px; text-align: right; white-space: nowrap; }
+      .exam-count-row .ec-date { font-size: .7rem; color: #9ca3af; white-space: nowrap; }
+      .exam-count-row .ec-arrow { font-size: .7rem; color: #9ca3af; }
+      .exam-count-detail { display: none; background: #fafafa; border-left: 3px solid #e5e7eb; padding: .3rem .65rem; margin: -.2rem 0 .4rem .5rem; border-radius: 0 6px 6px 0; }
+      .exam-count-detail.open { display: block; }
+      .exam-count-detail-row { display: flex; justify-content: space-between; padding: .25rem 0; font-size: .78rem; border-bottom: 1px dashed #e5e7eb; }
+      .exam-count-detail-row:last-child { border-bottom: none; }
       .exam-res-card {
         background: white;
         border-radius: 10px;
@@ -6121,28 +6139,32 @@
             if (a.runs.length !== b.runs.length) return a.runs.length - b.runs.length;
             return b.lastDate.localeCompare(a.lastDate);
           });
-          const cards = sorted.map(g => {
+          const cards = sorted.map((g, gi) => {
+            const cnt = g.runs.length;
+            const countColor = cnt >= 3 ? '#059669' : cnt >= 2 ? '#d97706' : '#dc2626';
+            const countBg = cnt >= 3 ? '#d1fae5' : cnt >= 2 ? '#fef3c7' : '#fee2e2';
+            // 試卷簡稱:把「牙三 / 108 年第 2 次」縮成「108-2」
+            const shortName = g.label.replace(/^牙[三四五六]\s*\/\s*/, '').replace(/\s*年\s*第\s*(\d+)\s*次/, '-$1');
+            const dateShort = (g.lastDate || '').slice(5, 10).replace('-', '/');
             const runsHtml = g.runs.slice().sort((a,b) => (b.date||'').localeCompare(a.date||'')).map(h => {
               const examKey = (h.date || '') + '|' + (h.label || '');
               const reviewed = reviewedSet.has(examKey);
               const pct = h.total > 0 ? Math.round((h.correct/h.total)*100) : 0;
               const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
-              return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.32rem .55rem;border-bottom:1px dashed #f1f5f9;font-size:.82rem;${reviewed?'opacity:.55':''}">
+              return `<div class="exam-count-detail-row" style="${reviewed?'opacity:.5':''}">
                 <span style="color:#6b7280">${reviewed?'<span style="color:#059669;margin-right:.25rem">✓</span>':''}${h.date}</span>
-                <span style="font-weight:700;color:${color}">${h.score}/${h.fullScore} <span style="font-weight:400;color:#9ca3af;font-size:.74rem">(${h.correct}/${h.total})</span></span>
+                <span style="font-weight:700;color:${color}">${h.score}/${h.fullScore} <span style="font-weight:400;color:#9ca3af;font-size:.72rem">(${h.correct}/${h.total})</span></span>
               </div>`;
             }).join('');
-            const cnt = g.runs.length;
-            const countColor = cnt >= 3 ? '#059669' : cnt >= 2 ? '#d97706' : '#dc2626';
-            const countBg = cnt >= 3 ? '#d1fae5' : cnt >= 2 ? '#fef3c7' : '#fee2e2';
-            return `<div style="background:white;border:1.5px solid #e5e7eb;border-radius:10px;padding:.7rem .85rem;margin-bottom:.55rem">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem;gap:.5rem;flex-wrap:wrap">
-                <span style="font-weight:800;font-size:.9rem">${escapeHtml(g.label)}</span>
-                <span style="background:${countBg};color:${countColor};padding:.18rem .65rem;border-radius:999px;font-size:.74rem;font-weight:800;white-space:nowrap">寫過 ${cnt} 次</span>
-              </div>
-              <div style="font-size:.72rem;color:#9ca3af;margin-bottom:.4rem">🏆 最高分 ${g.bestScore}　·　🕒 最近 ${g.lastDate}</div>
-              ${runsHtml}
-            </div>`;
+            const detailId = 'ec-detail-' + subj + '-' + gi;
+            return `<div class="exam-count-row" onclick="(function(el){el.classList.toggle('open')})(document.getElementById('${detailId}'))">
+              <span class="ec-name" title="${escapeHtml(g.label)}">${escapeHtml(shortName)}</span>
+              <span class="ec-cnt" style="background:${countBg};color:${countColor}">${cnt} 次</span>
+              <span class="ec-best">🏆 ${g.bestScore}</span>
+              <span class="ec-date">${dateShort}</span>
+              <span class="ec-arrow">▼</span>
+            </div>
+            <div class="exam-count-detail" id="${detailId}">${runsHtml}</div>`;
           }).join('');
           return `<details class="exam-count-subj" style="margin-bottom:.6rem;background:white;border:1.5px solid #e5e7eb;border-radius:10px">
             <summary style="cursor:pointer;padding:.7rem .85rem;font-weight:800;font-size:.95rem;display:flex;justify-content:space-between;align-items:center;list-style:none">

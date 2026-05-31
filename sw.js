@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v166-exam-count-nested';
+const CACHE_NAME = 'dental-all-v167-exam-count-compact-scroll';
 const PRECACHE = [
   './',
   './index.html',

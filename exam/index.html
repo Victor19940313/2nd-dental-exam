@@ -5536,8 +5536,14 @@
         document.getElementById("btn-edit-expl").style.display = "none";
 
 
-        // Exam mode: restore previously selected answer if going back
+        // Exam mode: 不管有沒有答題,一進來就露出標記 + 加入筆記 UI(隱藏答案 banner/詳解)
         if (examMode) {
+          document.getElementById("result-banner").style.display = "none";
+          document.getElementById("pq-expl").classList.remove("visible");
+          document.getElementById("btn-edit-expl").style.display = "none";
+          document.getElementById("result-area").style.display = "block";
+          updateMarkButtons(q.id);
+          // restore previously selected answer if going back
           const prev = examAnswers[q.id];
           if (prev !== undefined) {
             answered = true;
@@ -5551,13 +5557,10 @@
                 b.classList.add('dim');
               }
             });
-            // 露出標記 + 加入筆記 UI(隱藏答案 banner/詳解)
-            document.getElementById("result-banner").style.display = "none";
-            document.getElementById("pq-expl").classList.remove("visible");
-            document.getElementById("btn-edit-expl").style.display = "none";
-            document.getElementById("result-area").style.display = "block";
             document.getElementById("btn-next").style.display = "block";
-            updateMarkButtons(q.id);
+          } else {
+            // 還沒答題:btn-next 隱藏(要選 ABCD 後才顯示)
+            document.getElementById("btn-next").style.display = "none";
           }
         }
 

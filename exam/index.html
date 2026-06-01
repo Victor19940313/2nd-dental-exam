@@ -5485,6 +5485,7 @@
           `<span class="badge badge-${q.subject}">${SMAP[q.subject] || q.subject}</span>` +
           `<span class="badge badge-meta">${q.meta || ""}</span>` +
           _qNotebookBadge(q.id);
+        _updateAddNotebookBtn(q.id);
 
         // Question
         document.getElementById("pq-text").textContent = q.question;
@@ -5935,17 +5936,14 @@
             };
             const isFlagged = qState[q.id] && qState[q.id].flagged;
             const flagBtn = `<button onclick="scrollExamToggleFlag('${q.id}')" style="background:${isFlagged?'#fee2e2':'#fff'};border:1.5px solid ${isFlagged?'#dc2626':'#e5e7eb'};border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap">🚩 錯題本</button>`;
-            const nbBadge = _isQInNotebook(q.id)
-              ? '<span style="background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:999px;padding:.08rem .45rem;font-size:.68rem;font-weight:700">📒 已加入</span>'
-              : '';
+            const nbBtn = _addNbBtnHTML(q.id, `onclick="scrollExamAddNotebook('${q.id}')"`, 'small');
             const actionsHtml = `<div style="display:flex;gap:.3rem;flex-wrap:wrap;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed #e5e7eb">
-              <button onclick="scrollExamAddNotebook('${q.id}')" style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:700;cursor:pointer">📒 加入筆記</button>
+              ${nbBtn}
               ${flagBtn}
               ${_markBtn('understood','🟢','簡單','#dcfce7','#22c55e')}
               ${_markBtn('guessed','🤔','猜的','#ede9fe','#a78bfa')}
               ${_markBtn('learning','🟡','再努力','#fef9c3','#eab308')}
               ${_markBtn('give_up','🔴','送他吧','#fee2e2','#ef4444')}
-              ${nbBadge}
             </div>`;
             return `<div class="scroll-q-card" id="se-card-${q.id}">
       <div class="scroll-q-meta">
@@ -6479,7 +6477,7 @@
             <div style="font-weight:800;color:${statusColor}">${status}　·　你答 ${userL}　·　正解 ${corrL}</div>
           </div>
           <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap">
-            <button onclick="reviewAddToNotebook()" style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;cursor:pointer">📒 加入筆記</button>
+            ${_addNbBtnHTML(q.id, 'onclick="reviewAddToNotebook()"', 'large')}
             <button onclick="reviewPeekNotebook()" style="background:#ecfeff;color:#0369a1;border:1.5px solid #7dd3fc;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;cursor:pointer">📖 偷看筆記</button>
           </div>
           <div style="font-size:.95rem;line-height:1.7;color:#1f2937;margin-bottom:.8rem">${escapeHtml(q.question||'')}</div>
@@ -6521,6 +6519,40 @@
         return _isQInNotebook(qid)
           ? '<span style="display:inline-block;background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700;margin-left:.4rem">📒 已加入筆記</span>'
           : '';
+      }
+      // 「加入筆記」按鈕 HTML(若已加入則 disabled,顯示「已加入筆記」)
+      // size: 'small'(整頁捲動) / 'large'(重看試卷)
+      function _addNbBtnHTML(qid, onclickAttr, size){
+        const done = _isQInNotebook(qid);
+        const pad = size === 'large' ? '.35rem .7rem' : '.22rem .55rem';
+        const radius = size === 'large' ? '8px' : '6px';
+        const fs = size === 'large' ? '.82rem' : '.76rem';
+        if (done) {
+          return `<button disabled style="background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:${radius};padding:${pad};font-size:${fs};font-weight:700;cursor:default;opacity:.95">📒 已加入筆記</button>`;
+        }
+        return `<button ${onclickAttr} style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:${radius};padding:${pad};font-size:${fs};font-weight:700;cursor:pointer">📒 加入筆記</button>`;
+      }
+      // 主練習模式:更新 btn-add-notebook 按鈕狀態
+      function _updateAddNotebookBtn(qid){
+        const btn = document.getElementById('btn-add-notebook');
+        if (!btn) return;
+        if (_isQInNotebook(qid)) {
+          btn.textContent = '📒 已加入筆記';
+          btn.disabled = true;
+          btn.style.background = '#dcfce7';
+          btn.style.color = '#15803d';
+          btn.style.borderColor = '#86efac';
+          btn.style.cursor = 'default';
+          btn.style.opacity = '0.95';
+        } else {
+          btn.textContent = '📒 加入筆記';
+          btn.disabled = false;
+          btn.style.background = '#fdf4ff';
+          btn.style.color = '#7e22ce';
+          btn.style.borderColor = '#f3d4ff';
+          btn.style.cursor = 'pointer';
+          btn.style.opacity = '';
+        }
       }
       function reviewPeekNotebook(){
         const q = _currentReviewQ();
@@ -8095,7 +8127,7 @@ ${dec.reasoning || ''}
           .finally(() => {
             _nbPending--;
             _updateNbBadge();
-            // 整理完成後，若還在同一題就更新徽章為「已加入筆記」
+            // 整理完成後，若還在同一題就更新徽章 + 按鈕
             const cur = practiceList[practiceIdx];
             if (cur && cur.id === q.id) {
               const be = document.getElementById("pq-badges");
@@ -8106,6 +8138,7 @@ ${dec.reasoning || ''}
                   `<span class="badge badge-meta">${cur.meta || ""}</span>` +
                   _qNotebookBadge(cur.id);
               }
+              _updateAddNotebookBtn(cur.id);
             }
           });
       }

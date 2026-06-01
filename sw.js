@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v177-review-nb-fix';
+const CACHE_NAME = 'dental-all-v178-nb-inflight-guard';
 const PRECACHE = [
   './',
   './index.html',

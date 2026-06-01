@@ -6005,17 +6005,25 @@
       function scrollExamAddNotebook(qid){
         const q = scrollExamList.find(x => x.id === qid);
         if (!q) { showToast('找不到題目'); return; }
+        if (_nbInflight.has(qid) || _isQInNotebook(qid)) return; // 重複按 / 已加入直接擋掉
         if (!getGeminiKey()) {
           showToast('請先設定 Gemini API key');
           openAISettings();
           return;
         }
+        _nbInflight.add(qid);
         _nbPending++;
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理(可繼續寫題)');
+        renderScrollExam(); // 立即把這題按鈕變成「⏳ AI 整理中…」
+        Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
+          const el = document.getElementById('se-opt-' + id + '-' + idx);
+          if (el) el.classList.add('sel');
+        });
         _nbQueue = _nbQueue.then(() => addQToNotebook(q))
           .catch(err => console.error('scroll nb queue err', err))
           .finally(() => {
+            _nbInflight.delete(qid);
             _nbPending--;
             _updateNbBadge();
             renderScrollExam();
@@ -6495,17 +6503,25 @@
       function reviewAddToNotebook(){
         const q = _currentReviewQ();
         if (!q) { showToast('找不到題目'); return; }
+        if (_nbInflight.has(q.id) || _isQInNotebook(q.id)) return;
         if (!getGeminiKey()) {
           showToast('請先設定 Gemini API key');
           openAISettings();
           return;
         }
+        _nbInflight.add(q.id);
         _nbPending++;
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理(可繼續看其他題)');
+        renderReviewQ(_reviewIdx); // 立即顯示「⏳ AI 整理中…」
         _nbQueue = _nbQueue.then(() => addQToNotebook(q))
           .catch(err => console.error('notebook queue err', err))
-          .finally(() => { _nbPending--; _updateNbBadge(); renderReviewQ(_reviewIdx); });
+          .finally(() => {
+            _nbInflight.delete(q.id);
+            _nbPending--;
+            _updateNbBadge();
+            renderReviewQ(_reviewIdx);
+          });
       }
       // 判斷一題是否已被加入筆記(任一章節的 qids 包含此 q.id)
       function _isQInNotebook(qid){
@@ -6520,15 +6536,21 @@
           ? '<span style="display:inline-block;background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700;margin-left:.4rem">📒 已加入筆記</span>'
           : '';
       }
-      // 「加入筆記」按鈕 HTML(若已加入則 disabled,顯示「已加入筆記」)
+      // 正在請 AI 整理中的題目(避免重複觸發)
+      const _nbInflight = new Set();
+      // 「加入筆記」按鈕 HTML(已加入→綠色 disabled / 整理中→黃色 disabled / 否則紫色可按)
       // size: 'small'(整頁捲動) / 'large'(重看試卷)
       function _addNbBtnHTML(qid, onclickAttr, size){
         const done = _isQInNotebook(qid);
+        const inflight = _nbInflight.has(qid);
         const pad = size === 'large' ? '.35rem .7rem' : '.22rem .55rem';
         const radius = size === 'large' ? '8px' : '6px';
         const fs = size === 'large' ? '.82rem' : '.76rem';
         if (done) {
           return `<button disabled style="background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:${radius};padding:${pad};font-size:${fs};font-weight:700;cursor:default;opacity:.95">📒 已加入筆記</button>`;
+        }
+        if (inflight) {
+          return `<button disabled style="background:#fef3c7;color:#92400e;border:1.5px solid #fde68a;border-radius:${radius};padding:${pad};font-size:${fs};font-weight:700;cursor:default;opacity:.95">⏳ AI 整理中…</button>`;
         }
         return `<button ${onclickAttr} style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:${radius};padding:${pad};font-size:${fs};font-weight:700;cursor:pointer">📒 加入筆記</button>`;
       }
@@ -6542,6 +6564,14 @@
           btn.style.background = '#dcfce7';
           btn.style.color = '#15803d';
           btn.style.borderColor = '#86efac';
+          btn.style.cursor = 'default';
+          btn.style.opacity = '0.95';
+        } else if (_nbInflight.has(qid)) {
+          btn.textContent = '⏳ AI 整理中…';
+          btn.disabled = true;
+          btn.style.background = '#fef3c7';
+          btn.style.color = '#92400e';
+          btn.style.borderColor = '#fde68a';
           btn.style.cursor = 'default';
           btn.style.opacity = '0.95';
         } else {
@@ -8105,6 +8135,7 @@ ${dec.reasoning || ''}
       function addCurrentToNotebook(){
         const q = practiceList[practiceIdx];
         if (!q) { showToast('找不到當前題目'); return; }
+        if (_nbInflight.has(q.id) || _isQInNotebook(q.id)) return; // 重複按 / 已加入直接擋掉
         // 先檢查有沒有設定 key（沒有就先彈設定，不要排隊）
         if (!getGeminiKey()) {
           showToast('請先設定 Gemini API key');
@@ -8112,19 +8143,17 @@ ${dec.reasoning || ''}
           return;
         }
         // 立刻給回饋，使用者可以繼續做下一題
+        _nbInflight.add(q.id);
         _nbPending++;
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理（可繼續做題）');
-        // 立即把題目徽章換成「整理中」，讓使用者看到反饋
-        const badgesEl = document.getElementById("pq-badges");
-        if (badgesEl) {
-          const cur = badgesEl.innerHTML.replace(/<span[^>]*>📒[^<]*<\/span>/g, '');
-          badgesEl.innerHTML = cur + '<span id="pq-nb-pending" style="display:inline-block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700;margin-left:.4rem">⏳ AI 整理中…</span>';
-        }
+        // 立即把按鈕變成「整理中」disabled
+        _updateAddNotebookBtn(q.id);
         // 排進佇列（fire-and-forget，不阻塞 UI）
         _nbQueue = _nbQueue.then(() => addQToNotebook(q))
           .catch(err => console.error('notebook queue err', err))
           .finally(() => {
+            _nbInflight.delete(q.id);
             _nbPending--;
             _updateNbBadge();
             // 整理完成後，若還在同一題就更新徽章 + 按鈕

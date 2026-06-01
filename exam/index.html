@@ -5483,7 +5483,8 @@
         const SMAP = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
         document.getElementById("pq-badges").innerHTML =
           `<span class="badge badge-${q.subject}">${SMAP[q.subject] || q.subject}</span>` +
-          `<span class="badge badge-meta">${q.meta || ""}</span>`;
+          `<span class="badge badge-meta">${q.meta || ""}</span>` +
+          _qNotebookBadge(q.id);
 
         // Question
         document.getElementById("pq-text").textContent = q.question;
@@ -5542,9 +5543,21 @@
             answered = true;
             document.querySelectorAll(".opt-btn").forEach((b, i) => {
               b.disabled = true;
-              b.classList.add(i === prev ? "exam-sel" : "dim");
+              if (i === prev) {
+                b.style.borderColor = '#6366f1';
+                b.style.background = '#eef2ff';
+                b.style.color = '#4338ca';
+              } else {
+                b.classList.add('dim');
+              }
             });
+            // 露出標記 + 加入筆記 UI(隱藏答案 banner/詳解)
+            document.getElementById("result-banner").style.display = "none";
+            document.getElementById("pq-expl").classList.remove("visible");
+            document.getElementById("btn-edit-expl").style.display = "none";
+            document.getElementById("result-area").style.display = "block";
             document.getElementById("btn-next").style.display = "block";
+            updateMarkButtons(q.id);
           }
         }
 
@@ -5558,10 +5571,30 @@
         answered = true;
         const q = practiceList[practiceIdx];
 
-        // ── Exam mode: record answer and jump to next immediately ──
+        // ── Exam mode: 記錄答案 + 顯示「你選的」+ 露出標記/加筆記 UI(不告訴對錯) ──
         if (examMode) {
           examAnswers[q.id] = idx;
-          nextQ();
+          // 標出選的選項(不告訴對錯)
+          const opts = document.querySelectorAll(".opt-btn");
+          opts.forEach((b, i) => {
+            b.disabled = true;
+            if (i === idx) {
+              b.style.borderColor = '#6366f1';
+              b.style.background = '#eef2ff';
+              b.style.color = '#4338ca';
+            } else {
+              b.classList.add('dim');
+            }
+          });
+          // 隱藏答案/詳解區塊,只露 mark-row + 加入筆記
+          document.getElementById("result-banner").style.display = "none";
+          document.getElementById("pq-expl").classList.remove("visible");
+          document.getElementById("btn-edit-expl").style.display = "none";
+          document.getElementById("result-area").style.display = "block";
+          document.getElementById("btn-next").style.display = "block";
+          updateMarkButtons(q.id);
+          qgridSkipped[practiceIdx] = false;
+          renderQGrid();
           return;
         }
         const correct = q.answer; // 0-based index
@@ -5886,6 +5919,25 @@
       </div>`,
               )
               .join("");
+            const curStatus = (qState[q.id] && qState[q.id].status) || 'none';
+            const _markBtn = (st, emoji, title) => {
+              const active = curStatus === st;
+              return `<button onclick="scrollExamMark('${q.id}','${st}')" title="${title}" style="background:${active?'#fef08a':'#fff'};border:1.5px solid ${active?'#eab308':'#e5e7eb'};border-radius:6px;padding:.2rem .45rem;font-size:.78rem;cursor:pointer">${emoji}</button>`;
+            };
+            const isFlagged = qState[q.id] && qState[q.id].flagged;
+            const flagBtn = `<button onclick="scrollExamToggleFlag('${q.id}')" title="錯題本" style="background:${isFlagged?'#fee2e2':'#fff'};border:1.5px solid ${isFlagged?'#dc2626':'#e5e7eb'};border-radius:6px;padding:.2rem .5rem;font-size:.78rem;cursor:pointer">🚩</button>`;
+            const nbBadge = _isQInNotebook(q.id)
+              ? '<span style="background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:999px;padding:.08rem .45rem;font-size:.68rem;font-weight:700">📒 已加入</span>'
+              : '';
+            const actionsHtml = `<div style="display:flex;gap:.3rem;flex-wrap:wrap;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed #e5e7eb">
+              <button onclick="scrollExamAddNotebook('${q.id}')" style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:700;cursor:pointer">📒 加入筆記</button>
+              ${flagBtn}
+              ${_markBtn('understood','🟢','簡單')}
+              ${_markBtn('guessed','🤔','猜的')}
+              ${_markBtn('learning','🟡','再努力!')}
+              ${_markBtn('give_up','🔴','送他吧')}
+              ${nbBadge}
+            </div>`;
             return `<div class="scroll-q-card" id="se-card-${q.id}">
       <div class="scroll-q-meta">
         <span class="badge badge-${q.subject}" style="font-size:.7rem;padding:.1rem .4rem">${SMAP[q.subject] || q.subject}</span>
@@ -5896,6 +5948,7 @@
       ${imgHtml}
       <div class="scroll-opts" id="se-opts-${q.id}">${opts}</div>
       <div id="se-result-${q.id}"></div>
+      ${actionsHtml}
     </div>`;
           })
           .join("");
@@ -5918,6 +5971,53 @@
           `${done} / ${scrollExamList.length} 題已作答`;
       }
 
+      async function scrollExamMark(qid, status){
+        if (!qState[qid]) qState[qid] = { status: 'none', count: 0 };
+        qState[qid].status = qState[qid].status === status ? 'none' : status;
+        await persist(qid);
+        const labels = { give_up:'🔴 送他吧', learning:'🟡 再努力!', guessed:'🤔 猜的', understood:'🟢 簡單', none:'標記取消' };
+        showToast(labels[qState[qid].status]);
+        renderScrollExam();
+        // 保留答題狀態(re-render 會 reset opt 選中,要重套)
+        Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
+          const el = document.getElementById('se-opt-' + id + '-' + idx);
+          if (el) el.classList.add('sel');
+        });
+      }
+      async function scrollExamToggleFlag(qid){
+        if (!qState[qid]) qState[qid] = { status: 'none', count: 0 };
+        qState[qid].flagged = !qState[qid].flagged;
+        await persist(qid);
+        showToast(qState[qid].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
+        renderScrollExam();
+        Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
+          const el = document.getElementById('se-opt-' + id + '-' + idx);
+          if (el) el.classList.add('sel');
+        });
+      }
+      function scrollExamAddNotebook(qid){
+        const q = scrollExamList.find(x => x.id === qid);
+        if (!q) { showToast('找不到題目'); return; }
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        _nbPending++;
+        _updateNbBadge();
+        showToast('🤖 已送進 AI 整理(可繼續寫題)');
+        _nbQueue = _nbQueue.then(() => addQToNotebook(q))
+          .catch(err => console.error('scroll nb queue err', err))
+          .finally(() => {
+            _nbPending--;
+            _updateNbBadge();
+            renderScrollExam();
+            Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
+              const el = document.getElementById('se-opt-' + id + '-' + idx);
+              if (el) el.classList.add('sel');
+            });
+          });
+      }
       function submitScrollExam() {
         if (scrollExamSubmitted) return;
         scrollExamSubmitted = true;
@@ -6366,7 +6466,7 @@
 
         el.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem">
-            <div style="font-size:.85rem;color:#6b7280">第 ${idx+1} 題　·　${escapeHtml(q.meta||q.id)}</div>
+            <div style="font-size:.85rem;color:#6b7280">第 ${idx+1} 題　·　${escapeHtml(q.meta||q.id)}${_qNotebookBadge(q.id)}</div>
             <div style="font-weight:800;color:${statusColor}">${status}　·　你答 ${userL}　·　正解 ${corrL}</div>
           </div>
           <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap">
@@ -6388,7 +6488,30 @@
       function reviewAddToNotebook(){
         const q = _currentReviewQ();
         if (!q) { showToast('找不到題目'); return; }
-        if (typeof addQToNotebook === 'function') addQToNotebook(q);
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        _nbPending++;
+        _updateNbBadge();
+        showToast('🤖 已送進 AI 整理(可繼續看其他題)');
+        _nbQueue = _nbQueue.then(() => addQToNotebook(q))
+          .catch(err => console.error('notebook queue err', err))
+          .finally(() => { _nbPending--; _updateNbBadge(); renderReviewDetail(_reviewIdx); });
+      }
+      // 判斷一題是否已被加入筆記(任一章節的 qids 包含此 q.id)
+      function _isQInNotebook(qid){
+        try {
+          if (typeof notebook === 'undefined' || !notebook) loadNotebook();
+          return (notebook.chapters || []).some(c => Array.isArray(c.qids) && c.qids.includes(qid));
+        } catch(e){ return false; }
+      }
+      // 「已加入筆記」標記 HTML(放在題目旁邊)
+      function _qNotebookBadge(qid){
+        return _isQInNotebook(qid)
+          ? '<span style="display:inline-block;background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700;margin-left:.4rem">📒 已加入筆記</span>'
+          : '';
       }
       function reviewPeekNotebook(){
         const q = _currentReviewQ();

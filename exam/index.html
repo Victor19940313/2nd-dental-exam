@@ -5923,22 +5923,22 @@
               )
               .join("");
             const curStatus = (qState[q.id] && qState[q.id].status) || 'none';
-            const _markBtn = (st, emoji, title) => {
+            const _markBtn = (st, emoji, label, activeBg, activeBd) => {
               const active = curStatus === st;
-              return `<button onclick="scrollExamMark('${q.id}','${st}')" title="${title}" style="background:${active?'#fef08a':'#fff'};border:1.5px solid ${active?'#eab308':'#e5e7eb'};border-radius:6px;padding:.2rem .45rem;font-size:.78rem;cursor:pointer">${emoji}</button>`;
+              return `<button onclick="scrollExamMark('${q.id}','${st}')" style="background:${active?activeBg:'#fff'};border:1.5px solid ${active?activeBd:'#e5e7eb'};border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap">${emoji} ${label}</button>`;
             };
             const isFlagged = qState[q.id] && qState[q.id].flagged;
-            const flagBtn = `<button onclick="scrollExamToggleFlag('${q.id}')" title="錯題本" style="background:${isFlagged?'#fee2e2':'#fff'};border:1.5px solid ${isFlagged?'#dc2626':'#e5e7eb'};border-radius:6px;padding:.2rem .5rem;font-size:.78rem;cursor:pointer">🚩</button>`;
+            const flagBtn = `<button onclick="scrollExamToggleFlag('${q.id}')" style="background:${isFlagged?'#fee2e2':'#fff'};border:1.5px solid ${isFlagged?'#dc2626':'#e5e7eb'};border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap">🚩 錯題本</button>`;
             const nbBadge = _isQInNotebook(q.id)
               ? '<span style="background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:999px;padding:.08rem .45rem;font-size:.68rem;font-weight:700">📒 已加入</span>'
               : '';
             const actionsHtml = `<div style="display:flex;gap:.3rem;flex-wrap:wrap;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed #e5e7eb">
               <button onclick="scrollExamAddNotebook('${q.id}')" style="background:#f5f3ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:700;cursor:pointer">📒 加入筆記</button>
               ${flagBtn}
-              ${_markBtn('understood','🟢','簡單')}
-              ${_markBtn('guessed','🤔','猜的')}
-              ${_markBtn('learning','🟡','再努力!')}
-              ${_markBtn('give_up','🔴','送他吧')}
+              ${_markBtn('understood','🟢','簡單','#dcfce7','#22c55e')}
+              ${_markBtn('guessed','🤔','猜的','#ede9fe','#a78bfa')}
+              ${_markBtn('learning','🟡','再努力','#fef9c3','#eab308')}
+              ${_markBtn('give_up','🔴','送他吧','#fee2e2','#ef4444')}
               ${nbBadge}
             </div>`;
             return `<div class="scroll-q-card" id="se-card-${q.id}">

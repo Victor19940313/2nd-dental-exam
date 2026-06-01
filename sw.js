@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v174-scroll-mark-labels';
+const CACHE_NAME = 'dental-all-v175-exam-change-answer';
 const PRECACHE = [
   './',
   './index.html',

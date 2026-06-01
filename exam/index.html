@@ -5543,12 +5543,12 @@
           document.getElementById("btn-edit-expl").style.display = "none";
           document.getElementById("result-area").style.display = "block";
           updateMarkButtons(q.id);
-          // restore previously selected answer if going back
+          // restore previously selected answer if going back（仍可改答案）
           const prev = examAnswers[q.id];
           if (prev !== undefined) {
             answered = true;
             document.querySelectorAll(".opt-btn").forEach((b, i) => {
-              b.disabled = true;
+              b.disabled = false;
               if (i === prev) {
                 b.style.borderColor = '#6366f1';
                 b.style.background = '#eef2ff';
@@ -5570,17 +5570,22 @@
       }
 
       function answerQ(idx) {
-        if (answered) return;
-        answered = true;
+        // 試卷模式答題後仍可改答案，直到「下一題」/「交卷」為止
+        if (answered && !examMode) return;
         const q = practiceList[practiceIdx];
 
         // ── Exam mode: 記錄答案 + 顯示「你選的」+ 露出標記/加筆記 UI(不告訴對錯) ──
         if (examMode) {
+          answered = true;
           examAnswers[q.id] = idx;
-          // 標出選的選項(不告訴對錯)
+          // 標出目前選的選項(不告訴對錯)，不 disable，允許繼續切換
           const opts = document.querySelectorAll(".opt-btn");
           opts.forEach((b, i) => {
-            b.disabled = true;
+            b.disabled = false;
+            b.classList.remove('dim');
+            b.style.borderColor = '';
+            b.style.background = '';
+            b.style.color = '';
             if (i === idx) {
               b.style.borderColor = '#6366f1';
               b.style.background = '#eef2ff';
@@ -5600,6 +5605,7 @@
           renderQGrid();
           return;
         }
+        answered = true;
         const correct = q.answer; // 0-based index
 
         // Style options
@@ -8077,10 +8083,31 @@ ${dec.reasoning || ''}
         _nbPending++;
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理（可繼續做題）');
+        // 立即把題目徽章換成「整理中」，讓使用者看到反饋
+        const badgesEl = document.getElementById("pq-badges");
+        if (badgesEl) {
+          const cur = badgesEl.innerHTML.replace(/<span[^>]*>📒[^<]*<\/span>/g, '');
+          badgesEl.innerHTML = cur + '<span id="pq-nb-pending" style="display:inline-block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:999px;padding:.1rem .55rem;font-size:.72rem;font-weight:700;margin-left:.4rem">⏳ AI 整理中…</span>';
+        }
         // 排進佇列（fire-and-forget，不阻塞 UI）
         _nbQueue = _nbQueue.then(() => addQToNotebook(q))
           .catch(err => console.error('notebook queue err', err))
-          .finally(() => { _nbPending--; _updateNbBadge(); });
+          .finally(() => {
+            _nbPending--;
+            _updateNbBadge();
+            // 整理完成後，若還在同一題就更新徽章為「已加入筆記」
+            const cur = practiceList[practiceIdx];
+            if (cur && cur.id === q.id) {
+              const be = document.getElementById("pq-badges");
+              if (be) {
+                const SMAP = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+                be.innerHTML =
+                  `<span class="badge badge-${cur.subject}">${SMAP[cur.subject] || cur.subject}</span>` +
+                  `<span class="badge badge-meta">${cur.meta || ""}</span>` +
+                  _qNotebookBadge(cur.id);
+              }
+            }
+          });
       }
 
       async function addQToNotebook(q, opts){

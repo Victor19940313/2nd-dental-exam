@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v180-retry-conservative';
+const CACHE_NAME = 'dental-all-v181-prostho-rename';
 const PRECACHE = [
   './',
   './index.html',

@@ -7463,7 +7463,7 @@
         '牙髓與牙本質 Pulp & Dentin',
         '牙周病學 Periodontics',
         '牙體復形 Operative Dentistry',
-        '補綴學 Prosthodontics',
+        '贗復學 Prosthodontics',
         '矯正學 Orthodontics',
         '口腔外科 Oral Surgery',
         '口腔病理 Oral Pathology',
@@ -7481,7 +7481,7 @@
         '牙髓與牙本質 Pulp & Dentin':   { emoji:'⚡', color:'#ea580c' },
         '牙周病學 Periodontics':         { emoji:'🌱', color:'#16a34a' },
         '牙體復形 Operative Dentistry':  { emoji:'🔧', color:'#0e7490' },
-        '補綴學 Prosthodontics':         { emoji:'🛠', color:'#3730a3' },
+        '贗復學 Prosthodontics':         { emoji:'🛠', color:'#3730a3' },
         '矯正學 Orthodontics':           { emoji:'📐', color:'#7c3aed' },
         '口腔外科 Oral Surgery':         { emoji:'🔪', color:'#b91c1c' },
         '口腔病理 Oral Pathology':       { emoji:'🔬', color:'#9333ea' },
@@ -7498,7 +7498,7 @@
         return {
           ya3: '齒內治療學 Endodontics',
           ya4: '口腔外科 Oral Surgery',
-          ya5: '補綴學 Prosthodontics',
+          ya5: '贗復學 Prosthodontics',
           ya6: '矯正學 Orthodontics',
         }[subj] || '其他 Other';
       }
@@ -7513,6 +7513,15 @@
           notebook = raw ? JSON.parse(raw) : { chapters: [], history: [] };
           if (!notebook.chapters) notebook.chapters = [];
           if (!notebook.history) notebook.history = [];
+          // domain 用字升級:補綴學 → 贗復學(台灣牙醫正式用語)
+          let domainMigrated = false;
+          notebook.chapters.forEach(ch => {
+            if (ch.domain === '補綴學 Prosthodontics') {
+              ch.domain = '贗復學 Prosthodontics';
+              domainMigrated = true;
+            }
+          });
+          if (domainMigrated) localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
           // 一進來就掃，把被「AI 雙重編碼」搞壞的章節自動還原（換行從 `\n` 字串改回真換行）
           migrateBrokenChapters();
           // 自動清掉「上傳中」殘留（如果還在這代表前次上傳失敗或被中斷）

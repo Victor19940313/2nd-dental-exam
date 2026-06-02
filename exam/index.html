@@ -7628,7 +7628,7 @@
             : '<span style="color:#16a34a;font-weight:700">✓ 正常</span>';
           nbInfo = '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:.5rem .7rem;margin-bottom:.4rem;font-size:.76rem;line-height:1.7;color:#374151">' +
             '<strong>📊 診斷</strong><br>' +
-            '• 目前 user:<code style="background:#eef2ff;padding:1px 5px;border-radius:3px">' + (typeof currentUser !== "undefined" ? currentUser : "(未知)") + '</code><br>' +
+            '• 目前 user:<code style="background:#eef2ff;padding:1px 5px;border-radius:3px">' + (typeof _curUserId !== "undefined" ? _curUserId : "(未知)") + '</code><br>' +
             '• 使用 model:<code style="background:#eef2ff;padding:1px 5px;border-radius:3px">' + model + '</code><br>' +
             '• 筆記章節數:<strong>' + chN + '</strong> 章<br>' +
             '• 預估 prompt 大小:<strong>' + Math.round(promptSize/1000) + ' KB</strong>(約 ' + Math.round(promptSize/4) + ' tokens)' + ' ' + sizeWarn +
@@ -7940,24 +7940,30 @@
           });
           return { outline: outline.join(' | '), keywords: Array.from(kws).slice(0, 25) };
         };
-        // 候選 600 字 + 完整 outline/keywords；其他 150 字 + 完整 outline/keywords
-        // 重點是 outline + keywords 不省略，因為這是判斷相關性最有用的訊號
-        const buildEntry = (c) => {
+        // 候選章節:詳盡資訊(AI 主要看這個決定 append) / 其他章節:精簡(只給名稱 + subtopic + concepts)
+        // 限制 candidates 最多 8 章,避免章節爆多時 prompt 失控
+        const MAX_CANDIDATES = 8;
+        const buildCandidateEntry = (c) => {
           const meta = _extractMeta(c.content || '');
           return {
             id: c.id,
             name: c.name,
-            domain: c.domain || '',
             subtopic: c.subtopic || '',
-            concepts: c.concepts || [],
-            outline: meta.outline,
-            keywords: meta.keywords,
-            summary: (c.content || '').slice(0, candidateIds.has(c.id) ? 600 : 150),
-            source_qids: (c.qids || []).slice(0, 5)
+            concepts: (c.concepts || []).slice(0, 8),
+            outline: (meta.outline || '').slice(0, 400),
+            keywords: (meta.keywords || []).slice(0, 10),
+            summary: (c.content || '').slice(0, 400)
           };
         };
-        const candidates = chapters.filter(c => candidateIds.has(c.id)).map(buildEntry);
-        const others = chapters.filter(c => !candidateIds.has(c.id)).map(buildEntry);
+        // 其他章節超精簡 — 只給 AI 知道有這章,讓它判斷要不要從 others 挑出來 append
+        const buildOtherEntry = (c) => ({
+          id: c.id,
+          name: c.name,
+          subtopic: c.subtopic || '',
+          concepts: (c.concepts || []).slice(0, 4)
+        });
+        const candidates = chapters.filter(c => candidateIds.has(c.id)).slice(0, MAX_CANDIDATES).map(buildCandidateEntry);
+        const others = chapters.filter(c => !candidateIds.has(c.id)).map(buildOtherEntry);
         return `你是一位專業的牙醫國考筆記整理員。
 
 【任務】
@@ -7992,10 +7998,10 @@
 - **concepts / subtopic / name**
 - summary 只是內容前段摘要，**outline 跟 keywords 比 summary 更能反映章節主題**
 
-【🎯 強烈推薦候選章節（${candidates.length} 章；按相似度排序，內容看到 1000 字）】
+【🎯 強烈推薦候選章節（${candidates.length} 章；按相似度排序）】
 ${candidates.length === 0 ? '（無 — 但仍要從下面「其他章節」找最接近的；找不到才開新章）' : JSON.stringify(candidates, null, 2)}
 
-【其他既有章節（摘要 200 字；如果上面候選都不適合再看這邊）】
+【其他既有章節（精簡列表 — 只含 name + subtopic + concepts；如果有候選都不適合,從這邊挑 subtopic 完全相同的;找不到才開新章）】
 ${others.length === 0 ? (chapters.length === 0 ? '（筆記本是空的，這是第一題）' : '（無）') : JSON.stringify(others, null, 2)}
 
 【新題目】

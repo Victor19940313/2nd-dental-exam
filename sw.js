@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v191-cooldown-fallback';
+const CACHE_NAME = 'dental-all-v192-force-ping-on-retry';
 const PRECACHE = [
   './',
   './index.html',

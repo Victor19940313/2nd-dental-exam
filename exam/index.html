@@ -6013,6 +6013,7 @@
           openAISettings();
           return;
         }
+        _silentResetCooldowns(); // 使用者主動按 → 清乾淨
         _nbInflight.add(qid);
         _nbPending++;
         _updateNbBadge();
@@ -6511,6 +6512,7 @@
           openAISettings();
           return;
         }
+        _silentResetCooldowns(); // 使用者主動按 → 清乾淨
         _nbInflight.add(q.id);
         _nbPending++;
         _updateNbBadge();
@@ -7673,6 +7675,11 @@
           showToast('✓ 已重置 ' + Math.max(beforeC, beforeN) + ' 把 key 的冷卻狀態');
         }
       }
+      // 安靜版重置(使用者主動觸發加入筆記時自動跑,不顯示 toast)
+      function _silentResetCooldowns(){
+        Object.keys(_keyCooldowns).forEach(k => delete _keyCooldowns[k]);
+        Object.keys(_key429Count).forEach(k => delete _key429Count[k]);
+      }
       const GITHUB_TOKEN_LS = uKey("github_token");
       const GITHUB_REPO_LS = uKey("github_repo");
       function getGithubToken(){ return localStorage.getItem(GITHUB_TOKEN_LS) || ''; }
@@ -7899,11 +7906,11 @@
           // 503 或 UNAVAILABLE → 等 30 秒重試
           const is503 = res.status === 503 || /UNAVAILABLE|high demand|overloaded/i.test(lastErrTxt);
           if (is503 && attempt < 2) {
-            console.warn('[Gemini 503] 第 ' + (attempt+1) + ' 次撞忙線,等 30 秒重試…');
+            console.warn('[Gemini 503] 第 ' + (attempt+1) + ' 次撞忙線,等 15 秒重試…');
             if (typeof showToast === 'function') {
-              showToast('⏳ Gemini 忙線,30 秒後自動重試(' + (attempt+1) + '/2)');
+              showToast('⏳ Gemini 忙線,15 秒後自動重試(' + (attempt+1) + '/2)');
             }
-            await sleep(30000);
+            await sleep(15000);
             continue;
           }
           // 非 503 或重試完仍失敗 → 拋出
@@ -8441,6 +8448,7 @@ ${dec.reasoning || ''}
           openAISettings();
           return;
         }
+        _silentResetCooldowns(); // 使用者主動按 → 清乾淨,強制去 ping Google
         // 立刻給回饋，使用者可以繼續做下一題
         _nbInflight.add(q.id);
         _nbPending++;
@@ -8524,12 +8532,11 @@ ${dec.reasoning || ''}
           const errMsg = (err.message || '').slice(0, 200);
           addToPendingQueue(q, errMsg);
           if (!opts.silent) {
-            // 用 toast 代替 alert，比較不打擾；429 / 503 給特別提示
             const is429 = /429|quota|exceed/i.test(errMsg);
             const is503 = /503|UNAVAILABLE|high demand/i.test(errMsg);
-            if (is429) showToast('⚠️ Gemini 撞到額度上限 → 已加進「📥 待整理」');
-            else if (is503) showToast('⚠️ Gemini 暫時忙線 → 已加進「📥 待整理」');
-            else showToast('❌ AI 失敗 → 已加進「📥 待整理」');
+            if (is429) showToast('📥 額度暫滿,已排隊 — 背景會自動重試,你繼續做題就好');
+            else if (is503) showToast('📥 Gemini 暫忙,已排隊 — 背景會自動重試,你繼續做題就好');
+            else showToast('📥 整理失敗,已排隊 — 背景會自動重試,你繼續做題就好');
           }
           updatePendingBadge();
           return false;
@@ -8574,37 +8581,47 @@ ${dec.reasoning || ''}
         startPendingAutoRetry();
       }
 
-      // ── 背景自動重試 ──
-      // 每 70 秒重試 1 題（避免再撞 RPM）。retries ≥ 5 的不再自動重試，要人工處理
+      // ── 背景自動重試(永不放棄,智能延遲) ──
+      // 重試 < 5 次:30 秒/題;5-15 次:5 分鐘/題;15+ 次:30 分鐘/題(撞 daily quota 等明天)
       let _pendingAutoRetryTimer = null;
+      let _pendingAutoRetryRound = 0;
       function startPendingAutoRetry(){
         if (_pendingAutoRetryTimer) return; // 已經在跑
-        _pendingAutoRetryTimer = setInterval(async () => {
-          // 先清掉已整理的
-          _cleanupAlreadyOrganizedPending();
+        const scheduleNext = () => {
+          // 看 pending 裡 retries 最少的那題決定間隔
           const arr = getPendingQueue();
           if (arr.length === 0) { stopPendingAutoRetry(); return; }
-          // 挑第 1 個 retries < 5 的試
-          const item = arr.find(x => (x.retries || 0) < 5);
-          if (!item) {
-            // 全部都試過 5 次以上 → 停掉自動重試，要使用者人工處理
-            stopPendingAutoRetry();
-            return;
-          }
-          const q = QS.find(x => x.id === item.qid);
-          if (!q) { removeFromPendingQueue(item.qid); return; }
-          // 不打擾使用者，只在 console 留紀錄
-          console.log('[auto-retry pending]', q.meta || q.id, 'retries=' + (item.retries||0));
-          try {
-            await addQToNotebook(q, { silent: true });
-          } catch(e) { /* 失敗會自動進 pending，無需處理 */ }
-        }, 70000); // 70 秒
+          const minR = Math.min(...arr.map(x => x.retries || 0));
+          // 智能延遲:嘗試次數越多,間隔越長(避免空轉燒 quota)
+          const delay = minR < 5 ? 30000 : minR < 15 ? 300000 : 1800000;
+          _pendingAutoRetryTimer = setTimeout(async () => {
+            _cleanupAlreadyOrganizedPending();
+            const arr2 = getPendingQueue();
+            if (arr2.length === 0) { stopPendingAutoRetry(); return; }
+            // 挑 retries 最少的試(優先 fair)
+            const item = arr2.sort((a,b)=>(a.retries||0)-(b.retries||0))[0];
+            const q = QS.find(x => x.id === item.qid);
+            if (!q) { removeFromPendingQueue(item.qid); scheduleNext(); return; }
+            _pendingAutoRetryRound++;
+            console.log('[auto-retry pending #' + _pendingAutoRetryRound + ']', q.meta || q.id, 'retries=' + (item.retries||0), 'next delay=' + Math.round(delay/1000) + 's');
+            // 每 3 輪自動清一次 cooldown,確保不被 in-memory 卡死
+            if (_pendingAutoRetryRound % 3 === 0) _silentResetCooldowns();
+            try {
+              await addQToNotebook(q, { silent: true });
+            } catch(e) { /* 失敗會自動進 pending,無需處理 */ }
+            // 連續排下一輪 — 永不放棄
+            _pendingAutoRetryTimer = null;
+            scheduleNext();
+          }, delay);
+        };
+        scheduleNext();
       }
       function stopPendingAutoRetry(){
         if (_pendingAutoRetryTimer) {
-          clearInterval(_pendingAutoRetryTimer);
+          clearTimeout(_pendingAutoRetryTimer);
           _pendingAutoRetryTimer = null;
         }
+        _pendingAutoRetryRound = 0;
       }
       function removeFromPendingQueue(qid){
         const arr = getPendingQueue();
@@ -8695,6 +8712,7 @@ ${dec.reasoning || ''}
       async function retryOnePending(qid){
         const q = QS.find(x => x.id === qid);
         if (!q) { showToast('找不到題目資料'); removeFromPendingQueue(qid); openPendingModal(); return; }
+        _silentResetCooldowns(); // 使用者主動按 → 清乾淨,強制去 ping Google
         showToast('🤖 重試中：' + (q.meta || q.id));
         const ok = await addQToNotebook(q, { silent: true });
         if (ok) showToast('✓ 整理成功：' + (q.meta || q.id));
@@ -8710,6 +8728,7 @@ ${dec.reasoning || ''}
         if (arr.length === 0) return;
         if (!confirm('一鍵整理 ' + arr.length + ' 題?\n\n會逐一送進 AI 整理(每題間隔 5 秒避免撞 RPM 限制),撞 429 會先等 60 秒再繼續。')) return;
         closePendingModal();
+        _silentResetCooldowns(); // 使用者主動按 → 清乾淨,強制去 ping Google
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
         let ok = 0, fail = 0, consec429 = 0;
         const total = arr.length;

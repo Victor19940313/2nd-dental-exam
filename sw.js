@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v192-force-ping-on-retry';
+const CACHE_NAME = 'dental-all-v193-peek-subject-filter';
 const PRECACHE = [
   './',
   './index.html',

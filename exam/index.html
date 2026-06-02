@@ -7833,45 +7833,61 @@
         const model = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
         let lastErr = null;
         const invalidKeys = new Set();
-        // 最多嘗試 keys.length 次（每把 key 一次）
+        const tried = []; // 記錄每把試過的 key 跟結果(給失敗訊息用)
+        const stats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0 };
+        // 最多嘗試 keys.length 次(每把 key 一次)
         for (let attempt = 0; attempt < keys.length; attempt++) {
           const key = _pickHealthyKey(keys);
-          if (!key) {
-            // 全部冷卻中 → 抛 429 讓 pending queue 接手
-            throw new Error('Gemini 429: 所有 key 都撞到額度，已自動排隊重試');
-          }
-          if (invalidKeys.has(key)) continue; // 本輪已知失效就跳過
+          if (!key) break; // 不應該發生(v191 有 fallback)
+          if (invalidKeys.has(key)) continue;
+          const kMask = key.slice(0,8) + '…' + key.slice(-4);
+          console.log('[Gemini try]', (attempt+1) + '/' + keys.length, kMask);
           try {
             const result = await _callGeminiWithKey(promptText, schema, key, model);
-            _resetKey429(key); // 成功 → 重置該 key 的 429 計數
+            _resetKey429(key);
+            stats.ok++;
+            tried.push(kMask + ':✅');
+            console.log('[Gemini try]', kMask, '✅ 成功');
             return result;
           } catch (err) {
             lastErr = err;
             const msg = err.message || '';
             if (_isKeyInvalidError(msg)) {
-              // key 失效 → 標記 + 換下一把
               invalidKeys.add(key);
-              _markKeyCooldown(key, 24 * 60 * 60 * 1000); // 失效 key 冷卻 24 小時(等使用者去更新)
-              console.warn('[Gemini key 失效]', msg.slice(0, 200));
+              _markKeyCooldown(key, 24 * 60 * 60 * 1000);
+              stats.invalid++;
+              tried.push(kMask + ':🔴失效');
+              console.warn('[Gemini key 失效]', kMask, msg.slice(0, 200));
               continue;
             }
             if (/429|quota|exceed|rate.*limit/i.test(msg)) {
-              const cooldownMs = _mark429(key); // 漸進冷卻:1 次 60s / 2 次 5min / 3+ 4hr
-              console.warn('[Gemini key 撞額度]', key.slice(0,8) + '…', 'count=' + _key429Count[key], 'cooldown=' + Math.round(cooldownMs/1000) + 's', msg.slice(0, 120));
+              _mark429(key);
+              stats.q429++;
+              tried.push(kMask + ':🟠429');
+              console.warn('[Gemini key 撞額度]', kMask, msg.slice(0, 120));
               continue;
             }
-            throw err; // 非 429/失效直接拋
+            if (/503|UNAVAILABLE|high demand|overloaded/i.test(msg)) {
+              stats.q503++;
+              tried.push(kMask + ':🟡503');
+              console.warn('[Gemini 503]', kMask, msg.slice(0, 120));
+              continue;
+            }
+            stats.other++;
+            tried.push(kMask + ':❌' + msg.slice(0,40));
+            throw err;
           }
         }
-        // 整輪跑完還是失敗:如果有 key 失效,跳大提醒
+        // 整輪都失敗 — 組裝詳細訊息
+        const summary = `試了 ${keys.length} 把key:${stats.q429}撞額度/${stats.q503}忙線/${stats.invalid}失效/${stats.other}其他`;
+        console.warn('[Gemini 全部失敗]', summary, tried);
         if (invalidKeys.size === keys.length) {
           _alertKeyInvalid(lastErr && lastErr.message);
-          throw new Error('Gemini API key 失效:' + (lastErr && lastErr.message || '').slice(0, 200));
-        } else if (invalidKeys.size > 0) {
-          // 部分 key 失效但其他 key 也撞 429
-          _alertKeyInvalid(lastErr && lastErr.message);
+          throw new Error('Gemini API key 全部失效 (' + summary + ')');
         }
-        throw lastErr || new Error('Gemini call failed');
+        if (invalidKeys.size > 0) _alertKeyInvalid(lastErr && lastErr.message);
+        const baseMsg = (lastErr && lastErr.message) ? lastErr.message.slice(0, 150) : 'Gemini 全部失敗';
+        throw new Error(baseMsg + ' [' + summary + ']');
       }
       async function _callGeminiWithKey(promptText, schema, key, model){
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
@@ -12197,7 +12213,9 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         const body = document.getElementById('peek-body');
         const overlay = document.getElementById('peek-overlay');
 
-        const { directHit, topicHit } = findRelatedChapters(q, notebook.chapters);
+        // ★ 只看同科目章節(偷看牙五就只看牙五)
+        const sameSubjectChapters = (notebook.chapters || []).filter(c => chapterMatchesSubject(c, q.subject));
+        const { directHit, topicHit } = findRelatedChapters(q, sameSubjectChapters);
         const topic = (q.topic || '').trim();
 
         overlay.style.display = 'flex';

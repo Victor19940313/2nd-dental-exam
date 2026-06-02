@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v187-strict-subject-filter';
+const CACHE_NAME = 'dental-all-v188-chapter-subject-field';
 const PRECACHE = [
   './',
   './index.html',

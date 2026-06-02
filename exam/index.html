@@ -7528,17 +7528,30 @@
         // '其他 Other' 不在這 → 後面 fallback 處理
       };
       // 判斷章節是否「屬於」某科目(給 buildAIPrompt 過濾候選用)
-      // 嚴格規則:章節有明確證據屬於該科 → 保留;明確屬於別科 → 排除;完全不確定 → 排除(避免 prompt 爆掉)
+      // 三層判斷:c.subject 欄位(最直接) → qids 反推 → domain 反查 → 不確定就排除
       function chapterMatchesSubject(c, subject){
-        // 1. 從 qids 反推主科 — 最可靠
+        // 1. 最高優先:章節本身有 subject 欄位 → 直接判斷
+        if (c.subject) return c.subject === subject;
+        // 2. 從 qids 反推主科
         const main = chapterMainSubject(c);
         if (main) return main === subject;
-        // 2. 沒 qids → 看 domain 對應哪些科目
+        // 3. 沒 qids → 看 domain 對應哪些科目
         if (c.domain && DOMAIN_TO_SUBJECTS[c.domain]) {
           return DOMAIN_TO_SUBJECTS[c.domain].includes(subject);
         }
-        // 3. 完全沒線索 → 排除(避免 prompt 爆,寧可開新章)
+        // 4. 完全沒線索 → 排除
         return false;
+      }
+      // 反推章節科目(給 migration 用):有 subject 用 subject,沒有就用 qids/domain 反推
+      function inferChapterSubject(c){
+        if (c.subject) return c.subject;
+        const main = chapterMainSubject(c);
+        if (main) return main;
+        if (c.domain && DOMAIN_TO_SUBJECTS[c.domain]) {
+          const subjs = DOMAIN_TO_SUBJECTS[c.domain];
+          if (subjs.length === 1) return subjs[0]; // 唯一對應才能確定
+        }
+        return ''; // 真的推不出來
       }
 
       function loadNotebook() {
@@ -7555,7 +7568,18 @@
               domainMigrated = true;
             }
           });
-          if (domainMigrated) localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
+          // 一次性:給沒有 subject 欄位的舊章節補上(用 qids 反推 → domain 反推)
+          let subjectMigrated = false;
+          notebook.chapters.forEach(ch => {
+            if (!ch.subject) {
+              const inferred = inferChapterSubject(ch);
+              if (inferred) {
+                ch.subject = inferred;
+                subjectMigrated = true;
+              }
+            }
+          });
+          if (domainMigrated || subjectMigrated) localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
           // 一進來就掃，把被「AI 雙重編碼」搞壞的章節自動還原（換行從 `\n` 字串改回真換行）
           migrateBrokenChapters();
           // 自動清掉「上傳中」殘留（如果還在這代表前次上傳失敗或被中斷）
@@ -8709,6 +8733,7 @@ ${dec.reasoning || ''}
         if (dec.action === 'new_chapter') {
           const newCh = {
             id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+            subject: q.subject, // ★ 加入時就直接寫死科目,以後再也不用推
             name: dec.chapter_name || dec.chapterName || '未命名章節',
             domain: dec.domain || guessDomainBySubject(q.subject),
             subtopic: dec.subtopic || '未分類',
@@ -8738,13 +8763,15 @@ ${dec.reasoning || ''}
             applyAIDecision({ ...dec, action:'new_chapter' }, q);
             return;
           }
-          // ★ 跨科分類保險:若 AI 仍試圖 append 到不同科目章節,強制改開新章
-          const chMain = chapterMainSubject(ch);
-          if (chMain && chMain !== q.subject) {
-            console.warn('cross-subject append blocked:', chMain, '->', q.subject, ch.name);
+          // ★ 跨科分類保險:c.subject 最優先(因為加入時已寫死科目)
+          const chSubject = ch.subject || chapterMainSubject(ch);
+          if (chSubject && chSubject !== q.subject) {
+            console.warn('cross-subject append blocked:', chSubject, '->', q.subject, ch.name);
             applyAIDecision({ ...dec, action:'new_chapter' }, q);
             return;
           }
+          // 順便:append 時若舊章還沒 subject 欄位,趁機補上(migration on-write)
+          if (!ch.subject) ch.subject = q.subject;
           // ★ subtopic 不一致保險:不同 subtopic 不能 append(大分類相同 ≠ subtopic 相同)
           const _normSub = (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
           const chSub = _normSub(ch.subtopic);

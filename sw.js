@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v182-key-expired-alert';
+const CACHE_NAME = 'dental-all-v183-strict-subtopic';
 const PRECACHE = [
   './',
   './index.html',

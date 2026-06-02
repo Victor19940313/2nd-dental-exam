@@ -7848,14 +7848,28 @@
 【任務】
 把這題納入我的「核心概念筆記本」。**不是寫題目詳解**，是整理「將來再遇到同概念題目都能答對」的核心重點。同概念多題之間要**合併、去重、累積**，不要每題重寫。
 
-⚠️【最高指導原則：優先 append、避免開新章】
-新章只要可以併進舊章，**一律 append**。下面「強烈推薦候選章節」是 JS 預先用關鍵字/概念比對找出的高相似章節，**只要任一候選的 concept / subtopic / outline / keywords / 內容跟新題有重疊，就 append 到那一章**。
-不要因為「章節名稱不完全一樣」就開新章 — 章節名可以維持原樣，內容用 append 合併擴充。
-**除非完全沒有任何候選章節跟這題有關**，才用 new_chapter。
+⚠️【最高指導原則：subtopic 精準一致才能 append】
+**只有當新題的 subtopic 跟舊章節 subtopic 完全相同(或極度相近)時才可以 append**。subtopic 不同就一律 new_chapter,就算大方向相同也不行。
 
-🚨【絕對禁止：跨科目分類】
-題目科目是 **${SMAP[q.subject] || q.subject}**，**只能 append 到同科目的章節**，或 new_chapter。
-下方所有候選章節都已經是同科目，但你仍要再次確認:章節名/內容明顯是不同科目的(例如新題是牙五假牙，候選章節在講牙髓病) → **一律 new_chapter，禁止 append**。
+✅ 可以 append 的例子:
+- 舊章 subtopic="Phonetics 發音" + 新題也在講「發音」 → append
+- 舊章 subtopic="Border seal 邊緣封閉" + 新題在講「post-dam 後堤封閉」 → append(都屬於邊緣封閉)
+
+❌ 不可以 append 的例子(都要 new_chapter):
+- 舊章 subtopic="Tissue behavior 組織行為" + 新題在講「發音」 → 不同子主題,new_chapter
+- 舊章 subtopic="Tissue behavior 組織行為" + 新題在講「上顎植體支持式義齒」 → 不同子主題,new_chapter
+- 兩者都屬於「Complete Denture 全口義齒」**不算同 subtopic**,大分類相同 ≠ subtopic 相同
+
+判斷流程:
+1. **先決定新題的 subtopic**(精準到「發音 / 邊緣封閉 / 組織行為 / 植體支持義齒 / 咬合 / 美觀」這種顆粒度,不要寫成「Complete Denture」這種大分類)
+2. **看候選章節中有沒有 subtopic 完全相同的**
+   - 有 → append 到那一章
+   - 沒有 → new_chapter(章節名要精準寫出 subtopic,例如「Phonetics in Complete Denture 全口義齒發音問題」)
+3. 不要因為「都屬於 Complete Denture」就硬 append
+
+🚨【絕對禁止:跨科目分類】
+題目科目是 **${SMAP[q.subject] || q.subject}**,**只能 append 到同科目的章節**,或 new_chapter。
+下方所有候選章節都已經是同科目,但你仍要再次確認:章節名/內容明顯是不同科目的(例如新題是牙五假牙,候選章節在講牙髓病) → **一律 new_chapter,禁止 append**。
 
 【判斷相關性時請優先看這幾個欄位】
 - **outline**：章節的所有 ## 小標題列表（最能反映章節在講什麼）
@@ -8566,6 +8580,15 @@ ${dec.reasoning || ''}
           const chMain = chapterMainSubject(ch);
           if (chMain && chMain !== q.subject) {
             console.warn('cross-subject append blocked:', chMain, '->', q.subject, ch.name);
+            applyAIDecision({ ...dec, action:'new_chapter' }, q);
+            return;
+          }
+          // ★ subtopic 不一致保險:不同 subtopic 不能 append(大分類相同 ≠ subtopic 相同)
+          const _normSub = (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+          const chSub = _normSub(ch.subtopic);
+          const newSub = _normSub(dec.subtopic);
+          if (chSub && newSub && chSub !== newSub) {
+            console.warn('subtopic mismatch, forcing new_chapter:', chSub, '!=', newSub, 'ch:', ch.name);
             applyAIDecision({ ...dec, action:'new_chapter' }, q);
             return;
           }

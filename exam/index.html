@@ -8372,7 +8372,7 @@ ${dec.reasoning || ''}
         const autoNote = autoCleared > 0
           ? '<div style="font-size:.8rem;color:#15803d;margin-bottom:.4rem">✓ 已自動清掉 ' + autoCleared + ' 題已整理的（已經在筆記章節裡了）</div>'
           : '';
-        let html = autoNote + '<div style="font-size:.85rem;color:#6b7280;margin-bottom:.6rem;line-height:1.6">這些題目之前 AI 整理失敗（額度上限 / 模型忙線 / 其他錯誤）。<br>按「<strong>🚀 一鍵整理全部</strong>」會逐一重試，仍失敗的留在這裡。</div>';
+        let html = autoNote + '<div style="font-size:.85rem;color:#6b7280;margin-bottom:.6rem;line-height:1.6">這些題目之前 AI 整理失敗（額度上限 / 模型忙線 / 其他錯誤）。<br>按「<strong>🚀 一鍵整理全部</strong>」會<strong>一題一題排隊重試</strong>(每題間隔 5 秒,撞 429 自動等 60 秒),仍失敗的留在這裡。</div>';
         html += '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">';
         html += '<button onclick="retryAllPending()" style="background:#7c3aed;color:white;border:none;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🚀 一鍵整理全部</button>';
         html += '<button onclick="clearAllPending()" style="background:white;color:#dc2626;border:1.5px solid #fca5a5;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">🗑 全部清空</button>';
@@ -8418,11 +8418,11 @@ ${dec.reasoning || ''}
       async function retryAllPending(){
         const arr = getPendingQueue();
         if (arr.length === 0) return;
-        if (!confirm('一鍵整理 ' + arr.length + ' 題？\n\n會逐一送進 AI 整理，過程中可能還是會撞到額度。')) return;
+        if (!confirm('一鍵整理 ' + arr.length + ' 題?\n\n會逐一送進 AI 整理(每題間隔 5 秒避免撞 RPM 限制),撞 429 會先等 60 秒再繼續。')) return;
         closePendingModal();
-        let ok = 0, fail = 0;
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        let ok = 0, fail = 0, consec429 = 0;
         const total = arr.length;
-        // 用 toast 顯示進度
         for (let i = 0; i < arr.length; i++) {
           const item = arr[i];
           const q = QS.find(x => x.id === item.qid);
@@ -8430,22 +8430,36 @@ ${dec.reasoning || ''}
             removeFromPendingQueue(item.qid);
             continue;
           }
-          showToast('🤖 整理中 ' + (i+1) + '/' + total + '：' + (q.meta || q.id));
+          showToast('🤖 整理中 ' + (i+1) + '/' + total + ': ' + (q.meta || q.id));
           const success = await addQToNotebook(q, { silent: true });
-          if (success) ok++;
-          else fail++;
-          // 撞到 429 連續 3 次 → 提早停（避免一直白噴）
-          if (fail >= 3) {
-            const lastErr = (getPendingQueue()[0]||{}).lastError || '';
-            if (/429|quota/i.test(lastErr)) {
-              showToast('⚠️ 連續撞到額度上限，停止整理');
-              break;
+          if (success) {
+            ok++;
+            consec429 = 0; // 成功歸零
+          } else {
+            fail++;
+            const lastErr = (getPendingQueue().find(x => x.qid === item.qid) || {}).lastError || '';
+            const is429 = /429|quota|exceed/i.test(lastErr);
+            if (is429) {
+              consec429++;
+              // 連續兩次撞 429 → 停止(配額短時間內不會恢復)
+              if (consec429 >= 2) {
+                showToast('⚠️ 連續撞到額度上限,停止整理(可改天再試)');
+                break;
+              }
+              // 第一次撞 429 → 等 60 秒讓 RPM 視窗滑掉再試下一題
+              showToast('⏳ 撞到額度,等 60 秒讓配額恢復再繼續…');
+              await sleep(60000);
+            } else {
+              consec429 = 0; // 非額度錯誤不算連續
             }
           }
-          // 小延遲避免撞 RPM
-          if (i < arr.length - 1) await new Promise(r => setTimeout(r, 1500));
+          // 兩題之間禮讓 5 秒,避免免費版 RPM(~15/分)被打滿
+          if (i < arr.length - 1) {
+            showToast('⏸ 等 5 秒避免撞 RPM…(' + (i+1) + '/' + total + ' 完成)');
+            await sleep(5000);
+          }
         }
-        showToast('✓ 整理完成：成功 ' + ok + '，失敗 ' + fail);
+        showToast('✓ 整理完成:成功 ' + ok + ',失敗 ' + fail);
         openPendingModal();
       }
 

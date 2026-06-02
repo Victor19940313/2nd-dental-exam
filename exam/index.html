@@ -7629,12 +7629,34 @@
       function setGeminiKey(k){ setGeminiKeys(k ? [k] : []); }
       // 冷卻管理：撞額度的 key 暫時跳過
       const _keyCooldowns = {}; // {keyString: expiryTs}
+      const _key429Count = {}; // {keyString: 連續撞 429 次數}
       function _isKeyHealthy(k){ const e = _keyCooldowns[k]; return !e || e <= Date.now(); }
       function _markKeyCooldown(k, ms){ _keyCooldowns[k] = Date.now() + (ms||60000); }
+      // 真正的 round-robin 輪替:每次從下一把開始挑,平均分散負載
+      let _keyRotateIdx = 0;
       function _pickHealthyKey(keys){
-        for (const k of keys) if (_isKeyHealthy(k)) return k;
+        if (!keys.length) return null;
+        const n = keys.length;
+        for (let i = 0; i < n; i++) {
+          const idx = (_keyRotateIdx + i) % n;
+          const k = keys[idx];
+          if (_isKeyHealthy(k)) {
+            _keyRotateIdx = (idx + 1) % n; // 下一次從下一把開始
+            return k;
+          }
+        }
         return null;
       }
+      // 撞 429 漸進延長冷卻:1 次 60 秒(可能是 RPM 限制) → 2 次 5 分鐘 → 3+ 次 4 小時(確認是 daily quota)
+      function _mark429(k){
+        _key429Count[k] = (_key429Count[k] || 0) + 1;
+        const n = _key429Count[k];
+        const ms = n === 1 ? 60000 : n === 2 ? 300000 : 14400000;
+        _markKeyCooldown(k, ms);
+        return ms;
+      }
+      // 成功一次就重置該 key 的 429 計數
+      function _resetKey429(k){ _key429Count[k] = 0; }
       const GITHUB_TOKEN_LS = uKey("github_token");
       const GITHUB_REPO_LS = uKey("github_repo");
       function getGithubToken(){ return localStorage.getItem(GITHUB_TOKEN_LS) || ''; }
@@ -7794,7 +7816,9 @@
           }
           if (invalidKeys.has(key)) continue; // 本輪已知失效就跳過
           try {
-            return await _callGeminiWithKey(promptText, schema, key, model);
+            const result = await _callGeminiWithKey(promptText, schema, key, model);
+            _resetKey429(key); // 成功 → 重置該 key 的 429 計數
+            return result;
           } catch (err) {
             lastErr = err;
             const msg = err.message || '';
@@ -7806,8 +7830,8 @@
               continue;
             }
             if (/429|quota|exceed|rate.*limit/i.test(msg)) {
-              _markKeyCooldown(key, 60000); // 撞額度 → 冷卻 60 秒
-              console.warn('[Gemini key 撞額度] 切換到下一把', msg.slice(0, 120));
+              const cooldownMs = _mark429(key); // 漸進冷卻:1 次 60s / 2 次 5min / 3+ 4hr
+              console.warn('[Gemini key 撞額度]', key.slice(0,8) + '…', 'count=' + _key429Count[key], 'cooldown=' + Math.round(cooldownMs/1000) + 's', msg.slice(0, 120));
               continue;
             }
             throw err; // 非 429/失效直接拋

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v188-chapter-subject-field';
+const CACHE_NAME = 'dental-all-v189-round-robin-cooldown';
 const PRECACHE = [
   './',
   './index.html',

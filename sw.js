@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v186-prompt-shrink';
+const CACHE_NAME = 'dental-all-v187-strict-subject-filter';
 const PRECACHE = [
   './',
   './index.html',

@@ -7508,6 +7508,38 @@
         if (c.domain && NOTEBOOK_DOMAINS.includes(c.domain)) return c.domain;
         return guessDomainBySubject(c._mainSubj);
       }
+      // domain 反查科目(讓只有 domain 沒 qids 的章節也能被正確過濾)
+      const DOMAIN_TO_SUBJECTS = {
+        '齒內治療學 Endodontics':       ['ya3'],
+        '牙髓與牙本質 Pulp & Dentin':   ['ya3'],
+        '牙周病學 Periodontics':         ['ya3'],
+        '牙體復形 Operative Dentistry':  ['ya3'],
+        '贗復學 Prosthodontics':         ['ya5'],
+        '矯正學 Orthodontics':           ['ya6'],
+        '口腔外科 Oral Surgery':         ['ya4'],
+        '口腔病理 Oral Pathology':       ['ya4'],
+        '口腔放射 Oral Radiology':       ['ya4'],
+        '兒童牙科 Pedodontics':          ['ya6'],
+        '牙科材料 Dental Materials':     ['ya3','ya5'],
+        '局部麻醉與藥物 LA & Pharmacology':['ya4'],
+        '解剖與胚胎 Anatomy & Embryology':['ya3','ya4'],
+        '生物統計與流行病學 Biostatistics & Epi':['ya6'],
+        '公衛與倫理 Public Health & Ethics':['ya6']
+        // '其他 Other' 不在這 → 後面 fallback 處理
+      };
+      // 判斷章節是否「屬於」某科目(給 buildAIPrompt 過濾候選用)
+      // 嚴格規則:章節有明確證據屬於該科 → 保留;明確屬於別科 → 排除;完全不確定 → 排除(避免 prompt 爆掉)
+      function chapterMatchesSubject(c, subject){
+        // 1. 從 qids 反推主科 — 最可靠
+        const main = chapterMainSubject(c);
+        if (main) return main === subject;
+        // 2. 沒 qids → 看 domain 對應哪些科目
+        if (c.domain && DOMAIN_TO_SUBJECTS[c.domain]) {
+          return DOMAIN_TO_SUBJECTS[c.domain].includes(subject);
+        }
+        // 3. 完全沒線索 → 排除(避免 prompt 爆,寧可開新章)
+        return false;
+      }
 
       function loadNotebook() {
         try {
@@ -7607,22 +7639,30 @@
         const sel = document.getElementById('ai-model-select');
         const model = sel ? sel.value : 'gemini-2.5-flash';
         if (btn) { btn.disabled = true; btn.textContent = '🔄 測試中…'; btn.style.opacity = '0.7'; }
-        // 顯示診斷資訊:user / model / chapters / 預估 prompt 大小
+        // 顯示診斷資訊:user / model / chapters / 過濾後章節 / prompt 大小
         let nbInfo = '';
         try {
           loadNotebook();
           const chN = (notebook.chapters || []).length;
-          // 用最後一題或第一章 q 模擬 buildAIPrompt 看大小
-          let promptSize = 0;
+          // 各科過濾後章節數(讓使用者看到哪一科有幾章)
+          const perSubj = { ya3:0, ya4:0, ya5:0, ya6:0 };
+          (notebook.chapters || []).forEach(c => {
+            ['ya3','ya4','ya5','ya6'].forEach(s => {
+              if (chapterMatchesSubject(c, s)) perSubj[s]++;
+            });
+          });
+          // 用一個牙五題模擬 buildAIPrompt 看大小(因為使用者主要在寫牙五)
+          let promptSize = 0, filteredN = 0;
           try {
-            const sampleQ = (typeof QS !== 'undefined' && QS.length > 0) ? QS[0] : null;
+            const sampleQ = (typeof QS !== 'undefined') ? QS.find(x => x.subject === 'ya5') || QS[0] : null;
             if (sampleQ && chN > 0) {
               const p = buildAIPrompt(sampleQ, notebook.chapters);
               promptSize = p.length;
+              filteredN = perSubj[sampleQ.subject] || 0;
             }
           } catch(e){}
           const sizeWarn = promptSize > 60000
-            ? '<span style="color:#dc2626;font-weight:700">⚠️ 過大,易撞 503</span>'
+            ? '<span style="color:#dc2626;font-weight:700">⚠️ 過大,易撞 quota</span>'
             : promptSize > 30000
             ? '<span style="color:#ea580c;font-weight:700">⚠️ 偏大</span>'
             : '<span style="color:#16a34a;font-weight:700">✓ 正常</span>';
@@ -7630,7 +7670,9 @@
             '<strong>📊 診斷</strong><br>' +
             '• 目前 user:<code style="background:#eef2ff;padding:1px 5px;border-radius:3px">' + (typeof _curUserId !== "undefined" ? _curUserId : "(未知)") + '</code><br>' +
             '• 使用 model:<code style="background:#eef2ff;padding:1px 5px;border-radius:3px">' + model + '</code><br>' +
-            '• 筆記章節數:<strong>' + chN + '</strong> 章<br>' +
+            '• 筆記章節總數:<strong>' + chN + '</strong> 章 ' +
+              '<span style="color:#6b7280">(牙三 ' + perSubj.ya3 + ' / 牙四 ' + perSubj.ya4 + ' / 牙五 ' + perSubj.ya5 + ' / 牙六 ' + perSubj.ya6 + ')</span><br>' +
+            '• 寫牙五題時 AI 只會看:<strong>' + filteredN + '</strong> 章(只給同科,跨科過濾)<br>' +
             '• 預估 prompt 大小:<strong>' + Math.round(promptSize/1000) + ' KB</strong>(約 ' + Math.round(promptSize/4) + ' tokens)' + ' ' + sizeWarn +
           '</div>';
         } catch(e) {}
@@ -7909,11 +7951,10 @@
         const LETTERS = ['A','B','C','D','E'];
         const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
         const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
-        // ★ 跨科分類保險:只把同科目(或還沒有題目的空章節)給 AI 看,避免牙五題被分到牙三
-        chapters = (chapters || []).filter(c => {
-          const main = chapterMainSubject(c);
-          return !main || main === q.subject;
-        });
+        // ★ 跨科過濾(嚴格版):只給 AI 看「明確屬於本科」的章節
+        // 大幅減小 prompt,且避免牙五題誤分到牙三章節
+        const totalChapters = (chapters || []).length;
+        chapters = (chapters || []).filter(c => chapterMatchesSubject(c, q.subject));
         // 用 findRelatedChapters 預先排序找出最相似章節，當「強候選」推薦給 AI
         let candidateIds = new Set();
         try {
@@ -7989,8 +8030,8 @@
 3. 不要因為「都屬於 Complete Denture」就硬 append
 
 🚨【絕對禁止:跨科目分類】
-題目科目是 **${SMAP[q.subject] || q.subject}**,**只能 append 到同科目的章節**,或 new_chapter。
-下方所有候選章節都已經是同科目,但你仍要再次確認:章節名/內容明顯是不同科目的(例如新題是牙五假牙,候選章節在講牙髓病) → **一律 new_chapter,禁止 append**。
+題目科目是 **${SMAP[q.subject] || q.subject}**。下面看到的所有章節(candidates + others)**都已經過濾為 ${SMAP[q.subject] || q.subject} 科目**,你看不到其他科的章節。
+意思:**你只能在這 ${chapters.length} 章內 append,或 new_chapter**。不要試圖 append 到「不存在於下方清單」的章節。
 
 【判斷相關性時請優先看這幾個欄位】
 - **outline**：章節的所有 ## 小標題列表（最能反映章節在講什麼）

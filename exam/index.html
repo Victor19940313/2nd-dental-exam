@@ -7685,6 +7685,9 @@
         const sel = document.getElementById('ai-model-select');
         const model = sel ? sel.value : 'gemini-2.5-flash';
         if (btn) { btn.disabled = true; btn.textContent = '🔄 測試中…'; btn.style.opacity = '0.7'; }
+        // 清空 in-memory cooldown,讓測試結果反映 Google 端真實狀態
+        Object.keys(_keyCooldowns).forEach(k => delete _keyCooldowns[k]);
+        Object.keys(_key429Count).forEach(k => delete _key429Count[k]);
         // 顯示診斷資訊:user / model / chapters / 過濾後章節 / prompt 大小
         let nbInfo = '';
         try {

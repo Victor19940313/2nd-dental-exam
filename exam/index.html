@@ -7633,30 +7633,46 @@
       function _isKeyHealthy(k){ const e = _keyCooldowns[k]; return !e || e <= Date.now(); }
       function _markKeyCooldown(k, ms){ _keyCooldowns[k] = Date.now() + (ms||60000); }
       // 真正的 round-robin 輪替:每次從下一把開始挑,平均分散負載
+      // 全部 cooldown 時不放棄 — 挑「最快過期」那把試一次,因為 Google 可能已經放行了
       let _keyRotateIdx = 0;
       function _pickHealthyKey(keys){
         if (!keys.length) return null;
         const n = keys.length;
+        // 1. 找健康的
         for (let i = 0; i < n; i++) {
           const idx = (_keyRotateIdx + i) % n;
           const k = keys[idx];
           if (_isKeyHealthy(k)) {
-            _keyRotateIdx = (idx + 1) % n; // 下一次從下一把開始
+            _keyRotateIdx = (idx + 1) % n;
             return k;
           }
         }
-        return null;
+        // 2. 全部 cooldown → 挑最快過期那把試試看(Google 可能已經放行)
+        let pickK = null, soonestExpiry = Infinity;
+        for (const k of keys) {
+          const e = _keyCooldowns[k] || 0;
+          if (e < soonestExpiry) { soonestExpiry = e; pickK = k; }
+        }
+        return pickK; // 仍可能 429,但至少給 Google 一次機會
       }
-      // 撞 429 漸進延長冷卻:1 次 60 秒(可能是 RPM 限制) → 2 次 5 分鐘 → 3+ 次 4 小時(確認是 daily quota)
+      // 撞 429 統一 60 秒冷卻(對齊 Gemini RPM 滑動視窗,不再漸進延長)
       function _mark429(k){
         _key429Count[k] = (_key429Count[k] || 0) + 1;
-        const n = _key429Count[k];
-        const ms = n === 1 ? 60000 : n === 2 ? 300000 : 14400000;
-        _markKeyCooldown(k, ms);
-        return ms;
+        _markKeyCooldown(k, 60000);
+        return 60000;
       }
       // 成功一次就重置該 key 的 429 計數
       function _resetKey429(k){ _key429Count[k] = 0; }
+      // 🔄 重置所有 key 的 cooldown 跟 429 計數(使用者主動觸發,例如「我覺得不對勁,讓我再試一次」)
+      function resetAllKeyCooldowns(){
+        const beforeC = Object.keys(_keyCooldowns).length;
+        const beforeN = Object.keys(_key429Count).length;
+        Object.keys(_keyCooldowns).forEach(k => delete _keyCooldowns[k]);
+        Object.keys(_key429Count).forEach(k => delete _key429Count[k]);
+        if (typeof showToast === 'function') {
+          showToast('✓ 已重置 ' + Math.max(beforeC, beforeN) + ' 把 key 的冷卻狀態');
+        }
+      }
       const GITHUB_TOKEN_LS = uKey("github_token");
       const GITHUB_REPO_LS = uKey("github_repo");
       function getGithubToken(){ return localStorage.getItem(GITHUB_TOKEN_LS) || ''; }

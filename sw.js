@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v181-prostho-rename';
+const CACHE_NAME = 'dental-all-v182-key-expired-alert';
 const PRECACHE = [
   './',
   './index.html',

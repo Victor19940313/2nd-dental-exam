@@ -7592,6 +7592,26 @@
 
       // ── Gemini API call (可選帶 responseSchema 強制結構化) ──
       // 多 key 輪替：撞 429 自動切換到下一把 healthy 的 key，並把該 key 冷卻 60 秒
+      // 偵測 API key 失效訊號(400 + API_KEY_INVALID / 403 + key not valid / API key expired)
+      function _isKeyInvalidError(msg){
+        if (!msg) return false;
+        return /API_KEY_INVALID|API key not valid|api key expired|invalid api key|key.*invalid|PERMISSION_DENIED.*key/i.test(msg);
+      }
+      // 全部 key 失效時提醒(同一 session 只跳一次,避免連按連跳)
+      let _keyInvalidAlerted = false;
+      function _alertKeyInvalid(detail){
+        if (_keyInvalidAlerted) return;
+        _keyInvalidAlerted = true;
+        showToast('⚠️ Gemini API key 已過期/失效,請更新');
+        setTimeout(() => {
+          alert('⚠️ Gemini API key 已過期或失效\n\n' +
+                '你設定的 Gemini key 已無法使用(可能被撤銷、超過試用期、或剛剛 Google 那邊改了)。\n\n' +
+                '請到「⚙️ AI 設定」更新 key,然後重新試一次。\n\n' +
+                '錯誤訊息:\n' + (detail || '').slice(0, 200));
+          if (typeof openAISettings === 'function') openAISettings();
+          setTimeout(() => { _keyInvalidAlerted = false; }, 30000); // 30 秒後可再跳
+        }, 100);
+      }
       async function callGemini(promptText, schema){
         const keys = getGeminiKeys();
         if (keys.length === 0) {
@@ -7601,6 +7621,7 @@
         }
         const model = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
         let lastErr = null;
+        const invalidKeys = new Set();
         // 最多嘗試 keys.length 次（每把 key 一次）
         for (let attempt = 0; attempt < keys.length; attempt++) {
           const key = _pickHealthyKey(keys);
@@ -7608,17 +7629,34 @@
             // 全部冷卻中 → 抛 429 讓 pending queue 接手
             throw new Error('Gemini 429: 所有 key 都撞到額度，已自動排隊重試');
           }
+          if (invalidKeys.has(key)) continue; // 本輪已知失效就跳過
           try {
             return await _callGeminiWithKey(promptText, schema, key, model);
           } catch (err) {
             lastErr = err;
-            if (/429|quota|exceed|rate.*limit/i.test(err.message)) {
-              _markKeyCooldown(key, 60000); // 撞額度 → 冷卻 60 秒
-              console.warn('[Gemini key 撞額度] 切換到下一把', err.message.slice(0, 120));
+            const msg = err.message || '';
+            if (_isKeyInvalidError(msg)) {
+              // key 失效 → 標記 + 換下一把
+              invalidKeys.add(key);
+              _markKeyCooldown(key, 24 * 60 * 60 * 1000); // 失效 key 冷卻 24 小時(等使用者去更新)
+              console.warn('[Gemini key 失效]', msg.slice(0, 200));
               continue;
             }
-            throw err; // 非 429 直接拋
+            if (/429|quota|exceed|rate.*limit/i.test(msg)) {
+              _markKeyCooldown(key, 60000); // 撞額度 → 冷卻 60 秒
+              console.warn('[Gemini key 撞額度] 切換到下一把', msg.slice(0, 120));
+              continue;
+            }
+            throw err; // 非 429/失效直接拋
           }
+        }
+        // 整輪跑完還是失敗:如果有 key 失效,跳大提醒
+        if (invalidKeys.size === keys.length) {
+          _alertKeyInvalid(lastErr && lastErr.message);
+          throw new Error('Gemini API key 失效:' + (lastErr && lastErr.message || '').slice(0, 200));
+        } else if (invalidKeys.size > 0) {
+          // 部分 key 失效但其他 key 也撞 429
+          _alertKeyInvalid(lastErr && lastErr.message);
         }
         throw lastErr || new Error('Gemini call failed');
       }

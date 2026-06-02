@@ -7607,7 +7607,34 @@
         const sel = document.getElementById('ai-model-select');
         const model = sel ? sel.value : 'gemini-2.5-flash';
         if (btn) { btn.disabled = true; btn.textContent = '🔄 測試中…'; btn.style.opacity = '0.7'; }
-        out.innerHTML = '<div style="color:#6b7280">正在測試 ' + keys.length + ' 把 key 對 ' + model + '…</div>';
+        // 顯示診斷資訊:user / model / chapters / 預估 prompt 大小
+        let nbInfo = '';
+        try {
+          loadNotebook();
+          const chN = (notebook.chapters || []).length;
+          // 用最後一題或第一章 q 模擬 buildAIPrompt 看大小
+          let promptSize = 0;
+          try {
+            const sampleQ = (typeof QS !== 'undefined' && QS.length > 0) ? QS[0] : null;
+            if (sampleQ && chN > 0) {
+              const p = buildAIPrompt(sampleQ, notebook.chapters);
+              promptSize = p.length;
+            }
+          } catch(e){}
+          const sizeWarn = promptSize > 60000
+            ? '<span style="color:#dc2626;font-weight:700">⚠️ 過大,易撞 503</span>'
+            : promptSize > 30000
+            ? '<span style="color:#ea580c;font-weight:700">⚠️ 偏大</span>'
+            : '<span style="color:#16a34a;font-weight:700">✓ 正常</span>';
+          nbInfo = '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:.5rem .7rem;margin-bottom:.4rem;font-size:.76rem;line-height:1.7;color:#374151">' +
+            '<strong>📊 診斷</strong><br>' +
+            '• 目前 user:<code style="background:#eef2ff;padding:1px 5px;border-radius:3px">' + (typeof currentUser !== "undefined" ? currentUser : "(未知)") + '</code><br>' +
+            '• 使用 model:<code style="background:#eef2ff;padding:1px 5px;border-radius:3px">' + model + '</code><br>' +
+            '• 筆記章節數:<strong>' + chN + '</strong> 章<br>' +
+            '• 預估 prompt 大小:<strong>' + Math.round(promptSize/1000) + ' KB</strong>(約 ' + Math.round(promptSize/4) + ' tokens)' + ' ' + sizeWarn +
+          '</div>';
+        } catch(e) {}
+        out.innerHTML = nbInfo + '<div style="color:#6b7280">正在測試 ' + keys.length + ' 把 key 對 ' + model + '…</div>';
         const results = [];
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
         for (let i = 0; i < keys.length; i++) {
@@ -7659,7 +7686,7 @@
           '<div style="padding:.3rem .5rem;background:' + (r.ok ? '#ecfdf5' : '#fef2f2') + ';border:1px solid ' + (r.ok ? '#a7f3d0' : '#fecaca') + ';border-radius:5px;margin-bottom:.2rem;font-family:monospace;font-size:.74rem">' +
           '<strong>' + r.key + '</strong>: ' + r.msg + '</div>'
         ).join('');
-        out.innerHTML = summary + rows;
+        out.innerHTML = nbInfo + summary + rows;
       }
 
       // 偵測 API key 失效訊號(400 + API_KEY_INVALID / 403 + key not valid / API key expired)

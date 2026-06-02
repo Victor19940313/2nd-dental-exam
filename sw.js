@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v184-503-retry-test-conn';
+const CACHE_NAME = 'dental-all-v185-test-conn-diagnose';
 const PRECACHE = [
   './',
   './index.html',

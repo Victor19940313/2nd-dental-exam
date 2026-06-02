@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v193-peek-subject-filter';
+const CACHE_NAME = 'dental-all-v194-key-show-copy';
 const PRECACHE = [
   './',
   './index.html',

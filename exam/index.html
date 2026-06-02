@@ -11709,8 +11709,32 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         const inputType = (showCheck && showCheck.checked) ? 'text' : 'password';
         row.innerHTML =
           '<input type="' + inputType + '" class="ai-key-input" value="' + escapeHtml(value || '') + '" placeholder="AIzaSy..." style="flex:1;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />' +
+          '<button type="button" onclick="_toggleKeyVisible(this)" title="顯示/隱藏 key" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:.4rem .55rem;border-radius:6px;font-size:.9rem;cursor:pointer">👁</button>' +
+          '<button type="button" onclick="_copyKey(this)" title="複製這把 key" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;padding:.4rem .55rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">📋</button>' +
           '<button type="button" onclick="this.parentElement.remove()" title="移除這把" style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:.4rem .6rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">✕</button>';
         list.appendChild(row);
+      }
+      // 切換顯示/隱藏單把 key
+      function _toggleKeyVisible(btn){
+        const inp = btn.parentElement.querySelector('input.ai-key-input');
+        if (!inp) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      }
+      // 複製 key 到剪貼簿
+      function _copyKey(btn){
+        const inp = btn.parentElement.querySelector('input.ai-key-input');
+        if (!inp || !inp.value) { showToast('這格還沒填 key'); return; }
+        const orig = btn.textContent;
+        navigator.clipboard.writeText(inp.value).then(() => {
+          btn.textContent = '✓';
+          btn.style.background = '#dcfce7';
+          showToast('✓ 已複製 key 到剪貼簿');
+          setTimeout(() => { btn.textContent = orig; btn.style.background = '#eef2ff'; }, 1500);
+        }).catch(() => {
+          inp.type = 'text';
+          inp.select();
+          showToast('請手動 Ctrl+C 複製');
+        });
       }
       function openAISettings(){
         renderGeminiKeyInputs(getGeminiKeys());

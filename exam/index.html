@@ -4115,6 +4115,8 @@
             <option value="gemini-2.0-flash-exp">gemini-2.0-flash-exp（實驗版｜每天 250 次）</option>
             <option value="gemini-1.5-flash">gemini-1.5-flash（舊版備用｜每天 50 次）</option>
           </select>
+          <button type="button" onclick="testGeminiConnection()" id="btn-test-gemini" style="margin-top:.55rem;background:#ecfeff;color:#0369a1;border:1.5px solid #7dd3fc;border-radius:8px;padding:.45rem .85rem;font-size:.82rem;font-weight:700;cursor:pointer">🧪 測試連線(看 key/model 能不能用)</button>
+          <div id="gemini-test-result" style="margin-top:.5rem;font-size:.78rem;line-height:1.6"></div>
         </details>
 
         <details style="margin-top:.6rem;border:1.5px solid #bae6fd;border-radius:8px;padding:.6rem .8rem;background:#f0f9ff">
@@ -7592,6 +7594,74 @@
 
       // ── Gemini API call (可選帶 responseSchema 強制結構化) ──
       // 多 key 輪替：撞 429 自動切換到下一把 healthy 的 key，並把該 key 冷卻 60 秒
+      // 🧪 測試連線:逐把 key 對選的 model 發一個小 ping,顯示結果
+      async function testGeminiConnection(){
+        const btn = document.getElementById('btn-test-gemini');
+        const out = document.getElementById('gemini-test-result');
+        if (!out) return;
+        const keys = getGeminiKeys();
+        if (keys.length === 0) {
+          out.innerHTML = '<div style="color:#dc2626;font-weight:700">❌ 還沒設定任何 key</div>';
+          return;
+        }
+        const sel = document.getElementById('ai-model-select');
+        const model = sel ? sel.value : 'gemini-2.5-flash';
+        if (btn) { btn.disabled = true; btn.textContent = '🔄 測試中…'; btn.style.opacity = '0.7'; }
+        out.innerHTML = '<div style="color:#6b7280">正在測試 ' + keys.length + ' 把 key 對 ' + model + '…</div>';
+        const results = [];
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          const masked = key.slice(0, 6) + '…' + key.slice(-4);
+          const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
+          const t0 = performance.now();
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({
+                contents: [{ parts:[{ text: 'ping' }] }],
+                generationConfig: { temperature: 0, maxOutputTokens: 8 }
+              })
+            });
+            const ms = Math.round(performance.now() - t0);
+            if (res.ok) {
+              results.push({ key: masked, ok: true, msg: '✅ 正常(' + ms + 'ms)' });
+            } else {
+              const errTxt = await res.text();
+              let diag = '';
+              if (res.status === 503 || /UNAVAILABLE|high demand|overloaded/i.test(errTxt)) {
+                diag = '🟡 503 忙線 → Google 端高負載,等幾分鐘再試 / 換 gemini-2.5-flash-lite';
+              } else if (res.status === 429 || /quota|exceed|rate.*limit/i.test(errTxt)) {
+                diag = '🟠 429 額度已用完 → 等明天重置 / 換另一把 key';
+              } else if (_isKeyInvalidError(errTxt) || res.status === 400 || res.status === 403) {
+                diag = '🔴 key 失效/無效 → 請去 AI Studio 重新生一把';
+              } else if (res.status === 404) {
+                diag = '🔴 model 不存在 → 這個 model 名稱可能已停用,換一個試試';
+              } else {
+                diag = '❌ ' + res.status + ': ' + errTxt.slice(0, 120);
+              }
+              results.push({ key: masked, ok: false, msg: diag });
+            }
+          } catch (err) {
+            results.push({ key: masked, ok: false, msg: '❌ 網路錯誤: ' + (err.message || '').slice(0, 80) });
+          }
+          if (i < keys.length - 1) await sleep(800);
+        }
+        if (btn) { btn.disabled = false; btn.textContent = '🧪 測試連線(看 key/model 能不能用)'; btn.style.opacity = ''; }
+        const okCount = results.filter(r => r.ok).length;
+        const summary = okCount === keys.length
+          ? '<div style="color:#16a34a;font-weight:700;margin-bottom:.3rem">✅ 全部 ' + okCount + ' 把 key 都正常!</div>'
+          : okCount > 0
+          ? '<div style="color:#ea580c;font-weight:700;margin-bottom:.3rem">⚠️ ' + okCount + '/' + keys.length + ' 把 key 正常,其他有問題</div>'
+          : '<div style="color:#dc2626;font-weight:700;margin-bottom:.3rem">❌ 全部 ' + keys.length + ' 把 key 都不能用</div>';
+        const rows = results.map(r =>
+          '<div style="padding:.3rem .5rem;background:' + (r.ok ? '#ecfdf5' : '#fef2f2') + ';border:1px solid ' + (r.ok ? '#a7f3d0' : '#fecaca') + ';border-radius:5px;margin-bottom:.2rem;font-family:monospace;font-size:.74rem">' +
+          '<strong>' + r.key + '</strong>: ' + r.msg + '</div>'
+        ).join('');
+        out.innerHTML = summary + rows;
+      }
+
       // 偵測 API key 失效訊號(400 + API_KEY_INVALID / 403 + key not valid / API key expired)
       function _isKeyInvalidError(msg){
         if (!msg) return false;
@@ -7667,25 +7737,43 @@
           generationConfig.responseMimeType = 'application/json';
           generationConfig.responseSchema = schema;
         }
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            contents: [{ parts:[{ text: promptText }] }],
-            generationConfig
-          })
+        const body = JSON.stringify({
+          contents: [{ parts:[{ text: promptText }] }],
+          generationConfig
         });
-        if (!res.ok) {
-          const errTxt = await res.text();
-          throw new Error('Gemini ' + res.status + ': ' + errTxt.slice(0, 300));
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        // 503 UNAVAILABLE/忙線 自動重試:等 30 秒重試,最多 2 次
+        let lastErrTxt = '';
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (!txt) {
+              console.error('Gemini empty response:', JSON.stringify(data).slice(0, 500));
+              throw new Error('Gemini 回了空內容（可能被安全過濾擋住，或 model 不支援）');
+            }
+            return txt;
+          }
+          lastErrTxt = await res.text();
+          // 503 或 UNAVAILABLE → 等 30 秒重試
+          const is503 = res.status === 503 || /UNAVAILABLE|high demand|overloaded/i.test(lastErrTxt);
+          if (is503 && attempt < 2) {
+            console.warn('[Gemini 503] 第 ' + (attempt+1) + ' 次撞忙線,等 30 秒重試…');
+            if (typeof showToast === 'function') {
+              showToast('⏳ Gemini 忙線,30 秒後自動重試(' + (attempt+1) + '/2)');
+            }
+            await sleep(30000);
+            continue;
+          }
+          // 非 503 或重試完仍失敗 → 拋出
+          throw new Error('Gemini ' + res.status + ': ' + lastErrTxt.slice(0, 300));
         }
-        const data = await res.json();
-        const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        if (!txt) {
-          console.error('Gemini empty response:', JSON.stringify(data).slice(0, 500));
-          throw new Error('Gemini 回了空內容（可能被安全過濾擋住，或 model 不支援）');
-        }
-        return txt;
+        throw new Error('Gemini 503: 重試 2 次仍忙線,' + lastErrTxt.slice(0, 200));
       }
 
       // 強制結構 schema：加題決策

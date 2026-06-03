@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v202-print-tree-colors';
+const CACHE_NAME = 'dental-all-v203-print-ink-save';
 const PRECACHE = [
   './',
   './index.html',

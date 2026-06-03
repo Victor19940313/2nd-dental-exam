@@ -2559,16 +2559,14 @@
 
       /* ── Notebook Screen ── */
       #screen-notebook{ padding:0;max-width:1200px;margin:0 auto;}
-      /* 🖨️ 列印樣式 — 用「筆記頁面原本的樣式」+ 強制保留所有顏色/背景 */
+      /* 🖨️ 列印樣式 — 用筆記原本樣式 + 強制保留顏色/圖片大小 */
       #nb-print-area { display: none; }
       @media print {
-        /* 🔑 關鍵:強制所有元素保留背景色與顏色(預設瀏覽器列印會 strip 掉) */
+        /* 🔑 預設模式:保留所有顏色背景(瀏覽器列印預設會 strip 掉) */
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-        /* 隱藏所有東西,只顯示列印區 */
         body.nb-printing > *:not(#nb-print-area) { display: none !important; }
         body.nb-printing #nb-print-area { display: block !important; background: white !important; padding: 0; margin: 0; }
         body.nb-printing { background: white !important; filter: none !important; }
-        /* 列印區套用筆記原本 class,自動繼承所有顏色/表格/callout/標籤樣式 */
         #nb-print-area .nb-chapter { page-break-after: always; margin-bottom: 0; padding: 1rem .5rem; }
         #nb-print-area .nb-chapter:last-child { page-break-after: auto; }
         #nb-print-area .nb-chapter-actions { display: none !important; }
@@ -2577,9 +2575,18 @@
         #nb-print-area .nb-chapter-content h3,
         #nb-print-area .nb-chapter-content h4 { page-break-after: avoid; }
         #nb-print-area .nb-chapter-content table { page-break-inside: avoid; }
-        #nb-print-area .nb-chapter-content img { page-break-inside: avoid; max-width: 100% !important; height: auto !important; }
+        /* 圖片保留筆記原本尺寸(60%),不再強制撐滿 */
+        #nb-print-area .nb-chapter-content img { page-break-inside: avoid; height: auto !important; }
         #nb-print-area .nb-chapter-sources { font-size: .78rem; color: #6b7280; margin-top: 1rem; padding: .5rem .7rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; page-break-inside: avoid; }
         #nb-print-area .nb-print-num { font-size: .72rem; color: #9ca3af; margin-bottom: .3rem; }
+        /* 🪶 省墨水模式:body 多一個 ink-save class 時套用 */
+        body.nb-printing.ink-save #nb-print-area * { color: #000 !important; background: transparent !important; background-image: none !important; border-color: #666 !important; box-shadow: none !important; text-shadow: none !important; }
+        body.nb-printing.ink-save #nb-print-area mark { background: transparent !important; border-bottom: 1px solid #000 !important; }
+        body.nb-printing.ink-save #nb-print-area .nb-chapter-content h2 { background: transparent !important; color: #000 !important; border: none !important; border-bottom: 2px solid #000 !important; border-radius: 0 !important; padding: .3rem 0 !important; }
+        body.nb-printing.ink-save #nb-print-area .nb-chapter-content h3 { color: #000 !important; border-left: 3px solid #000 !important; padding-left: .4rem !important; }
+        body.nb-printing.ink-save #nb-print-area .nb-chapter-content table th { background: #eee !important; border: 1px solid #000 !important; }
+        body.nb-printing.ink-save #nb-print-area .nb-chapter-content table td { border: 1px solid #000 !important; }
+        body.nb-printing.ink-save #nb-print-area .nb-chapter-content blockquote { background: transparent !important; border-left: 3px solid #000 !important; }
         @page { margin: 1.2cm 1cm; }
       }
       /* 列印 Modal — 不在 @media print, 是平常 UI */
@@ -2608,8 +2615,15 @@
       .print-modal-box .pm-fold { display: inline-block; transition: transform .15s; font-size: .75rem; margin-right: .15rem; }
       .print-modal-box details[open] > summary .pm-fold { transform: rotate(90deg); }
       .print-modal-box .pm-count { font-size: .68rem; background: rgba(0,0,0,.08); padding: 1px 7px; border-radius: 8px; font-weight: 700; margin-left: auto; }
-      .print-modal-box .pm-grp-sel { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.1); color: #374151; padding: 1px 8px; border-radius: 6px; font-size: .72rem; cursor: pointer; margin-left: .4rem; }
+      .print-modal-box .pm-grp-sel { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.1); color: #374151; padding: 1px 8px; border-radius: 6px; font-size: .72rem; cursor: pointer; margin-left: .4rem; font-weight: 700; }
       .print-modal-box .pm-grp-sel:hover { background: rgba(0,0,0,.12); }
+      .print-modal-box .pm-grp-sel.is-checked { background: #16a34a !important; border-color: #15803d !important; color: white !important; }
+      .print-modal-box .pm-grp-sel.is-partial { background: #f59e0b !important; border-color: #d97706 !important; color: white !important; }
+      /* 省墨水切換 */
+      .print-modal-box .pm-ink-toggle { display: flex; gap: .4rem; margin-bottom: .9rem; align-items: center; padding: .55rem .8rem; background: linear-gradient(to right,#f5f3ff,white); border-radius: 10px; border: 1.5px solid #e9d5ff; }
+      .print-modal-box .pm-ink-toggle .pm-ink-label { font-size: .82rem; font-weight: 700; color: #374151; margin-right: .3rem; }
+      .print-modal-box .pm-ink-toggle .pm-ink-btn { padding: .35rem .7rem; border: 1.5px solid #d1d5db; background: white; border-radius: 7px; cursor: pointer; font-size: .78rem; font-weight: 700; color: #6b7280; }
+      .print-modal-box .pm-ink-toggle .pm-ink-btn.is-active { background: #7c3aed; border-color: #7c3aed; color: white; box-shadow: 0 2px 6px rgba(124,58,237,.3); }
       /* 第 1 層: 科目 */
       .print-modal-box .pm-subj-group { background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: .45rem; overflow: hidden; }
       .print-modal-box .pm-subj-header { font-weight: 800; padding: .5rem .7rem; display: flex; align-items: center; gap: .4rem; font-size: .9rem; }
@@ -12149,6 +12163,11 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             <button class="pm-close" onclick="closePrintModal()" title="關閉">✕</button>
             <h2>🖨️ 列印筆記本</h2>
             <div class="pm-sub">列印版面會跟筆記頁面一模一樣(顏色 / 表格 / callout 全部保留)</div>
+            <div class="pm-ink-toggle">
+              <span class="pm-ink-label">列印模式:</span>
+              <button class="pm-ink-btn is-active" id="pm-ink-color" onclick="_setInkMode(false)" title="保留所有顏色與背景(吃墨水較多)">🎨 彩色版</button>
+              <button class="pm-ink-btn" id="pm-ink-save" onclick="_setInkMode(true)" title="黑白底,省墨水/省碳粉">🪶 省墨水版</button>
+            </div>
             <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem">
               <button class="pm-btn-primary" onclick="closePrintModal();printOneChapter(currentChapterId)" ${curName ? '' : 'disabled'}>${curBtnLabel}</button>
               <button class="pm-btn-teal" onclick="closePrintModal();printAllChapters()">📚 列印全部 (${notebook.chapters.length} 章)</button>
@@ -12177,10 +12196,33 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         // 監聽勾選變化更新計數
         overlay.querySelectorAll('.print-ch-cb').forEach(cb => cb.addEventListener('change', _updatePrintCount));
       }
+      // 列印模式:false = 彩色,true = 省墨水
+      let _printInkSave = false;
+      function _setInkMode(save){
+        _printInkSave = !!save;
+        const c = document.getElementById('pm-ink-color');
+        const s = document.getElementById('pm-ink-save');
+        if (c) c.classList.toggle('is-active', !save);
+        if (s) s.classList.toggle('is-active', !!save);
+      }
       function _updatePrintCount(){
         const n = document.querySelectorAll('.print-ch-cb:checked').length;
         const el = document.getElementById('pm-count');
         if (el) el.textContent = '已選 ' + n + ' 章';
+        _updateGroupSelButtons();
+      }
+      // 更新各層群組的 ✓ 按鈕外觀:全勾→綠色,部分勾→黃色,都沒勾→灰
+      function _updateGroupSelButtons(){
+        document.querySelectorAll('.print-modal-box details').forEach(d => {
+          const btn = d.querySelector(':scope > summary .pm-grp-sel');
+          if (!btn) return;
+          const cbs = d.querySelectorAll('.print-ch-cb');
+          if (cbs.length === 0) return;
+          const checked = Array.from(cbs).filter(cb => cb.checked).length;
+          btn.classList.remove('is-checked', 'is-partial');
+          if (checked === cbs.length) btn.classList.add('is-checked');
+          else if (checked > 0) btn.classList.add('is-partial');
+        });
       }
       function closePrintModal(){
         const o = document.getElementById('print-overlay');
@@ -12250,10 +12292,12 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         // 列印時把所有 details 強制展開(否則被收合的內容不會列印)
         area.querySelectorAll('details').forEach(d => d.open = true);
         document.body.classList.add('nb-printing');
+        if (_printInkSave) document.body.classList.add('ink-save');
         setTimeout(() => {
           window.print();
           setTimeout(() => {
             document.body.classList.remove('nb-printing');
+            document.body.classList.remove('ink-save');
             area.innerHTML = '';
           }, 800);
         }, 200);

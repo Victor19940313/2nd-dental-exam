@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v198-notebook-print';
+const CACHE_NAME = 'dental-all-v199-tiptap-fallback';
 const PRECACHE = [
   './',
   './index.html',

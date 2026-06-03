@@ -10323,20 +10323,39 @@ ${JSON.stringify(candidates, null, 2)}
       }
       function mountTipTapEditor(ch){
         const el = document.getElementById('ch-tiptap');
-        if (!el || !window.NotebookTipTap) {
-          // 模組還沒載入完成 → 重試一次
-          if (!window.NotebookTipTap) setTimeout(() => mountTipTapEditor(ch), 200);
+        if (!el) return;
+        // TipTap 還沒就緒 → 重試最多 5 秒,逾時自動回退 markdown 模式(避免使用者卡在空白編輯器)
+        if (!window.NotebookTipTap) {
+          if (!ch._tiptapRetries) ch._tiptapRetries = 0;
+          ch._tiptapRetries++;
+          if (ch._tiptapRetries === 1) {
+            el.innerHTML = '<div style="padding:1.5rem;color:#6b7280;text-align:center;font-size:.88rem;line-height:1.7">⏳ 載入 TipTap 編輯器中…<br><span style="font-size:.78rem;color:#9ca3af">第一次載入需要連 esm.sh CDN,網路慢可能會等久</span><br><br><button onclick="switchEditorMode(\'markdown\')" style="background:#fef3c7;border:1.5px solid #fbbf24;color:#92400e;padding:.45rem .85rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.82rem">📝 不等了,改用 Markdown 模式</button></div>';
+          }
+          if (ch._tiptapRetries < 25) { // 25 * 200ms = 5 秒
+            setTimeout(() => mountTipTapEditor(ch), 200);
+          } else {
+            console.error('TipTap 載入超時 5 秒,自動回退 markdown 模式');
+            showToast('⚠️ TipTap 載入超時,自動切換到 Markdown 模式');
+            switchEditorMode('markdown');
+          }
           return;
         }
+        ch._tiptapRetries = 0;
         // 把 ch.content (markdown) 轉成 HTML,再做圖片格式調整,然後丟給 TipTap
         const md = (ch._tiptapDraft != null) ? ch._tiptapDraft : (ch.content || '');
         delete ch._tiptapDraft;
         let html;
         try { html = renderMarkdown(md); } catch (e) { html = '<p style="color:red">渲染失敗</p>'; }
-        // 用 DOMParser 處理巢狀結構(原版圖片有 .nb-img-wrap 外層 + .nb-img-controls 內層按鈕)
         const tiptapHtml = transformHtmlForTipTap(html);
-        window.NotebookTipTap.mount(el, tiptapHtml);
-        window.NotebookTipTap.focus();
+        try {
+          window.NotebookTipTap.mount(el, tiptapHtml);
+          window.NotebookTipTap.focus();
+        } catch (err) {
+          console.error('TipTap mount 失敗', err);
+          showToast('⚠️ TipTap 編輯器無法啟動,改用 Markdown 模式');
+          switchEditorMode('markdown');
+          return;
+        }
         // 安全網:點任何地方時直接重置 TipTap 內部的 column resizing plugin state
         // (光清 DOM class 沒用,plugin state 沒清就會以為還在拖拽,滑鼠一動就加回 class)
         if (!window._tiptapClickSafetyNet) {

@@ -2559,6 +2559,31 @@
 
       /* ── Notebook Screen ── */
       #screen-notebook{ padding:0;max-width:1200px;margin:0 auto;}
+      /* 🖨️ 列印樣式 */
+      #nb-print-area { display: none; }
+      @media print {
+        body.nb-printing > *:not(#nb-print-area) { display: none !important; }
+        body.nb-printing #nb-print-area { display: block !important; position: static; padding: 0; margin: 0; background: white; color: #1f2937; }
+        body.nb-printing { background: white !important; filter: none !important; }
+        .nb-print-chapter { page-break-after: always; padding: 1.2rem 1.5rem; max-width: 100%; }
+        .nb-print-chapter:last-child { page-break-after: auto; }
+        .nb-print-num { font-size: .72rem; color: #9ca3af; margin-bottom: .3rem; }
+        .nb-print-title { font-size: 1.6rem; margin: 0 0 .4rem; color: #1f2937; border-bottom: 2px solid #7c3aed; padding-bottom: .3rem; font-weight: 800; }
+        .nb-print-meta { font-size: .82rem; color: #6b7280; margin-bottom: .9rem; }
+        .nb-print-body { font-size: .92rem; line-height: 1.7; color: #1f2937; }
+        .nb-print-body h2 { font-size: 1.15rem; margin: 1rem 0 .4rem; color: #374151; border-left: 4px solid #7c3aed; padding-left: .5rem; page-break-after: avoid; }
+        .nb-print-body h3 { font-size: 1.02rem; margin: .8rem 0 .3rem; color: #4b5563; page-break-after: avoid; }
+        .nb-print-body table { border-collapse: collapse; width: 100%; margin: .6rem 0; font-size: .85rem; page-break-inside: avoid; }
+        .nb-print-body th, .nb-print-body td { border: 1px solid #d1d5db; padding: .4rem .55rem; vertical-align: top; }
+        .nb-print-body th { background: #f3f4f6; font-weight: 700; }
+        .nb-print-body img { max-width: 100%; page-break-inside: avoid; }
+        .nb-print-body ul, .nb-print-body ol { margin: .4rem 0; padding-left: 1.5rem; }
+        .nb-print-body li { margin: .15rem 0; }
+        .nb-print-body blockquote { border-left: 4px solid #c4b5fd; background: #f5f3ff; padding: .5rem .8rem; margin: .6rem 0; }
+        .nb-print-body mark { background: #fef3c7; padding: 1px 3px; }
+        .nb-print-sources { margin-top: 1rem; padding: .5rem .7rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: .78rem; color: #6b7280; page-break-inside: avoid; }
+        @page { margin: 1.2cm 1cm; }
+      }
       .nb-toolbar{
         display:flex;justify-content:space-between;align-items:center;
         padding:.8rem 1.2rem;background:#fdf4ff;border-bottom:1.5px solid #f3d4ff;
@@ -3963,6 +3988,7 @@
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
+          <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
         </div>
       </div>
@@ -11998,6 +12024,122 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               : `<button class="hist-row-btn" onclick="undoHistoryAt(${idx})">🗑 撤銷</button>`}
           </div>`;
         }).join('');
+      }
+
+      // ══════════════════════════════════════════
+      // 🖨️ 列印功能(單頁/多頁/全部)
+      // ══════════════════════════════════════════
+      function openPrintModal(){
+        loadNotebook();
+        if (!notebook.chapters || notebook.chapters.length === 0) { showToast('筆記本是空的'); return; }
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const curName = (() => {
+          const c = notebook.chapters.find(x => x.id === currentChapterId);
+          return c ? c.name : '';
+        })();
+        // 按科目分組顯示
+        const bySubject = {};
+        notebook.chapters.forEach(c => {
+          const s = c.subject || inferChapterSubject(c) || '';
+          if (!bySubject[s]) bySubject[s] = [];
+          bySubject[s].push(c);
+        });
+        const subjOrder = ['ya3','ya4','ya5','ya6',''];
+        const checkRows = subjOrder.filter(s => bySubject[s] && bySubject[s].length).map(s => {
+          const label = s ? SMAP[s] || s : '其他';
+          const rows = bySubject[s].map(c => `<label style="display:flex;gap:.5rem;align-items:center;padding:.35rem .5rem;border-bottom:1px solid #f3f4f6;cursor:pointer">
+            <input type="checkbox" class="print-ch-cb" value="${c.id}" />
+            <span style="font-size:.85rem">${escapeHtml(c.name)}</span>
+            ${c.subtopic ? `<span style="font-size:.7rem;color:#7c3aed;background:#f5f3ff;padding:1px 6px;border-radius:8px">${escapeHtml(c.subtopic)}</span>` : ''}
+          </label>`).join('');
+          return `<details open style="margin-bottom:.5rem;border:1px solid #e5e7eb;border-radius:6px">
+            <summary style="cursor:pointer;font-weight:700;padding:.4rem .6rem;background:#f9fafb;border-radius:6px">${label} (${bySubject[s].length})</summary>
+            <div>${rows}</div>
+          </details>`;
+        }).join('');
+        const html = `
+          <div class="modal-box" style="max-width:560px;width:92%;max-height:88vh;display:flex;flex-direction:column">
+            <button class="modal-close" onclick="closePrintModal()">✕</button>
+            <h2 style="margin:0 0 .4rem">🖨️ 列印筆記本</h2>
+            <div style="font-size:.85rem;color:#6b7280;margin-bottom:.7rem">會以可列印的版面開啟瀏覽器列印對話框</div>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
+              <button onclick="closePrintModal();printOneChapter(currentChapterId)" ${curName ? '' : 'disabled'} style="background:#7c3aed;color:white;border:none;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem">🖨️ 列印當前章節${curName ? ('「' + (curName.length>10?curName.slice(0,10)+'…':curName) + '」') : ''}</button>
+              <button onclick="closePrintModal();printAllChapters()" style="background:#0e7490;color:white;border:none;padding:.55rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem">📚 列印全部 (${notebook.chapters.length} 章)</button>
+            </div>
+            <div style="border-top:1px solid #e5e7eb;padding-top:.7rem;margin-bottom:.5rem;font-size:.85rem;font-weight:700;color:#374151">📑 或勾選要列印的章節:</div>
+            <div style="overflow-y:auto;flex:1;min-height:200px;border:1px solid #e5e7eb;border-radius:8px;padding:.5rem">${checkRows}</div>
+            <div style="display:flex;gap:.4rem;justify-content:space-between;margin-top:.7rem;align-items:center;flex-wrap:wrap">
+              <div style="font-size:.78rem;color:#6b7280"><button onclick="_printSelectAll(true)" style="background:#f3f4f6;border:1px solid #d1d5db;padding:.25rem .5rem;border-radius:5px;font-size:.75rem;cursor:pointer">全選</button> <button onclick="_printSelectAll(false)" style="background:#f3f4f6;border:1px solid #d1d5db;padding:.25rem .5rem;border-radius:5px;font-size:.75rem;cursor:pointer">全不選</button></div>
+              <button onclick="_printSelected()" style="background:#7c3aed;color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem">🖨️ 列印勾選的章節</button>
+            </div>
+          </div>`;
+        let overlay = document.getElementById('print-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'print-overlay';
+          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10500;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto';
+          overlay.onclick = (e) => { if (e.target === overlay) closePrintModal(); };
+          document.body.appendChild(overlay);
+        }
+        overlay.innerHTML = html;
+        overlay.style.display = 'flex';
+      }
+      function closePrintModal(){
+        const o = document.getElementById('print-overlay');
+        if (o) o.style.display = 'none';
+      }
+      function _printSelectAll(checked){
+        document.querySelectorAll('.print-ch-cb').forEach(cb => { cb.checked = checked; });
+      }
+      function _printSelected(){
+        const ids = Array.from(document.querySelectorAll('.print-ch-cb:checked')).map(cb => cb.value);
+        if (ids.length === 0) { showToast('還沒勾選任何章節'); return; }
+        closePrintModal();
+        printChapters(ids);
+      }
+      function printOneChapter(id){
+        if (!id) { showToast('請先打開一個章節'); return; }
+        printChapters([id]);
+      }
+      function printAllChapters(){
+        loadNotebook();
+        printChapters(notebook.chapters.map(c => c.id));
+      }
+      function printChapters(ids){
+        loadNotebook();
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const chs = ids.map(id => notebook.chapters.find(c => c.id === id)).filter(Boolean);
+        if (chs.length === 0) { showToast('找不到章節'); return; }
+        let area = document.getElementById('nb-print-area');
+        if (!area) {
+          area = document.createElement('div');
+          area.id = 'nb-print-area';
+          document.body.appendChild(area);
+        }
+        area.innerHTML = chs.map((c, i) => {
+          const subj = c.subject || inferChapterSubject(c) || '';
+          const subjLabel = subj ? (SMAP[subj] || subj) : '';
+          const meta = [subjLabel, c.domain || '', c.subtopic || ''].filter(Boolean).join(' · ');
+          const sources = (c.qids || []).map(qid => {
+            const q = QS.find(x => x.id === qid);
+            return q ? (q.meta || qid) : qid;
+          }).join(' · ');
+          return `<section class="nb-print-chapter">
+            <div class="nb-print-num">第 ${i+1} / ${chs.length} 章</div>
+            <h1 class="nb-print-title">${escapeHtml(c.name)}</h1>
+            ${meta ? `<div class="nb-print-meta">${escapeHtml(meta)}</div>` : ''}
+            <div class="nb-print-body">${renderMarkdown(c.content || '')}</div>
+            ${sources ? `<div class="nb-print-sources"><strong>💡 來源題目:</strong> ${escapeHtml(sources)}</div>` : ''}
+          </section>`;
+        }).join('');
+        document.body.classList.add('nb-printing');
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => {
+            document.body.classList.remove('nb-printing');
+            area.innerHTML = '';
+          }, 800);
+        }, 150);
       }
 
       // ── Export as Markdown ──

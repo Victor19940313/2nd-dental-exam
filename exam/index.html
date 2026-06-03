@@ -7823,7 +7823,7 @@
           setTimeout(() => { _keyInvalidAlerted = false; }, 30000); // 30 秒後可再跳
         }, 100);
       }
-      async function callGemini(promptText, schema){
+      async function callGemini(promptText, schema, opts){
         const keys = getGeminiKeys();
         if (keys.length === 0) {
           showToast('請先設定 Gemini API key');
@@ -7843,7 +7843,7 @@
           const kMask = key.slice(0,8) + '…' + key.slice(-4);
           console.log('[Gemini try]', (attempt+1) + '/' + keys.length, kMask);
           try {
-            const result = await _callGeminiWithKey(promptText, schema, key, model);
+            const result = await _callGeminiWithKey(promptText, schema, key, model, opts);
             _resetKey429(key);
             stats.ok++;
             tried.push(kMask + ':✅');
@@ -7889,9 +7889,10 @@
         const baseMsg = (lastErr && lastErr.message) ? lastErr.message.slice(0, 150) : 'Gemini 全部失敗';
         throw new Error(baseMsg + ' [' + summary + ']');
       }
-      async function _callGeminiWithKey(promptText, schema, key, model){
+      async function _callGeminiWithKey(promptText, schema, key, model, opts){
+        opts = opts || {};
         const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
-        const generationConfig = { temperature: 0.3, maxOutputTokens: 8192 };
+        const generationConfig = { temperature: 0.3, maxOutputTokens: opts.maxOutputTokens || 8192 };
         if (schema) {
           generationConfig.responseMimeType = 'application/json';
           generationConfig.responseSchema = schema;
@@ -8022,18 +8023,45 @@
         if (i >= 0 && j > i) {
           const candidate = raw.slice(i, j + 1);
           try { return JSON.parse(candidate); } catch(e) {
-            // 4. 嘗試修補：把單引號換雙引號、移除尾逗號
+            // 4. 嘗試修補：移除尾逗號
             try {
-              let s = candidate
-                .replace(/,(\s*[}\]])/g, '$1');
+              let s = candidate.replace(/,(\s*[}\]])/g, '$1');
               return JSON.parse(s);
             } catch(e2) {}
+          }
+        }
+        // 5. 嘗試修補「被截斷的 JSON」(常見於 maxOutputTokens 不夠)
+        // 從第一個 { 開始,逐字節找最後一個合法 token,自動補齊 } 跟 ]
+        if (i >= 0) {
+          let s = raw.slice(i);
+          // 移除尾巴可能殘缺的部分(從最後一個 } 或 ] 截斷)
+          const lastClose = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
+          if (lastClose > 0) s = s.slice(0, lastClose + 1);
+          // 計算未配對的括號
+          let opens = 0, depth = 0, inStr = false, escape = false;
+          for (const ch of s) {
+            if (escape) { escape = false; continue; }
+            if (ch === '\\') { escape = true; continue; }
+            if (ch === '"') { inStr = !inStr; continue; }
+            if (inStr) continue;
+            if (ch === '{' || ch === '[') depth++;
+            else if (ch === '}' || ch === ']') depth--;
+          }
+          // 移除尾逗號 + 補齊括號
+          s = s.replace(/,\s*$/, '');
+          // 嘗試補 ] 跟 } (從內到外)
+          for (let attempt = 0; attempt < depth + 2; attempt++) {
+            // 假設大部分是 array 在最深,先補 ] 再補 }
+            const candidate = s + ']'.repeat(Math.min(attempt, depth)) + '}'.repeat(Math.max(0, depth - attempt));
+            try { return JSON.parse(candidate); } catch(e3){}
+            const candidate2 = s + '}'.repeat(depth);
+            try { return JSON.parse(candidate2); } catch(e4){}
           }
         }
         // 失敗：印出來方便除錯
         console.error('=== Failed to parse Gemini response ===');
         console.error(raw);
-        throw new Error('AI 回傳格式無法解析\n（前 200 字：' + raw.slice(0, 200).replace(/\n/g, ' ') + '）');
+        throw new Error('AI 回傳格式無法解析(可能被截斷)\n(前 300 字: ' + raw.slice(0, 300).replace(/\n/g, ' ') + ')');
       }
 
       function buildAIPrompt(q, chapters){
@@ -9204,7 +9232,7 @@ ${JSON.stringify(list, null, 2)}
 { "assignments": [{ "chapter_id": "...", "subtopic": "..." }, ...] }
 請為每一個 chapter_id 都回一個 subtopic（不能漏）。`;
 
-            const raw = await callGemini(prompt, REORGANIZE_SUBTOPIC_SCHEMA);
+            const raw = await callGemini(prompt, REORGANIZE_SUBTOPIC_SCHEMA, { maxOutputTokens: 32768 });
             const dec = extractJSON(raw);
             if (dec.assignments) {
               dec.assignments.forEach(a => {
@@ -12305,6 +12333,19 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         // 若還有 pending，啟動背景自動重試（70 秒一題）
         if (getPendingQueue().length > 0) startPendingAutoRetry();
       } catch(e) {}
+
+      // 支援從首頁直接跳到筆記本(URL hash #notebook)
+      function _maybeOpenNotebookFromHash(){
+        if (location.hash === '#notebook' && typeof showNotebook === 'function') {
+          showNotebook();
+        }
+      }
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(_maybeOpenNotebookFromHash, 0);
+      } else {
+        document.addEventListener('DOMContentLoaded', _maybeOpenNotebookFromHash);
+      }
+      window.addEventListener('hashchange', _maybeOpenNotebookFromHash);
 
       // ════════════════════════════════════════════
       //  Reset All Marks

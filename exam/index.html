@@ -4046,6 +4046,7 @@
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
+          <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目分類,找出誤分章節並一鍵修正">🔧 修復分類</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
         </div>
@@ -12096,6 +12097,110 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               : `<button class="hist-row-btn" onclick="undoHistoryAt(${idx})">🗑 撤銷</button>`}
           </div>`;
         }).join('');
+      }
+
+      // ══════════════════════════════════════════
+      // 🔧 章節科目診斷 + 修復
+      // 目的:抓出 c.subject 跟「實際題目科目」不一致的章節並修正
+      // ══════════════════════════════════════════
+      function diagnoseChapterSubjects(){
+        loadNotebook();
+        if (!notebook.chapters || notebook.chapters.length === 0) {
+          showToast('沒有章節');
+          return;
+        }
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六', '':'未分類' };
+        const SCOLOR = { ya3:'#0e7490', ya4:'#7c3aed', ya5:'#3730a3', ya6:'#166534', '':'#9ca3af' };
+        // 分析每章
+        const issues = [];
+        const summary = { byCurrent: {}, byQids: {}, byDomain: {} };
+        notebook.chapters.forEach(ch => {
+          const cur = ch.subject || '';
+          const fromQids = chapterMainSubject(ch);
+          const fromDomain = (ch.domain && DOMAIN_TO_SUBJECTS[ch.domain] && DOMAIN_TO_SUBJECTS[ch.domain].length === 1)
+            ? DOMAIN_TO_SUBJECTS[ch.domain][0] : '';
+          // 最可靠的推斷:有 qids 用 qids,沒 qids 用 domain
+          const inferred = fromQids || fromDomain || '';
+          summary.byCurrent[cur] = (summary.byCurrent[cur]||0) + 1;
+          summary.byQids[fromQids] = (summary.byQids[fromQids]||0) + 1;
+          summary.byDomain[fromDomain] = (summary.byDomain[fromDomain]||0) + 1;
+          if (inferred && cur !== inferred) {
+            issues.push({ ch, cur, fromQids, fromDomain, inferred });
+          }
+        });
+        // 組裝報告 HTML
+        const distRow = (label, dist) => {
+          const parts = ['ya3','ya4','ya5','ya6',''].map(s => {
+            const n = dist[s] || 0;
+            if (n === 0) return '';
+            return '<span style="background:' + SCOLOR[s] + ';color:white;padding:2px 8px;border-radius:6px;font-size:.74rem;margin-right:.25rem">' + SMAP[s] + ' ' + n + '</span>';
+          }).filter(Boolean).join('');
+          return '<div style="font-size:.8rem;line-height:1.9"><strong>' + label + ':</strong> ' + (parts || '無資料') + '</div>';
+        };
+        const issueHtml = issues.length === 0
+          ? '<div style="color:#16a34a;padding:1rem;text-align:center;background:#f0fdf4;border-radius:8px"><div style="font-size:1.8rem">✅</div><div style="font-weight:700;margin-top:.3rem">所有章節分類都正確</div></div>'
+          : '<div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.8rem;margin-bottom:.7rem"><strong style="color:#92400e">⚠️ 找到 ' + issues.length + ' 章可能分錯科目</strong><div style="font-size:.78rem;color:#78350f;margin-top:.3rem">下面列出「當前 subject」跟「題目實際科目」不一致的章節</div></div>'
+            + '<div style="max-height:40vh;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px">'
+            + issues.map(x => {
+                const oldBadge = '<span style="background:' + SCOLOR[x.cur] + ';color:white;padding:2px 8px;border-radius:5px;font-size:.72rem">' + SMAP[x.cur] + '</span>';
+                const newBadge = '<span style="background:' + SCOLOR[x.inferred] + ';color:white;padding:2px 8px;border-radius:5px;font-size:.72rem">' + SMAP[x.inferred] + '</span>';
+                const why = x.fromQids ? ('題目 → ' + SMAP[x.fromQids]) : ('學科 → ' + SMAP[x.fromDomain]);
+                return '<div style="padding:.5rem .7rem;border-bottom:1px solid #f3f4f6;font-size:.82rem">'
+                  + '<div style="font-weight:700;color:#1f2937;margin-bottom:.2rem">' + escapeHtml(x.ch.name) + '</div>'
+                  + '<div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;font-size:.78rem;color:#6b7280">'
+                  + '目前: ' + oldBadge + ' → 建議: ' + newBadge
+                  + '<span style="color:#9ca3af">(依據 ' + why + ')</span>'
+                  + '</div></div>';
+              }).join('')
+            + '</div>';
+        const html = `
+          <div class="print-modal-box" style="max-width:640px">
+            <button class="pm-close" onclick="closeFixModal()">✕</button>
+            <h2>🔧 章節科目診斷</h2>
+            <div class="pm-sub">章節總數:<strong>${notebook.chapters.length}</strong> 章</div>
+            <div style="background:#f9fafb;border-radius:8px;padding:.7rem;margin-bottom:.8rem">
+              ${distRow('🏷 目前 subject 標記', summary.byCurrent)}
+              ${distRow('📝 依題目反推', summary.byQids)}
+              ${distRow('📚 依學科領域反推', summary.byDomain)}
+            </div>
+            ${issueHtml}
+            ${issues.length > 0 ? `<div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem;flex-wrap:wrap">
+              <button onclick="closeFixModal()" style="background:#f3f4f6;border:1px solid #d1d5db;color:#374151;padding:.5rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem">取消</button>
+              <button onclick="_applyFixSubjects()" class="pm-btn-primary">✓ 一鍵修正全部 (${issues.length} 章)</button>
+            </div>` : '<div style="display:flex;justify-content:flex-end;margin-top:1rem"><button onclick="closeFixModal()" class="pm-btn-primary">關閉</button></div>'}
+          </div>`;
+        let overlay = document.getElementById('fix-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'fix-overlay';
+          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:10500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+          overlay.onclick = (e) => { if (e.target === overlay) closeFixModal(); };
+          document.body.appendChild(overlay);
+        }
+        overlay.innerHTML = html;
+        overlay.style.display = 'flex';
+        window._fixIssues = issues; // 暫存供修復用
+      }
+      function closeFixModal(){
+        const o = document.getElementById('fix-overlay');
+        if (o) o.style.display = 'none';
+        window._fixIssues = null;
+      }
+      function _applyFixSubjects(){
+        const issues = window._fixIssues || [];
+        if (issues.length === 0) { closeFixModal(); return; }
+        let n = 0;
+        issues.forEach(x => {
+          const ch = notebook.chapters.find(c => c.id === x.ch.id);
+          if (ch && x.inferred) {
+            ch.subject = x.inferred;
+            n++;
+          }
+        });
+        saveNotebook();
+        renderNotebook();
+        closeFixModal();
+        showToast('✓ 已校正 ' + n + ' 章的科目分類');
       }
 
       // ══════════════════════════════════════════

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v203-print-ink-save';
+const CACHE_NAME = 'dental-all-v204-fix-chapter-subject';
 const PRECACHE = [
   './',
   './index.html',

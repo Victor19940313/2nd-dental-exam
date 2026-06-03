@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v195-notebook-link-reorg-fix';
+const CACHE_NAME = 'dental-all-v196-home-reorder';
 const PRECACHE = [
   './',
   './index.html',

@@ -2559,23 +2559,25 @@
 
       /* ── Notebook Screen ── */
       #screen-notebook{ padding:0;max-width:1200px;margin:0 auto;}
-      /* 🖨️ 列印樣式 — 列印時用「筆記頁面原本的樣式」, 只隱藏 UI 控件 */
+      /* 🖨️ 列印樣式 — 用「筆記頁面原本的樣式」+ 強制保留所有顏色/背景 */
       #nb-print-area { display: none; }
       @media print {
+        /* 🔑 關鍵:強制所有元素保留背景色與顏色(預設瀏覽器列印會 strip 掉) */
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
         /* 隱藏所有東西,只顯示列印區 */
         body.nb-printing > *:not(#nb-print-area) { display: none !important; }
         body.nb-printing #nb-print-area { display: block !important; background: white !important; padding: 0; margin: 0; }
         body.nb-printing { background: white !important; filter: none !important; }
-        /* 列印區內用筆記原本的 .nb-chapter / .nb-chapter-content class,自動繼承所有顏色/表格/callout/標籤樣式 */
-        #nb-print-area .nb-chapter { page-break-after: always; margin-bottom: 0; padding: .8rem 0; }
+        /* 列印區套用筆記原本 class,自動繼承所有顏色/表格/callout/標籤樣式 */
+        #nb-print-area .nb-chapter { page-break-after: always; margin-bottom: 0; padding: 1rem .5rem; }
         #nb-print-area .nb-chapter:last-child { page-break-after: auto; }
         #nb-print-area .nb-chapter-actions { display: none !important; }
-        #nb-print-area .nb-chapter-content table { page-break-inside: avoid; }
-        #nb-print-area .nb-chapter-content img { page-break-inside: avoid; max-width: 100% !important; height: auto !important; }
+        #nb-print-area .nb-chapter-content { color: #374151 !important; font-size: .92rem !important; line-height: 1.75 !important; }
         #nb-print-area .nb-chapter-content h2,
         #nb-print-area .nb-chapter-content h3,
         #nb-print-area .nb-chapter-content h4 { page-break-after: avoid; }
-        #nb-print-area .nb-chapter-content details { /* 列印時展開所有 details */ }
+        #nb-print-area .nb-chapter-content table { page-break-inside: avoid; }
+        #nb-print-area .nb-chapter-content img { page-break-inside: avoid; max-width: 100% !important; height: auto !important; }
         #nb-print-area .nb-chapter-sources { font-size: .78rem; color: #6b7280; margin-top: 1rem; padding: .5rem .7rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; page-break-inside: avoid; }
         #nb-print-area .nb-print-num { font-size: .72rem; color: #9ca3af; margin-bottom: .3rem; }
         @page { margin: 1.2cm 1cm; }
@@ -2600,17 +2602,28 @@
       .print-modal-box .pm-btn-primary:hover { box-shadow: 0 4px 12px rgba(124,58,237,.35); }
       .print-modal-box .pm-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
       .print-modal-box .pm-btn-teal { background: linear-gradient(135deg,#0e7490,#0891b2); color: white; border: none; padding: .6rem 1rem; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: .88rem; box-shadow: 0 2px 8px rgba(14,116,144,.25); }
-      .print-modal-box .pm-list { overflow-y: auto; flex: 1; min-height: 220px; border: 1.5px solid #e9d5ff; border-radius: 10px; padding: .4rem; background: #fafafa; }
-      .print-modal-box .pm-subj-group { background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: .4rem; overflow: hidden; }
-      .print-modal-box .pm-subj-header { cursor: pointer; font-weight: 700; padding: .5rem .7rem; background: linear-gradient(to right,#f5f3ff,white); list-style: none; display: flex; align-items: center; gap: .4rem; color: #6b21a8; font-size: .88rem; }
-      .print-modal-box .pm-subj-header::-webkit-details-marker { display: none; }
-      .print-modal-box .pm-subj-header::before { content: '▸'; transition: transform .15s; }
-      .print-modal-box details[open] .pm-subj-header::before { transform: rotate(90deg); }
-      .print-modal-box .pm-ch-row { display: flex; gap: .55rem; align-items: center; padding: .4rem .65rem; border-top: 1px solid #f3f4f6; cursor: pointer; font-size: .85rem; transition: background .12s; }
+      .print-modal-box .pm-list { overflow-y: auto; flex: 1; min-height: 240px; max-height: 56vh; border: 1.5px solid #e9d5ff; border-radius: 10px; padding: .4rem; background: #fafafa; }
+      .print-modal-box details summary { list-style: none; cursor: pointer; }
+      .print-modal-box details summary::-webkit-details-marker { display: none; }
+      .print-modal-box .pm-fold { display: inline-block; transition: transform .15s; font-size: .75rem; margin-right: .15rem; }
+      .print-modal-box details[open] > summary .pm-fold { transform: rotate(90deg); }
+      .print-modal-box .pm-count { font-size: .68rem; background: rgba(0,0,0,.08); padding: 1px 7px; border-radius: 8px; font-weight: 700; margin-left: auto; }
+      .print-modal-box .pm-grp-sel { background: rgba(0,0,0,.06); border: 1px solid rgba(0,0,0,.1); color: #374151; padding: 1px 8px; border-radius: 6px; font-size: .72rem; cursor: pointer; margin-left: .4rem; }
+      .print-modal-box .pm-grp-sel:hover { background: rgba(0,0,0,.12); }
+      /* 第 1 層: 科目 */
+      .print-modal-box .pm-subj-group { background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: .45rem; overflow: hidden; }
+      .print-modal-box .pm-subj-header { font-weight: 800; padding: .5rem .7rem; display: flex; align-items: center; gap: .4rem; font-size: .9rem; }
+      /* 第 2 層: 領域 */
+      .print-modal-box .pm-dom-group { margin: .15rem .3rem .35rem; border-left: 3px solid #e9d5ff; }
+      .print-modal-box .pm-dom-header { font-weight: 700; padding: .35rem .6rem; display: flex; align-items: center; gap: .35rem; font-size: .82rem; color: #6b21a8; background: #faf5ff; }
+      /* 第 3 層: subtopic */
+      .print-modal-box .pm-subt-group { margin: .1rem .3rem .25rem 1rem; border-left: 2px solid #ddd6fe; }
+      .print-modal-box .pm-subt-header { font-weight: 600; padding: .3rem .55rem; display: flex; align-items: center; gap: .35rem; font-size: .78rem; color: #4338ca; background: #f5f3ff; }
+      /* 第 4 層: 章節 */
+      .print-modal-box .pm-ch-row { display: flex; gap: .55rem; align-items: center; padding: .35rem .6rem; padding-left: 2rem; border-top: 1px solid #f3f4f6; cursor: pointer; font-size: .85rem; transition: background .12s; }
       .print-modal-box .pm-ch-row:hover { background: #f9fafb; }
-      .print-modal-box .pm-ch-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #7c3aed; }
+      .print-modal-box .pm-ch-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; accent-color: #7c3aed; flex-shrink: 0; }
       .print-modal-box .pm-ch-name { flex: 1; color: #374151; }
-      .print-modal-box .pm-ch-tag { font-size: .7rem; color: #7c3aed; background: #f5f3ff; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
       .print-modal-box .pm-mini { background: #f3f4f6; border: 1px solid #d1d5db; padding: .3rem .55rem; border-radius: 6px; font-size: .76rem; cursor: pointer; color: #374151; }
       .print-modal-box .pm-mini:hover { background: #e5e7eb; }
       .print-modal-box .pm-close { position: absolute; top: .8rem; right: .9rem; background: #f3f4f6; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 1rem; color: #6b7280; display: flex; align-items: center; justify-content: center; }
@@ -12077,29 +12090,57 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       function openPrintModal(){
         loadNotebook();
         if (!notebook.chapters || notebook.chapters.length === 0) { showToast('筆記本是空的'); return; }
-        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六', '':'其他' };
+        const SCOLOR = { ya3:'#0e7490', ya4:'#7c3aed', ya5:'#3730a3', ya6:'#166534', '':'#9ca3af' };
+        const SEMOJI = { ya3:'🦷', ya4:'🪥', ya5:'😬', ya6:'😁', '':'📁' };
+        const SUBJ_ORDER = ['ya3','ya4','ya5','ya6',''];
         const curName = (() => {
           const c = notebook.chapters.find(x => x.id === currentChapterId);
           return c ? c.name : '';
         })();
-        // 按科目分組顯示
-        const bySubject = {};
+        // 比照筆記目錄: 科目 → 領域 → subtopic → 章節
+        const tree = {};
         notebook.chapters.forEach(c => {
           const s = c.subject || inferChapterSubject(c) || '';
-          if (!bySubject[s]) bySubject[s] = [];
-          bySubject[s].push(c);
+          const d = c.domain || '未分類領域';
+          const t = c.subtopic || '未分類';
+          if (!tree[s]) tree[s] = {};
+          if (!tree[s][d]) tree[s][d] = {};
+          if (!tree[s][d][t]) tree[s][d][t] = [];
+          tree[s][d][t].push(c);
         });
-        const subjOrder = ['ya3','ya4','ya5','ya6',''];
-        const checkRows = subjOrder.filter(s => bySubject[s] && bySubject[s].length).map(s => {
-          const label = s ? SMAP[s] || s : '其他';
-          const rows = bySubject[s].map(c => `<label class="pm-ch-row">
-            <input type="checkbox" class="print-ch-cb" value="${c.id}" />
-            <span class="pm-ch-name">${escapeHtml(c.name)}</span>
-            ${c.subtopic ? `<span class="pm-ch-tag">${escapeHtml(c.subtopic)}</span>` : ''}
-          </label>`).join('');
-          return `<details open class="pm-subj-group">
-            <summary class="pm-subj-header">${label} <span style="font-weight:400;color:#9ca3af;font-size:.78rem">(${bySubject[s].length} 章)</span></summary>
-            <div>${rows}</div>
+        const checkRows = SUBJ_ORDER.filter(s => tree[s]).map(s => {
+          const label = SMAP[s] || s || '其他';
+          const color = SCOLOR[s];
+          const emoji = SEMOJI[s];
+          const domains = tree[s];
+          // 統計該科總數
+          let subjTotal = 0;
+          Object.values(domains).forEach(t => Object.values(t).forEach(arr => subjTotal += arr.length));
+          // 領域 → subtopic → 章節
+          const domainHtml = Object.keys(domains).map(d => {
+            const subtopics = domains[d];
+            let domainTotal = 0;
+            Object.values(subtopics).forEach(arr => domainTotal += arr.length);
+            const subtopicHtml = Object.keys(subtopics).map(t => {
+              const chs = subtopics[t];
+              const chsHtml = chs.map(c => `<label class="pm-ch-row">
+                <input type="checkbox" class="print-ch-cb" value="${c.id}" />
+                <span class="pm-ch-name">${escapeHtml(c.name)}</span>
+              </label>`).join('');
+              return `<details class="pm-subt-group">
+                <summary class="pm-subt-header"><span class="pm-fold">▸</span>${escapeHtml(t)} <span class="pm-count">${chs.length}</span><button class="pm-grp-sel" onclick="event.preventDefault();event.stopPropagation();_printSelectGroup(this,true)" title="全選這組">✓</button></summary>
+                <div>${chsHtml}</div>
+              </details>`;
+            }).join('');
+            return `<details class="pm-dom-group">
+              <summary class="pm-dom-header"><span class="pm-fold">▸</span>${escapeHtml(d)} <span class="pm-count">${domainTotal}</span><button class="pm-grp-sel" onclick="event.preventDefault();event.stopPropagation();_printSelectGroup(this,true)" title="全選這領域">✓</button></summary>
+              <div>${subtopicHtml}</div>
+            </details>`;
+          }).join('');
+          return `<details class="pm-subj-group">
+            <summary class="pm-subj-header" style="background:${color};color:white"><span class="pm-fold">▸</span>${emoji} ${label} <span class="pm-count" style="background:rgba(255,255,255,.25)">${subjTotal}</span><button class="pm-grp-sel" onclick="event.preventDefault();event.stopPropagation();_printSelectGroup(this,true)" title="全選這科" style="background:rgba(255,255,255,.25);color:white;border-color:rgba(255,255,255,.4)">✓</button></summary>
+            <div>${domainHtml}</div>
           </details>`;
         }).join('');
         const curBtnLabel = curName ? ('🖨️ 列印當前章節「' + (curName.length>14 ? curName.slice(0,14)+'…' : curName) + '」') : '🖨️ 列印當前章節';
@@ -12147,6 +12188,18 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       }
       function _printSelectAll(checked){
         document.querySelectorAll('.print-ch-cb').forEach(cb => { cb.checked = checked; });
+        _updatePrintCount();
+      }
+      // 全選/全不選某個群組(科目 / 領域 / subtopic 內的所有章節)
+      function _printSelectGroup(btn, _select){
+        const details = btn.closest('details');
+        if (!details) return;
+        const cbs = details.querySelectorAll('.print-ch-cb');
+        const allChecked = Array.from(cbs).every(cb => cb.checked);
+        cbs.forEach(cb => { cb.checked = !allChecked; });
+        // 自動展開
+        if (!details.open) details.open = true;
+        _updatePrintCount();
       }
       function _printSelected(){
         const ids = Array.from(document.querySelectorAll('.print-ch-cb:checked')).map(cb => cb.value);

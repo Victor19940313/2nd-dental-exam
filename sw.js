@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v199-tiptap-fallback';
+const CACHE_NAME = 'dental-all-v200-sw-skip-cdn';
 const PRECACHE = [
   './',
   './index.html',
@@ -73,6 +73,12 @@ function isDataFile(url) {
 self.addEventListener('fetch', e => {
   if (e.request.url.includes('supabase')) return;
   if (e.request.url.includes('firebase') || e.request.url.includes('firebaseio')) return;
+  // 第三方 CDN(TipTap ESM、gstatic 等)直接交給瀏覽器,不過 SW
+  // 否則 fetch 失敗時 fallback 到 index.html 會回 HTML,導致 ESM 模組載入失敗
+  if (e.request.url.includes('esm.sh') ||
+      e.request.url.includes('unpkg.com') ||
+      e.request.url.includes('cdn.jsdelivr.net') ||
+      e.request.url.includes('gstatic.com')) return;
 
   if (isDataFile(e.request.url)) {
     // Network first for data files (get updates immediately)

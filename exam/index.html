@@ -2177,6 +2177,12 @@
         border-color: rgba(239, 68, 68, 0.7);
         animation: pulse-warn 0.8s infinite alternate;
       }
+      .exam-timer.overtime {
+        background: rgba(120, 53, 15, 0.92);
+        border: 2px solid rgba(245, 158, 11, 0.9);
+        color: #fed7aa;
+        animation: pulse-warn 1.2s infinite alternate;
+      }
       @keyframes pulse-warn {
         from {
           opacity: 1;
@@ -2536,6 +2542,7 @@
       .qg-cell:hover{transform:scale(1.15);}
       .qg-cell.qg-correct{background:#22c55e;color:white;border-color:#16a34a;}
       .qg-cell.qg-wrong{background:#ef4444;color:white;border-color:#dc2626;}
+      .qg-cell.qg-answered{background:#6366f1;color:white;border-color:#4338ca;}
       .qg-cell.qg-skipped{background:white;color:transparent;border:1.5px dashed #cbd5e1;}
       .qg-cell.qg-current{box-shadow:0 0 0 2.5px #7c3aed;z-index:2;}
       .qg-cell.qg-flagged::after{
@@ -5906,25 +5913,23 @@
       function startTimer(seconds) {
         stopTimer();
         timerSeconds = seconds;
+        _timerNotifiedTimeUp = false;
         const el = document.getElementById("exam-timer");
         el.style.display = "inline-block";
         el.classList.remove("warning");
+        el.classList.remove("overtime");
         updateTimerEl(el);
         timerInterval = setInterval(() => {
           timerSeconds--;
           updateTimerEl(el);
-          if (timerSeconds <= 0) {
-            stopTimer();
-            showToast("⏱ 時間到！自動交卷");
-            if (examMode) showExamResults();
-            else if (
-              document.getElementById("screen-scroll-exam").style.display !==
-              "none"
-            )
-              submitScrollExam();
+          // 時間到不再自動交卷 — 改成繼續計算「超時時間」,給使用者一次提示後沉默繼續
+          if (timerSeconds === 0 && !_timerNotifiedTimeUp) {
+            _timerNotifiedTimeUp = true;
+            showToast("⏱ 60 分鐘到! 計時改為記錄超時時間,你可以繼續作答");
           }
         }, 1000);
       }
+      let _timerNotifiedTimeUp = false;
       function stopTimer() {
         if (timerInterval) {
           clearInterval(timerInterval);
@@ -5934,10 +5939,22 @@
         if (el) el.style.display = "none";
       }
       function updateTimerEl(el) {
-        const m = Math.floor(Math.max(0, timerSeconds) / 60);
-        const s = Math.max(0, timerSeconds) % 60;
-        el.textContent = `⏱ ${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-        el.classList.toggle("warning", timerSeconds <= 300);
+        if (timerSeconds >= 0) {
+          // 正常倒數
+          const m = Math.floor(timerSeconds / 60);
+          const s = timerSeconds % 60;
+          el.textContent = `⏱ ${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+          el.classList.toggle("warning", timerSeconds <= 300 && timerSeconds > 0);
+          el.classList.remove("overtime");
+        } else {
+          // 超時:顯示 +mm:ss
+          const overSec = -timerSeconds;
+          const m = Math.floor(overSec / 60);
+          const s = overSec % 60;
+          el.textContent = `⏱ 超時 +${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+          el.classList.remove("warning");
+          el.classList.add("overtime");
+        }
       }
 
       // ════════════════════════════════════════════
@@ -13211,10 +13228,16 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           var titleSuffix = '';
 
           if(isAnswered){
-            var correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
-            var isCorrect = correctArr.includes(userIdx);
-            cls += isCorrect ? ' qg-correct' : ' qg-wrong';
-            titleSuffix = isCorrect ? '（答對）' : '（答錯）';
+            if (examMode) {
+              // 試卷模式(答案後給):只顯示「已作答」中性色,不洩漏對錯
+              cls += ' qg-answered';
+              titleSuffix = '（已作答）';
+            } else {
+              var correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+              var isCorrect = correctArr.includes(userIdx);
+              cls += isCorrect ? ' qg-correct' : ' qg-wrong';
+              titleSuffix = isCorrect ? '（答對）' : '（答錯）';
+            }
           } else if(isSkipped){
             cls += ' qg-skipped';
             label = ''; // 跳過題目不顯示數字

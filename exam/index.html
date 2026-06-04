@@ -12376,9 +12376,24 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         const patches = loadExplPatches();
         let n = 0;
         (typeof QS !== 'undefined' ? QS : []).forEach(q => {
-          if (patches[q.id]) { q.explanation = patches[q.id]; n++; }
+          const v = patches[q.id];
+          if (!v) return;
+          // 新格式: {expl, model, ts} / 舊格式: 純 string
+          if (typeof v === 'string') {
+            q.explanation = v;
+          } else if (v.expl) {
+            q.explanation = v.expl;
+            if (v.model) q.explanation_source = v.model; // 同步覆寫 source 標籤
+          }
+          n++;
         });
         return n;
+      }
+      // 記錄一筆 patch (新格式: 帶 model 資訊)
+      function recordPatch(qid, expl, model){
+        const p = loadExplPatches();
+        p[qid] = { expl: expl, model: model || getBgRegenModel(), ts: Date.now() };
+        saveExplPatches(p);
       }
       // 啟動時從 GitHub fetch patches.json (走 jsdelivr CDN,免 token)
       async function fetchPatchesFromGithub(){
@@ -12410,24 +12425,80 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         const token = getGithubToken();
         const repo = getGithubRepo();
         if (!token || !repo) throw new Error('需要 GitHub token + repo');
-        const patches = loadExplPatches();
-        let sha = null;
+        // 多使用者協作:先 fetch 遠端最新 patches → merge 本地 → push(用 sha 防 race)
+        let remote = {}, sha = null;
         try {
           const r = await fetch(`https://api.github.com/repos/${repo}/contents/exam/expl-patches.json`, {
             headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json'},
             cache: 'no-store'
           });
-          if (r.ok) { const d = await r.json(); sha = d.sha; }
+          if (r.ok) {
+            const d = await r.json();
+            sha = d.sha;
+            try { remote = JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, ''))))); } catch(e) { remote = {}; }
+          }
         } catch(e){}
-        const content = utf8ToBase64(JSON.stringify(patches, null, 2));
-        const body = { message: '更新 expl-patches (' + Object.keys(patches).length + ' 題)', content };
+        // merge:local 跟 remote 合併,新的覆寫舊的(看 ts)
+        const local = loadExplPatches();
+        const merged = { ...remote };
+        Object.entries(local).forEach(([qid, v]) => {
+          const rv = remote[qid];
+          // 兩邊都有 → 看 ts 哪個新
+          if (rv && typeof rv === 'object' && rv.ts && typeof v === 'object' && v.ts) {
+            merged[qid] = (v.ts > rv.ts) ? v : rv;
+          } else {
+            merged[qid] = v; // local 沒 ts 或 remote 沒這題 → 用 local
+          }
+        });
+        saveExplPatches(merged); // 本地同步更新
+        applyExplPatchesToQS();
+        const content = utf8ToBase64(JSON.stringify(merged, null, 2));
+        const body = { message: '更新 expl-patches (' + Object.keys(merged).length + ' 題)', content };
         if (sha) body.sha = sha;
         const r2 = await fetch(`https://api.github.com/repos/${repo}/contents/exam/expl-patches.json`, {
           method: 'PUT',
           headers: {'Authorization':'Bearer '+token, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json'},
           body: JSON.stringify(body)
         });
-        if (!r2.ok) { const txt = await r2.text(); throw new Error('PUT 失敗 ' + r2.status + ': ' + txt.slice(0, 200)); }
+        if (!r2.ok) {
+          const txt = await r2.text();
+          if (r2.status === 409 || /sha/i.test(txt)) {
+            // sha 衝突:別人剛 push 過 → 重試一次
+            console.warn('[push patches] sha 衝突,重試...');
+            return await pushPatchesToGithub();
+          }
+          throw new Error('PUT 失敗 ' + r2.status + ': ' + txt.slice(0, 200));
+        }
+      }
+
+      // 樹狀勾選 helpers
+      function _updateRegenPickCount(){
+        const cbs = document.querySelectorAll('.regen-pick:checked');
+        let total = 0;
+        cbs.forEach(cb => { total += (cb.dataset.qids || '').split(',').filter(x=>x).length; });
+        const info = document.getElementById('bgregen-pick-info');
+        if (info) info.innerHTML = '已勾選 <strong style="color:#374151">' + total + '</strong> 題';
+      }
+      function _startRegenFromPicked(){
+        const cbs = document.querySelectorAll('.regen-pick:checked');
+        const qids = [];
+        cbs.forEach(cb => {
+          (cb.dataset.qids || '').split(',').forEach(qid => { if (qid) qids.push(qid); });
+        });
+        if (qids.length === 0) { showToast('還沒勾選任何次別'); return; }
+        startBackgroundRegen(qids);
+      }
+      async function _clearAllPatches(){
+        if (!confirm('確定清空所有已重生詳解?\n(包括之前 flash-lite 跑的 104 題)\n\n清完後 GitHub 上也會清空,所有使用者看回舊版詳解。')) return;
+        try {
+          saveExplPatches({});
+          showToast('🗑 清空中,push 空 patches 到 GitHub...');
+          await pushPatchesToGithub();
+          showToast('✅ 已清空所有 patches');
+          openBgRegenModal();
+        } catch(e) {
+          showToast('❌ 清空失敗: ' + (e.message||'').slice(0,80));
+        }
       }
 
       // 背景重生 state(同步存 localStorage,重整後可恢復)
@@ -12475,7 +12546,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       let COST_PER_Q_USD = MODEL_COST_PER_Q['gemini-2.5-flash-lite'];
       const USD_TO_TWD = 32;
       const BG_MODEL_LS = 'bg_regen_model';
-      function getBgRegenModel(){ return localStorage.getItem(BG_MODEL_LS) || 'gemini-2.5-flash-lite'; }
+      function getBgRegenModel(){ return localStorage.getItem(BG_MODEL_LS) || 'gemini-3.5-flash'; }
       function setBgRegenModel(m){ localStorage.setItem(BG_MODEL_LS, m); COST_PER_Q_USD = MODEL_COST_PER_Q[m] || MODEL_COST_PER_Q['gemini-2.5-flash-lite']; }
       // initial sync
       COST_PER_Q_USD = MODEL_COST_PER_Q[getBgRegenModel()] || MODEL_COST_PER_Q['gemini-2.5-flash-lite'];
@@ -12485,14 +12556,13 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         const doneN = Object.keys(patches).length;
         const totalN = (typeof QS !== 'undefined' ? QS.length : 0);
         const remaining = totalN - doneN;
-        const paidK = getPaidKey();
-        const hasPaid = !!paidK;
+        const hasKeys = getGeminiKeys().length > 0;
         const hasGH = !!(getGithubToken() && getGithubRepo());
-        const setupOK = hasPaid && hasGH;
+        const setupOK = hasKeys && hasGH;
 
         const setupWarn = setupOK ? '' : `<div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:8px;padding:.7rem;margin-bottom:.8rem;font-size:.85rem;color:#991b1b">
           ⚠️ 還沒準備好:<br>
-          ${hasPaid ? '✅' : '❌'} AI 設定標記 ⭐ 付費 key<br>
+          ${hasKeys ? '✅' : '❌'} AI 設定貼上 Gemini key<br>
           ${hasGH ? '✅' : '❌'} GitHub token + repo 已設定
         </div>`;
 
@@ -12538,28 +12608,60 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             </div>` : '';
           const curModel = getBgRegenModel();
           const modelOptions = Object.keys(MODEL_LABEL).map(m => `<option value="${m}" ${m===curModel?'selected':''}>${MODEL_LABEL[m]}</option>`).join('');
-          const estTotalTWD = (remaining * MODEL_COST_PER_Q[curModel] * USD_TO_TWD).toFixed(0);
-          const modelBlock = `
-            <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:.6rem .8rem;margin-bottom:.8rem">
-              <label style="display:block;font-size:.78rem;font-weight:700;color:#92400e;margin-bottom:.35rem">🤖 選用 Model</label>
-              <select onchange="setBgRegenModel(this.value);openBgRegenModal()" style="width:100%;padding:.4rem .55rem;border:1.5px solid #fbbf24;border-radius:6px;background:white;font-size:.82rem">${modelOptions}</select>
-              <div style="font-size:.72rem;color:#78350f;margin-top:.35rem;line-height:1.6">flash-lite 偶爾廢話多;flash 品質更好但貴 5×;3.5-flash 最好但 20×</div>
-            </div>`;
+          // 樹狀結構: 科目 → 年份 → 次別,排除已重生
+          const tree = { ya3: {}, ya4: {}, ya5: {}, ya6: {} };
+          (QS || []).forEach(q => {
+            if (patches[q.id]) return;
+            const s = q.subject, y = q.year, ss = q.session;
+            if (!tree[s]) return;
+            if (!tree[s][y]) tree[s][y] = {};
+            if (!tree[s][y][ss]) tree[s][y][ss] = [];
+            tree[s][y][ss].push(q.id);
+          });
+          const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+          const SCOLOR = { ya3:'#0e7490', ya4:'#7c3aed', ya5:'#3730a3', ya6:'#166534' };
+          const SEMOJI = { ya3:'🦷', ya4:'🪥', ya5:'😬', ya6:'😁' };
+          const SUBJ_ORDER = ['ya5','ya3','ya4','ya6']; // 牙五排第一
+          const treeHtml = SUBJ_ORDER.map(s => {
+            const years = tree[s] || {};
+            const yearList = Object.keys(years).sort((a,b)=>+a-+b);
+            if (yearList.length === 0) return '';
+            let subjTotal = 0;
+            yearList.forEach(y => { Object.values(years[y]).forEach(arr => subjTotal += arr.length); });
+            const yearHtml = yearList.map(y => {
+              const sessions = years[y];
+              const sessList = Object.keys(sessions).sort((a,b)=>+a-+b);
+              let yearTotal = 0;
+              sessList.forEach(ss => yearTotal += sessions[ss].length);
+              const sessHtml = sessList.map(ss => {
+                const qids = sessions[ss];
+                return `<label style="display:flex;align-items:center;gap:.5rem;padding:.32rem .7rem;padding-left:2.2rem;cursor:pointer;font-size:.82rem;border-top:1px solid #f3f4f6"><input type="checkbox" class="regen-pick" data-qids="${qids.join(',')}" onchange="_updateRegenPickCount()" style="width:15px;height:15px;cursor:pointer;accent-color:${SCOLOR[s]}" /><span style="flex:1">第 ${ss} 次</span><span style="color:#9ca3af;font-size:.74rem">${qids.length} 題</span></label>`;
+              }).join('');
+              return `<details style="margin:.2rem .4rem;border-left:2px solid ${SCOLOR[s]}40"><summary style="cursor:pointer;font-weight:600;padding:.3rem .7rem;font-size:.83rem;background:#fafafa;display:flex;align-items:center;justify-content:space-between;list-style:none"><span>📅 ${y} 年</span><span style="font-size:.73rem;color:#6b7280">${yearTotal} 題</span></summary><div>${sessHtml}</div></details>`;
+            }).join('');
+            const open = (s === 'ya5') ? ' open' : '';
+            return `<details class="regen-subj-group" style="margin-bottom:.4rem;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden"${open}><summary style="cursor:pointer;font-weight:800;padding:.55rem .8rem;background:${SCOLOR[s]};color:white;font-size:.92rem;display:flex;align-items:center;justify-content:space-between;list-style:none"><span>${SEMOJI[s]} ${SMAP[s]}</span><span style="background:rgba(255,255,255,.25);padding:1px 9px;border-radius:8px;font-size:.76rem">${subjTotal} 題</span></summary><div>${yearHtml}</div></details>`;
+          }).join('');
+          const treeEmpty = remaining === 0 ? '<div style="text-align:center;color:#9ca3af;padding:2rem">🎉 全部都重生過了!</div>' : treeHtml;
           body = `
             ${resumeBlock}
-            ${modelBlock}
-            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:.8rem;margin-bottom:.9rem;font-size:.86rem;line-height:1.9">
-              📊 總題數: <strong>${totalN}</strong><br>
-              ✅ 已重生: <strong style="color:#16a34a">${doneN}</strong> ${doneN > 0 ? `<button onclick="viewRegenList()" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;padding:1px 9px;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;margin-left:.4rem">📋 看清單</button>` : ''}<br>
-              ⏳ 待重生: <strong style="color:#dc2626">${remaining}</strong><br>
-              💰 跑完估算: <strong>~ NT\$${estTotalTWD}</strong>
+            <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:.55rem .75rem;margin-bottom:.7rem">
+              <label style="display:block;font-size:.76rem;font-weight:700;color:#92400e;margin-bottom:.3rem">🤖 Model</label>
+              <select onchange="setBgRegenModel(this.value);openBgRegenModal()" style="width:100%;padding:.35rem .55rem;border:1.5px solid #fbbf24;border-radius:6px;background:white;font-size:.82rem">${modelOptions}</select>
             </div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-              <button onclick="closeBgRegenModal();startBackgroundRegen(100)" ${setupOK?'':'disabled'} class="pm-btn-primary">▶ 試跑 100 題</button>
-              <button onclick="closeBgRegenModal();startBackgroundRegen(500)" ${setupOK?'':'disabled'} class="pm-btn-teal">▶ 跑 500 題</button>
-              <button onclick="closeBgRegenModal();startBackgroundRegen(null)" ${setupOK?'':'disabled'} style="background:#dc2626;color:white;border:none;padding:.6rem 1rem;border-radius:10px;font-weight:700;cursor:${setupOK?'pointer':'not-allowed'};font-size:.85rem;opacity:${setupOK?'1':'.5'}">▶ 跑全部 ${remaining}</button>
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:.5rem .7rem;margin-bottom:.7rem;font-size:.8rem;display:flex;justify-content:space-between;align-items:center">
+              <span>✅ 已重生 <strong>${doneN}</strong> / ${totalN} 題</span>
+              <div>${doneN > 0 ? `<button onclick="viewRegenList()" style="background:white;color:#15803d;border:1px solid #86efac;padding:1px 8px;border-radius:5px;font-size:.72rem;cursor:pointer;margin-right:.3rem">📋 看清單</button><button onclick="_clearAllPatches()" style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:1px 8px;border-radius:5px;font-size:.72rem;cursor:pointer">🗑 清空</button>` : ''}</div>
             </div>
-            <div style="font-size:.74rem;color:#9ca3af;margin-top:.7rem;line-height:1.6">中斷後重整頁面會自動保存進度,可從上次繼續。跑完才會 push 到 GitHub。</div>`;
+            <div class="pm-list" style="overflow-y:auto;max-height:42vh;min-height:240px;padding:.4rem;background:#fafafa">${treeEmpty}</div>
+            <div style="margin-top:.7rem;font-size:.78rem;color:#6b7280;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem">
+              <span id="bgregen-pick-info">已勾選 <strong style="color:#374151">0</strong> 題</span>
+              <span>每 4 秒一題,round-robin ${getGeminiKeys().length} 把 key</span>
+            </div>
+            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.6rem">
+              <button onclick="closeBgRegenModal();_startRegenFromPicked()" ${setupOK?'':'disabled'} class="pm-btn-primary">▶ 開始重生勾選的</button>
+            </div>
+            <div style="font-size:.72rem;color:#9ca3af;margin-top:.5rem;line-height:1.6">中斷後重整頁面會自動保存進度。跑完次別會自動從清單消失。</div>`;
         }
 
         const html = `
@@ -12659,17 +12761,23 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         } else if (badge) { badge.remove(); }
       }
 
-      async function startBackgroundRegen(limit){
+      async function startBackgroundRegen(limitOrQids){
         if (_bgRegen.running) { showToast('已經在跑了'); return; }
-        const paidK = getPaidKey();
-        if (!paidK) { showToast('請先在 AI 設定標記 ⭐ 付費 key'); openAISettings(); return; }
+        if (getGeminiKeys().length === 0) { showToast('請先設定 Gemini API key'); openAISettings(); return; }
         const token = getGithubToken();
         const repo = getGithubRepo();
         if (!token || !repo) { showToast('請先設定 GitHub token + repo'); openAISettings(); return; }
         const patches = loadExplPatches();
-        const todoAll = (QS || []).filter(q => !patches[q.id]).map(q => q.id);
-        if (todoAll.length === 0) { showToast('所有題目都已重生'); return; }
-        const list = limit ? todoAll.slice(0, limit) : todoAll;
+        let list;
+        if (Array.isArray(limitOrQids)) {
+          // 指定 qids 陣列(從樹狀勾選來的)
+          list = limitOrQids.filter(qid => !patches[qid]);
+        } else {
+          // 數量限制(舊版相容)
+          const todoAll = (QS || []).filter(q => !patches[q.id]).map(q => q.id);
+          list = limitOrQids ? todoAll.slice(0, limitOrQids) : todoAll;
+        }
+        if (list.length === 0) { showToast('這批題目都已重生'); return; }
         _bgRegen = { running: true, paused: false, total: list.length, done: 0, failed: 0, lastPushAt: 0, list: list, curIdx: 0, model: getBgRegenModel(), startTime: Date.now(), costUSD: 0 };
         _updateBgRegenFloating();
         showToast('🤖 開始背景跑 ' + list.length + ' 題,你可以繼續做題');
@@ -12677,20 +12785,28 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         while (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) {
           while (_bgRegen.paused && _bgRegen.running) await new Promise(r => setTimeout(r, 500));
           if (!_bgRegen.running) break;
+          // ★ 待整理優先:有待整理筆記就先讓它跑,背景詳解暫停
+          if (typeof getPendingQueue === 'function' && getPendingQueue().length > 0) {
+            const pn = getPendingQueue().length;
+            console.log('[bg regen] 待整理 ' + pn + ' 題優先,暫停 60s');
+            if (typeof startPendingAutoRetry === 'function') startPendingAutoRetry();
+            await new Promise(r => setTimeout(r, 60000));
+            continue;
+          }
           const qid = _bgRegen.list[_bgRegen.curIdx];
           _bgRegen.curIdx++;
           try {
             const q = (QS || []).find(x => x.id === qid);
             if (!q) { _bgRegen.failed++; _updateBgRegenFloating(); continue; }
             const prompt = buildRegenExplPrompt(q);
-            const raw = await _callGeminiWithKey(prompt, null, paidK, _bgRegen.model);
+            // 用 callGemini round-robin 所有 key (撞 quota 自動換下一把)
+            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096 });
             const cleaned = _stripLatex((raw || '').trim());
             if (!cleaned || cleaned.length < 30) throw new Error('AI 回應太短');
-            const p = loadExplPatches();
-            p[qid] = cleaned;
-            saveExplPatches(p);
+            // 用新格式記 patch(帶 model 資訊,會自動更新「📖 來源」標籤)
+            recordPatch(qid, cleaned, _bgRegen.model);
             const qq = (QS || []).find(x => x.id === qid);
-            if (qq) qq.explanation = cleaned;
+            if (qq) { qq.explanation = cleaned; qq.explanation_source = _bgRegen.model; }
             _bgRegen.done++;
             _bgRegen.costUSD += COST_PER_Q_USD;
             consec429 = 0;
@@ -12700,8 +12816,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             _bgRegen.failed++;
             if (/429|quota|exceed|rate.*limit/i.test(msg)) {
               consec429++;
-              if (consec429 >= 3) {
-                showToast('⚠️ 連續撞額度 3 次,自動停止(可能 daily quota 滿了,明天再試)');
+              if (consec429 >= 5) {
+                showToast('⚠️ 連續撞額度 5 次,自動停止(可能今天 quota 用完,明天再試)');
                 _bgRegen.running = false;
                 break;
               }
@@ -12710,10 +12826,9 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             }
           }
           _updateBgRegenFloating();
-          _saveBgRegenState(); // 每題後 debounce 存 state
-          // 不再中途 push GitHub(會觸發 Pages 重新部署、體驗差) — 只在跑完/暫停/停止時 push
-          // 每題間隔 1.5 秒(避免撞 RPM)
-          if (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) await new Promise(r => setTimeout(r, 1500));
+          _saveBgRegenState(); // 每題後 debounce 存 state(中斷可恢復)
+          // 每題間隔 4 秒(免費版 15 RPM 安全)
+          if (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) await new Promise(r => setTimeout(r, 4000));
         }
         // 跑完 → push 一次到 GitHub
         try {
@@ -12744,30 +12859,36 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           return;
         }
         if (_bgRegen.running) { showToast('已經在跑了'); return; }
-        const paidK = getPaidKey();
-        if (!paidK) { showToast('請先在 AI 設定標記 ⭐ 付費 key'); return; }
+        if (getGeminiKeys().length === 0) { showToast('請先設定 Gemini API key'); return; }
         const remaining = _bgRegen.list.length - _bgRegen.curIdx;
         showToast('▶ 從第 ' + (_bgRegen.curIdx + 1) + ' 題繼續,剩 ' + remaining + ' 題');
         _bgRegen.running = true;
         _bgRegen.paused = false;
         _bgRegen.startTime = Date.now();
         _updateBgRegenFloating();
-        // 重新進入主 loop(複製自 startBackgroundRegen 末段)
         let consec429 = 0;
         while (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) {
           while (_bgRegen.paused && _bgRegen.running) await new Promise(r => setTimeout(r, 500));
           if (!_bgRegen.running) break;
+          // ★ 待整理優先
+          if (typeof getPendingQueue === 'function' && getPendingQueue().length > 0) {
+            console.log('[bg resume] 待整理優先,暫停 60s');
+            if (typeof startPendingAutoRetry === 'function') startPendingAutoRetry();
+            await new Promise(r => setTimeout(r, 60000));
+            continue;
+          }
           const qid = _bgRegen.list[_bgRegen.curIdx];
           _bgRegen.curIdx++;
           try {
             const q = (QS || []).find(x => x.id === qid);
             if (!q) { _bgRegen.failed++; continue; }
             const prompt = buildRegenExplPrompt(q);
-            const raw = await _callGeminiWithKey(prompt, null, paidK, _bgRegen.model);
+            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096 });
             const cleaned = _stripLatex((raw || '').trim());
             if (!cleaned || cleaned.length < 30) throw new Error('AI 回應太短');
-            const p = loadExplPatches(); p[qid] = cleaned; saveExplPatches(p);
-            const qq = (QS || []).find(x => x.id === qid); if (qq) qq.explanation = cleaned;
+            recordPatch(qid, cleaned, _bgRegen.model);
+            const qq = (QS || []).find(x => x.id === qid);
+            if (qq) { qq.explanation = cleaned; qq.explanation_source = _bgRegen.model; }
             _bgRegen.done++;
             _bgRegen.costUSD += COST_PER_Q_USD;
             consec429 = 0;
@@ -12777,13 +12898,13 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             _bgRegen.failed++;
             if (/429|quota|exceed|rate.*limit/i.test(msg)) {
               consec429++;
-              if (consec429 >= 3) { showToast('⚠️ 連續撞額度 3 次,自動停止'); _bgRegen.running = false; break; }
+              if (consec429 >= 5) { showToast('⚠️ 連續撞額度 5 次,自動停止'); _bgRegen.running = false; break; }
               showToast('⏳ 撞額度,等 60 秒'); await new Promise(r => setTimeout(r, 60000));
             }
           }
           _updateBgRegenFloating();
           _saveBgRegenState();
-          if (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) await new Promise(r => setTimeout(r, 1500));
+          if (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) await new Promise(r => setTimeout(r, 4000));
         }
         try { if (_bgRegen.done > 0) { showToast('📤 跑完了,正在同步到 GitHub...'); await pushPatchesToGithub(); showToast('✅ 已同步到 GitHub'); } }
         catch(e) { showToast('⚠️ GitHub 同步失敗:' + (e.message||'').slice(0,80)); }

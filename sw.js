@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v218-split-options-line';
+const CACHE_NAME = 'dental-all-v219-tree-pick-priority';
 const PRECACHE = [
   './',
   './index.html',

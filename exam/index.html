@@ -5353,8 +5353,8 @@ ${(q.options || []).join('\n')}
         if (!text) return "";
         text = _stripLatex(text);
         text = _splitInlineOptions(text);
-        // 移除「孤立的 dash / bullet 行」(NotebookLM 偶爾留下,造成排版破洞)
-        text = text.replace(/\n\s*[-–—*•·]\s*\n/g, '\n\n');
+        // 移除「孤立的 dash / bullet 行」(整行只有 dash/bullet 的清掉)
+        text = text.replace(/^[ \t]*[-–—*•·][ \t]*$/gm, '');
         // 多個連續空行壓成一個
         text = text.replace(/\n{3,}/g, '\n\n');
         // Remove answer-confirmation preamble sentences
@@ -6568,7 +6568,7 @@ ${(q.options || []).join('\n')}
         const SUBJ_ORDER = ['ya3','ya4','ya5','ya6',''];
         const subjGroupsHtml = SUBJ_ORDER.filter(s => groups[s].length > 0).map(s => {
           const items = groups[s].map(({h, i}) => renderRow(h, i)).join('');
-          return `<details open class="exam-hist-subj-group" style="margin:.6rem 0">
+          return `<details class="exam-hist-subj-group" style="margin:.6rem 0">
             <summary style="background:${SCOLOR[s]};color:white;padding:.5rem .85rem;border-radius:8px;font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem">
               <span>${SEMOJI[s]} ${SMAP[s]}</span>
               <span style="background:rgba(255,255,255,.25);padding:1px 9px;border-radius:8px;font-size:.78rem">${groups[s].length} 筆</span>

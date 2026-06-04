@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v232-html-clean-li';
+const CACHE_NAME = 'dental-all-v233-sw-skip-non-http';
 const PRECACHE = [
   './',
   './index.html',
@@ -71,6 +71,8 @@ function isDataFile(url) {
 }
 
 self.addEventListener('fetch', e => {
+  // 只處理 http/https,跳過 chrome-extension:// / file:// 等不支援 cache 的 scheme
+  if (!e.request.url.startsWith('http')) return;
   if (e.request.url.includes('supabase')) return;
   if (e.request.url.includes('firebase') || e.request.url.includes('firebaseio')) return;
   // 第三方 CDN(TipTap ESM、gstatic 等)直接交給瀏覽器,不過 SW

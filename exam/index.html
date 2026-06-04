@@ -5418,7 +5418,9 @@ ${(q.options || []).join('\n')}
         let cur = { header: null, content: "", lines: [] };
         for (const rawLine of lines) {
           const m = rawLine.match(/^【([^】]+)】(.*)/);
-          if (m) {
+          // 排除「【A】【B】【C】【D】【E】」這種選項標籤,不當 section header
+          const isOptionLabel = m && /^[A-E]$/.test((m[1] || '').trim());
+          if (m && !isOptionLabel) {
             sections.push(cur);
             cur = { header: m[1], content: m[2].trim(), lines: [] };
           } else if (rawLine.trim() === "") {

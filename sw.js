@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v227-logical-prompt';
+const CACHE_NAME = 'dental-all-v228-fix-option-label-as-section';
 const PRECACHE = [
   './',
   './index.html',

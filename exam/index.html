@@ -11028,6 +11028,36 @@ ${(ch.content || '').slice(0, 3000)}
         }
       }
       // ── 用自然語言告訴 AI 怎麼改章節 ──
+      // 多行輸入 modal(替代 prompt() 單行)
+      function promptMultiline(title, hint, placeholder){
+        return new Promise((resolve) => {
+          const overlay = document.createElement('div');
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(4px);z-index:11000;display:flex;align-items:center;justify-content:center;padding:1rem';
+          const box = document.createElement('div');
+          box.style.cssText = 'background:white;border-radius:14px;padding:1.4rem 1.5rem;max-width:640px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:.7rem';
+          box.innerHTML = `
+            <div style="font-size:1.05rem;font-weight:800;color:#1f2937">${escapeHtml(title)}</div>
+            ${hint ? `<div style="font-size:.84rem;color:#6b7280;line-height:1.75;white-space:pre-line">${escapeHtml(hint)}</div>` : ''}
+            <textarea id="_ml-prompt-input" placeholder="${escapeHtml(placeholder || '')}" style="width:100%;min-height:160px;max-height:50vh;padding:.7rem .85rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:inherit;font-size:.92rem;line-height:1.65;resize:vertical;outline:none" autofocus></textarea>
+            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.3rem">
+              <button id="_ml-cancel" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:.5rem 1.1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem">取消</button>
+              <button id="_ml-ok" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.5rem 1.3rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.88rem;box-shadow:0 2px 8px rgba(124,58,237,.3)">確定</button>
+            </div>`;
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+          const input = box.querySelector('#_ml-prompt-input');
+          const cleanup = (val) => { overlay.remove(); resolve(val); };
+          box.querySelector('#_ml-ok').onclick = () => cleanup(input.value);
+          box.querySelector('#_ml-cancel').onclick = () => cleanup(null);
+          overlay.onclick = (e) => { if (e.target === overlay) cleanup(null); };
+          // Cmd/Ctrl + Enter 送出
+          input.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); cleanup(input.value); }
+            else if (e.key === 'Escape') { e.preventDefault(); cleanup(null); }
+          });
+          setTimeout(() => input.focus(), 50);
+        });
+      }
       async function aiChatModifyChapter(chId){
         loadNotebook();
         const ch = notebook.chapters.find(c => c.id === chId);
@@ -11037,9 +11067,10 @@ ${(ch.content || '').slice(0, 3000)}
           openAISettings();
           return;
         }
-        const instruction = prompt(
-          `對「${ch.name}」這章，告訴 AI 你想怎麼改：\n\n例如：\n・加一個臨床決策表格\n・把神經 fiber 那段擴充，加傳導速度資料\n・砍掉重複的部分\n・加一個易混淆陷阱 callout\n・最後加「考點對照表」整理所有易考角度\n・把英文補上中文翻譯`,
-          ''
+        const instruction = await promptMultiline(
+          `💬 告訴 AI 怎麼改「${ch.name}」`,
+          `例如:\n・加一個臨床決策表格\n・把神經 fiber 那段擴充,加傳導速度資料\n・砍掉重複的部分\n・加一個易混淆陷阱 callout\n・最後加「考點對照表」整理所有易考角度\n・把英文補上中文翻譯\n\n按 Cmd+Enter 送出, Esc 取消`,
+          '想要 AI 怎麼改這章…(可以打很多行,不限字數)'
         );
         if (!instruction || !instruction.trim()) return;
 

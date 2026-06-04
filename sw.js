@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v220-lock-3.5-flash';
+const CACHE_NAME = 'dental-all-v221-ai-modify-multiline';
 const PRECACHE = [
   './',
   './index.html',

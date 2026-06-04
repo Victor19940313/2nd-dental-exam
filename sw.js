@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v209-bg-bold-keywords';
+const CACHE_NAME = 'dental-all-v210-bg-highlight';
 const PRECACHE = [
   './',
   './index.html',

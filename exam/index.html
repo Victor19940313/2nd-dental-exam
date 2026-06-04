@@ -1575,6 +1575,19 @@
         border-top: 1px solid #bfdbfe;
         color: #334155;
       }
+      /* 〔背景:...〕整段高亮樣式 — 整段黃底像螢光筆刷過 */
+      .bg-note {
+        display: block;
+        background: linear-gradient(to right, #fef3c7, #fef9c3);
+        border-left: 3px solid #f59e0b;
+        padding: .45rem .7rem;
+        border-radius: 6px;
+        margin: .35rem 0;
+        color: #78350f;
+        font-size: .92em;
+        line-height: 1.7;
+      }
+      .bg-note strong { color: #7c2d12; }
       .nb-expl {
         margin-top: 0.5rem;
         margin-bottom: 0.75rem;
@@ -5149,7 +5162,12 @@
         const regenBtn = qid
           ? `<button onclick="event.preventDefault();event.stopPropagation();regenerateGeminiExpl('${qid}')" title="用考生作答思路風格重新生成這題詳解" style="background:#7c3aed;color:white;border:none;padding:.18rem .5rem;border-radius:5px;font-size:.7rem;font-weight:700;cursor:pointer;margin-left:.5rem">🔄 重生</button>`
           : '';
-        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解${regenBtn}</summary><div class="gemini-expl-content">${formatExpl(expl)}${srcHtml}${links}</div></details>`;
+        let formatted = formatExpl(expl);
+        // 把整段〔背景:...〕加上黃色 highlight 樣式
+        formatted = formatted.replace(/〔背景[：:]([\s\S]*?)〕/g, (m, content) =>
+          `<span class="bg-note">📌 背景:${content}</span>`
+        );
+        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解${regenBtn}</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}</div></details>`;
       }
       // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)
       function buildRegenExplPrompt(q){

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v214-cost-tracker';
+const CACHE_NAME = 'dental-all-v215-bg-resume';
 const PRECACHE = [
   './',
   './index.html',

@@ -12411,8 +12411,35 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         if (!r2.ok) { const txt = await r2.text(); throw new Error('PUT 失敗 ' + r2.status + ': ' + txt.slice(0, 200)); }
       }
 
-      // 背景重生 state(in-memory)
+      // 背景重生 state(同步存 localStorage,重整後可恢復)
+      const BG_REGEN_LS = 'bg_regen_state_v1';
       let _bgRegen = { running: false, paused: false, total: 0, done: 0, failed: 0, lastPushAt: 0, list: [], curIdx: 0, model: 'gemini-2.5-flash-lite', costUSD: 0 };
+      let _bgRegenSaveTimer = null;
+      function _saveBgRegenState(){
+        if (_bgRegenSaveTimer) return;
+        _bgRegenSaveTimer = setTimeout(() => {
+          _bgRegenSaveTimer = null;
+          try {
+            if (_bgRegen.list && _bgRegen.list.length > 0 && _bgRegen.curIdx < _bgRegen.list.length) {
+              localStorage.setItem(BG_REGEN_LS, JSON.stringify(_bgRegen));
+            } else {
+              localStorage.removeItem(BG_REGEN_LS);
+            }
+          } catch(e){}
+        }, 500);
+      }
+      function _restoreBgRegenState(){
+        try {
+          const s = JSON.parse(localStorage.getItem(BG_REGEN_LS) || 'null');
+          if (s && s.list && s.curIdx < s.list.length) {
+            s.running = false; // 不自動跑,等使用者按「繼續」
+            s.paused = true;
+            _bgRegen = s;
+            console.log('[bg regen] 恢復上次進度:', s.curIdx + '/' + s.list.length);
+          }
+        } catch(e){}
+      }
+      _restoreBgRegenState();
       // gemini-2.5-flash-lite 單題估算: 1500 input × $0.10/M + 700 output × $0.40/M ≈ $0.00043 USD ≈ NT$0.014
       const COST_PER_Q_USD = 0.00043;
       const USD_TO_TWD = 32; // 約略匯率
@@ -12459,12 +12486,22 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               <div style="display:flex;gap:.4rem;margin-top:.7rem">
                 ${_bgRegen.paused
                   ? `<button onclick="_bgRegen.paused=false;openBgRegenModal()" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">▶ 繼續</button>`
-                  : `<button onclick="_bgRegen.paused=true;openBgRegenModal()" style="background:#f59e0b;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">⏸ 暫停</button>`}
+                  : `<button onclick="_pauseAndPush()" style="background:#f59e0b;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">⏸ 暫停並同步</button>`}
                 <button onclick="_bgRegen.running=false;openBgRegenModal()" style="background:#dc2626;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">⏹ 停止</button>
               </div>
             </div>`;
         } else {
+          // 偵測:有沒有「上次中斷的進度」可以繼續
+          const hasSaved = _bgRegen.list && _bgRegen.list.length > 0 && _bgRegen.curIdx < _bgRegen.list.length && (_bgRegen.curIdx > 0);
+          const resumeRemain = hasSaved ? (_bgRegen.list.length - _bgRegen.curIdx) : 0;
+          const resumeBlock = hasSaved ? `
+            <div style="background:#dbeafe;border:1.5px solid #60a5fa;border-radius:8px;padding:.7rem;margin-bottom:.8rem;font-size:.85rem;color:#1e3a8a">
+              <div style="font-weight:700;margin-bottom:.3rem">⏸ 上次中斷的進度</div>
+              <div style="font-size:.82rem;line-height:1.7">已跑 ${_bgRegen.curIdx}/${_bgRegen.list.length} 題,剩 <strong>${resumeRemain}</strong> 題未完成</div>
+              <button onclick="closeBgRegenModal();resumeBgRegenFromSaved()" ${setupOK?'':'disabled'} style="background:#2563eb;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.85rem;margin-top:.5rem">▶ 繼續上次的進度</button>
+            </div>` : '';
           body = `
+            ${resumeBlock}
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:.8rem;margin-bottom:.9rem;font-size:.86rem;line-height:1.9">
               📊 總題數: <strong>${totalN}</strong><br>
               ✅ 已重生: <strong style="color:#16a34a">${doneN}</strong><br>
@@ -12477,7 +12514,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               <button onclick="closeBgRegenModal();startBackgroundRegen(500)" ${setupOK?'':'disabled'} class="pm-btn-teal">▶ 跑 500 題</button>
               <button onclick="closeBgRegenModal();startBackgroundRegen(null)" ${setupOK?'':'disabled'} style="background:#dc2626;color:white;border:none;padding:.6rem 1rem;border-radius:10px;font-weight:700;cursor:${setupOK?'pointer':'not-allowed'};font-size:.85rem;opacity:${setupOK?'1':'.5'}">▶ 跑全部 ${remaining}</button>
             </div>
-            <div style="font-size:.74rem;color:#9ca3af;margin-top:.7rem;line-height:1.6">每 20 題自動 push 到 GitHub,所有使用者載入網站就會自動套用新詳解。</div>`;
+            <div style="font-size:.74rem;color:#9ca3af;margin-top:.7rem;line-height:1.6">中斷後重整頁面會自動保存進度,可從上次繼續。跑完才會 push 到 GitHub。</div>`;
         }
 
         const html = `
@@ -12500,6 +12537,15 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         overlay.style.display = 'flex';
       }
       function closeBgRegenModal(){ const o = document.getElementById('bgregen-overlay'); if (o) o.style.display = 'none'; }
+      async function _pauseAndPush(){
+        _bgRegen.paused = true;
+        openBgRegenModal();
+        if (_bgRegen.done > 0) {
+          showToast('📤 暫停中,同步到 GitHub...');
+          try { await pushPatchesToGithub(); showToast('✅ 已同步'); }
+          catch(e) { showToast('⚠️ 同步失敗:' + (e.message||'').slice(0,80)); }
+        }
+      }
 
       function _updateBgRegenFloating(){
         let badge = document.getElementById('bgregen-floating');
@@ -12568,23 +12614,87 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             }
           }
           _updateBgRegenFloating();
-          // 每 20 題 push GitHub
-          if ((_bgRegen.done + _bgRegen.failed - _bgRegen.lastPushAt) >= 20) {
-            try { await pushPatchesToGithub(); _bgRegen.lastPushAt = _bgRegen.done + _bgRegen.failed; console.log('[patches pushed at ' + _bgRegen.lastPushAt + ']'); }
-            catch(e) { console.warn('push failed', e); }
-          }
+          _saveBgRegenState(); // 每題後 debounce 存 state
+          // 不再中途 push GitHub(會觸發 Pages 重新部署、體驗差) — 只在跑完/暫停/停止時 push
           // 每題間隔 1.5 秒(避免撞 RPM)
           if (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) await new Promise(r => setTimeout(r, 1500));
         }
-        // 最終 push
-        try { await pushPatchesToGithub(); console.log('[patches final pushed]'); }
-        catch(e) { console.warn('final push failed', e); }
+        // 跑完 → push 一次到 GitHub
+        try {
+          if (_bgRegen.done > 0) {
+            showToast('📤 跑完了,正在同步到 GitHub...');
+            await pushPatchesToGithub();
+            console.log('[patches final pushed]');
+            showToast('✅ 已同步到 GitHub,所有使用者下次載入會看到新詳解');
+          }
+        } catch(e) { console.warn('final push failed', e); showToast('⚠️ GitHub 同步失敗,資料還在本地:' + (e.message||'').slice(0,80)); }
         const wasRunning = _bgRegen.running;
         _bgRegen.running = false;
+        // 若全部跑完 → 清 state;若中途停 → state 留著等使用者繼續
+        if (_bgRegen.curIdx >= _bgRegen.list.length) {
+          try { localStorage.removeItem(BG_REGEN_LS); } catch(e){}
+        } else {
+          _saveBgRegenState();
+        }
         _updateBgRegenFloating();
         if (wasRunning || _bgRegen.done > 0) {
           showToast('✅ 完成: ' + _bgRegen.done + ' 成功 / ' + _bgRegen.failed + ' 失敗');
         }
+      }
+      // 從上次的進度繼續(重整後恢復用)
+      async function resumeBgRegenFromSaved(){
+        if (!_bgRegen.list || _bgRegen.list.length === 0 || _bgRegen.curIdx >= _bgRegen.list.length) {
+          showToast('沒有可繼續的進度');
+          return;
+        }
+        if (_bgRegen.running) { showToast('已經在跑了'); return; }
+        const paidK = getPaidKey();
+        if (!paidK) { showToast('請先在 AI 設定標記 ⭐ 付費 key'); return; }
+        const remaining = _bgRegen.list.length - _bgRegen.curIdx;
+        showToast('▶ 從第 ' + (_bgRegen.curIdx + 1) + ' 題繼續,剩 ' + remaining + ' 題');
+        _bgRegen.running = true;
+        _bgRegen.paused = false;
+        _bgRegen.startTime = Date.now();
+        _updateBgRegenFloating();
+        // 重新進入主 loop(複製自 startBackgroundRegen 末段)
+        let consec429 = 0;
+        while (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) {
+          while (_bgRegen.paused && _bgRegen.running) await new Promise(r => setTimeout(r, 500));
+          if (!_bgRegen.running) break;
+          const qid = _bgRegen.list[_bgRegen.curIdx];
+          _bgRegen.curIdx++;
+          try {
+            const q = (QS || []).find(x => x.id === qid);
+            if (!q) { _bgRegen.failed++; continue; }
+            const prompt = buildRegenExplPrompt(q);
+            const raw = await _callGeminiWithKey(prompt, null, paidK, _bgRegen.model);
+            const cleaned = _stripLatex((raw || '').trim());
+            if (!cleaned || cleaned.length < 30) throw new Error('AI 回應太短');
+            const p = loadExplPatches(); p[qid] = cleaned; saveExplPatches(p);
+            const qq = (QS || []).find(x => x.id === qid); if (qq) qq.explanation = cleaned;
+            _bgRegen.done++;
+            _bgRegen.costUSD += COST_PER_Q_USD;
+            consec429 = 0;
+          } catch(err) {
+            const msg = err.message || '';
+            console.warn('[bg regen]', qid, msg.slice(0, 120));
+            _bgRegen.failed++;
+            if (/429|quota|exceed|rate.*limit/i.test(msg)) {
+              consec429++;
+              if (consec429 >= 3) { showToast('⚠️ 連續撞額度 3 次,自動停止'); _bgRegen.running = false; break; }
+              showToast('⏳ 撞額度,等 60 秒'); await new Promise(r => setTimeout(r, 60000));
+            }
+          }
+          _updateBgRegenFloating();
+          _saveBgRegenState();
+          if (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) await new Promise(r => setTimeout(r, 1500));
+        }
+        try { if (_bgRegen.done > 0) { showToast('📤 跑完了,正在同步到 GitHub...'); await pushPatchesToGithub(); showToast('✅ 已同步到 GitHub'); } }
+        catch(e) { showToast('⚠️ GitHub 同步失敗:' + (e.message||'').slice(0,80)); }
+        _bgRegen.running = false;
+        if (_bgRegen.curIdx >= _bgRegen.list.length) { try { localStorage.removeItem(BG_REGEN_LS); } catch(e){} }
+        _updateBgRegenFloating();
+        showToast('✅ 完成: ' + _bgRegen.done + ' 成功 / ' + _bgRegen.failed + ' 失敗');
       }
 
       // ══════════════════════════════════════════

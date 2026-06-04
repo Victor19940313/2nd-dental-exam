@@ -5355,6 +5355,11 @@ ${(q.options || []).join('\n')}
         text = _splitInlineOptions(text);
         // 移除「孤立的 dash / bullet 行」(整行只有 dash/bullet 的清掉)
         text = text.replace(/^[ \t]*[-–—*•·][ \t]*$/gm, '');
+        // 把選項標籤 (【A】~【E】) 的 list item 縮排統一拉到頂層
+        // 例如「  - 【B】 ...」、「    - 【C】 ...」都統一成「- 【A】 ...」(無縮排)
+        text = text.replace(/^[ \t]+[-–—*•·][ \t]*(【[A-E]】)/gm, '- $1');
+        // 沒被 list bullet 包起來、頂層的「【A】 xxx」也補上 -
+        text = text.replace(/^(【[A-E]】[ \t])/gm, '- $1');
         // 多個連續空行壓成一個
         text = text.replace(/\n{3,}/g, '\n\n');
         // Remove answer-confirmation preamble sentences

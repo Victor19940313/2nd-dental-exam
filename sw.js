@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v230-orphan-dash-mline-hist-collapse';
+const CACHE_NAME = 'dental-all-v231-flat-abcd-list';
 const PRECACHE = [
   './',
   './index.html',

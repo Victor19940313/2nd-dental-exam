@@ -5173,9 +5173,12 @@
           if (!t) return true;
           return /^[-–—*•·\s]+$/.test(t);
         };
-        // 1. 清空殼 li / p
-        Array.from(wrap.querySelectorAll('li, p')).forEach(el => {
-          if (isJunk(el) && el.children.length === 0) el.remove();
+        // 1. 清掉 textContent 只有 dash/空白的 li/p/div(連有 inline span 的也抓)
+        let removed = 0;
+        ['li', 'p', 'div'].forEach(tag => {
+          Array.from(wrap.querySelectorAll(tag)).forEach(el => {
+            if (isJunk(el)) { el.remove(); removed++; }
+          });
         });
         // 2. flatten nested ul/ol(li 內含的 ul/ol 提到外層 ul/ol)
         let loop = 0;
@@ -5194,9 +5197,12 @@
           nested.remove();
         }
         // 3. 移除空的 ul/ol
+        let emptyLists = 0;
         Array.from(wrap.querySelectorAll('ul, ol')).forEach(el => {
-          if (!el.querySelector('li')) el.remove();
+          if (!el.querySelector('li')) { el.remove(); emptyLists++; }
         });
+        // Debug log:讓 console 看得到處理過幾個
+        if (removed || emptyLists) console.log('[clean-expl] removed=' + removed + ' emptyLists=' + emptyLists);
         return wrap.innerHTML;
       }
       function nbExplBlock(q) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v226-remove-single-regen';
+const CACHE_NAME = 'dental-all-v227-logical-prompt';
 const PRECACHE = [
   './',
   './index.html',

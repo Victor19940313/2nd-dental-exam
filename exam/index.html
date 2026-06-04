@@ -5160,15 +5160,12 @@
         if (!expl || !expl.trim()) return "";
         const srcHtml = src ? `<div class="expl-source">📖 ${src}</div>` : "";
         const links = qid ? renderCrossLinks(qid) : "";
-        const regenBtn = qid
-          ? `<button onclick="event.preventDefault();event.stopPropagation();regenerateGeminiExpl('${qid}')" title="用考生作答思路風格重新生成這題詳解" style="background:#7c3aed;color:white;border:none;padding:.18rem .5rem;border-radius:5px;font-size:.7rem;font-weight:700;cursor:pointer;margin-left:.5rem">🔄 重生</button>`
-          : '';
         let formatted = formatExpl(expl);
         // 把整段〔背景:...〕加上黃色 highlight 樣式
         formatted = formatted.replace(/〔背景[：:]([\s\S]*?)〕/g, (m, content) =>
           `<span class="bg-note">📌 背景:${content}</span>`
         );
-        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解${regenBtn}</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}</div></details>`;
+        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}</div></details>`;
       }
       // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)
       function buildRegenExplPrompt(q){

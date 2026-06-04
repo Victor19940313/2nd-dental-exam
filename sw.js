@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v240-force-clean-junk-li';
+const CACHE_NAME = 'dental-all-v241-real-fix-split-options';
 const PRECACHE = [
   './',
   './index.html',

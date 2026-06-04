@@ -5405,8 +5405,9 @@ ${(q.options || []).join('\n')}
       // 把擠在同一段的 (A)/(B)/(C)/(D)/(E) 強制拆成獨立 markdown bullet
       function _splitInlineOptions(s){
         if (!s) return s;
-        // 偵測「文字結尾(句點/驚嘆/✓/✗/問號/、/;) 後接 (X)」並拆行
-        s = s.replace(/([\.\。\!！\?？\、\;；✓✗])\s*\(([A-E])\)\s*/g, '$1\n\n- **($2)** ');
+        // 偵測「同一行內」文字結尾(句點/驚嘆/✓/✗/問號/、/;) 後接 (X) 並拆行
+        // 用 [ \t]* 而不是 \s* — 避免抓到已經有換行的「。\n(B)」(那種已經分行,不該再變成 list)
+        s = s.replace(/([\.\。\!！\?？\、\;；✓✗])[ \t]*\(([A-E])\)[ \t]*/g, '$1\n\n- **($2)** ');
         // 標題類「**(X)** ...」也統一在前面加 bullet(避免 markdown 解讀錯)
         s = s.replace(/(^|\n)\s*\*\*\(([A-E])\)\s*([^*]*?)\*\*\s*/g, (m, pre, letter, content) => {
           return (pre || '\n') + '- **(' + letter + ')** ' + content.trim() + ' ';

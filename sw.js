@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v221-ai-modify-multiline';
+const CACHE_NAME = 'dental-all-v222-hide-cost-when-free';
 const PRECACHE = [
   './',
   './index.html',

@@ -12617,10 +12617,10 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
                 <span>✓ ${_bgRegen.done} 成功 · ❌ ${_bgRegen.failed} 失敗</span>
                 <span>速度 ${Math.round(speed)}/分 · 剩 ${eta}</span>
               </div>
-              <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(217,119,6,.3);font-size:.82rem;color:#7c2d12;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem">
+              ${getPaidKey() ? `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(217,119,6,.3);font-size:.82rem;color:#7c2d12;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem">
                 <span>💰 已花: <strong>NT$${costTWD.toFixed(2)}</strong> (USD $${costUSD.toFixed(4)})</span>
                 <span>還需估算: NT$${estRemainTWD.toFixed(1)}</span>
-              </div>
+              </div>` : `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(217,119,6,.3);font-size:.82rem;color:#15803d;text-align:center">💚 免費 key 跑,不扣錢</div>`}
               <div style="display:flex;gap:.4rem;margin-top:.7rem">
                 ${_bgRegen.paused
                   ? `<button onclick="_bgRegen.paused=false;openBgRegenModal()" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">▶ 繼續</button>`
@@ -12681,7 +12681,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               <span style="margin-left:auto;font-size:.7rem;background:#fde68a;color:#78350f;padding:1px 8px;border-radius:8px;font-weight:700">已鎖定</span>
             </div>
             <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:.5rem .7rem;margin-bottom:.7rem;font-size:.8rem;display:flex;justify-content:space-between;align-items:center">
-              <span>✅ 已重生 <strong>${doneN}</strong> / ${totalN} 題</span>
+              <span>✅ 已重生 <strong>${doneN}</strong> / ${totalN} 題 ${getPaidKey() ? '' : '<span style="color:#15803d;font-weight:700;margin-left:.4rem">💚 免費</span>'}</span>
               <div>${doneN > 0 ? `<button onclick="viewRegenList()" style="background:white;color:#15803d;border:1px solid #86efac;padding:1px 8px;border-radius:5px;font-size:.72rem;cursor:pointer;margin-right:.3rem">📋 看清單</button><button onclick="_clearAllPatches()" style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:1px 8px;border-radius:5px;font-size:.72rem;cursor:pointer">🗑 清空</button>` : ''}</div>
             </div>
             <div class="pm-list" style="overflow-y:auto;max-height:42vh;min-height:240px;padding:.4rem;background:#fafafa">${treeEmpty}</div>
@@ -12787,8 +12787,10 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             document.body.appendChild(badge);
           }
           const pct = _bgRegen.total > 0 ? Math.round((_bgRegen.done + _bgRegen.failed) / _bgRegen.total * 100) : 0;
-          const twd = (_bgRegen.costUSD || 0) * USD_TO_TWD;
-          badge.innerHTML = (_bgRegen.paused ? '⏸' : '🤖') + ' ' + (_bgRegen.done + _bgRegen.failed) + '/' + _bgRegen.total + ' (' + pct + '%) · NT$' + twd.toFixed(2);
+          // 用免費 key 跑(沒 paid key 標記)→ 不顯示費用
+          const showCost = !!getPaidKey();
+          const costTxt = showCost ? (' · NT$' + ((_bgRegen.costUSD || 0) * USD_TO_TWD).toFixed(2)) : '';
+          badge.innerHTML = (_bgRegen.paused ? '⏸' : '🤖') + ' ' + (_bgRegen.done + _bgRegen.failed) + '/' + _bgRegen.total + ' (' + pct + '%)' + costTxt;
         } else if (badge) { badge.remove(); }
       }
 

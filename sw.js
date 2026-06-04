@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v217-prompt-concise-model';
+const CACHE_NAME = 'dental-all-v218-split-options-line';
 const PRECACHE = [
   './',
   './index.html',

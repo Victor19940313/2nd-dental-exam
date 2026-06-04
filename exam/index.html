@@ -5230,6 +5230,7 @@
 - 不要寫「答案是 X」這種廢話 — 直接從【第一直覺】開頭
 - **找錯題的對的選項禁止寫「這對的,砍掉」「也是對的,砍掉」這種廢話** — 只打 ✓ 就好
 - 🚫 **【絕對禁止重複論述】** 作答思路砍完 4 個選項就直接結尾,不准再寫「仔細想想 X 選項」「重新看一下」這種重複分析
+- 🚫 **【ABCD 必須獨佔一行】** 每個 \`- **(A)** ...\`、\`- **(B)** ...\`、\`- **(C)** ...\`、\`- **(D)** ...\` 各自一行,**之間有空行**。**絕對禁止** \`(A) xxx ✓ (B) xxx ✓ (C) xxx ✗ (D) xxx\` 寫在同一段
 - 🚫 **【絕對禁止整段補述】** 砍完選項後不要再寫一段「C 說多量...感覺不太對」這種重複論述,因為這些已經在【作答思路】裡寫過了
 - **「為什麼是 X 不是 Y」只在兩個選項真的難分時才寫(最多 2 句)**;能直接砍的題不要硬寫
 - **「最後留 (X)」一句話就好**,不要再寫額外解釋
@@ -5322,9 +5323,21 @@ ${(q.options || []).join('\n')}
         s = s.replace(/\$([^\$\n]{1,50})\$/g, '$1');
         return s;
       }
+      // 把擠在同一段的 (A)/(B)/(C)/(D)/(E) 強制拆成獨立 markdown bullet
+      function _splitInlineOptions(s){
+        if (!s) return s;
+        // 偵測「文字結尾(句點/驚嘆/✓/✗/問號/、/;) 後接 (X)」並拆行
+        s = s.replace(/([\.\。\!！\?？\、\;；✓✗])\s*\(([A-E])\)\s*/g, '$1\n\n- **($2)** ');
+        // 標題類「**(X)** ...」也統一在前面加 bullet(避免 markdown 解讀錯)
+        s = s.replace(/(^|\n)\s*\*\*\(([A-E])\)\s*([^*]*?)\*\*\s*/g, (m, pre, letter, content) => {
+          return (pre || '\n') + '- **(' + letter + ')** ' + content.trim() + ' ';
+        });
+        return s;
+      }
       function formatExpl(text) {
         if (!text) return "";
         text = _stripLatex(text);
+        text = _splitInlineOptions(text);
         // Remove answer-confirmation preamble sentences
         text = text.replace(
           /^[^\n。！]*(?:你的答案|太棒了|完全正確|也是正確)[^\n。！]*[。！！]\s*/g,

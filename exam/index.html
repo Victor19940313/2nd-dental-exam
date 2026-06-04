@@ -12412,7 +12412,10 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       }
 
       // 背景重生 state(in-memory)
-      let _bgRegen = { running: false, paused: false, total: 0, done: 0, failed: 0, lastPushAt: 0, list: [], curIdx: 0, model: 'gemini-2.5-flash-lite' };
+      let _bgRegen = { running: false, paused: false, total: 0, done: 0, failed: 0, lastPushAt: 0, list: [], curIdx: 0, model: 'gemini-2.5-flash-lite', costUSD: 0 };
+      // gemini-2.5-flash-lite 單題估算: 1500 input × $0.10/M + 700 output × $0.40/M ≈ $0.00043 USD ≈ NT$0.014
+      const COST_PER_Q_USD = 0.00043;
+      const USD_TO_TWD = 32; // 約略匯率
 
       function openBgRegenModal(){
         const patches = loadExplPatches();
@@ -12437,6 +12440,10 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           const speed = elapsed > 0 ? (_bgRegen.done + _bgRegen.failed) / (elapsed / 60) : 0;
           const remainingSec = speed > 0 ? (_bgRegen.total - _bgRegen.done - _bgRegen.failed) / speed * 60 : 0;
           const eta = remainingSec > 60 ? Math.round(remainingSec/60) + ' 分鐘' : Math.round(remainingSec) + ' 秒';
+          const costUSD = _bgRegen.costUSD || 0;
+          const costTWD = costUSD * USD_TO_TWD;
+          const remainQ = _bgRegen.total - _bgRegen.done - _bgRegen.failed;
+          const estRemainTWD = remainQ * COST_PER_Q_USD * USD_TO_TWD;
           body = `
             <div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.8rem;margin-bottom:.8rem">
               <div style="font-weight:700;color:#92400e;margin-bottom:.4rem;font-size:.95rem">${_bgRegen.paused ? '⏸ 暫停中' : '🤖 跑中'}: ${_bgRegen.done + _bgRegen.failed} / ${_bgRegen.total}</div>
@@ -12445,7 +12452,11 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
                 <span>✓ ${_bgRegen.done} 成功 · ❌ ${_bgRegen.failed} 失敗</span>
                 <span>速度 ${Math.round(speed)}/分 · 剩 ${eta}</span>
               </div>
-              <div style="display:flex;gap:.4rem;margin-top:.6rem">
+              <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(217,119,6,.3);font-size:.82rem;color:#7c2d12;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem">
+                <span>💰 已花: <strong>NT$${costTWD.toFixed(2)}</strong> (USD $${costUSD.toFixed(4)})</span>
+                <span>還需估算: NT$${estRemainTWD.toFixed(1)}</span>
+              </div>
+              <div style="display:flex;gap:.4rem;margin-top:.7rem">
                 ${_bgRegen.paused
                   ? `<button onclick="_bgRegen.paused=false;openBgRegenModal()" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">▶ 繼續</button>`
                   : `<button onclick="_bgRegen.paused=true;openBgRegenModal()" style="background:#f59e0b;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">⏸ 暫停</button>`}
@@ -12501,7 +12512,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             document.body.appendChild(badge);
           }
           const pct = _bgRegen.total > 0 ? Math.round((_bgRegen.done + _bgRegen.failed) / _bgRegen.total * 100) : 0;
-          badge.innerHTML = (_bgRegen.paused ? '⏸' : '🤖') + ' ' + (_bgRegen.done + _bgRegen.failed) + '/' + _bgRegen.total + ' (' + pct + '%)';
+          const twd = (_bgRegen.costUSD || 0) * USD_TO_TWD;
+          badge.innerHTML = (_bgRegen.paused ? '⏸' : '🤖') + ' ' + (_bgRegen.done + _bgRegen.failed) + '/' + _bgRegen.total + ' (' + pct + '%) · NT$' + twd.toFixed(2);
         } else if (badge) { badge.remove(); }
       }
 
@@ -12516,7 +12528,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         const todoAll = (QS || []).filter(q => !patches[q.id]).map(q => q.id);
         if (todoAll.length === 0) { showToast('所有題目都已重生'); return; }
         const list = limit ? todoAll.slice(0, limit) : todoAll;
-        _bgRegen = { running: true, paused: false, total: list.length, done: 0, failed: 0, lastPushAt: 0, list: list, curIdx: 0, model: 'gemini-2.5-flash-lite', startTime: Date.now() };
+        _bgRegen = { running: true, paused: false, total: list.length, done: 0, failed: 0, lastPushAt: 0, list: list, curIdx: 0, model: 'gemini-2.5-flash-lite', startTime: Date.now(), costUSD: 0 };
         _updateBgRegenFloating();
         showToast('🤖 開始背景跑 ' + list.length + ' 題,你可以繼續做題');
         let consec429 = 0;
@@ -12538,6 +12550,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             const qq = (QS || []).find(x => x.id === qid);
             if (qq) qq.explanation = cleaned;
             _bgRegen.done++;
+            _bgRegen.costUSD += COST_PER_Q_USD;
             consec429 = 0;
           } catch(err) {
             const msg = err.message || '';

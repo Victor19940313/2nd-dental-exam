@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v213-bg-regen-expl';
+const CACHE_NAME = 'dental-all-v214-cost-tracker';
 const PRECACHE = [
   './',
   './index.html',

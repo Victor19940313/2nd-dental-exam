@@ -5160,16 +5160,44 @@
         return html;
       }
 
-      // HTML 後處理:清掉「只有 dash 內容的 li」+ 空段落
+      // HTML 後處理(用 DOM API,不再用 regex 瞎猜):
+      // 1. 移除「文字只有 dash / bullet / 空白」的 li 跟 p
+      // 2. flatten nested list(把 <li><ul><li></li></ul></li> 提到上層,讓 ABCD 對齊)
+      // 3. 移除清完後變空的 ul/ol
       function _cleanExplHtml(html){
-        if (!html) return html;
-        // 清掉內容只有 dash/bullet/空白的 <li>
-        html = html.replace(/<li[^>]*>\s*[-–—*•·]?\s*<\/li>/g, '');
-        // 清掉空 <p> 或只有 dash 的 <p>
-        html = html.replace(/<p[^>]*>\s*[-–—*•·]?\s*<\/p>/g, '');
-        // 清掉空 <ul>/<ol>(全部 li 被清掉後)
-        html = html.replace(/<(ul|ol)[^>]*>\s*<\/\1>/g, '');
-        return html;
+        if (!html || typeof document === 'undefined') return html;
+        const wrap = document.createElement('div');
+        wrap.innerHTML = html;
+        const isJunk = (el) => {
+          const t = (el.textContent || '').replace(/ /g, ' ').trim();
+          if (!t) return true;
+          return /^[-–—*•·\s]+$/.test(t);
+        };
+        // 1. 清空殼 li / p
+        Array.from(wrap.querySelectorAll('li, p')).forEach(el => {
+          if (isJunk(el) && el.children.length === 0) el.remove();
+        });
+        // 2. flatten nested ul/ol(li 內含的 ul/ol 提到外層 ul/ol)
+        let loop = 0;
+        while (loop++ < 10) {
+          const nested = wrap.querySelector('li > ul, li > ol');
+          if (!nested) break;
+          const parentLi = nested.parentElement;
+          const grandList = parentLi.parentElement;
+          if (!grandList || !/^(UL|OL)$/.test(grandList.tagName)) { nested.remove(); continue; }
+          let insertAfter = parentLi;
+          while (nested.firstElementChild) {
+            const li = nested.firstElementChild;
+            grandList.insertBefore(li, insertAfter.nextSibling);
+            insertAfter = li;
+          }
+          nested.remove();
+        }
+        // 3. 移除空的 ul/ol
+        Array.from(wrap.querySelectorAll('ul, ol')).forEach(el => {
+          if (!el.querySelector('li')) el.remove();
+        });
+        return wrap.innerHTML;
       }
       function nbExplBlock(q) {
         const nb = q && q.explanation_notebooklm;

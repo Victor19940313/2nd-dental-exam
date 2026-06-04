@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v233-sw-skip-non-http';
+const CACHE_NAME = 'dental-all-v234-dom-clean-flatten';
 const PRECACHE = [
   './',
   './index.html',

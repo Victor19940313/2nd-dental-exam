@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v205-exam-grid-overtime';
+const CACHE_NAME = 'dental-all-v206-strip-latex';
 const PRECACHE = [
   './',
   './index.html',

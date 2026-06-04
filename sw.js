@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v212-paid-key-marker';
+const CACHE_NAME = 'dental-all-v213-bg-regen-expl';
 const PRECACHE = [
   './',
   './index.html',

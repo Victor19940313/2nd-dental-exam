@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v208-regen-find-wrong';
+const CACHE_NAME = 'dental-all-v209-bg-bold-keywords';
 const PRECACHE = [
   './',
   './index.html',

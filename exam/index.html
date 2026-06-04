@@ -12504,7 +12504,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             ${resumeBlock}
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:.8rem;margin-bottom:.9rem;font-size:.86rem;line-height:1.9">
               📊 總題數: <strong>${totalN}</strong><br>
-              ✅ 已重生: <strong style="color:#16a34a">${doneN}</strong><br>
+              ✅ 已重生: <strong style="color:#16a34a">${doneN}</strong> ${doneN > 0 ? `<button onclick="viewRegenList()" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;padding:1px 9px;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;margin-left:.4rem">📋 看清單</button>` : ''}<br>
               ⏳ 待重生: <strong style="color:#dc2626">${remaining}</strong><br>
               💰 估算費用(gemini-2.5-flash-lite): <strong>~ NT\$${(remaining * 0.013).toFixed(0)}</strong>(全跑完)<br>
               ⏱ 預估時間: 每題約 2.5 秒
@@ -12537,6 +12537,57 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         overlay.style.display = 'flex';
       }
       function closeBgRegenModal(){ const o = document.getElementById('bgregen-overlay'); if (o) o.style.display = 'none'; }
+      // 看已重生詳解清單(按科目分組,可看哪幾題)
+      function viewRegenList(){
+        const patches = loadExplPatches();
+        const qids = Object.keys(patches);
+        if (qids.length === 0) { showToast('還沒有已重生的題目'); return; }
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六', '':'其他' };
+        const SCOLOR = { ya3:'#0e7490', ya4:'#7c3aed', ya5:'#3730a3', ya6:'#166534', '':'#9ca3af' };
+        const SEMOJI = { ya3:'🦷', ya4:'🪥', ya5:'😬', ya6:'😁', '':'📁' };
+        const SUBJ_ORDER = ['ya3','ya4','ya5','ya6',''];
+        const groups = {};
+        qids.forEach(qid => {
+          const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+          if (!q) return;
+          const s = q.subject || '';
+          if (!groups[s]) groups[s] = [];
+          groups[s].push(q);
+        });
+        const groupHtml = SUBJ_ORDER.filter(s => groups[s] && groups[s].length).map(s => {
+          const sortedItems = groups[s].slice().sort((a, b) => {
+            const aY = a.year || 0, bY = b.year || 0; if (aY !== bY) return aY - bY;
+            const aS = a.session || 0, bS = b.session || 0; if (aS !== bS) return aS - bS;
+            return (a.number || 0) - (b.number || 0);
+          });
+          const items = sortedItems.map(q => `<div style="padding:.28rem .55rem;border-bottom:1px solid #f3f4f6;font-size:.8rem;display:flex;justify-content:space-between;gap:.4rem;align-items:center"><span style="color:#374151;flex:1">${escapeHtml(q.meta || q.id)}</span><span style="color:#9ca3af;font-family:monospace;font-size:.7rem">${q.id}</span></div>`).join('');
+          return `<details open style="margin-bottom:.4rem;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:white">
+            <summary style="cursor:pointer;font-weight:700;padding:.5rem .75rem;background:${SCOLOR[s]};color:white;font-size:.9rem;display:flex;align-items:center;justify-content:space-between;list-style:none">
+              <span>${SEMOJI[s]} ${SMAP[s]}</span>
+              <span style="background:rgba(255,255,255,.25);padding:1px 9px;border-radius:8px;font-size:.78rem">${groups[s].length} 題</span>
+            </summary>
+            <div style="max-height:300px;overflow-y:auto">${items}</div>
+          </details>`;
+        }).join('');
+        const html = `
+          <div class="print-modal-box" style="max-width:600px;max-height:88vh;display:flex;flex-direction:column">
+            <button class="pm-close" onclick="closeRegenListModal()">✕</button>
+            <h2>📋 已重生詳解清單</h2>
+            <div class="pm-sub">總共 <strong>${qids.length}</strong> 題 — 按題號順序排列</div>
+            <div style="overflow-y:auto;flex:1;border:1.5px solid #e9d5ff;border-radius:10px;padding:.5rem;background:#fafafa">${groupHtml}</div>
+          </div>`;
+        let overlay = document.getElementById('regen-list-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'regen-list-overlay';
+          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:10600;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+          overlay.onclick = (e) => { if (e.target === overlay) closeRegenListModal(); };
+          document.body.appendChild(overlay);
+        }
+        overlay.innerHTML = html;
+        overlay.style.display = 'flex';
+      }
+      function closeRegenListModal(){ const o = document.getElementById('regen-list-overlay'); if (o) o.style.display = 'none'; }
       async function _pauseAndPush(){
         _bgRegen.paused = true;
         openBgRegenModal();

@@ -5229,6 +5229,12 @@
 - 不要寫「(原始題號)」「根據資料」「同學」這種開場
 - 不要寫「答案是 X」這種廢話 — 直接從【第一直覺】開頭
 - **找錯題的對的選項禁止寫「這對的,砍掉」「也是對的,砍掉」這種廢話** — 只打 ✓ 就好
+- 🚫 **【絕對禁止重複論述】** 作答思路砍完 4 個選項就直接結尾,不准再寫「仔細想想 X 選項」「重新看一下」這種重複分析
+- 🚫 **【絕對禁止整段補述】** 砍完選項後不要再寫一段「C 說多量...感覺不太對」這種重複論述,因為這些已經在【作答思路】裡寫過了
+- **「為什麼是 X 不是 Y」只在兩個選項真的難分時才寫(最多 2 句)**;能直接砍的題不要硬寫
+- **「最後留 (X)」一句話就好**,不要再寫額外解釋
+- 每段最多 2 句話,**寫多寫密都是禁止的**
+- 整篇詳解 markdown 字數 < 400 字(不含背景補充)
 
 【題目資料】
 科目: ${SMAP[q.subject] || q.subject}
@@ -12440,9 +12446,26 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         } catch(e){}
       }
       _restoreBgRegenState();
-      // gemini-2.5-flash-lite 單題估算: 1500 input × $0.10/M + 700 output × $0.40/M ≈ $0.00043 USD ≈ NT$0.014
-      const COST_PER_Q_USD = 0.00043;
-      const USD_TO_TWD = 32; // 約略匯率
+      // 各 model 每題估算成本 (USD)
+      const MODEL_COST_PER_Q = {
+        'gemini-2.5-flash-lite': 1500 * 0.10/1e6 + 700 * 0.40/1e6,   // ≈ $0.00043 (NT$0.014)
+        'gemini-2.5-flash':      1500 * 0.30/1e6 + 700 * 2.50/1e6,   // ≈ $0.00220 (NT$0.070)
+        'gemini-3-flash':        1500 * 0.50/1e6 + 700 * 3.00/1e6,   // ≈ $0.00285 (NT$0.091)
+        'gemini-3.5-flash':      1500 * 1.50/1e6 + 700 * 9.00/1e6,   // ≈ $0.00855 (NT$0.274)
+      };
+      const MODEL_LABEL = {
+        'gemini-2.5-flash-lite': '2.5-flash-lite ($0.014/題,品質普通)',
+        'gemini-2.5-flash':      '2.5-flash (NT$0.07/題,品質好)',
+        'gemini-3-flash':        '3-flash (NT$0.09/題,品質更好)',
+        'gemini-3.5-flash':      '3.5-flash (NT$0.27/題,品質最好)',
+      };
+      let COST_PER_Q_USD = MODEL_COST_PER_Q['gemini-2.5-flash-lite'];
+      const USD_TO_TWD = 32;
+      const BG_MODEL_LS = 'bg_regen_model';
+      function getBgRegenModel(){ return localStorage.getItem(BG_MODEL_LS) || 'gemini-2.5-flash-lite'; }
+      function setBgRegenModel(m){ localStorage.setItem(BG_MODEL_LS, m); COST_PER_Q_USD = MODEL_COST_PER_Q[m] || MODEL_COST_PER_Q['gemini-2.5-flash-lite']; }
+      // initial sync
+      COST_PER_Q_USD = MODEL_COST_PER_Q[getBgRegenModel()] || MODEL_COST_PER_Q['gemini-2.5-flash-lite'];
 
       function openBgRegenModal(){
         const patches = loadExplPatches();
@@ -12500,14 +12523,23 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               <div style="font-size:.82rem;line-height:1.7">已跑 ${_bgRegen.curIdx}/${_bgRegen.list.length} 題,剩 <strong>${resumeRemain}</strong> 題未完成</div>
               <button onclick="closeBgRegenModal();resumeBgRegenFromSaved()" ${setupOK?'':'disabled'} style="background:#2563eb;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.85rem;margin-top:.5rem">▶ 繼續上次的進度</button>
             </div>` : '';
+          const curModel = getBgRegenModel();
+          const modelOptions = Object.keys(MODEL_LABEL).map(m => `<option value="${m}" ${m===curModel?'selected':''}>${MODEL_LABEL[m]}</option>`).join('');
+          const estTotalTWD = (remaining * MODEL_COST_PER_Q[curModel] * USD_TO_TWD).toFixed(0);
+          const modelBlock = `
+            <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:.6rem .8rem;margin-bottom:.8rem">
+              <label style="display:block;font-size:.78rem;font-weight:700;color:#92400e;margin-bottom:.35rem">🤖 選用 Model</label>
+              <select onchange="setBgRegenModel(this.value);openBgRegenModal()" style="width:100%;padding:.4rem .55rem;border:1.5px solid #fbbf24;border-radius:6px;background:white;font-size:.82rem">${modelOptions}</select>
+              <div style="font-size:.72rem;color:#78350f;margin-top:.35rem;line-height:1.6">flash-lite 偶爾廢話多;flash 品質更好但貴 5×;3.5-flash 最好但 20×</div>
+            </div>`;
           body = `
             ${resumeBlock}
+            ${modelBlock}
             <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:.8rem;margin-bottom:.9rem;font-size:.86rem;line-height:1.9">
               📊 總題數: <strong>${totalN}</strong><br>
               ✅ 已重生: <strong style="color:#16a34a">${doneN}</strong> ${doneN > 0 ? `<button onclick="viewRegenList()" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;padding:1px 9px;border-radius:5px;font-size:.74rem;font-weight:700;cursor:pointer;margin-left:.4rem">📋 看清單</button>` : ''}<br>
               ⏳ 待重生: <strong style="color:#dc2626">${remaining}</strong><br>
-              💰 估算費用(gemini-2.5-flash-lite): <strong>~ NT\$${(remaining * 0.013).toFixed(0)}</strong>(全跑完)<br>
-              ⏱ 預估時間: 每題約 2.5 秒
+              💰 跑完估算: <strong>~ NT\$${estTotalTWD}</strong>
             </div>
             <div style="display:flex;gap:.5rem;flex-wrap:wrap">
               <button onclick="closeBgRegenModal();startBackgroundRegen(100)" ${setupOK?'':'disabled'} class="pm-btn-primary">▶ 試跑 100 題</button>
@@ -12625,7 +12657,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         const todoAll = (QS || []).filter(q => !patches[q.id]).map(q => q.id);
         if (todoAll.length === 0) { showToast('所有題目都已重生'); return; }
         const list = limit ? todoAll.slice(0, limit) : todoAll;
-        _bgRegen = { running: true, paused: false, total: list.length, done: 0, failed: 0, lastPushAt: 0, list: list, curIdx: 0, model: 'gemini-2.5-flash-lite', startTime: Date.now(), costUSD: 0 };
+        _bgRegen = { running: true, paused: false, total: list.length, done: 0, failed: 0, lastPushAt: 0, list: list, curIdx: 0, model: getBgRegenModel(), startTime: Date.now(), costUSD: 0 };
         _updateBgRegenFloating();
         showToast('🤖 開始背景跑 ' + list.length + ' 題,你可以繼續做題');
         let consec429 = 0;

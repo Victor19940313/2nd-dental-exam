@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v219-tree-pick-priority';
+const CACHE_NAME = 'dental-all-v220-lock-3.5-flash';
 const PRECACHE = [
   './',
   './index.html',

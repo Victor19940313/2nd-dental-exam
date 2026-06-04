@@ -8142,13 +8142,15 @@ ${(q.options || []).join('\n')}
         }, 100);
       }
       async function callGemini(promptText, schema, opts){
+        opts = opts || {};
         const keys = getGeminiKeys();
         if (keys.length === 0) {
           showToast('請先設定 Gemini API key');
           openAISettings();
           throw new Error('no_key');
         }
-        const model = localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+        // 允許 caller 指定 model(跑詳解時鎖死 3.5-flash);否則用使用者 AI 設定
+        const model = opts.model || localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
         let lastErr = null;
         const invalidKeys = new Set();
         const tried = []; // 記錄每把試過的 key 跟結果(給失敗訊息用)
@@ -12645,12 +12647,14 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       COST_PER_Q_USD = MODEL_COST_PER_Q[getBgRegenModel()] || MODEL_COST_PER_Q['gemini-2.5-flash-lite'];
 
       function openBgRegenModal(){
-        // 非同步 fetch 最新 locks(背景跑,立即用 cache 渲染)
-        fetchLocksFromGithub().then(() => {
-          // 若 modal 還開著就重新渲染(顯示最新鎖定狀態)
-          const o = document.getElementById('bgregen-overlay');
-          if (o && o.style.display === 'flex' && !_bgRegen.running) openBgRegenModal();
-        }).catch(()=>{});
+        // 非同步 fetch 最新 locks,但只在第一次打開時 fetch,避免無限循環
+        if (!_bgRegen.running && !window._bgRegenLocksFetched) {
+          window._bgRegenLocksFetched = true;
+          fetchLocksFromGithub().then(() => {
+            const o = document.getElementById('bgregen-overlay');
+            if (o && o.style.display === 'flex' && !_bgRegen.running) openBgRegenModal();
+          }).catch(()=>{});
+        }
         const patches = loadExplPatches();
         const doneN = Object.keys(patches).length;
         const totalN = (typeof QS !== 'undefined' ? QS.length : 0);
@@ -12807,7 +12811,11 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         overlay.innerHTML = html;
         overlay.style.display = 'flex';
       }
-      function closeBgRegenModal(){ const o = document.getElementById('bgregen-overlay'); if (o) o.style.display = 'none'; }
+      function closeBgRegenModal(){
+        const o = document.getElementById('bgregen-overlay');
+        if (o) o.style.display = 'none';
+        window._bgRegenLocksFetched = false; // 下次打開會重新 fetch 一次
+      }
       // 看已重生詳解清單(按科目分組,可看哪幾題)
       function viewRegenList(){
         const patches = loadExplPatches();
@@ -12928,7 +12936,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             if (!q) { _bgRegen.failed++; _updateBgRegenFloating(); continue; }
             const prompt = buildRegenExplPrompt(q);
             // 用 callGemini round-robin 所有 key (撞 quota 自動換下一把)
-            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096 });
+            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096, model: getBgRegenModel() });
             const cleaned = _stripLatex((raw || '').trim());
             if (!cleaned || cleaned.length < 30) throw new Error('AI 回應太短');
             // 用新格式記 patch(帶 model 資訊,會自動更新「📖 來源」標籤)
@@ -13013,7 +13021,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             const q = (QS || []).find(x => x.id === qid);
             if (!q) { _bgRegen.failed++; continue; }
             const prompt = buildRegenExplPrompt(q);
-            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096 });
+            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096, model: getBgRegenModel() });
             const cleaned = _stripLatex((raw || '').trim());
             if (!cleaned || cleaned.length < 30) throw new Error('AI 回應太短');
             recordPatch(qid, cleaned, _bgRegen.model);

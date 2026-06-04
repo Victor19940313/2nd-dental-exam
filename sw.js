@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v223-multi-user-lock';
+const CACHE_NAME = 'dental-all-v224-modal-loop-fix';
 const PRECACHE = [
   './',
   './index.html',

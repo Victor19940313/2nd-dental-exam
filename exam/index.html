@@ -5146,7 +5146,102 @@
         if (!expl || !expl.trim()) return "";
         const srcHtml = src ? `<div class="expl-source">📖 ${src}</div>` : "";
         const links = qid ? renderCrossLinks(qid) : "";
-        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatExpl(expl)}${srcHtml}${links}</div></details>`;
+        const regenBtn = qid
+          ? `<button onclick="event.preventDefault();event.stopPropagation();regenerateGeminiExpl('${qid}')" title="用考生作答思路風格重新生成這題詳解" style="background:#7c3aed;color:white;border:none;padding:.18rem .5rem;border-radius:5px;font-size:.7rem;font-weight:700;cursor:pointer;margin-left:.5rem">🔄 重生</button>`
+          : '';
+        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解${regenBtn}</summary><div class="gemini-expl-content">${formatExpl(expl)}${srcHtml}${links}</div></details>`;
+      }
+      // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)
+      function buildRegenExplPrompt(q){
+        const LETTERS = ['A','B','C','D','E'];
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
+        return `你是正在準備牙醫國考的考生,用第一人稱寫這題的「作答思路」詳解。
+重點:這不是教科書解釋,是模擬考生在腦裡怎麼想、怎麼砍選項。
+
+【格式】(必須完整輸出這 4 個 section,順序不能變)
+
+**【第一直覺】**
+看到題目第一個閃過的印象 (1-2 句,口語化)。
+
+**【作答思路】**
+逐項砍 4 個選項:
+- **(A) [選項關鍵字]** → 一句話砍/留 (留的標 ✓)
+  〔背景:必要時 1-2 句基本知識,夾在這〕
+- **(B) ...** → ...
+- **(C) ...** → ...
+- **(D) ...** → ...
+
+如果有兩個選項很像,結尾補一段「為什麼是 X 不是 Y」做對比。
+最後一句「最後留 **(X)**」。
+
+**【關鍵記憶】**
+> 💡 一句話,讓下次看到關鍵字就知道答案。
+
+**【臨床直覺】**(選填,有臨床連結再寫)
+> 🏥 一句話,連到臨床/實作意義。
+
+【寫作規範】
+- **絕對禁止教科書腔** — 不用「根據文獻」「定義為」「主要原因是」這種,改用「我記得」「直覺反應」「常識想」「砍掉」「先留」
+- **第一人稱口語化** — 「我先...」「等等,B 看起來對但...」「最後留 (C)」
+- **每句短** — 一句話講一件事,不要長句
+- **數字/解剖事實** — 夾在〔背景:〕裡 inline,不要當主體
+- **絕對禁止 LaTeX** — cm² 直接寫 cm²,不要 $\\text{cm}^2$;不要 \\ge \\le \\times
+- **絕對禁止「其他選項」摺疊區塊** — 全部攤開
+- 不要寫「(原始題號)」「根據資料」「同學」這種開場
+- 不要寫「答案是 X」這種廢話 — 直接從【第一直覺】開頭
+
+【題目資料】
+科目: ${SMAP[q.subject] || q.subject}
+題目: ${q.question}
+選項:
+${(q.options || []).join('\n')}
+正確答案: ${correctTxt}
+
+直接輸出 markdown(不要包 \`\`\` 或前言)。`;
+      }
+      async function regenerateGeminiExpl(qid){
+        const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+        if (!q) { showToast('找不到題目'); return; }
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        if (!confirm(`用「考生作答思路」新風格重生「${q.meta || q.id}」的 Gemini 詳解?\n\n會覆寫舊版,NotebookLM 詳解不動。`)) return;
+        showToast('🤖 AI 生成中... 約 5-15 秒');
+        _silentResetCooldowns();
+        try {
+          const prompt = buildRegenExplPrompt(q);
+          const raw = await callGemini(prompt);
+          const cleaned = _stripLatex((raw || '').trim());
+          if (!cleaned) throw new Error('AI 回傳空白');
+          const st = getS(qid);
+          st.expl_override = cleaned;
+          await persist(qid);
+          showToast('✓ 已用新風格重生詳解');
+          // 重新渲染當前畫面的 expl 區
+          const curQ = (typeof practiceList !== 'undefined' && practiceList[practiceIdx]) || null;
+          if (curQ && curQ.id === qid) {
+            const explBox = document.getElementById('pq-expl');
+            if (explBox) {
+              const topic = st.topic || q.topic || '';
+              const topicTag = topic ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block">🏷 ${topic}</span>` : '';
+              const src = st.src_override ?? q.explanation_source ?? '';
+              explBox.innerHTML = topicTag + clinicalExplBlock(q) + geminiExplBlock(cleaned, src, q.id) + nbExplBlock(q);
+              explBox.classList.add('visible');
+            }
+          }
+          // 重看試卷模式也要刷新
+          if (typeof renderReviewQ === 'function' && typeof _reviewIdx !== 'undefined' && _reviewEntry) {
+            const reviewQid = _reviewEntry.qids && _reviewEntry.qids[_reviewIdx];
+            if (reviewQid === qid) renderReviewQ(_reviewIdx);
+          }
+        } catch (err) {
+          console.error('regenerate expl failed', err);
+          showToast('❌ 生成失敗: ' + (err.message || '').slice(0, 100));
+        }
       }
 
       // 把 LaTeX 標記轉成 Unicode(網站不支援 LaTeX 渲染,但 AI 偶爾會寫進來)

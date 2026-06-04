@@ -6448,6 +6448,12 @@ ${(q.options || []).join('\n')}
           row.classList.toggle('is-reviewed', input.checked);
         } catch(e){}
       }
+      // 從歷次紀錄推主科:看 qids 或 wrongs 第一個 qid 的前綴
+      function _examHistSubject(h){
+        const firstQid = (h.qids && h.qids[0]) || (h.wrongs && h.wrongs[0] && h.wrongs[0].qid) || '';
+        const s = firstQid.split('-')[0];
+        return ['ya3','ya4','ya5','ya6'].includes(s) ? s : '';
+      }
       function renderExamHistory(containerId) {
         const el = document.getElementById(containerId);
         if (!el) return;
@@ -6456,7 +6462,8 @@ ${(q.options || []).join('\n')}
         const LETTERS = ['A','B','C','D','E'];
         const reviewedSet = _getReviewedExams();
 
-        const rows = hist.slice(0, 10).map((h, i) => {
+        // 內部:單筆紀錄渲染(原邏輯不變)
+        const renderRow = (h, i) => {
           const pct = h.total > 0 ? Math.round((h.correct / h.total) * 100) : 0;
           const color = pct >= 80 ? '#059669' : pct >= 60 ? '#d97706' : '#dc2626';
           const wrongs = h.wrongs || [];
@@ -6506,17 +6513,35 @@ ${(q.options || []).join('\n')}
             <div class="exam-hist-meta">${h.correct}/${h.total} 題 · ${pct}%</div>
           </div>
           ${detailHtml}`;
-        }).join('');
+        };
 
-        const more = hist.length > 10 ? `<div style="text-align:center;color:#888;font-size:.8rem;margin-top:.4rem">最近 10 筆 / 共 ${hist.length} 筆</div>` : '';
+        // 按科目分組
+        const groups = { ya3:[], ya4:[], ya5:[], ya6:[], '':[] };
+        hist.forEach((h, i) => {
+          const s = _examHistSubject(h);
+          groups[s].push({ h, i });
+        });
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六', '':'其他' };
+        const SCOLOR = { ya3:'#0e7490', ya4:'#7c3aed', ya5:'#3730a3', ya6:'#166534', '':'#9ca3af' };
+        const SEMOJI = { ya3:'🦷', ya4:'🪥', ya5:'😬', ya6:'😁', '':'📁' };
+        const SUBJ_ORDER = ['ya3','ya4','ya5','ya6',''];
+        const subjGroupsHtml = SUBJ_ORDER.filter(s => groups[s].length > 0).map(s => {
+          const items = groups[s].map(({h, i}) => renderRow(h, i)).join('');
+          return `<details open class="exam-hist-subj-group" style="margin:.6rem 0">
+            <summary style="background:${SCOLOR[s]};color:white;padding:.5rem .85rem;border-radius:8px;font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;font-size:.95rem">
+              <span>${SEMOJI[s]} ${SMAP[s]}</span>
+              <span style="background:rgba(255,255,255,.25);padding:1px 9px;border-radius:8px;font-size:.78rem">${groups[s].length} 筆</span>
+            </summary>
+            <div class="exam-hist-list" style="margin-top:.4rem">${items}</div>
+          </details>`;
+        }).join('');
 
         el.innerHTML = `
           <div class="exam-res-section" style="margin-top:1.2rem;display:flex;justify-content:space-between;align-items:center">
-            <span>📊 歷次成績</span>
+            <span>📊 歷次成績(共 ${hist.length} 筆)</span>
             <button class="start-btn secondary" style="padding:.25rem .7rem;font-size:.78rem;margin:0" onclick="clearExamHistory()">🗑️ 清空</button>
           </div>
-          <div class="exam-hist-list">${rows}</div>
-          ${more}`;
+          ${subjGroupsHtml}`;
       }
 
       // 刪除單筆考試紀錄

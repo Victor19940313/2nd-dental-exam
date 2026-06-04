@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v222-hide-cost-when-free';
+const CACHE_NAME = 'dental-all-v223-multi-user-lock';
 const PRECACHE = [
   './',
   './index.html',

@@ -12502,6 +12502,67 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         }
       }
 
+      // ══ 共享鎖機制(多使用者協作不重複跑) ══
+      const LOCK_TTL_MS = 30 * 60 * 1000; // 30 分鐘過期
+      let _locksCache = {}; // {qid: {user, lockedAt, expiresAt}}
+      async function fetchLocksFromGithub(){
+        try {
+          const repo = getGithubRepo();
+          if (!repo) return {};
+          const r = await fetch(`https://cdn.jsdelivr.net/gh/${repo}@main/exam/expl-locks.json?_=${Date.now()}`);
+          if (!r.ok) return {};
+          const raw = await r.json();
+          if (!raw || typeof raw !== 'object') return {};
+          // 過濾過期
+          const now = Date.now();
+          const valid = {};
+          Object.entries(raw).forEach(([qid, v]) => {
+            if (v && typeof v === 'object' && v.expiresAt > now) valid[qid] = v;
+          });
+          _locksCache = valid;
+          return valid;
+        } catch(e) { return _locksCache || {}; }
+      }
+      async function pushLocksToGithub(locks){
+        const token = getGithubToken();
+        const repo = getGithubRepo();
+        if (!token || !repo) return;
+        let sha = null;
+        try {
+          const r = await fetch(`https://api.github.com/repos/${repo}/contents/exam/expl-locks.json`, {
+            headers: {'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json'},
+            cache: 'no-store'
+          });
+          if (r.ok) { const d = await r.json(); sha = d.sha; }
+        } catch(e){}
+        const content = utf8ToBase64(JSON.stringify(locks, null, 2));
+        const body = { message: 'locks (' + Object.keys(locks).length + ' 題)', content };
+        if (sha) body.sha = sha;
+        const r2 = await fetch(`https://api.github.com/repos/${repo}/contents/exam/expl-locks.json`, {
+          method: 'PUT',
+          headers: {'Authorization':'Bearer '+token, 'Content-Type':'application/json', 'Accept':'application/vnd.github+json'},
+          body: JSON.stringify(body)
+        });
+        if (r2.ok) _locksCache = locks;
+      }
+      // 鎖定一批 qids(跑前呼叫),回 Promise
+      async function lockQids(qids){
+        const remote = await fetchLocksFromGithub();
+        const now = Date.now();
+        const user = (typeof _curUserId !== 'undefined') ? _curUserId : 'unknown';
+        const merged = { ...remote };
+        qids.forEach(qid => {
+          merged[qid] = { user, lockedAt: now, expiresAt: now + LOCK_TTL_MS };
+        });
+        await pushLocksToGithub(merged);
+      }
+      // 解鎖一批 qids(跑完呼叫)
+      async function releaseQids(qids){
+        const remote = await fetchLocksFromGithub();
+        const merged = { ...remote };
+        qids.forEach(qid => delete merged[qid]);
+        await pushLocksToGithub(merged);
+      }
       // 樹狀勾選 helpers
       function _updateRegenPickCount(){
         const cbs = document.querySelectorAll('.regen-pick:checked');
@@ -12584,6 +12645,12 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       COST_PER_Q_USD = MODEL_COST_PER_Q[getBgRegenModel()] || MODEL_COST_PER_Q['gemini-2.5-flash-lite'];
 
       function openBgRegenModal(){
+        // 非同步 fetch 最新 locks(背景跑,立即用 cache 渲染)
+        fetchLocksFromGithub().then(() => {
+          // 若 modal 還開著就重新渲染(顯示最新鎖定狀態)
+          const o = document.getElementById('bgregen-overlay');
+          if (o && o.style.display === 'flex' && !_bgRegen.running) openBgRegenModal();
+        }).catch(()=>{});
         const patches = loadExplPatches();
         const doneN = Object.keys(patches).length;
         const totalN = (typeof QS !== 'undefined' ? QS.length : 0);
@@ -12639,12 +12706,22 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               <button onclick="closeBgRegenModal();resumeBgRegenFromSaved()" ${setupOK?'':'disabled'} style="background:#2563eb;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.85rem;margin-top:.5rem">▶ 繼續上次的進度</button>
             </div>` : '';
           const curModel = getBgRegenModel(); // 鎖死 3.5-flash
-          // 樹狀結構: 科目 → 年份 → 次別,排除已重生
+          // 樹狀結構: 科目 → 年份 → 次別,排除已重生 + 已被別人鎖定
           const tree = { ya3: {}, ya4: {}, ya5: {}, ya6: {} };
+          const lockedSessions = {}; // {ya5_106_1: {user, n}}
+          const me = (typeof _curUserId !== 'undefined') ? _curUserId : '';
           (QS || []).forEach(q => {
             if (patches[q.id]) return;
             const s = q.subject, y = q.year, ss = q.session;
             if (!tree[s]) return;
+            const lock = _locksCache[q.id];
+            if (lock && lock.user !== me) {
+              // 別人鎖的:不放進可選樹,改記到 lockedSessions
+              const k = s + '_' + y + '_' + ss;
+              if (!lockedSessions[k]) lockedSessions[k] = { user: lock.user, n: 0, subject: s, year: y, session: ss };
+              lockedSessions[k].n++;
+              return;
+            }
             if (!tree[s][y]) tree[s][y] = {};
             if (!tree[s][y][ss]) tree[s][y][ss] = [];
             tree[s][y][ss].push(q.id);
@@ -12673,7 +12750,23 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             const open = (s === 'ya5') ? ' open' : '';
             return `<details class="regen-subj-group" style="margin-bottom:.4rem;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden"${open}><summary style="cursor:pointer;font-weight:800;padding:.55rem .8rem;background:${SCOLOR[s]};color:white;font-size:.92rem;display:flex;align-items:center;justify-content:space-between;list-style:none"><span>${SEMOJI[s]} ${SMAP[s]}</span><span style="background:rgba(255,255,255,.25);padding:1px 9px;border-radius:8px;font-size:.76rem">${subjTotal} 題</span></summary><div>${yearHtml}</div></details>`;
           }).join('');
-          const treeEmpty = remaining === 0 ? '<div style="text-align:center;color:#9ca3af;padding:2rem">🎉 全部都重生過了!</div>' : treeHtml;
+          // 別人鎖中的次別清單(顯示但不可選)
+          const lockedSubjs = {};
+          Object.values(lockedSessions).forEach(L => {
+            if (!lockedSubjs[L.subject]) lockedSubjs[L.subject] = [];
+            lockedSubjs[L.subject].push(L);
+          });
+          const lockedHtml = Object.keys(lockedSubjs).length > 0 ? (
+            '<div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.55rem .75rem;margin-bottom:.5rem;font-size:.78rem">'
+            + '<div style="font-weight:700;color:#92400e;margin-bottom:.3rem">⏳ 別人正在跑(鎖中,30 分鐘後自動解):</div>'
+            + Object.entries(lockedSubjs).map(([s, list]) => {
+              const SM = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+              const items = list.map(L => `<span style="background:white;color:#92400e;padding:1px 7px;border-radius:5px;font-size:.72rem;margin:1px 3px;display:inline-block">${SM[L.subject]||L.subject} ${L.year}年第${L.session}次 (${L.n}題) · ${escapeHtml(L.user)}</span>`).join('');
+              return items;
+            }).join('')
+            + '</div>'
+          ) : '';
+          const treeEmpty = remaining === 0 ? '<div style="text-align:center;color:#9ca3af;padding:2rem">🎉 全部都重生過了!</div>' : (lockedHtml + (treeHtml || '<div style="text-align:center;color:#9ca3af;padding:2rem">沒有可勾選的題目(其他都被鎖中)</div>'));
           body = `
             ${resumeBlock}
             <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:.55rem .75rem;margin-bottom:.7rem;font-size:.82rem;color:#78350f;display:flex;align-items:center;gap:.4rem">
@@ -12813,6 +12906,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         if (list.length === 0) { showToast('這批題目都已重生'); return; }
         _bgRegen = { running: true, paused: false, total: list.length, done: 0, failed: 0, lastPushAt: 0, list: list, curIdx: 0, model: getBgRegenModel(), startTime: Date.now(), costUSD: 0 };
         _updateBgRegenFloating();
+        // 🔒 push lock,讓別人看到你在跑這批
+        try { await lockQids(list); console.log('[lock] 鎖定 ' + list.length + ' 題'); } catch(e) { console.warn('lock failed', e); }
         showToast('🤖 開始背景跑 ' + list.length + ' 題,你可以繼續做題');
         let consec429 = 0;
         while (_bgRegen.curIdx < _bgRegen.list.length && _bgRegen.running) {
@@ -12872,6 +12967,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             showToast('✅ 已同步到 GitHub,所有使用者下次載入會看到新詳解');
           }
         } catch(e) { console.warn('final push failed', e); showToast('⚠️ GitHub 同步失敗,資料還在本地:' + (e.message||'').slice(0,80)); }
+        // 🔓 release lock (跑完 / 停止都要解鎖,讓別人能跑沒跑完的)
+        try { await releaseQids(_bgRegen.list || []); console.log('[lock] 解鎖完成'); } catch(e) { console.warn('release failed', e); }
         const wasRunning = _bgRegen.running;
         _bgRegen.running = false;
         // 若全部跑完 → 清 state;若中途停 → state 留著等使用者繼續

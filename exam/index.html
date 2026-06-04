@@ -7922,6 +7922,10 @@ ${(q.options || []).join('\n')}
       }
       // 老 API：getGeminiKey 回傳第 1 把（其他地方還在用）
       function getGeminiKey(){ const ks = getGeminiKeys(); return ks[0] || ''; }
+      // ⭐ 付費專用 key — 標記後僅給「背景重生詳解」使用
+      const PAID_KEY_LS = uKey('gemini_paid_key');
+      function getPaidKey(){ return localStorage.getItem(PAID_KEY_LS) || ''; }
+      function setPaidKey(k){ if (k) localStorage.setItem(PAID_KEY_LS, k); else localStorage.removeItem(PAID_KEY_LS); }
       function setGeminiKey(k){ setGeminiKeys(k ? [k] : []); }
       // 冷卻管理：撞額度的 key 暫時跳過
       const _keyCooldowns = {}; // {keyString: expiryTs}
@@ -12045,12 +12049,44 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         row.style.cssText = 'display:flex;gap:.35rem;align-items:center';
         const showCheck = document.getElementById('ai-key-show');
         const inputType = (showCheck && showCheck.checked) ? 'text' : 'password';
+        const paidK = getPaidKey();
+        const isPaid = value && paidK && value === paidK;
         row.innerHTML =
-          '<input type="' + inputType + '" class="ai-key-input" value="' + escapeHtml(value || '') + '" placeholder="AIzaSy..." style="flex:1;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />' +
+          '<input type="' + inputType + '" class="ai-key-input" value="' + escapeHtml(value || '') + '" placeholder="AIzaSy..." style="flex:1;padding:.5rem .7rem;border:1.5px solid ' + (isPaid?'#f59e0b':'#d1d5db') + ';border-radius:6px;font-family:monospace;font-size:.85rem" />' +
+          '<button type="button" class="ai-key-paid-btn" onclick="_togglePaidKey(this)" title="設為付費專用 key(背景重生詳解只用這把)" style="background:' + (isPaid?'#fbbf24':'#f9fafb') + ';color:' + (isPaid?'white':'#9ca3af') + ';border:1px solid ' + (isPaid?'#f59e0b':'#d1d5db') + ';padding:.4rem .5rem;border-radius:6px;font-size:.95rem;cursor:pointer;font-weight:700">' + (isPaid?'⭐':'☆') + '</button>' +
           '<button type="button" onclick="_toggleKeyVisible(this)" title="顯示/隱藏 key" style="background:#f3f4f6;color:#374151;border:1px solid #d1d5db;padding:.4rem .55rem;border-radius:6px;font-size:.9rem;cursor:pointer">👁</button>' +
           '<button type="button" onclick="_copyKey(this)" title="複製這把 key" style="background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;padding:.4rem .55rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">📋</button>' +
           '<button type="button" onclick="this.parentElement.remove()" title="移除這把" style="background:white;color:#dc2626;border:1px solid #fca5a5;padding:.4rem .6rem;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer">✕</button>';
         list.appendChild(row);
+      }
+      // 切換付費 key 標記(同時只有一把,用 input 值寫死避免 index 錯亂)
+      function _togglePaidKey(btn){
+        const row = btn.parentElement;
+        const inp = row.querySelector('input.ai-key-input');
+        if (!inp || !inp.value) { showToast('這格還沒填 key,請先貼上'); return; }
+        const cur = getPaidKey();
+        if (cur === inp.value) {
+          setPaidKey('');
+          showToast('已取消付費 key 標記');
+        } else {
+          setPaidKey(inp.value);
+          showToast('✓ 已標記為付費專用 key');
+        }
+        // 重新渲染所有 row 的 ⭐ 狀態
+        const allRows = document.querySelectorAll('#ai-keys-list > div');
+        const paidNow = getPaidKey();
+        allRows.forEach(r => {
+          const i = r.querySelector('input.ai-key-input');
+          const b = r.querySelector('.ai-key-paid-btn');
+          const isP = i && i.value && i.value === paidNow;
+          if (b) {
+            b.textContent = isP ? '⭐' : '☆';
+            b.style.background = isP ? '#fbbf24' : '#f9fafb';
+            b.style.color = isP ? 'white' : '#9ca3af';
+            b.style.borderColor = isP ? '#f59e0b' : '#d1d5db';
+          }
+          if (i) i.style.borderColor = isP ? '#f59e0b' : '#d1d5db';
+        });
       }
       // 切換顯示/隱藏單把 key
       function _toggleKeyVisible(btn){

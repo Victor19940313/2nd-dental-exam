@@ -5353,6 +5353,10 @@ ${(q.options || []).join('\n')}
         if (!text) return "";
         text = _stripLatex(text);
         text = _splitInlineOptions(text);
+        // 移除「孤立的 dash / bullet 行」(NotebookLM 偶爾留下,造成排版破洞)
+        text = text.replace(/\n\s*[-–—*•·]\s*\n/g, '\n\n');
+        // 多個連續空行壓成一個
+        text = text.replace(/\n{3,}/g, '\n\n');
         // Remove answer-confirmation preamble sentences
         text = text.replace(
           /^[^\n。！]*(?:你的答案|太棒了|完全正確|也是正確)[^\n。！]*[。！！]\s*/g,

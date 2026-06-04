@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v228-fix-option-label-as-section';
+const CACHE_NAME = 'dental-all-v229-strip-orphan-dash';
 const PRECACHE = [
   './',
   './index.html',

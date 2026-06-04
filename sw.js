@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v224-modal-loop-fix';
+const CACHE_NAME = 'dental-all-v225-no-cost-display';
 const PRECACHE = [
   './',
   './index.html',

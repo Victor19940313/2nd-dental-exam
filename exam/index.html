@@ -12688,10 +12688,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
                 <span>✓ ${_bgRegen.done} 成功 · ❌ ${_bgRegen.failed} 失敗</span>
                 <span>速度 ${Math.round(speed)}/分 · 剩 ${eta}</span>
               </div>
-              ${getPaidKey() ? `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(217,119,6,.3);font-size:.82rem;color:#7c2d12;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.3rem">
-                <span>💰 已花: <strong>NT$${costTWD.toFixed(2)}</strong> (USD $${costUSD.toFixed(4)})</span>
-                <span>還需估算: NT$${estRemainTWD.toFixed(1)}</span>
-              </div>` : `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(217,119,6,.3);font-size:.82rem;color:#15803d;text-align:center">💚 免費 key 跑,不扣錢</div>`}
+              <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(217,119,6,.3);font-size:.82rem;color:#15803d;text-align:center">💚 免費 key 跑,不扣錢</div>
               <div style="display:flex;gap:.4rem;margin-top:.7rem">
                 ${_bgRegen.paused
                   ? `<button onclick="_bgRegen.paused=false;openBgRegenModal()" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">▶ 繼續</button>`
@@ -12888,10 +12885,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             document.body.appendChild(badge);
           }
           const pct = _bgRegen.total > 0 ? Math.round((_bgRegen.done + _bgRegen.failed) / _bgRegen.total * 100) : 0;
-          // 用免費 key 跑(沒 paid key 標記)→ 不顯示費用
-          const showCost = !!getPaidKey();
-          const costTxt = showCost ? (' · NT$' + ((_bgRegen.costUSD || 0) * USD_TO_TWD).toFixed(2)) : '';
-          badge.innerHTML = (_bgRegen.paused ? '⏸' : '🤖') + ' ' + (_bgRegen.done + _bgRegen.failed) + '/' + _bgRegen.total + ' (' + pct + '%)' + costTxt;
+          // 完全不顯示費用(走免費路線)
+          badge.innerHTML = (_bgRegen.paused ? '⏸' : '🤖') + ' ' + (_bgRegen.done + _bgRegen.failed) + '/' + _bgRegen.total + ' (' + pct + '%)';
         } else if (badge) { badge.remove(); }
       }
 

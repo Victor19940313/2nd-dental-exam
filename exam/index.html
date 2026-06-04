@@ -1620,6 +1620,24 @@
         border-top: 1px solid #e9d5ff;
         color: #334155;
       }
+      /* 詳解內 nested list 全部拉平到同一個縮排,避免 ABCD 錯位 */
+      .nb-expl-content ul, .nb-expl-content ol,
+      .gemini-expl-content ul, .gemini-expl-content ol,
+      .clinical-expl-content ul, .clinical-expl-content ol {
+        padding-left: 1.2rem;
+        margin: .4rem 0;
+      }
+      .nb-expl-content ul ul, .nb-expl-content ol ol,
+      .nb-expl-content ul ol, .nb-expl-content ol ul,
+      .gemini-expl-content ul ul, .gemini-expl-content ol ol,
+      .gemini-expl-content ul ol, .gemini-expl-content ol ul {
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+      }
+      /* 空 li (NotebookLM markdown 留下的孤立 dash) 直接隱藏 */
+      .nb-expl-content li:empty,
+      .gemini-expl-content li:empty,
+      .clinical-expl-content li:empty { display: none !important; }
       .no-expl {
         color: #94a3b8;
         font-size: 0.8rem;
@@ -5142,10 +5160,21 @@
         return html;
       }
 
+      // HTML 後處理:清掉「只有 dash 內容的 li」+ 空段落
+      function _cleanExplHtml(html){
+        if (!html) return html;
+        // 清掉內容只有 dash/bullet/空白的 <li>
+        html = html.replace(/<li[^>]*>\s*[-–—*•·]?\s*<\/li>/g, '');
+        // 清掉空 <p> 或只有 dash 的 <p>
+        html = html.replace(/<p[^>]*>\s*[-–—*•·]?\s*<\/p>/g, '');
+        // 清掉空 <ul>/<ol>(全部 li 被清掉後)
+        html = html.replace(/<(ul|ol)[^>]*>\s*<\/\1>/g, '');
+        return html;
+      }
       function nbExplBlock(q) {
         const nb = q && q.explanation_notebooklm;
         if (!nb || !nb.trim()) return "";
-        return `<details class="nb-expl"><summary>📚 NotebookLM 詳解（依據參考書）</summary><div class="nb-expl-content">${formatExpl(nb)}</div></details>`;
+        return `<details class="nb-expl"><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content">${_cleanExplHtml(formatExpl(nb))}</div></details>`;
       }
 
       function clinicalExplBlock(q) {
@@ -5153,7 +5182,7 @@
         if (!c || !c.trim()) return "";
         const lvl = q.clinical_level || "";
         const tag = lvl === "重點" || lvl === "重點(深度)" ? `<span class="clinical-level">⭐ ${lvl}</span>` : "";
-        return `<details class="clinical-expl"><summary>🏥 臨床意義${tag}</summary><div class="clinical-expl-content">${formatExpl(c)}</div></details>`;
+        return `<details class="clinical-expl"><summary>🏥 臨床意義${tag}</summary><div class="clinical-expl-content">${_cleanExplHtml(formatExpl(c))}</div></details>`;
       }
 
       function geminiExplBlock(expl, src, qid) {
@@ -5165,6 +5194,7 @@
         formatted = formatted.replace(/〔背景[：:]([\s\S]*?)〕/g, (m, content) =>
           `<span class="bg-note">📌 背景:${content}</span>`
         );
+        formatted = _cleanExplHtml(formatted);
         return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}</div></details>`;
       }
       // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)

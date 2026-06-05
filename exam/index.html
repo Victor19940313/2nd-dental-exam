@@ -6963,6 +6963,9 @@ ${(q.options || []).join('\n')}
         }
         _reviewEntry = working;
         _reviewIdx = 0;
+        // 新的重看試卷 session → 清掉舊的返回狀態(避免「回試卷」按鈕指向舊紀錄)
+        window._reviewReturnState = null;
+        if (typeof _hideReviewReturnBtn === 'function') _hideReviewReturnBtn();
         document.getElementById('exam-review-modal').style.display = 'flex';
         const fallbackTag = isFallback ? '　·　⚠️ 僅錯題（完整資料缺失）' : '';
         const meta = `${entry.date}　·　${entry.label}　·　${entry.score} / ${entry.fullScore} 分　·　${entry.correct}/${entry.total} 題${fallbackTag}`;
@@ -7041,11 +7044,31 @@ ${(q.options || []).join('\n')}
           ? `<div style="margin-top:.8rem">${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}</div>`
           : '<div style="margin-top:.8rem;color:#9ca3af;font-size:.85rem;text-align:center;padding:.8rem">尚無詳解</div>';
 
+        // 題目標記列(同主畫面的標記:狀態+錯題本+次數)
+        const curStatus = st.status || 'none';
+        const flagged = !!st.flagged;
+        const cnt = st.count || 0;
+        const sBtn = (val, emoji, label, color) => {
+          const on = curStatus === val;
+          return `<button onclick="reviewMarkQ('${val}')" title="${label}" style="background:${on?color:'#fff'};color:${on?'#fff':'#374151'};border:1.5px solid ${color};border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">${emoji} ${label}</button>`;
+        };
+        const markRowHtml = `
+          <div style="display:flex;align-items:center;gap:.35rem;margin-bottom:.6rem;flex-wrap:wrap;padding:.45rem .55rem;background:#fafafa;border:1px dashed #d1d5db;border-radius:8px">
+            <button onclick="reviewToggleFlag()" title="加入/移出錯題本" style="background:${flagged?'#f59e0b':'#fff'};color:${flagged?'#fff':'#92400e'};border:1.5px solid #f59e0b;border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">🚩 ${flagged?'已收錄':'錯題本'}</button>
+            <span style="font-size:.75rem;color:#6b7280">標記:</span>
+            ${sBtn('understood','🟢','簡單','#22c55e')}
+            ${sBtn('guessed','🤔','猜的','#a78bfa')}
+            ${sBtn('learning','🟡','再努力','#eab308')}
+            ${sBtn('give_up','🔴','送他吧','#ef4444')}
+            <span style="font-size:.74rem;color:#9ca3af;margin-left:auto">已寫過 ${cnt} 次</span>
+          </div>`;
+
         el.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;flex-wrap:wrap;gap:.4rem">
             <div style="font-size:.85rem;color:#6b7280">第 ${idx+1} 題　·　${escapeHtml(q.meta||q.id)}${_qNotebookBadge(q.id)}</div>
             <div style="font-weight:800;color:${statusColor}">${status}　·　你答 ${userL}　·　正解 ${corrL}</div>
           </div>
+          ${markRowHtml}
           <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap">
             ${_addNbBtnHTML(q.id, 'onclick="reviewAddToNotebook()"', 'large')}
             <button onclick="reviewPeekNotebook()" style="background:#ecfeff;color:#0369a1;border:1.5px solid #7dd3fc;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;cursor:pointer">📖 偷看筆記</button>
@@ -7055,6 +7078,33 @@ ${(q.options || []).join('\n')}
           ${optionsHtml}
           ${explHtml}
         `;
+      }
+      // 重看試卷裡按標記:更新 qState,立即重渲染
+      async function reviewMarkQ(status){
+        const q = _currentReviewQ();
+        if (!q) return;
+        if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
+        qState[q.id].status = qState[q.id].status === status ? 'none' : status;
+        await persist(q.id);
+        if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        renderReviewQ(_reviewIdx);
+        showToast({
+          give_up: '🔴 送他吧',
+          learning: '🟡 再努力!',
+          guessed: '🤔 猜的',
+          understood: '🟢 簡單',
+          none: '標記取消'
+        }[qState[q.id].status]);
+      }
+      async function reviewToggleFlag(){
+        const q = _currentReviewQ();
+        if (!q) return;
+        if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
+        qState[q.id].flagged = !qState[q.id].flagged;
+        await persist(q.id);
+        if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        renderReviewQ(_reviewIdx);
+        showToast(qState[q.id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
       }
       // 重看試卷內按「加入筆記」「偷看筆記」— 拿當前 review 題傳給原本函數
       function _currentReviewQ(){
@@ -7150,7 +7200,48 @@ ${(q.options || []).join('\n')}
       function reviewPeekNotebook(){
         const q = _currentReviewQ();
         if (!q) { showToast('找不到題目'); return; }
+        // 標記:這次 peek 是從重看試卷叫的(讓 openNotebookAt 知道要保存返回狀態)
+        window._reviewPeekActive = true;
         if (typeof peekNotebook === 'function') peekNotebook(q);
+      }
+      // 從筆記本回到剛剛的「重看試卷」(自動還原當時看的那一題)
+      function returnToReview(){
+        const r = window._reviewReturnState;
+        if (!r) return;
+        window._reviewReturnState = null;
+        _hideReviewReturnBtn();
+        _reviewEntry = r.entry;
+        _reviewIdx = r.idx;
+        const modal = document.getElementById('exam-review-modal');
+        if (modal) modal.style.display = 'flex';
+        document.getElementById('exam-review-meta').textContent = r.meta || '';
+        renderReviewGrid();
+        renderReviewQ(r.idx);
+      }
+      function _showReviewReturnBtn(){
+        let btn = document.getElementById('review-return-btn');
+        const r = window._reviewReturnState;
+        const notebookScreen = document.getElementById('screen-notebook');
+        if (r && notebookScreen) {
+          if (!btn) {
+            btn = document.createElement('button');
+            btn.id = 'review-return-btn';
+            // 放在 screen-notebook 內 → 切換頁面時 parent display:none 會自動隱藏
+            btn.style.cssText = 'position:fixed;top:.7rem;right:.7rem;z-index:9998;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.55rem 1rem;border-radius:22px;box-shadow:0 4px 14px rgba(124,58,237,.45);font-size:.82rem;font-weight:700;cursor:pointer';
+            btn.onclick = returnToReview;
+            notebookScreen.appendChild(btn);
+          } else if (btn.parentElement !== notebookScreen) {
+            notebookScreen.appendChild(btn);
+          }
+          btn.textContent = `🔙 回試卷 · 第 ${r.idx + 1} 題`;
+          btn.style.display = '';
+        } else if (btn) {
+          btn.style.display = 'none';
+        }
+      }
+      function _hideReviewReturnBtn(){
+        const btn = document.getElementById('review-return-btn');
+        if (btn) btn.style.display = 'none';
       }
 
       function showExamResults() {
@@ -9548,6 +9639,18 @@ ${dec.reasoning || ''}
       // ── Notebook screen render ──
       function showNotebook(){
         loadNotebook();
+        // 若 peek 是從重看試卷叫的 → 保存返回狀態 + 隱藏試卷 modal
+        if (window._reviewPeekActive && _reviewEntry) {
+          const metaEl = document.getElementById('exam-review-meta');
+          window._reviewReturnState = {
+            entry: _reviewEntry,
+            idx: _reviewIdx,
+            meta: metaEl ? metaEl.textContent : ''
+          };
+          const rm = document.getElementById('exam-review-modal');
+          if (rm) rm.style.display = 'none';
+        }
+        window._reviewPeekActive = false;
         ['screen-home','screen-practice','screen-db','screen-browse','screen-wrongbook','screen-exam-results','screen-scroll-exam','screen-fixexam'].forEach(s => {
           const el = document.getElementById(s);
           if (el) el.style.display = 'none';
@@ -9565,6 +9668,8 @@ ${dec.reasoning || ''}
         if (!localStorage.getItem(uKey('onboarding_seen')) && !getGeminiKey()) {
           setTimeout(() => showOnboarding(), 300);
         }
+        // 若有 review 返回狀態(從重看試卷的偷看筆記跳過來) → 顯示「🔙 回試卷」按鈕
+        if (typeof _showReviewReturnBtn === 'function') _showReviewReturnBtn();
       }
       function renderNotebookIfVisible(){
         const el = document.getElementById('screen-notebook');
@@ -14235,8 +14340,21 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       }
       function openNotebookAt(chId){
         closePeekNotebook();
+        // 若 peek 是從重看試卷叫的 → 保存返回狀態 + 把試卷 modal 暫時隱藏
+        if (window._reviewPeekActive && _reviewEntry) {
+          const metaEl = document.getElementById('exam-review-meta');
+          window._reviewReturnState = {
+            entry: _reviewEntry,
+            idx: _reviewIdx,
+            meta: metaEl ? metaEl.textContent : ''
+          };
+          const modal = document.getElementById('exam-review-modal');
+          if (modal) modal.style.display = 'none';
+        }
+        window._reviewPeekActive = false;
         currentChapterId = chId;
         showNotebook();
+        _showReviewReturnBtn();
       }
       function closePeekNotebook(){
         document.getElementById('peek-overlay').style.display = 'none';

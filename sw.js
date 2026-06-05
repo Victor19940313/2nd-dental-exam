@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v247-review-marks-and-return';
+const CACHE_NAME = 'dental-all-v248-teacher-persona';
 const PRECACHE = [
   './',
   './index.html',

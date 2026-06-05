@@ -7,6 +7,13 @@
       content="width=device-width, initial-scale=1.0"
     />
     <title>🦷 牙醫國考練習本</title>
+    <script>
+      // 從首頁直接連到筆記本(#notebook):在頁面 paint 前就先隱藏考試 home,
+      // 避免閃一下「考試首頁」再跳到筆記本
+      if (location.hash === '#notebook') {
+        document.write('<style>#screen-home,#screen-practice,#screen-scroll-exam,#screen-exam-results,#screen-wrongbook{display:none!important}</style>');
+      }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       :root {
@@ -3253,8 +3260,8 @@
       <div class="header-right">
         <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
         <span class="header-user" id="header-user" title="目前使用者"></span>
-        <button class="btn-mode" id="btn-notes" onclick="location.href='../index.html'" title="回到互動筆記首頁">
-          回到筆記頁
+        <button class="btn-mode" id="btn-notes" onclick="location.href='../index.html'" title="回到首頁選單">
+          回到選單
         </button>
         <button class="btn-mode active" id="btn-home" onclick="showHome()">
           考試首頁

@@ -5248,7 +5248,19 @@
         return `你是正在準備牙醫國考的考生,用第一人稱、**邏輯化**寫這題的作答思路。
 **絕對不是寫感覺**,是寫「有依據的推理」。
 
-🚨【最重要兩條鐵律 — 違反就重寫】
+🚨🚨🚨【最高指導原則:標準答案不可違抗】🚨🚨🚨
+
+**正確答案是 (${correctTxt}),這是國家考試的官方標準答案,絕對正確,不可質疑、不可推翻、不可改寫。**
+
+- 你的工作是**解釋為什麼 (${correctTxt}) 是正確的**,不是判斷哪個選項對
+- 就算你覺得標準答案有問題,也**必須**寫成「(${correctTxt}) 是對的」並補上支持它的理由
+- 嚴禁出現「答案應該是 X 才對」「我覺得正解應該是 Y」「(${correctTxt}) 看起來不太對」這種挑戰標準答案的話
+- 嚴禁在 ✓ 跟 ✗ 標記時搞反:正確答案 (${correctTxt}) **一定要打 ✓**,其餘選項打 ✗
+- 找錯題的情況下:正確答案 (${correctTxt}) 是「錯誤的那個選項」,要詳寫它錯在哪;其他三個打 ✓
+
+違反這條會被使用者直接刪掉整篇,等於白寫。
+
+🚨【其他兩條鐵律 — 違反就重寫】
 
 1. **禁止主觀詞**:「感覺」「印象」「好像」「應該」「我猜」「不太符合」「有點怪」「不太對」「比較少見」等
 2. **每個判斷都要給具體依據**:不准寫「(A) 砍」就結束,要寫「為什麼砍 — 機制錯/解剖位置錯/數字錯/時間淘汰/互斥矛盾」
@@ -5304,7 +5316,7 @@
 5. **關鍵字觸發**:「看到 eugenol → 直接想到 IRM 毒性」
 6. **數字 / 解剖位置 / 時間淘汰**
 
-最後一句:「最後留 **(X)**」一句話結尾,不准再解釋。
+最後一句:「最後留 **(${correctTxt})**」一句話結尾(**必須是 (${correctTxt}),不可寫其他字母**),不准再解釋。
 
 **【關鍵記憶】**
 > 💡 一句話,讓下次看到關鍵字直接知道答案。
@@ -5329,7 +5341,9 @@
 題目: ${q.question}
 選項:
 ${(q.options || []).join('\n')}
-正確答案: ${correctTxt}
+
+🚨 **正確答案: (${correctTxt})** ← 國考官方標準答案,不可違抗
+你的詳解必須以 (${correctTxt}) 為正解,不可寫成其他選項是正解。
 
 直接輸出 markdown(不要包 \`\`\` 或前言)。`;
       }
@@ -5345,10 +5359,7 @@ ${(q.options || []).join('\n')}
         showToast('🤖 AI 生成中... 約 5-15 秒');
         _silentResetCooldowns();
         try {
-          const prompt = buildRegenExplPrompt(q);
-          const raw = await callGemini(prompt);
-          const cleaned = _stripLatex((raw || '').trim());
-          if (!cleaned) throw new Error('AI 回傳空白');
+          const cleaned = await _generateExplWithCheck(q);
           const st = getS(qid);
           st.expl_override = cleaned;
           await persist(qid);
@@ -5377,6 +5388,48 @@ ${(q.options || []).join('\n')}
       }
 
       // 把 LaTeX 標記轉成 Unicode(網站不支援 LaTeX 渲染,但 AI 偶爾會寫進來)
+      // 抓 AI 詳解結尾寫的答案字母(支援「最後留 (X)」「答案是 (X)」等)
+      function _extractFinalAnswerLetter(text){
+        if (!text) return null;
+        const patterns = [
+          /最後留[^\(\n]{0,8}\(([A-E])\)/,
+          /最後[^\(\n]{0,8}\(([A-E])\)/,
+          /答案[是為][^\(\n]{0,8}\(([A-E])\)/,
+          /正解[是為][^\(\n]{0,8}\(([A-E])\)/,
+          /選\s*\(([A-E])\)/
+        ];
+        for (const p of patterns) {
+          const m = text.match(p);
+          if (m) return m[1];
+        }
+        return null;
+      }
+      // 包一層:AI 生成詳解後檢查結論是否符合標準答案,不符就重試一次
+      async function _generateExplWithCheck(q, opts){
+        const LETTERS = ['A','B','C','D','E'];
+        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const correctSet = new Set(correctArr.map(i => LETTERS[i]));
+        const correctTxt = Array.from(correctSet).join('/');
+
+        const prompt = buildRegenExplPrompt(q);
+        let raw = await callGemini(prompt, null, opts);
+        let cleaned = _stripLatex((raw || '').trim());
+        if (!cleaned) throw new Error('AI 回應空白');
+
+        const found = _extractFinalAnswerLetter(cleaned);
+        if (found && !correctSet.has(found)) {
+          console.warn('[expl verify] AI 寫成 (' + found + ') 但正解是 (' + correctTxt + '),重試');
+          const retryPrompt = prompt + `\n\n🚨🚨🚨 上一次生成把 (${found}) 當作正解 —— 這是錯的!\n標準答案是 (${correctTxt}),不是 (${found})。\n請重新寫,結論必須是「最後留 **(${correctTxt})**」。\n所有 ✓ 必須給 (${correctTxt}),其餘選項給 ✗(找錯題就反過來)。`;
+          const raw2 = await callGemini(retryPrompt, null, opts);
+          const cleaned2 = _stripLatex((raw2 || '').trim());
+          const found2 = _extractFinalAnswerLetter(cleaned2);
+          if (cleaned2 && (!found2 || correctSet.has(found2))) return cleaned2;
+          // 重試也失敗 → 丟錯讓上層處理
+          throw new Error('AI 連續 2 次答錯(' + (found2 || found) + ' vs 正解 ' + correctTxt + ')');
+        }
+        return cleaned;
+      }
+
       function _stripLatex(s){
         if (!s) return s;
         // 1. $\text{xxx}$ 包住的純文字
@@ -13347,10 +13400,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           try {
             const q = (QS || []).find(x => x.id === qid);
             if (!q) { _bgRegen.failed++; _updateBgRegenFloating(); continue; }
-            const prompt = buildRegenExplPrompt(q);
-            // 用 callGemini round-robin 所有 key (撞 quota 自動換下一把)
-            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096, model: getBgRegenModel() });
-            const cleaned = _stripLatex((raw || '').trim());
+            // 用 callGemini round-robin 所有 key + 驗證答案字母,不符自動重試
+            const cleaned = await _generateExplWithCheck(q, { maxOutputTokens: 4096, model: getBgRegenModel() });
             if (!cleaned || cleaned.length < 30) throw new Error('AI 回應太短');
             // 用新格式記 patch(帶 model 資訊,會自動更新「📖 來源」標籤)
             recordPatch(qid, cleaned, _bgRegen.model);
@@ -13433,9 +13484,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           try {
             const q = (QS || []).find(x => x.id === qid);
             if (!q) { _bgRegen.failed++; continue; }
-            const prompt = buildRegenExplPrompt(q);
-            const raw = await callGemini(prompt, null, { maxOutputTokens: 4096, model: getBgRegenModel() });
-            const cleaned = _stripLatex((raw || '').trim());
+            const cleaned = await _generateExplWithCheck(q, { maxOutputTokens: 4096, model: getBgRegenModel() });
             if (!cleaned || cleaned.length < 30) throw new Error('AI 回應太短');
             recordPatch(qid, cleaned, _bgRegen.model);
             const qq = (QS || []).find(x => x.id === qid);

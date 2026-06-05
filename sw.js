@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v244-merge-chapters-tool';
+const CACHE_NAME = 'dental-all-v245-expl-answer-verify';
 const PRECACHE = [
   './',
   './index.html',

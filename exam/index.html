@@ -8546,24 +8546,26 @@ ${(q.options || []).join('\n')}
 【任務】
 把這題納入我的「核心概念筆記本」。**不是寫題目詳解**，是整理「將來再遇到同概念題目都能答對」的核心重點。同概念多題之間要**合併、去重、累積**，不要每題重寫。
 
-⚠️【最高指導原則：subtopic 精準一致才能 append】
-**只有當新題的 subtopic 跟舊章節 subtopic 完全相同(或極度相近)時才可以 append**。subtopic 不同就一律 new_chapter,就算大方向相同也不行。
+⚠️【最高指導原則：寧可併章太雜,也不要開太多重複概念的章】
+**新題只要跟某個現有章節「大主題相關」就 append**。subtopic 不必完全相同,只要兩題在臨床上會被當成「同一個範疇」討論,就算 append。
 
-✅ 可以 append 的例子:
-- 舊章 subtopic="Phonetics 發音" + 新題也在講「發音」 → append
-- 舊章 subtopic="Border seal 邊緣封閉" + 新題在講「post-dam 後堤封閉」 → append(都屬於邊緣封閉)
+✅ 應該 append 的例子(往這邊靠):
+- 舊章在講「植牙的骨頭條件」+ 新題在講「植體間距與齒間乳頭」→ append(同屬植牙術前評估,放同一章方便對讀)
+- 舊章在講「Complete Denture 印模」+ 新題在講「Complete Denture 邊緣封閉」→ append(同屬 CD 印模/邊緣處理)
+- 舊章在講「根管沖洗液」+ 新題在講「不同沖洗液濃度」→ append
+- 舊章 subtopic 跟新題 subtopic 不同,但兩題會出現在同一個臨床決策流程裡 → append
 
-❌ 不可以 append 的例子(都要 new_chapter):
-- 舊章 subtopic="Tissue behavior 組織行為" + 新題在講「發音」 → 不同子主題,new_chapter
-- 舊章 subtopic="Tissue behavior 組織行為" + 新題在講「上顎植體支持式義齒」 → 不同子主題,new_chapter
-- 兩者都屬於「Complete Denture 全口義齒」**不算同 subtopic**,大分類相同 ≠ subtopic 相同
+❌ 才該 new_chapter 的例子(真的完全不同主題):
+- 舊章在講「植牙的骨頭條件」+ 新題在講「全口義齒的咬合垂直高度」→ 完全不同的修復方式,new_chapter
+- 舊章在講「根管沖洗液」+ 新題在講「牙周翻瓣手術」→ 牙髓 vs 牙周,new_chapter
+- 候選章節跟新題沒有任何概念重疊 → new_chapter
 
-判斷流程:
-1. **先決定新題的 subtopic**(精準到「發音 / 邊緣封閉 / 組織行為 / 植體支持義齒 / 咬合 / 美觀」這種顆粒度,不要寫成「Complete Denture」這種大分類)
-2. **看候選章節中有沒有 subtopic 完全相同的**
-   - 有 → append 到那一章
-   - 沒有 → new_chapter(章節名要精準寫出 subtopic,例如「Phonetics in Complete Denture 全口義齒發音問題」)
-3. 不要因為「都屬於 Complete Denture」就硬 append
+判斷流程(預設 append):
+1. **看候選章節中,有沒有任何一章跟新題「同一個大概念」**(植牙 / 全口義齒 / 根管治療 / 牙周炎 / 矯正力學...)
+   - 有 → 一律 append 到最接近那章,**就算 subtopic 不完全相同也 append**
+   - 真的完全沒有同概念的 → 再看「其他章節」清單
+   - 都沒有 → 才 new_chapter
+2. 不確定要 append 還是 new_chapter → **永遠選 append**(寧可一章塞 20 題也好過開 10 個小章)
 
 🚨【絕對禁止:跨科目分類】
 題目科目是 **${SMAP[q.subject] || q.subject}**。下面看到的所有章節(candidates + others)**都已經過濾為 ${SMAP[q.subject] || q.subject} 科目**,你看不到其他科的章節。
@@ -8603,8 +8605,8 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 3. **決定子主題（subtopic）— 必填**，章節在領域中的細分主題
    * 寫法：英文專有名詞為主 + 括號中文，**簡短**（2-5 字英文 + 中文）
    * **盡量沿用現有章節已有的 subtopic**（看現有索引），同主題的章節應該 group 在同一 subtopic
-   * 例：「Pulp 牙髓」「Cementum 牙骨質」「Dentin 牙本質」「Microbiology 微生物」「Diagnosis 診斷」「Periodontitis 牙周炎」「Major connectors 主連接體」「Clasp 牙鈎」
-   * **不要每章一個 subtopic** — 一個 subtopic 應該能涵蓋 2-5 章
+   * 例：「Pulp 牙髓」「Cementum 牙骨質」「Dentin 牙本質」「Microbiology 微生物」「Diagnosis 診斷」「Periodontitis 牙周炎」「Major connectors 主連接體」「Clasp 牙鈎」「Implant 植牙」
+   * **一個 subtopic 應該涵蓋 5-10 章**（往粗的方向取，不要切太細）
 4. 行動三選一（**重要：預設 append，new_chapter 是最後選擇**）：
    - **append**: 屬於某現有章節但有新重點 → 整段重寫該章（合併舊內容+新重點，去重）
      * 只要強候選章節有**任一個 concept / subtopic / 內容**跟新題重疊 → 一律 append 到那章

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v242-direct-notebook-no-flash';
+const CACHE_NAME = 'dental-all-v243-loosen-chapter-split';
 const PRECACHE = [
   './',
   './index.html',

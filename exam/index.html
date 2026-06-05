@@ -6710,9 +6710,33 @@ ${(q.options || []).join('\n')}
       }
       // 從歷次紀錄推主科:看 qids 或 wrongs 第一個 qid 的前綴
       function _examHistSubject(h){
-        const firstQid = (h.qids && h.qids[0]) || (h.wrongs && h.wrongs[0] && h.wrongs[0].qid) || '';
-        const s = firstQid.split('-')[0];
-        return ['ya3','ya4','ya5','ya6'].includes(s) ? s : '';
+        const VALID = ['ya3','ya4','ya5','ya6'];
+        // 1. 掃所有 qids,取多數決(處理混合科目或第一題缺失的情況)
+        const counts = { ya3:0, ya4:0, ya5:0, ya6:0 };
+        const collect = (qid) => {
+          if (!qid) return;
+          const s = String(qid).split('-')[0];
+          if (counts[s] != null) counts[s]++;
+        };
+        (h.qids || []).forEach(collect);
+        // qids 沒有 → 改掃 wrongs
+        if (!Object.values(counts).some(v => v > 0)) {
+          (h.wrongs || []).forEach(w => collect(w && w.qid));
+        }
+        // 取最多的
+        let winner = '';
+        let maxN = 0;
+        for (const s of VALID) {
+          if (counts[s] > maxN) { winner = s; maxN = counts[s]; }
+        }
+        if (winner) return winner;
+        // 2. fallback:h.subjects(saveExamHistory 有存)
+        const subjs = h.subjects || [];
+        for (const s of subjs) {
+          if (VALID.includes(s)) return s;
+        }
+        // 3. 真的都不知道 → 其他
+        return '';
       }
       function renderExamHistory(containerId) {
         const el = document.getElementById(containerId);

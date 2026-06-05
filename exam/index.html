@@ -4093,6 +4093,7 @@
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
+          <button class="nb-tb-btn" onclick="scanWrongAnswerExpls()" title="掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的題目" style="background:#fee2e2;border-color:#f87171;color:#991b1b">🔍 找答錯</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目分類,找出誤分章節並一鍵修正">🔧 修復分類</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
@@ -5428,6 +5429,98 @@ ${(q.options || []).join('\n')}
           throw new Error('AI 連續 2 次答錯(' + (found2 || found) + ' vs 正解 ' + correctTxt + ')');
         }
         return cleaned;
+      }
+
+      // 🔍 掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的
+      function scanWrongAnswerExpls(){
+        if (typeof QS === 'undefined' || !QS.length) { showToast('題庫尚未載入'); return; }
+        const LETTERS = ['A','B','C','D','E'];
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const patches = loadExplPatches();
+        const wrong = [];
+        QS.forEach(q => {
+          if (!q.explanation) return;
+          // 只掃 Gemini 系列詳解(NotebookLM 來源不掃)
+          const src = (q.explanation_source || '').toLowerCase();
+          const isFromGemini = !src || /gemini|flash|pro\-/i.test(src) || !!patches[q.id];
+          if (!isFromGemini) return;
+          const found = _extractFinalAnswerLetter(q.explanation);
+          if (!found) return; // 抓不到結論字母 → 跳過(不算答錯,可能是格式不同)
+          const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+          const correctSet = new Set(correctArr.map(i => LETTERS[i]));
+          if (!correctSet.has(found)) {
+            wrong.push({
+              qid: q.id,
+              meta: q.meta || q.id,
+              subject: SMAP[q.subject] || q.subject,
+              question: (q.question || '').slice(0, 60),
+              aiAns: found,
+              correctAns: Array.from(correctSet).join('/')
+            });
+          }
+        });
+
+        let overlay = document.getElementById('wrong-ans-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'wrong-ans-overlay';
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+          document.body.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+
+        if (wrong.length === 0) {
+          overlay.innerHTML = `<div style="background:white;border-radius:12px;max-width:480px;width:100%;padding:1.2rem">
+            <h3 style="margin:0 0 .8rem;color:#166534">🔍 找答錯</h3>
+            <div style="background:#dcfce7;border:1.5px solid #22c55e;border-radius:8px;padding:1rem;text-align:center;color:#166534">
+              <div style="font-size:1.1rem;margin-bottom:.4rem">✓ 沒找到答錯的詳解</div>
+              <div style="font-size:.82rem;color:#15803d">掃了 ${QS.length} 題,Gemini 結論都跟標準答案一致</div>
+            </div>
+            <button onclick="document.getElementById('wrong-ans-overlay').style.display='none'" style="width:100%;margin-top:1rem;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">關閉</button>
+          </div>`;
+          return;
+        }
+
+        // 依科目分組
+        const bySubj = {};
+        wrong.forEach(w => { (bySubj[w.subject] = bySubj[w.subject] || []).push(w); });
+        const subjBlocks = Object.keys(bySubj).map(sn => {
+          const items = bySubj[sn].slice(0, 50).map(w => `
+            <li style="padding:.35rem 0;border-bottom:1px solid #f3f4f6;font-size:.82rem">
+              <span style="font-weight:700;color:#374151">${w.meta}</span>
+              <span style="background:#fee2e2;color:#991b1b;padding:1px 6px;border-radius:8px;font-size:.7rem;margin-left:.3rem">AI 寫 (${w.aiAns}) → 正解 (${w.correctAns})</span>
+              <div style="color:#6b7280;font-size:.75rem;margin-top:2px">${w.question}...</div>
+            </li>
+          `).join('');
+          const moreInfo = bySubj[sn].length > 50 ? `<div style="font-size:.75rem;color:#9ca3af;padding:.3rem">…還有 ${bySubj[sn].length - 50} 題沒列出(但會一起重跑)</div>` : '';
+          return `<details style="background:#f9fafb;border-radius:8px;padding:.6rem;margin-bottom:.5rem">
+            <summary style="cursor:pointer;font-weight:700;color:#991b1b">${sn} (${bySubj[sn].length} 題)</summary>
+            <ul style="list-style:none;margin:.4rem 0 0;padding:0">${items}</ul>
+            ${moreInfo}
+          </details>`;
+        }).join('');
+
+        const allQids = wrong.map(w => w.qid);
+        window._wrongAnsQids = allQids;
+
+        overlay.innerHTML = `<div style="background:white;border-radius:12px;max-width:680px;width:100%;max-height:90vh;overflow:auto;padding:1.2rem">
+          <h3 style="margin:0 0 .8rem;color:#991b1b">🔍 找到 ${wrong.length} 題詳解答錯</h3>
+          <div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;margin-bottom:.8rem;font-size:.85rem;color:#92400e">
+            這些題目的 Gemini 詳解結論跟標準答案不符。可以一鍵全部重跑(用新版會驗證答案+不符自動重試)。
+          </div>
+          ${subjBlocks}
+          <div style="display:flex;gap:.5rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid #e5e7eb;position:sticky;bottom:0;background:white">
+            <button onclick="document.getElementById('wrong-ans-overlay').style.display='none'" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">關閉</button>
+            <button onclick="rerunWrongAnswerExpls()" style="flex:2;background:#dc2626;color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">🤖 全部重跑 (${wrong.length} 題)</button>
+          </div>
+        </div>`;
+      }
+      async function rerunWrongAnswerExpls(){
+        const qids = window._wrongAnsQids || [];
+        if (!qids.length) { showToast('沒有要重跑的'); return; }
+        document.getElementById('wrong-ans-overlay').style.display = 'none';
+        // force=true → 已經有 patches 的也要重跑
+        await startBackgroundRegen(qids, { force: true });
       }
 
       function _stripLatex(s){
@@ -13361,20 +13454,21 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         } else if (badge) { badge.remove(); }
       }
 
-      async function startBackgroundRegen(limitOrQids){
+      async function startBackgroundRegen(limitOrQids, opts){
         if (_bgRegen.running) { showToast('已經在跑了'); return; }
         if (getGeminiKeys().length === 0) { showToast('請先設定 Gemini API key'); openAISettings(); return; }
         const token = getGithubToken();
         const repo = getGithubRepo();
         if (!token || !repo) { showToast('請先設定 GitHub token + repo'); openAISettings(); return; }
+        const force = !!(opts && opts.force);
         const patches = loadExplPatches();
         let list;
         if (Array.isArray(limitOrQids)) {
-          // 指定 qids 陣列(從樹狀勾選來的)
-          list = limitOrQids.filter(qid => !patches[qid]);
+          // 指定 qids 陣列(從樹狀勾選來的);force=true 時保留已 patched 的也要重跑
+          list = force ? limitOrQids.slice() : limitOrQids.filter(qid => !patches[qid]);
         } else {
           // 數量限制(舊版相容)
-          const todoAll = (QS || []).filter(q => !patches[q.id]).map(q => q.id);
+          const todoAll = (QS || []).filter(q => force || !patches[q.id]).map(q => q.id);
           list = limitOrQids ? todoAll.slice(0, limitOrQids) : todoAll;
         }
         if (list.length === 0) { showToast('這批題目都已重生'); return; }

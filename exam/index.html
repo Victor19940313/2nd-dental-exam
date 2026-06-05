@@ -4087,6 +4087,7 @@
           <button class="nb-tb-btn" onclick="showOnboarding()" title="入門指引">📖 入門</button>
           <button class="nb-tb-btn" id="btn-pending" onclick="openPendingModal()" title="之前整理失敗的題目（可一鍵重試）" style="display:none;background:#fef3c7;border-color:#fbbf24;color:#92400e">📥 待整理</button>
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題">🗂 重整目錄</button>
+          <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出相同概念但被切太細的章節,建議合併(圖片絕對保留)" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 整理章節</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
@@ -9675,6 +9676,323 @@ ${JSON.stringify(list, null, 2)}
         } finally {
           if (btn) { btn.disabled = false; btn.innerHTML = orig; }
         }
+      }
+
+      // ── 🧹 整理章節：AI 找出該合併的章節群組,使用者勾選後執行合併 ──
+      const MERGE_SCAN_SCHEMA = {
+        type: "OBJECT",
+        properties: {
+          groups: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                reason: { type: "STRING", description: "為什麼這幾章該合併(臨床上同屬什麼範疇)" },
+                new_name: { type: "STRING", description: "合併後建議的章節名(英文+中文,具體概念)" },
+                new_subtopic: { type: "STRING", description: "合併後 subtopic(英文+中文,簡短)" },
+                chapter_ids: { type: "ARRAY", items: { type: "STRING" }, description: "要被合併的章節 id 清單(至少 2 個)" }
+              },
+              required: ["reason", "new_name", "new_subtopic", "chapter_ids"]
+            }
+          }
+        },
+        required: ["groups"]
+      };
+      const MERGE_EXEC_SCHEMA = {
+        type: "OBJECT",
+        properties: {
+          content: { type: "STRING", description: "合併後完整 Markdown 章節內容,必須包含所有原章節重點且保留所有圖片" }
+        },
+        required: ["content"]
+      };
+
+      let _mergeChState = { subject: 'ya5', groups: null, scanning: false, executing: false, doneCount: 0, totalCount: 0 };
+
+      function openMergeChaptersModal(){
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        let body;
+        if (_mergeChState.executing) {
+          const pct = _mergeChState.totalCount > 0 ? Math.round(_mergeChState.doneCount / _mergeChState.totalCount * 100) : 0;
+          body = `<div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.9rem;margin-bottom:.8rem">
+            <div style="font-weight:700;color:#92400e;margin-bottom:.5rem">🧹 合併中：${_mergeChState.doneCount} / ${_mergeChState.totalCount} 組</div>
+            <div style="background:white;border-radius:4px;overflow:hidden;height:10px;margin-bottom:.4rem"><div style="background:linear-gradient(to right,#16a34a,#22c55e);height:100%;width:${pct}%;transition:width .3s"></div></div>
+            <div style="font-size:.78rem;color:#78350f">合併過程中所有圖片都會被保留(會自動檢查)</div>
+          </div>
+          <div style="text-align:center;color:#6b7280;font-size:.8rem">合併完成後會自動關閉這個視窗,並重新渲染目錄</div>`;
+        } else if (_mergeChState.scanning) {
+          body = `<div style="text-align:center;padding:2rem">
+            <div class="nb-loading" style="border-color:#22c55e;border-top-color:transparent;width:32px;height:32px;border-width:3px"></div>
+            <div style="margin-top:1rem;color:#166534;font-weight:700">AI 正在掃描 ${SMAP[_mergeChState.subject]} 章節...</div>
+            <div style="margin-top:.4rem;color:#6b7280;font-size:.82rem">只送章節標題/概念給 AI(不送內文),省 token</div>
+          </div>`;
+        } else if (_mergeChState.groups) {
+          const chById = new Map((notebook.chapters||[]).map(c => [c.id, c]));
+          if (_mergeChState.groups.length === 0) {
+            body = `<div style="background:#dcfce7;border:1.5px solid #22c55e;border-radius:8px;padding:1rem;text-align:center;color:#166534">
+              <div style="font-size:1.2rem;margin-bottom:.4rem">✓ ${SMAP[_mergeChState.subject]} 的章節已經夠整齊了</div>
+              <div style="font-size:.85rem;color:#15803d">AI 沒找到適合合併的章節</div>
+            </div>`;
+          } else {
+            const groupsHtml = _mergeChState.groups.map((g, gi) => {
+              const validChs = (g.chapter_ids || []).map(id => chById.get(id)).filter(Boolean);
+              if (validChs.length < 2) return '';
+              const chList = validChs.map(c => {
+                const imgCount = ((c.content||'').match(/!\[[^\]]*\]\([^)]+\)/g) || []).length;
+                const imgBadge = imgCount > 0 ? `<span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-size:.7rem;margin-left:.3rem">🖼 ${imgCount}</span>` : '';
+                return `<li style="padding:.2rem 0;font-size:.85rem">${c.name||c.id}${imgBadge} <span style="color:#9ca3af;font-size:.75rem">[${c.subtopic||'無 subtopic'}]</span></li>`;
+              }).join('');
+              return `<div style="background:white;border:1.5px solid #e5e7eb;border-radius:8px;padding:.7rem;margin-bottom:.5rem">
+                <label style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer">
+                  <input type="checkbox" class="merge-group-cb" data-gi="${gi}" checked style="margin-top:.25rem;width:16px;height:16px;cursor:pointer">
+                  <div style="flex:1">
+                    <div style="font-weight:700;color:#166534;margin-bottom:.2rem">合併成：${g.new_name}</div>
+                    <div style="font-size:.78rem;color:#6b7280;margin-bottom:.4rem">subtopic: ${g.new_subtopic} · 理由：${g.reason}</div>
+                    <ul style="list-style:disc;margin-left:1.2rem;padding:0">${chList}</ul>
+                  </div>
+                </label>
+              </div>`;
+            }).join('');
+            body = `<div style="background:#dcfce7;border:1.5px solid #22c55e;border-radius:8px;padding:.7rem;margin-bottom:.8rem;font-size:.85rem;color:#166534">
+              AI 建議合併 <strong>${_mergeChState.groups.length}</strong> 組章節。預設全部勾選,不想合的取消勾選。<br>
+              <strong>🖼 圖片絕對保留</strong>(會在合併後檢查,若 AI 漏掉會自動補回)
+            </div>
+            ${groupsHtml}
+            <div style="display:flex;gap:.5rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid #e5e7eb">
+              <button onclick="closeMergeChModal()" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">取消</button>
+              <button onclick="executeMergeChapters()" style="flex:2;background:#16a34a;color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">✓ 開始合併勾選的群組</button>
+            </div>`;
+          }
+        } else {
+          // 初始畫面
+          const counts = {};
+          (notebook.chapters||[]).forEach(c => {
+            for (const s of ['ya3','ya4','ya5','ya6']) {
+              if (chapterMatchesSubject(c, s)) { counts[s] = (counts[s]||0) + 1; break; }
+            }
+          });
+          const subjectBtns = ['ya5','ya3','ya4','ya6'].map(s => {
+            const sel = _mergeChState.subject === s;
+            return `<button onclick="_mergeChState.subject='${s}';openMergeChaptersModal()" style="background:${sel?'#16a34a':'#f3f4f6'};color:${sel?'white':'#374151'};border:none;padding:.5rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.88rem">${SMAP[s]} <span style="opacity:.7;font-weight:400">(${counts[s]||0})</span></button>`;
+          }).join('');
+          body = `<div style="margin-bottom:.8rem;font-size:.88rem;color:#374151;line-height:1.6">
+            這個工具讓 AI 看你的章節清單,找出<strong>講同一個大概念但被切太細</strong>的章節,建議合併。
+            <ul style="margin:.5rem 0 0 1.2rem;padding:0;font-size:.82rem;color:#6b7280">
+              <li>第一階段只送章節名/subtopic/關鍵字(省 token)</li>
+              <li>你勾選確認後才會送內文給 AI 重整</li>
+              <li>🖼 圖片絕對保留(會驗證、漏掉自動補)</li>
+            </ul>
+          </div>
+          <div style="margin-bottom:1rem">
+            <div style="font-size:.85rem;color:#374151;font-weight:700;margin-bottom:.4rem">選擇科目：</div>
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap">${subjectBtns}</div>
+          </div>
+          <div style="display:flex;gap:.5rem;margin-top:1rem">
+            <button onclick="closeMergeChModal()" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">取消</button>
+            <button onclick="analyzeMergeChapters()" style="flex:2;background:#16a34a;color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">🤖 開始掃描 ${SMAP[_mergeChState.subject]}</button>
+          </div>`;
+        }
+
+        let overlay = document.getElementById('merge-ch-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'merge-ch-overlay';
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+          document.body.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+        overlay.innerHTML = `<div style="background:white;border-radius:12px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:1.2rem">
+          <h3 style="margin:0 0 .8rem;color:#166534">🧹 整理章節 (AI 合併建議)</h3>
+          ${body}
+        </div>`;
+      }
+
+      function closeMergeChModal(){
+        const o = document.getElementById('merge-ch-overlay');
+        if (o) o.style.display = 'none';
+        _mergeChState.groups = null;
+        _mergeChState.scanning = false;
+        _mergeChState.executing = false;
+        _mergeChState.doneCount = 0;
+        _mergeChState.totalCount = 0;
+      }
+
+      async function analyzeMergeChapters(){
+        if (!getGeminiKey()) { showToast('請先設定 Gemini API key'); openAISettings(); return; }
+        const subj = _mergeChState.subject;
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const chs = (notebook.chapters||[]).filter(c => chapterMatchesSubject(c, subj));
+        if (chs.length < 2) { showToast(SMAP[subj] + ' 章節太少,不用整理'); return; }
+
+        _mergeChState.scanning = true;
+        openMergeChaptersModal();
+
+        // 第一階段:只送精簡資訊
+        const lite = chs.map(c => ({
+          id: c.id,
+          name: c.name || '',
+          subtopic: c.subtopic || '',
+          concepts: (c.concepts||[]).slice(0, 5),
+          // 抓 ## 標題前 3 個給 AI 看章節內容方向
+          headings: ((c.content||'').match(/^#{2,3}\s+(.+)$/gm)||[]).slice(0, 3).map(s => s.replace(/^#{2,3}\s+/, ''))
+        }));
+
+        const prompt = `你是牙醫國考筆記整理員,要幫使用者把切太細的章節合併。
+
+【任務】
+下面是 ${SMAP[subj]} 的 ${chs.length} 個章節清單。找出「該合併在一起」的章節群組。
+
+【合併判準】
+- 兩章或以上「臨床上會被當成同一個範疇討論」→ 合併
+- 例:
+  * 「植牙骨頭尺寸」+「植牙乳頭距離」→ 同屬植牙術前評估,合併
+  * 「Complete Denture 印模」+「Complete Denture 邊緣封閉」→ 同屬 CD 印模處理,合併
+  * 「根管沖洗液濃度」+「根管沖洗液種類」→ 同屬根管沖洗,合併
+- 跨大概念就不要合(植牙 vs 全口義齒、牙髓 vs 牙周)
+
+【規則】
+- 一組至少 2 章,可以多章
+- 同一章不能出現在多個群組
+- 若所有章節都已經夠整齊,回 { "groups": [] }
+- 寧可保守(寧可少合幾組也不要亂合)
+
+【章節清單】
+${JSON.stringify(lite, null, 2)}
+
+【回 JSON】
+{ "groups": [{ "reason": "...", "new_name": "...", "new_subtopic": "...", "chapter_ids": ["...", "..."] }, ...] }`;
+
+        try {
+          const raw = await callGemini(prompt, MERGE_SCAN_SCHEMA, { maxOutputTokens: 16384 });
+          const dec = extractJSON(raw);
+          // 過濾掉無效群組(少於 2 章 / id 不存在)
+          const idSet = new Set(chs.map(c => c.id));
+          const valid = (dec.groups||[]).map(g => ({
+            ...g,
+            chapter_ids: (g.chapter_ids||[]).filter(id => idSet.has(id))
+          })).filter(g => g.chapter_ids.length >= 2);
+          _mergeChState.groups = valid;
+          _mergeChState.scanning = false;
+          openMergeChaptersModal();
+        } catch (err) {
+          _mergeChState.scanning = false;
+          openMergeChaptersModal();
+          alert('AI 掃描失敗:\n\n' + err.message);
+        }
+      }
+
+      async function executeMergeChapters(){
+        const checked = Array.from(document.querySelectorAll('.merge-group-cb:checked')).map(cb => parseInt(cb.dataset.gi));
+        const groups = checked.map(gi => _mergeChState.groups[gi]).filter(Boolean);
+        if (!groups.length) { showToast('沒有勾選任何群組'); return; }
+
+        const totalChs = groups.reduce((sum, g) => sum + g.chapter_ids.length, 0);
+        if (!confirm(`要合併 ${groups.length} 組(共 ${totalChs} 個舊章節變成 ${groups.length} 個新章節)?\n\n圖片絕對保留(會自動驗證)`)) return;
+
+        _mergeChState.executing = true;
+        _mergeChState.totalCount = groups.length;
+        _mergeChState.doneCount = 0;
+        openMergeChaptersModal();
+
+        const chById = new Map((notebook.chapters||[]).map(c => [c.id, c]));
+        let okCount = 0, failCount = 0;
+        const errors = [];
+
+        for (const g of groups) {
+          try {
+            const oldChs = g.chapter_ids.map(id => chById.get(id)).filter(Boolean);
+            if (oldChs.length < 2) { failCount++; continue; }
+            const newContent = await _mergeChapterGroup(oldChs, g);
+
+            // 把第一個舊章節改成合併後的章節,其餘的刪掉
+            const keepCh = oldChs[0];
+            const otherIds = new Set(oldChs.slice(1).map(c => c.id));
+            const allQids = Array.from(new Set(oldChs.flatMap(c => c.qids || [])));
+            const allConcepts = Array.from(new Set(oldChs.flatMap(c => c.concepts || [])));
+
+            keepCh.name = g.new_name || keepCh.name;
+            keepCh.subtopic = g.new_subtopic || keepCh.subtopic;
+            keepCh.content = newContent;
+            keepCh.qids = allQids;
+            keepCh.concepts = allConcepts;
+            keepCh.updatedAt = Date.now();
+
+            notebook.chapters = (notebook.chapters||[]).filter(c => !otherIds.has(c.id));
+            saveNotebook();
+            okCount++;
+          } catch (err) {
+            failCount++;
+            errors.push((g.new_name || g.chapter_ids.join(',')) + ': ' + err.message);
+            console.error('[mergeChapter] ', err);
+          }
+          _mergeChState.doneCount++;
+          openMergeChaptersModal();
+        }
+
+        renderNotebook();
+        closeMergeChModal();
+        if (failCount === 0) {
+          showToast('✓ 合併完成:' + okCount + ' 組');
+        } else {
+          alert('合併完成\n\n✓ 成功:' + okCount + ' 組\n✗ 失敗:' + failCount + ' 組\n\n失敗原因:\n' + errors.slice(0,5).join('\n'));
+        }
+      }
+
+      async function _mergeChapterGroup(oldChs, g){
+        // 先抽所有舊章節的圖片,等等做驗證用
+        const allImgs = [];
+        oldChs.forEach(c => {
+          const imgs = _extractImgs(c.content || '');
+          imgs.forEach(im => allImgs.push(im));
+        });
+        const allImgUrls = new Set(allImgs.map(im => im.url));
+
+        const prompt = `你是牙醫國考筆記整理員。下面 ${oldChs.length} 個章節要被合併成「${g.new_name}」這一章。
+
+【核心鐵則(極重要)】
+1. **完整保留**所有原章節的重點(條列、表格、callout、延伸補充)
+2. **合併重複內容**(同一概念不要寫兩遍,選最完整版本)
+3. **整體結構合理**:相關概念放一起,用 ## / ### 分小節
+4. **🖼 圖片絕對保留**:所有原章節的 \`![alt](url)\` markdown,**一張都不可刪除**
+   - 可調整圖片位置(放到適合的段落下),但禁止省略
+   - 禁止改成「(此處有圖)」這類描述、禁止省略 URL
+5. **合併後內容資訊量必須 ≥ 所有原章節的總和**
+6. 保留 \`### 🔗 延伸補充(國考相關必知)\` 區塊(把所有舊章節的延伸補充整合)
+7. **數學/公式禁止 LaTeX**(\`$...$\` 不支援):用 Unicode ≥ ≤ ≠ ± × ÷ → ° ≈
+8. **粗體 \`**\` 兩側不留空格**:\`**敏感性**\` 不是 \`** 敏感性 **\`
+9. **\`[[ ]]\` 跟 \`**\` 不可同時包同一詞**:選一個用
+10. 表格每一行各自獨佔一行,結尾用 \`|\` 收尾
+
+【新章節資訊】
+新章節名:${g.new_name}
+新 subtopic:${g.new_subtopic}
+合併理由:${g.reason}
+
+【舊章節清單(${oldChs.length} 章)】
+${oldChs.map((c, i) => `
+---舊章節 #${i+1}: ${c.name}(subtopic: ${c.subtopic || ''})---
+${c.content || ''}
+---舊章節 #${i+1} 結束---
+`).join('\n')}
+
+【圖片清單(必須全部出現在新章節)】
+${allImgs.length === 0 ? '(無圖片)' : allImgs.map(im => `- ${im.md}`).join('\n')}
+
+【回 JSON】
+{ "content": "..." } 不要 markdown 反引號包裝。content 是合併後的完整章節 markdown。`;
+
+        const raw = await callGemini(prompt, MERGE_EXEC_SCHEMA, { maxOutputTokens: 32768 });
+        const dec = extractJSON(raw);
+        let newContent = unescapeIfNeeded(dec.content || '');
+        if (!newContent.trim()) throw new Error('AI 沒回內容');
+
+        // 🖼 驗證:把漏掉的圖片補回末尾
+        const newImgUrls = new Set(_extractImgs(newContent).map(im => im.url));
+        const missing = allImgs.filter(im => !newImgUrls.has(im.url));
+        if (missing.length > 0) {
+          newContent += '\n\n### 🖼 補回的圖片\n\n' + missing.map(im => im.md).join('\n\n');
+          console.warn('[mergeChapter] AI 漏了 ' + missing.length + ' 張圖,已自動補回末尾');
+        }
+        return newContent;
       }
 
       // ── 清掉所有殘留的「上傳中」placeholder ──

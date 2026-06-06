@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v255-review-detail-on-top';
+const CACHE_NAME = 'dental-all-v256-return-btn-sticky';
 const PRECACHE = [
   './',
   './index.html',

@@ -7362,20 +7362,22 @@ ${(q.options || []).join('\n')}
       function _showReviewReturnBtn(){
         let btn = document.getElementById('review-return-btn');
         const r = window._reviewReturnState;
+        // 判斷現在是否在筆記頁:看 screen-notebook display
         const notebookScreen = document.getElementById('screen-notebook');
-        if (r && notebookScreen) {
+        const onNotebook = notebookScreen && notebookScreen.style.display !== 'none' && notebookScreen.offsetParent !== null;
+        if (r && onNotebook) {
           if (!btn) {
             btn = document.createElement('button');
             btn.id = 'review-return-btn';
-            // 放在 screen-notebook 內 → 切換頁面時 parent display:none 會自動隱藏
-            btn.style.cssText = 'position:fixed;top:.7rem;right:.7rem;z-index:9998;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.55rem 1rem;border-radius:22px;box-shadow:0 4px 14px rgba(124,58,237,.45);font-size:.82rem;font-weight:700;cursor:pointer';
             btn.onclick = returnToReview;
-            notebookScreen.appendChild(btn);
-          } else if (btn.parentElement !== notebookScreen) {
-            notebookScreen.appendChild(btn);
+            // 掛到 body,避免被 ancestor 的 transform/filter 把 position:fixed 變成相對定位
+            document.body.appendChild(btn);
+          } else if (btn.parentElement !== document.body) {
+            document.body.appendChild(btn);
           }
+          // 用 cssText 強制覆寫,並 !important 防其他 CSS 蓋掉
+          btn.style.cssText = 'position:fixed !important;top:12px !important;right:12px !important;z-index:99999 !important;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.6rem 1.05rem;border-radius:22px;box-shadow:0 4px 14px rgba(124,58,237,.45);font-size:.85rem;font-weight:700;cursor:pointer;display:block !important';
           btn.textContent = `🔙 回試卷 · 第 ${r.idx + 1} 題`;
-          btn.style.display = '';
         } else if (btn) {
           btn.style.display = 'none';
         }
@@ -7384,6 +7386,20 @@ ${(q.options || []).join('\n')}
         const btn = document.getElementById('review-return-btn');
         if (btn) btn.style.display = 'none';
       }
+      // 監聽 #screen-notebook 的 display 變動 → 自動隱藏/顯示返回按鈕
+      // (按鈕現在掛在 body,不會跟著 parent display:none 自動隱藏)
+      (function _installReviewBtnObserver(){
+        const nb = document.getElementById('screen-notebook');
+        if (!nb || nb.__reviewBtnObserved) return;
+        nb.__reviewBtnObserved = true;
+        const obs = new MutationObserver(() => {
+          const visible = nb.style.display !== 'none';
+          const btn = document.getElementById('review-return-btn');
+          if (!btn || !window._reviewReturnState) return;
+          btn.style.display = visible ? 'block' : 'none';
+        });
+        obs.observe(nb, { attributes: true, attributeFilter: ['style'] });
+      })();
 
       function showExamResults() {
         const LETTERS = ["A", "B", "C", "D", "E"];

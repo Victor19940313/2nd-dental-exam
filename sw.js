@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v263-merge-notebooklm-done';
+const CACHE_NAME = 'dental-all-v264-find-lazy-expl';
 const PRECACHE = [
   './',
   './index.html',

@@ -4100,6 +4100,7 @@
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
           <button class="nb-tb-btn" onclick="scanWrongAnswerExpls()" title="掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的題目" style="background:#fee2e2;border-color:#f87171;color:#991b1b">🔍 找答錯</button>
+          <button class="nb-tb-btn" onclick="scanLazyGeminiExpls()" title="找新格式詳解裡「3 個 ✓ 都沒解釋」的偷懶版本,一鍵重跑" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🥱 找偷懶詳解</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目分類,找出誤分章節並一鍵修正">🔧 修復分類</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
@@ -5544,6 +5545,96 @@ ${(q.options || []).join('\n')}
       }
 
       // 🔍 掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的
+      // 🥱 掃描新格式詳解(【作答思路】+✓/✗)裡「✓ 選項沒解釋」的偷懶題,一鍵重跑
+      function scanLazyGeminiExpls(){
+        if (typeof QS === 'undefined' || !QS.length) { showToast('題庫尚未載入'); return; }
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const lazy = [];
+        QS.forEach(q => {
+          const t = q.explanation || '';
+          if (!t.includes('【作答思路】')) return;
+          // 抓【作答思路】到下一個【...】或最後留
+          const m = t.match(/【作答思路】([\s\S]+?)(?=【|最後留|$)/);
+          if (!m) return;
+          const body = m[1];
+          // 抓選項行 (A) (B) (C) (D)
+          const optRe = /^\s*\*?\*?\(([ABCDE])\)([^\n]*)/gm;
+          const optChars = {};
+          let mm;
+          while ((mm = optRe.exec(body)) !== null) {
+            const letter = mm[1];
+            const line = mm[2];
+            // 移除 ✓/✗/X/→/粗體後算字數
+            const clean = line.replace(/[✓✗→]|\*+/g, '').replace(/^\s*X\s*/, '').trim();
+            optChars[letter] = clean.length;
+          }
+          if (Object.keys(optChars).length < 3) return;
+          const shortN = Object.values(optChars).filter(n => n < 5).length;
+          if (shortN >= 2) {
+            lazy.push({ qid: q.id, meta: q.meta || q.id, subject: q.subject, question: (q.question||'').slice(0, 60), optChars });
+          }
+        });
+
+        let overlay = document.getElementById('lazy-expl-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'lazy-expl-overlay';
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+          document.body.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+
+        if (lazy.length === 0) {
+          overlay.innerHTML = `<div style="background:white;border-radius:12px;max-width:480px;width:100%;padding:1.2rem">
+            <h3 style="margin:0 0 .8rem;color:#92400e">🥱 找偷懶詳解</h3>
+            <div style="background:#dcfce7;border:1.5px solid #22c55e;border-radius:8px;padding:1rem;text-align:center;color:#166534">
+              <div style="font-size:1.1rem;margin-bottom:.4rem">✓ 沒找到偷懶詳解</div>
+              <div style="font-size:.82rem;color:#15803d">掃了 ${QS.filter(q=>q.explanation && q.explanation.includes('【作答思路】')).length} 題新格式詳解,沒有 ≥ 2 個 ✓ 選項沒解釋的</div>
+            </div>
+            <button onclick="document.getElementById('lazy-expl-overlay').style.display='none'" style="width:100%;margin-top:1rem;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">關閉</button>
+          </div>`;
+          return;
+        }
+
+        const bySubj = {};
+        lazy.forEach(x => { (bySubj[x.subject] = bySubj[x.subject]||[]).push(x); });
+        const subjBlocks = Object.keys(bySubj).sort().map(s => {
+          const items = bySubj[s].slice(0, 30).map(x => `
+            <li style="padding:.35rem 0;border-bottom:1px solid #f3f4f6;font-size:.82rem">
+              <strong>${x.meta}</strong>
+              <span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px;font-size:.7rem;margin-left:.3rem">${Object.entries(x.optChars).map(([k,v])=>k+':'+v).join(' ')}</span>
+              <div style="color:#6b7280;font-size:.75rem;margin-top:2px">${x.question}...</div>
+            </li>
+          `).join('');
+          const more = bySubj[s].length > 30 ? `<div style="font-size:.75rem;color:#9ca3af;padding:.3rem">…還有 ${bySubj[s].length-30} 題</div>` : '';
+          return `<details style="background:#f9fafb;border-radius:8px;padding:.6rem;margin-bottom:.5rem">
+            <summary style="cursor:pointer;font-weight:700;color:#92400e">${SMAP[s]||s} (${bySubj[s].length} 題)</summary>
+            <ul style="list-style:none;margin:.4rem 0 0;padding:0">${items}</ul>
+            ${more}
+          </details>`;
+        }).join('');
+
+        window._lazyExplQids = lazy.map(x => x.qid);
+
+        overlay.innerHTML = `<div style="background:white;border-radius:12px;max-width:680px;width:100%;max-height:90vh;overflow:auto;padding:1.2rem">
+          <h3 style="margin:0 0 .8rem;color:#92400e">🥱 找到 ${lazy.length} 題偷懶詳解</h3>
+          <div style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;margin-bottom:.8rem;font-size:.85rem;color:#92400e">
+            這些題詳解有 2+ 個選項只打 ✓ 沒解釋。標記旁邊的數字 = 該選項字數,0 表示完全空白。
+            按下方按鈕用新版 prompt 一鍵重跑,跑完同步到 GitHub。
+          </div>
+          ${subjBlocks}
+          <div style="display:flex;gap:.5rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid #e5e7eb;position:sticky;bottom:0;background:white">
+            <button onclick="document.getElementById('lazy-expl-overlay').style.display='none'" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">關閉</button>
+            <button onclick="rerunLazyGeminiExpls()" style="flex:2;background:#f59e0b;color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">🔄 全部重跑 (${lazy.length} 題)</button>
+          </div>
+        </div>`;
+      }
+      async function rerunLazyGeminiExpls(){
+        const qids = window._lazyExplQids || [];
+        if (!qids.length) { showToast('沒有要重跑的'); return; }
+        document.getElementById('lazy-expl-overlay').style.display = 'none';
+        await startBackgroundRegen(qids, { force: true });
+      }
       function scanWrongAnswerExpls(){
         if (typeof QS === 'undefined' || !QS.length) { showToast('題庫尚未載入'); return; }
         const LETTERS = ['A','B','C','D','E'];

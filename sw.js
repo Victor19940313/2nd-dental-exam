@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v265-remove-lazy-btn';
+const CACHE_NAME = 'dental-all-v266-remove-scan-buttons';
 const PRECACHE = [
   './',
   './index.html',

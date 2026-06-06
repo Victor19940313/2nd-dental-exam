@@ -11910,7 +11910,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         md = _stripLatex(md);
         // AI 容錯:把錯誤寫成 raw HTML 的概念標籤還原成 [[xxx]] markdown 語法
         // (AI 偶爾會直接吐 <span class="ctag">X</span>,被 markdown 渲染當文字逸出 → 變亂碼)
-        md = md.replace(/<span\s+class=["']ctag["']\s*>([^<\n]+?)<\/span>/gi, '[[$1]]');
+        // 用比較寬鬆的 regex 接住:class 可以有其他屬性、quote 可以是單/雙引號
+        md = md.replace(/<span\s+[^>]*?class\s*=\s*["']ctag["'][^>]*>([^<\n]+?)<\/span>/gi, '[[$1]]');
         // 同樣處理一些可能洩漏的單行 raw tag
         md = md.replace(/<strong>([^<\n]+?)<\/strong>/gi, '**$1**');
         md = md.replace(/<em>([^<\n]+?)<\/em>/gi, '*$1*');
@@ -12354,6 +12355,12 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       function _renderCellInline(c){
         // 還原 <br> 換行（escapeHtml 把 <br> 變成 &lt;br&gt;）
         c = c.replace(/&lt;br\s*\/?\s*&gt;/gi, '<br>');
+        // AI 偶爾把概念標籤寫成 raw HTML(被 escapeHtml 變成 &lt;span class="ctag"&gt;X&lt;/span&gt;) → 還原成 [[X]]
+        c = c.replace(/&lt;span\s+[^&]*?class=["']ctag["'][^&]*?&gt;([^&\n]+?)&lt;\/span&gt;/gi, '[[$1]]');
+        // 其他常見 raw HTML 標籤被 escape → 還原
+        c = c.replace(/&lt;strong&gt;([^&\n]+?)&lt;\/strong&gt;/gi, '**$1**');
+        c = c.replace(/&lt;em&gt;([^&\n]+?)&lt;\/em&gt;/gi, '*$1*');
+        c = c.replace(/&lt;code&gt;([^&\n]+?)&lt;\/code&gt;/gi, '`$1`');
         // 粗體
         c = c.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
         // 斜體 *xxx* （但不要碰已經是粗體的）

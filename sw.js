@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v256-return-btn-sticky';
+const CACHE_NAME = 'dental-all-v257-answer-fix-501';
 const PRECACHE = [
   './',
   './index.html',

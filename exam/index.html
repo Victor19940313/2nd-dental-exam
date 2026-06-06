@@ -5222,7 +5222,12 @@
       }
       function nbExplBlock(q) {
         const nb = q && q.explanation_notebooklm;
-        if (!nb || !nb.trim()) return "";
+        if (!nb || !nb.trim()) {
+          if (q && q.explanation_pending) {
+            return `<details class="nb-expl" open><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。</div></details>`;
+          }
+          return "";
+        }
         return `<details class="nb-expl"><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content">${_cleanExplHtml(formatExpl(nb))}</div></details>`;
       }
 
@@ -5235,7 +5240,14 @@
       }
 
       function geminiExplBlock(expl, src, qid) {
-        if (!expl || !expl.trim()) return "";
+        if (!expl || !expl.trim()) {
+          // 詳解被清掉(因為答案改了)+ 標記 pending → 顯示「待補」提示
+          const q = qid ? (typeof QS !== 'undefined' ? QS.find(x => x.id === qid) : null) : null;
+          if (q && q.explanation_pending) {
+            return `<details class="gemini-expl" open><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。</div></details>`;
+          }
+          return "";
+        }
         const srcHtml = src ? `<div class="expl-source">📖 ${src}</div>` : "";
         const links = qid ? renderCrossLinks(qid) : "";
         let formatted = formatExpl(expl);
@@ -7180,7 +7192,7 @@ ${(q.options || []).join('\n')}
         const st = (typeof getS === 'function') ? getS(q.id) : {};
         const expl = (st.expl_override ?? q.explanation) || '';
         const src = (st.src_override ?? q.explanation_source) || '';
-        const hasAnyExpl = expl || q.explanation_notebooklm || q.clinical;
+        const hasAnyExpl = expl || q.explanation_notebooklm || q.clinical || q.explanation_pending;
         const explHtml = hasAnyExpl
           ? `<div style="margin-top:.8rem">${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}</div>`
           : '<div style="margin-top:.8rem;color:#9ca3af;font-size:.85rem;text-align:center;padding:.8rem">尚無詳解</div>';
@@ -7612,7 +7624,7 @@ ${(q.options || []).join('\n')}
         const topicTagB = topicB
           ? `<span class="topic-tag" style="margin-left:0;margin-bottom:.35rem;display:inline-block" onclick="filterByTopic('${topicB.replace(/'/g, "\\'")}');event.stopPropagation();">🏷 ${topicB}</span>`
           : "";
-        const explHtml = (expl || q.explanation_notebooklm || q.clinical)
+        const explHtml = (expl || q.explanation_notebooklm || q.clinical || q.explanation_pending)
           ? `${topicTagB}${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}`
           : `${topicTagB}<p class="no-expl">尚無詳解</p>`;
 

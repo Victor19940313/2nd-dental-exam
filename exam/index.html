@@ -4099,6 +4099,7 @@
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
+          <button class="nb-tb-btn" onclick="startPublicHealthGeminiRegen()" title="只跑 125 題公衛(沒有 NotebookLM 參考書的)的 Gemini 詳解" style="background:#e0f2fe;border-color:#38bdf8;color:#0369a1">🚑 優先跑公衛</button>
           <button class="nb-tb-btn" onclick="scanWrongAnswerExpls()" title="掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的題目" style="background:#fee2e2;border-color:#f87171;color:#991b1b">🔍 找答錯</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目分類,找出誤分章節並一鍵修正">🔧 修復分類</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
@@ -5223,6 +5224,9 @@
       function nbExplBlock(q) {
         const nb = q && q.explanation_notebooklm;
         if (!nb || !nb.trim()) {
+          if (q && q.no_notebooklm_source) {
+            return `<details class="nb-expl"><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content" style="background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:8px;padding:.7rem;color:#0369a1;font-size:.88rem"><strong>📖 沒有公衛參考書</strong><br>本題屬於牙科公共衛生科目,目前未建立對應的 NotebookLM 參考書,**請直接看上方 Gemini 詳解**。</div></details>`;
+          }
           if (q && q.explanation_pending) {
             return `<details class="nb-expl" open><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。</div></details>`;
           }
@@ -5257,8 +5261,8 @@
           `<span class="bg-note">📌 背景:${content}</span>`
         );
         formatted = _cleanExplHtml(formatted);
-        const regenBtn = qid ? `<button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}')" title="用最新的 prompt 重生這題詳解(會覆寫舊版)" style="background:#f3f4f6;color:#6b21a8;border:1.5px solid #c084fc;padding:.3rem .65rem;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;margin-top:.5rem;float:right">🔄 重生這題詳解</button>` : '';
-        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}${regenBtn}<div style="clear:both"></div></div></details>`;
+        const regenBtn = qid ? `<div style="text-align:center;margin-top:.8rem;padding-top:.5rem;border-top:1px dashed #e5e7eb"><button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}')" title="覺得這篇詳解品質不好?用最新版 prompt 重新生成(覆寫舊版)" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.25)">🔄 請 Gemini 重生詳解</button><div style="font-size:.7rem;color:#9ca3af;margin-top:.3rem">覺得這篇寫得太爛?按一下用最新 prompt 重做</div></div>` : '';
+        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}${regenBtn}</div></details>`;
       }
       // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)
       function buildRegenExplPrompt(q){
@@ -5266,6 +5270,61 @@
         const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
         const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
         const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
+
+        // 公衛題:沒 NotebookLM 參考書 → Gemini 要把概念說清楚,讓沒底子的人也能懂
+        const isPublicHealth = (q.topic === '公共衛生與流行病學' || q.topic === '口腔健康促進與預防');
+        if (isPublicHealth) {
+          return `你是一位牙科公共衛生老師。**本題沒有 NotebookLM 參考書可用**,所以你的詳解是學生**唯一的學習資源**。
+
+🚨 **目標**:讓**完全沒有公衛底子的人**看完也能懂這題在考什麼、為什麼選 (${correctTxt})。
+
+🚨🚨🚨【最高指導原則:標準答案不可違抗】🚨🚨🚨
+**正確答案是 (${correctTxt}),這是國考官方標準答案,絕對正確,不可質疑、不可推翻**。
+你的工作是解釋為什麼 (${correctTxt}) 是對的,**不准**寫「答案應該是 X 才對」這種話。
+
+🎯【公衛題寫作要點】
+- 看到陌生名詞**先用一句話解釋這個名詞是什麼**(不能假設讀者懂)
+- 流行病學公式:把公式直接寫出(例:敏感度 = 真陽性 / (真陽性+偽陰性)),用 Unicode 不用 LaTeX
+- 提到台灣政策/計畫**寫具體名稱**(衛福部兒童口腔保健、學童氟漱口、健保洗牙給付半年一次等)
+- 三段五級預防、HBM、TTM 等概念出現時**直接帶一句白話解釋**
+
+【格式】(順序不能變)
+
+**【第一直覺】**
+看到題目立刻聯想到的核心概念(1-2 句),用白話講題目在問什麼。
+
+**【作答思路】**
+
+⚠️ **每個選項都要寫:看到關鍵字 → 直覺聯想 → 跟題目的關係**,不准只打 ✓/✗。
+
+- **(A) 選項關鍵字** ✗/✓ → 看到 **XX 名詞(一句話定義)** → 想到 **YY(具體內容/數字/政策)** → 所以這個敘述對 / 錯,因為...
+- (B/C/D 同格式)
+
+最後一句:「最後留 **(${correctTxt})**」結尾。
+
+**【關鍵記憶】**
+> 💡 一句金句,讓學生下次看到關鍵字直接知道答案。
+
+**【公衛實務】**(選填,有實務連結才寫)
+> 🏥 這個概念在台灣實際怎麼執行(政策/健保/篩檢頻率)。
+
+【其他規範】
+- 文字以**白話、看得懂**為優先,不刻意拉長
+- 🚫 禁止主觀詞「感覺/印象/好像/應該」
+- 🚫 ABCD 每個獨佔一行,不准擠成一段
+- 🚫 禁止 LaTeX,數學符號用 Unicode
+
+【題目資料】
+科目: ${SMAP[q.subject] || q.subject}(${q.topic || ''})
+題目: ${q.question}
+選項:
+${(q.options || []).join('\n')}
+
+🚨 **正確答案: (${correctTxt})** ← 官方標準答案,不可違抗
+
+直接輸出 markdown(不要包 \`\`\` 或前言)。`;
+        }
+
         return `你是一位很會教學的牙醫國考老師,現在正在帶學生剖析這道題。
 你的學生看完詳解後,要能**理解每個選項背後的概念**、**為下次遇到類似題建立判斷邏輯**,而不是只看到「答案是 X」。
 
@@ -5390,15 +5449,35 @@ ${(q.options || []).join('\n')}
           openAISettings();
           return;
         }
-        if (!confirm(`用「老師教學」新風格重生「${q.meta || q.id}」的 Gemini 詳解?\n\n每個選項都會寫為什麼對/為什麼錯。會覆寫舊版,NotebookLM 詳解不動。`)) return;
+        if (!confirm(`用「老師教學」新風格重生「${q.meta || q.id}」的 Gemini 詳解?\n\n會覆寫舊版,並同步到 GitHub(所有使用者下次載入會看到新詳解)。NotebookLM 詳解不動。`)) return;
         showToast('🤖 AI 生成中... 約 5-15 秒');
         _silentResetCooldowns();
         try {
           const cleaned = await _generateExplWithCheck(q);
+          // 1. 覆寫題庫(本機 + 全使用者)
+          q.explanation = cleaned;
+          q.explanation_source = getBgRegenModel ? getBgRegenModel() : 'gemini-3.5-flash';
+          // 2. 清掉 pending 旗標
+          q.explanation_pending = false;
+          // 3. 同步到 patches(本機 + GitHub)
+          if (typeof recordPatch === 'function') {
+            recordPatch(qid, cleaned, q.explanation_source);
+          }
+          // 4. 清掉個人 override(讓全使用者版顯示)
           const st = getS(qid);
-          st.expl_override = cleaned;
+          delete st.expl_override;
+          delete st.src_override;
           await persist(qid);
-          showToast('✓ 已用新風格重生詳解');
+          showToast('✓ 已重生,正在同步到 GitHub...');
+          // 5. push 到 GitHub(讓所有使用者看到)
+          if (typeof pushPatchesToGithub === 'function') {
+            pushPatchesToGithub().then(() => {
+              showToast('✅ 已同步到 GitHub,所有使用者下次載入會看到新詳解');
+            }).catch(err => {
+              console.warn('push patches failed', err);
+              showToast('⚠️ 本機已更新,但同步 GitHub 失敗:' + (err.message||'').slice(0,60));
+            });
+          }
           // 重新渲染當前畫面的 expl 區
           const curQ = (typeof practiceList !== 'undefined' && practiceList[practiceIdx]) || null;
           if (curQ && curQ.id === qid) {
@@ -5466,6 +5545,16 @@ ${(q.options || []).join('\n')}
       }
 
       // 🔍 掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的
+      // 🚑 只跑 125 題公衛的 Gemini 詳解(沒 NotebookLM 參考書,優先補)
+      async function startPublicHealthGeminiRegen(){
+        if (typeof QS === 'undefined' || !QS.length) { showToast('題庫尚未載入'); return; }
+        // 找出 no_notebooklm_source=true 的題目
+        const qids = QS.filter(q => q.no_notebooklm_source).map(q => q.id);
+        if (qids.length === 0) { showToast('沒有需要優先跑的公衛題'); return; }
+        if (!confirm(`要開始跑 ${qids.length} 題公衛 Gemini 詳解嗎?\n\n會在背景跑,跑完自動同步到 GitHub。`)) return;
+        // force:true 讓已經有 patches 的也重跑
+        await startBackgroundRegen(qids, { force: true });
+      }
       function scanWrongAnswerExpls(){
         if (typeof QS === 'undefined' || !QS.length) { showToast('題庫尚未載入'); return; }
         const LETTERS = ['A','B','C','D','E'];

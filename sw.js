@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v260-fix-broken-prompt';
+const CACHE_NAME = 'dental-all-v261-public-health-priority';
 const PRECACHE = [
   './',
   './index.html',

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v259-regen-single-btn';
+const CACHE_NAME = 'dental-all-v260-fix-broken-prompt';
 const PRECACHE = [
   './',
   './index.html',

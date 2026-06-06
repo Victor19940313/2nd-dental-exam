@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v257-answer-fix-501';
+const CACHE_NAME = 'dental-all-v258-prompt-keyword-trigger';
 const PRECACHE = [
   './',
   './index.html',

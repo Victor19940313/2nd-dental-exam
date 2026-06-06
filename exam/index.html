@@ -3893,6 +3893,12 @@
           <button onclick="closeExamReview()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.2rem;cursor:pointer">×</button>
         </div>
         <div style="padding:1rem 1.2rem">
+          <div id="exam-review-filter-bar" style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.7rem">
+            <span style="font-size:.78rem;color:#6b7280;font-weight:700">顯示:</span>
+            <button id="rvf-all" onclick="setReviewFilter('all')" style="background:#7c3aed;color:white;border:none;padding:.3rem .7rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">全部</button>
+            <button id="rvf-wm" onclick="setReviewFilter('wrong_marked')" style="background:#f3f4f6;color:#374151;border:1.5px solid #d1d5db;padding:.3rem .7rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ 錯題 + 🚩 標記題</button>
+            <span id="rvf-count" style="font-size:.75rem;color:#9ca3af;margin-left:auto"></span>
+          </div>
           <div id="exam-review-grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:.35rem;margin-bottom:1rem"></div>
           <div style="display:flex;gap:1rem;font-size:.78rem;color:#6b7280;margin-bottom:.8rem;flex-wrap:wrap">
             <span><span style="display:inline-block;width:14px;height:14px;background:#dcfce7;border:1px solid #86efac;border-radius:3px;vertical-align:middle"></span> 答對</span>
@@ -7015,6 +7021,62 @@ ${(q.options || []).join('\n')}
       // ── 重看試卷：點歷史記錄後跳出 modal，顯示題號 grid + 點題看詳情 ──
       let _reviewEntry = null;
       let _reviewIdx = 0;
+      let _reviewFilter = 'all'; // 'all' | 'wrong_marked'
+      // 判斷某 qid 在當前 review 是否符合「錯題 + 標記題」條件
+      function _isWrongOrMarkedInReview(qid){
+        if (!_reviewEntry) return false;
+        const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+        const userIdx = _reviewEntry.userAnswers ? _reviewEntry.userAnswers[qid] : undefined;
+        // 1. 答錯(有作答但選錯)
+        if (q && userIdx != null) {
+          const arr = Array.isArray(q.answer) ? q.answer : [q.answer];
+          if (!arr.includes(userIdx)) return true;
+        }
+        // 2. 有任何標記(🚩 / 🟢 / 🤔 / 🟡 / 🔴)
+        const st = (typeof qState !== 'undefined' && qState[qid]) ? qState[qid] : {};
+        if (st.flagged) return true;
+        if (st.status && st.status !== 'none') return true;
+        return false;
+      }
+      // 取得當前篩選下的 qids 跟對應 idx(在原 qids 中的位置)
+      function _filteredReviewQids(){
+        if (!_reviewEntry) return [];
+        const qids = _reviewEntry.qids || [];
+        if (_reviewFilter === 'all') return qids.map((qid, i) => ({qid, i}));
+        return qids.map((qid, i) => ({qid, i})).filter(x => _isWrongOrMarkedInReview(x.qid));
+      }
+      function setReviewFilter(f){
+        _reviewFilter = f;
+        // 切換按鈕視覺
+        const a = document.getElementById('rvf-all');
+        const w = document.getElementById('rvf-wm');
+        if (a && w) {
+          const on = (id, isOn) => {
+            const el = document.getElementById(id);
+            el.style.background = isOn ? '#7c3aed' : '#f3f4f6';
+            el.style.color = isOn ? 'white' : '#374151';
+            el.style.border = isOn ? 'none' : '1.5px solid #d1d5db';
+            el.style.padding = isOn ? '.3rem .7rem' : '.3rem .68rem';
+          };
+          on('rvf-all', f === 'all');
+          on('rvf-wm', f === 'wrong_marked');
+        }
+        // 篩選後重渲染:如果當前 _reviewIdx 不在篩選結果中,跳到第一筆
+        renderReviewGrid();
+        const filtered = _filteredReviewQids();
+        if (filtered.length === 0) {
+          const el = document.getElementById('exam-review-detail');
+          if (el) el.innerHTML = `<div style="text-align:center;padding:2rem;color:#9ca3af">
+            <div style="font-size:2rem">✨</div>
+            <div style="margin-top:.4rem;font-weight:700;color:#374151">這份考卷沒有錯題,也沒有標記題</div>
+            <div style="font-size:.82rem;margin-top:.3rem">恭喜!</div>
+          </div>`;
+          return;
+        }
+        const inFiltered = filtered.some(x => x.i === _reviewIdx);
+        if (!inFiltered) renderReviewQ(filtered[0].i);
+        else renderReviewQ(_reviewIdx);
+      }
       function openExamReview(histIdx){
         const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
         const entry = hist[histIdx];
@@ -7035,6 +7097,7 @@ ${(q.options || []).join('\n')}
         }
         _reviewEntry = working;
         _reviewIdx = 0;
+        _reviewFilter = 'all'; // 新 session 預設看全部
         // 新的重看試卷 session → 清掉舊的返回狀態(避免「回試卷」按鈕指向舊紀錄)
         window._reviewReturnState = null;
         if (typeof _hideReviewReturnBtn === 'function') _hideReviewReturnBtn();
@@ -7042,8 +7105,8 @@ ${(q.options || []).join('\n')}
         const fallbackTag = isFallback ? '　·　⚠️ 僅錯題（完整資料缺失）' : '';
         const meta = `${entry.date}　·　${entry.label}　·　${entry.score} / ${entry.fullScore} 分　·　${entry.correct}/${entry.total} 題${fallbackTag}`;
         document.getElementById('exam-review-meta').textContent = meta;
-        renderReviewGrid();
-        renderReviewQ(0);
+        // 重置篩選按鈕視覺(預設選「全部」)
+        setReviewFilter('all');
       }
       function closeExamReview(){
         document.getElementById('exam-review-modal').style.display = 'none';
@@ -7054,7 +7117,8 @@ ${(q.options || []).join('\n')}
         if (!el || !_reviewEntry) return;
         const LETTERS = ['A','B','C','D','E'];
         const STATUS_COLOR = { understood:'#22c55e', guessed:'#a78bfa', learning:'#eab308', give_up:'#ef4444' };
-        const cells = _reviewEntry.qids.map((qid, i) => {
+        const filtered = _filteredReviewQids();
+        const cells = filtered.map(({qid, i}) => {
           const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
           const userIdx = _reviewEntry.userAnswers ? _reviewEntry.userAnswers[qid] : undefined;
           let bg = '#f3f4f6', bd = '#d1d5db', fg = '#9ca3af';
@@ -7066,7 +7130,6 @@ ${(q.options || []).join('\n')}
             else { bg = '#fee2e2'; bd = '#fca5a5'; fg = '#991b1b'; }
           }
           const ring = (i === _reviewIdx) ? 'box-shadow:0 0 0 2px #7c3aed' : '';
-          // 從 qState 讀使用者標記（沿用主畫面相同視覺：左上小色點=狀態、右上橘點=收藏）
           const st = (typeof qState !== 'undefined' && qState[qid]) ? qState[qid] : {};
           const stColor = STATUS_COLOR[st.status];
           const stDot = stColor
@@ -7078,6 +7141,12 @@ ${(q.options || []).join('\n')}
           return `<div onclick="renderReviewQ(${i})" style="position:relative;background:${bg};border:1px solid ${bd};color:${fg};border-radius:5px;text-align:center;padding:.35rem 0;font-size:.82rem;font-weight:700;cursor:pointer;${ring}">${label}${stDot}${flagDot}</div>`;
         }).join('');
         el.innerHTML = cells;
+        // 更新筆數顯示
+        const cntEl = document.getElementById('rvf-count');
+        if (cntEl) {
+          const total = (_reviewEntry.qids || []).length;
+          cntEl.textContent = _reviewFilter === 'all' ? `共 ${total} 題` : `${filtered.length} / ${total} 題`;
+        }
       }
       function renderReviewQ(idx){
         if (!_reviewEntry) return;

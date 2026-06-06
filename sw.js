@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v252-ctag-in-table-cells';
+const CACHE_NAME = 'dental-all-v253-review-filter';
 const PRECACHE = [
   './',
   './index.html',

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v250-no-raw-html';
+const CACHE_NAME = 'dental-all-v251-diag-exam-hist';
 const PRECACHE = [
   './',
   './index.html',

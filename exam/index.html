@@ -6821,11 +6821,64 @@ ${(q.options || []).join('\n')}
         }).join('');
 
         el.innerHTML = `
-          <div class="exam-res-section" style="margin-top:1.2rem;display:flex;justify-content:space-between;align-items:center">
+          <div class="exam-res-section" style="margin-top:1.2rem;display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap">
             <span>📊 歷次成績(共 ${hist.length} 筆)</span>
-            <button class="start-btn secondary" style="padding:.25rem .7rem;font-size:.78rem;margin:0" onclick="clearExamHistory()">🗑️ 清空</button>
+            <div style="display:flex;gap:.3rem">
+              <button class="start-btn secondary" style="padding:.25rem .7rem;font-size:.78rem;margin:0;background:#dbeafe;color:#1e3a8a" onclick="diagnoseExamHistory()">🔍 找紀錄</button>
+              <button class="start-btn secondary" style="padding:.25rem .7rem;font-size:.78rem;margin:0" onclick="clearExamHistory()">🗑️ 清空</button>
+            </div>
           </div>
           ${subjGroupsHtml}`;
+      }
+      // 🔍 找紀錄:掃所有使用者的 examHistory,列出每一筆的科目/年次/題目數,協助找失蹤紀錄
+      function diagnoseExamHistory(){
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六', '':'(科目不明)' };
+        const allKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.endsWith('_examHistory')) allKeys.push(k);
+        }
+        if (allKeys.length === 0) { showToast('localStorage 裡找不到任何試卷紀錄'); return; }
+        const rows = [];
+        allKeys.forEach(k => {
+          const user = k.replace('_examHistory','');
+          let hist;
+          try { hist = JSON.parse(localStorage.getItem(k) || '[]'); } catch(e) { hist = []; }
+          hist.forEach((h, i) => {
+            const subj = _examHistSubject(h);
+            const qidN = (h.qids||[]).length;
+            const firstQid = (h.qids||[])[0] || (h.wrongs||[])[0]?.qid || '(無)';
+            rows.push({ user, idx: i, date: h.date, label: h.label, subj, qidN, firstQid, hSubjects: (h.subjects||[]).join('/'), score: h.score, fullScore: h.fullScore });
+          });
+        });
+        // 找疑似 107-2 牙五的紀錄(高亮)
+        const isTarget = (r) => {
+          const s = (r.label||'') + ' ' + (r.firstQid||'');
+          return /107/.test(s) && (/ya5/.test(s) || /牙五/.test(s));
+        };
+        rows.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+        const hi = rows.filter(isTarget);
+        const head = `<div style="background:white;border-radius:12px;max-width:680px;width:100%;max-height:90vh;overflow:auto;padding:1.2rem">
+          <h3 style="margin:0 0 .8rem;color:#1e3a8a">🔍 試卷紀錄診斷</h3>
+          <div style="background:#dbeafe;border:1.5px solid #93c5fd;border-radius:8px;padding:.6rem;margin-bottom:.6rem;font-size:.82rem;color:#1e3a8a">
+            目前使用者:<strong>${_curUserId}</strong> · 掃到 ${allKeys.length} 個使用者各自的紀錄
+          </div>`;
+        const renderRow = (r, isHi) => `<div style="background:${isHi?'#fef3c7':'#fafafa'};border:1.5px solid ${isHi?'#fbbf24':'#e5e7eb'};border-radius:8px;padding:.5rem .7rem;margin-bottom:.4rem;font-size:.78rem">
+          <div style="font-weight:700;color:#374151">${r.date} · ${SMAP[r.subj]||r.subj} · ${r.label}</div>
+          <div style="color:#6b7280;margin-top:.2rem">使用者:<strong>${r.user}</strong> · 分數 ${r.score}/${r.fullScore}</div>
+          <div style="color:#9ca3af;margin-top:.15rem">qids 數量:${r.qidN} · 第一題:${r.firstQid} · subjects 欄位:${r.hSubjects||'(空)'}</div>
+        </div>`;
+        const hiHtml = hi.length ? `<div style="font-weight:800;color:#92400e;margin:.5rem 0 .3rem">🎯 疑似你找的 107 + 牙五 紀錄(${hi.length} 筆)</div>${hi.map(r => renderRow(r, true)).join('')}` : `<div style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:8px;padding:.7rem;margin:.6rem 0;color:#991b1b;font-size:.85rem">⚠️ <strong>找不到任何含「107」+「牙五」的紀錄</strong>。可能是該筆 qids 跟 label 都缺資訊,也可能根本沒存到。</div>`;
+        const restHtml = `<div style="font-weight:800;color:#374151;margin:1rem 0 .3rem">所有紀錄(${rows.length} 筆,新→舊)</div>${rows.slice(0,30).map(r => renderRow(r, isTarget(r))).join('')}${rows.length>30?`<div style="font-size:.75rem;color:#9ca3af;padding:.4rem">…還有 ${rows.length-30} 筆</div>`:''}`;
+        let overlay = document.getElementById('diag-hist-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'diag-hist-overlay';
+          overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+          document.body.appendChild(overlay);
+        }
+        overlay.style.display = 'flex';
+        overlay.innerHTML = head + hiHtml + restHtml + `<button onclick="document.getElementById('diag-hist-overlay').style.display='none'" style="width:100%;margin-top:.8rem;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">關閉</button></div>`;
       }
 
       // 刪除單筆考試紀錄

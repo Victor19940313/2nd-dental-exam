@@ -4099,7 +4099,6 @@
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
-          <button class="nb-tb-btn" onclick="startPublicHealthGeminiRegen()" title="只跑 125 題公衛(沒有 NotebookLM 參考書的)的 Gemini 詳解" style="background:#e0f2fe;border-color:#38bdf8;color:#0369a1">🚑 優先跑公衛</button>
           <button class="nb-tb-btn" onclick="scanWrongAnswerExpls()" title="掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的題目" style="background:#fee2e2;border-color:#f87171;color:#991b1b">🔍 找答錯</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目分類,找出誤分章節並一鍵修正">🔧 修復分類</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
@@ -5545,21 +5544,6 @@ ${(q.options || []).join('\n')}
       }
 
       // 🔍 掃描所有題目,找出 Gemini 詳解的結論跟標準答案不符的
-      // 🚑 只跑 125 題公衛的 Gemini 詳解(沒 NotebookLM 參考書,優先補)
-      // 智能跳過已完成:詳解 >= 50 字視為已生成,不會重做
-      async function startPublicHealthGeminiRegen(){
-        if (typeof QS === 'undefined' || !QS.length) { showToast('題庫尚未載入'); return; }
-        const all = QS.filter(q => q.no_notebooklm_source);
-        const todo = all.filter(q => !q.explanation || q.explanation.length < 50);
-        const done = all.length - todo.length;
-        if (todo.length === 0) {
-          showToast(`✅ 125 題公衛都跑完了(${done}/${all.length})`);
-          return;
-        }
-        if (!confirm(`要跑 ${todo.length} 題公衛 Gemini 詳解嗎?\n(已完成 ${done}/${all.length},剩 ${todo.length} 題)\n\n會在背景跑,跑完自動同步到 GitHub。`)) return;
-        // 不用 force,讓 bg-regen 自然跳過已有 patches 的
-        await startBackgroundRegen(todo.map(q => q.id));
-      }
       function scanWrongAnswerExpls(){
         if (typeof QS === 'undefined' || !QS.length) { showToast('題庫尚未載入'); return; }
         const LETTERS = ['A','B','C','D','E'];

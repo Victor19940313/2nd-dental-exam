@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v262-public-health-resume';
+const CACHE_NAME = 'dental-all-v263-merge-notebooklm-done';
 const PRECACHE = [
   './',
   './index.html',

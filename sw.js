@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v258-prompt-keyword-trigger';
+const CACHE_NAME = 'dental-all-v259-regen-single-btn';
 const PRECACHE = [
   './',
   './index.html',

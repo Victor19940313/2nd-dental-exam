@@ -5244,7 +5244,8 @@
           // 詳解被清掉(因為答案改了)+ 標記 pending → 顯示「待補」提示
           const q = qid ? (typeof QS !== 'undefined' ? QS.find(x => x.id === qid) : null) : null;
           if (q && q.explanation_pending) {
-            return `<details class="gemini-expl" open><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。</div></details>`;
+            const regenBtnEmpty = qid ? `<button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}')" title="現在就重生這題的 Gemini 詳解" style="background:#7c3aed;color:white;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;margin-top:.5rem">🔄 現在就重生</button>` : '';
+            return `<details class="gemini-expl" open><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。${regenBtnEmpty}</div></details>`;
           }
           return "";
         }
@@ -5256,7 +5257,8 @@
           `<span class="bg-note">📌 背景:${content}</span>`
         );
         formatted = _cleanExplHtml(formatted);
-        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}</div></details>`;
+        const regenBtn = qid ? `<button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}')" title="用最新的 prompt 重生這題詳解(會覆寫舊版)" style="background:#f3f4f6;color:#6b21a8;border:1.5px solid #c084fc;padding:.3rem .65rem;border-radius:6px;font-size:.75rem;font-weight:700;cursor:pointer;margin-top:.5rem;float:right">🔄 重生這題詳解</button>` : '';
+        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}${regenBtn}<div style="clear:both"></div></div></details>`;
       }
       // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)
       function buildRegenExplPrompt(q){

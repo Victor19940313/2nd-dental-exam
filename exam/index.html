@@ -3893,19 +3893,19 @@
           <button onclick="closeExamReview()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.2rem;cursor:pointer">×</button>
         </div>
         <div style="padding:1rem 1.2rem">
+          <div id="exam-review-detail" style="min-height:200px;padding-bottom:1rem;border-bottom:1px solid #e5e7eb;margin-bottom:1rem"></div>
           <div id="exam-review-filter-bar" style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.7rem">
-            <span style="font-size:.78rem;color:#6b7280;font-weight:700">顯示:</span>
+            <span style="font-size:.78rem;color:#6b7280;font-weight:700">📋 考題清單　·　顯示:</span>
             <button id="rvf-all" onclick="setReviewFilter('all')" style="background:#7c3aed;color:white;border:none;padding:.3rem .7rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">全部</button>
             <button id="rvf-wm" onclick="setReviewFilter('wrong_marked')" style="background:#f3f4f6;color:#374151;border:1.5px solid #d1d5db;padding:.3rem .7rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">❌ 錯題 + 🚩 標記題</button>
             <span id="rvf-count" style="font-size:.75rem;color:#9ca3af;margin-left:auto"></span>
           </div>
           <div id="exam-review-grid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:.35rem;margin-bottom:1rem"></div>
-          <div style="display:flex;gap:1rem;font-size:.78rem;color:#6b7280;margin-bottom:.8rem;flex-wrap:wrap">
+          <div style="display:flex;gap:1rem;font-size:.78rem;color:#6b7280;margin-bottom:.5rem;flex-wrap:wrap">
             <span><span style="display:inline-block;width:14px;height:14px;background:#dcfce7;border:1px solid #86efac;border-radius:3px;vertical-align:middle"></span> 答對</span>
             <span><span style="display:inline-block;width:14px;height:14px;background:#fee2e2;border:1px solid #fca5a5;border-radius:3px;vertical-align:middle"></span> 答錯</span>
             <span><span style="display:inline-block;width:14px;height:14px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:3px;vertical-align:middle"></span> 未作答</span>
           </div>
-          <div id="exam-review-detail" style="border-top:1px solid #e5e7eb;padding-top:1rem;min-height:200px"></div>
         </div>
       </div>
     </div>

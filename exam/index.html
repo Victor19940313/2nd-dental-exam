@@ -9380,24 +9380,29 @@ ${dec.reasoning || ''}
             const oldContent = (oldCh && oldCh.content) || '';
             const oldLen = oldContent.trim().length;
             if (oldCh && oldLen >= 800) {
-              // 長章節：跑第 2 階段合併
+              // 長章節:跑第 2 階段合併,token 上限拉高避免長章節被截斷
               try {
                 const mergePrompt = buildMergePrompt(q, oldCh, dec);
-                const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA);
+                const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA, { maxOutputTokens: 32768 });
                 const mergeDec = extractJSON(mergeRaw);
                 if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= oldLen * 0.7) {
                   dec.content = _preserveImagesIn(oldContent, mergeDec.content);
                 } else {
-                  console.warn('merge result too short, falling back to old content');
-                  dec.content = oldContent;
+                  // 退而求其次:把新內容當「待整合」段落塞到章節結尾,至少不會默默丟掉
+                  console.warn('merge result too short, appending as 待整合 section');
+                  const newPart = (dec.content || '').trim() || ('題目:' + (q.question||'').slice(0, 80) + '...');
+                  dec.content = oldContent.trimEnd() + '\n\n---\n\n## 🆕 待整合:' + (q.meta || q.id) + '\n\n' + newPart;
+                  showToast('⚠️ 章節太長,新題目暫存到章節末尾「待整合」段落');
                 }
               } catch(mergeErr) {
                 // 撞額度 → 整題拋出讓 pending queue 重排
                 if (/429|quota|exceed/i.test(mergeErr.message || '')) {
                   throw new Error('合併撞額度: ' + (mergeErr.message || '').slice(0, 80));
                 }
-                console.warn('merge step failed, keeping old content', mergeErr);
-                dec.content = oldContent;
+                console.warn('merge step failed, appending instead of dropping', mergeErr);
+                const newPart = (dec.content || '').trim() || ('題目:' + (q.question||'').slice(0, 80) + '...');
+                dec.content = oldContent.trimEnd() + '\n\n---\n\n## 🆕 待整合:' + (q.meta || q.id) + '\n\n' + newPart;
+                showToast('⚠️ 合併失敗,新題目暫存到章節末尾「待整合」段落');
               }
             } else if (oldCh) {
               // 短章節：用第 1 階段結果 + 圖片安全網（不再花第 2 次 API）
@@ -11129,7 +11134,7 @@ ${JSON.stringify(candidates, null, 2)}
         const isEditing = editingChapterId === curCh.id;
         const contentBlock = isEditing
           ? renderEditorView(curCh)
-          : `<div class="nb-chapter-content" data-chid="${curCh.id}">${renderMarkdown(curCh.content)}</div>`;
+          : `<div class="nb-chapter-content" data-chid="${curCh.id}">${renderChapterPaginated(curCh)}</div>`;
 
         body.innerHTML =
           `<section id="chapter-${curCh.id}" class="nb-chapter" data-subj="${curCh._mainSubj||''}">
@@ -11986,6 +11991,96 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
       function escapeHtml(s){
         return (s == null ? '' : String(s)).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
       }
+      // ── 章節分頁 + 延伸補充/易考重點收合 ──
+      window._chapterPage = window._chapterPage || {};
+      const PAGE_SIZE = 4000;
+
+      // 用 ## 標題分頁,累計超過 PAGE_SIZE 才換頁
+      function paginateMarkdownByH2(md){
+        if (!md || md.length < PAGE_SIZE * 1.25) return [md || ''];
+        // 用 H2 標題切;第一段沒 H2 也保留為第 0 段
+        const parts = md.split(/(?=^##\s)/m);
+        const pages = [];
+        let cur = '';
+        for (const p of parts) {
+          if (cur && cur.length + p.length > PAGE_SIZE) {
+            pages.push(cur);
+            cur = p;
+          } else {
+            cur += p;
+          }
+        }
+        if (cur) pages.push(cur);
+        return pages;
+      }
+
+      // 把 ### 延伸補充 / ### 易考重點 等的 section 包成 <details>(預設收合)
+      function _wrapCollapsibleSections(html){
+        if (!html || (!html.includes('延伸補充') && !html.includes('易考'))) return html;
+        if (typeof document === 'undefined') return html;
+        const wrap = document.createElement('div');
+        wrap.innerHTML = html;
+        const h3s = Array.from(wrap.querySelectorAll('h3'));
+        h3s.forEach(h3 => {
+          const text = h3.textContent || '';
+          if (!/延伸補充|易考/.test(text)) return;
+          // 把後面的 sibling 收集起來,直到下一個 h1/h2/h3
+          const siblings = [];
+          let sib = h3.nextElementSibling;
+          while (sib && !/^H[1-3]$/.test(sib.tagName)) {
+            siblings.push(sib);
+            sib = sib.nextElementSibling;
+          }
+          if (!siblings.length) return;
+          const details = document.createElement('details');
+          details.className = 'nb-collapsible-section';
+          details.style.cssText = 'margin:.8rem 0';
+          const summary = document.createElement('summary');
+          summary.innerHTML = h3.innerHTML;
+          summary.style.cssText = 'cursor:pointer;font-weight:700;color:#7c3aed;padding:.55rem .85rem;background:#f3e8ff;border-radius:8px;font-size:1rem;list-style:none';
+          details.appendChild(summary);
+          h3.replaceWith(details);
+          siblings.forEach(s => details.appendChild(s));
+        });
+        return wrap.innerHTML;
+      }
+
+      function _setChapterPage(chId, page){
+        window._chapterPage[chId] = page;
+        if (typeof renderNotebook === 'function') renderNotebook();
+        // 滾回章節頂端
+        setTimeout(() => {
+          const el = document.querySelector('.nb-chapter-content');
+          if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+        }, 50);
+      }
+
+      function renderChapterPaginated(ch){
+        const md = ch.content || '';
+        const pages = paginateMarkdownByH2(md);
+        if (pages.length <= 1) {
+          // 短章節:正常渲染 + 收合
+          return _wrapCollapsibleSections(renderMarkdown(md));
+        }
+        let pageIdx = window._chapterPage[ch.id] || 0;
+        if (pageIdx >= pages.length) pageIdx = 0;
+        const html = _wrapCollapsibleSections(renderMarkdown(pages[pageIdx]));
+        const navBtns = pages.map((_, i) => {
+          const active = i === pageIdx;
+          return `<button onclick="_setChapterPage('${ch.id}', ${i})" style="background:${active?'#7c3aed':'#fff'};color:${active?'#fff':'#7c3aed'};border:1.5px solid #c084fc;padding:.3rem .65rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.82rem">${i+1}</button>`;
+        }).join('');
+        const prev = pageIdx > 0 ? `<button onclick="_setChapterPage('${ch.id}', ${pageIdx-1})" style="background:#fff;color:#7c3aed;border:1.5px solid #c084fc;padding:.4rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">← 上一頁</button>` : '';
+        const next = pageIdx < pages.length - 1 ? `<button onclick="_setChapterPage('${ch.id}', ${pageIdx+1})" style="background:#7c3aed;color:#fff;border:none;padding:.4rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">下一頁 →</button>` : '';
+        const nav = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.6rem 0;padding:.5rem .7rem;background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:10px;flex-wrap:wrap">
+          <div style="display:flex;gap:.3rem;flex-wrap:wrap;align-items:center">
+            <span style="font-size:.78rem;color:#6b21a8;font-weight:700;margin-right:.3rem">📖 第 ${pageIdx+1} / ${pages.length} 頁</span>
+            ${navBtns}
+          </div>
+          <div style="display:flex;gap:.4rem">${prev}${next}</div>
+        </div>`;
+        return nav + html + nav;
+      }
+
       function renderMarkdown(md){
         if (!md) return '<p style="color:#9ca3af">（章節內容是空的）</p>';
         // 清掉 LaTeX 標記(網站不支援數學渲染,只轉成 Unicode 顯示)

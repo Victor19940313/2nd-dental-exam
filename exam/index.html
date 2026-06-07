@@ -11246,11 +11246,23 @@ ${JSON.stringify(candidates, null, 2)}
           }
           newContent = ta.value;
         }
-        // 🚨 防呆:如果新內容比舊內容縮水超過 90% → 八成是編輯器還沒載完或圖片上傳中,擋下來
+        // 🚨 防呆:如果新內容比舊內容縮水超過 50% → 八成是編輯器還沒載完或 bug,擋下來
         const oldLen = (ch.content || '').trim().length;
         const newLen = (newContent || '').trim().length;
-        if (oldLen > 200 && newLen < oldLen * 0.1) {
-          if (!confirm(`⚠️ 編輯器內容看起來幾乎是空的\n\n原本 ${oldLen} 字 → 現在 ${newLen} 字\n\n常見原因:\n• 編輯器還在載入(等個 2-3 秒再存)\n• 圖片還在上傳\n• TipTap 出 bug 變空白\n\n確定要這樣覆寫舊內容嗎?\n按取消 = 不存(舊內容保住),按確定 = 我就是要清空。`)) {
+        // Console log 方便 debug
+        console.log('[saveChapterEdit]', {
+          chId: id,
+          mode,
+          oldLen,
+          newLen,
+          newContentPreview: (newContent || '').slice(0, 200),
+          editorHasContent: !!(window.NotebookTipTap?.getHTML?.() || '').trim()
+        });
+        // 嚴格防呆:舊有 50+ 字,新縮水到 < 50% → 警告
+        if (oldLen > 50 && newLen < oldLen * 0.5) {
+          const editorHtml = (window.NotebookTipTap?.getHTML?.() || '');
+          if (!confirm(`⚠️ 內容大幅縮水,可能 bug\n\n舊章節 ${oldLen} 字 → 新內容 ${newLen} 字 (剩 ${Math.round(newLen/oldLen*100)}%)\n\n編輯器目前實際 HTML 長度:${editorHtml.length}\n\n常見原因:\n• TipTap 編輯器還在載入(等 2-3 秒再存)\n• 圖片還在上傳完成中\n• htmlToMarkdown 沒抓到某些內容\n\n按【取消】= 保留舊章節,什麼都不存(推薦!)\n按【確定】= 我就是要這樣覆寫\n\n建議按取消,等 5 秒再試一次存。`)) {
+            console.warn('[saveChapterEdit] 被使用者取消,因內容大幅縮水');
             return; // 取消儲存,舊內容保留
           }
         }

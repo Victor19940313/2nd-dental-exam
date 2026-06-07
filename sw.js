@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v270-prevent-blank-overwrite';
+const CACHE_NAME = 'dental-all-v271-stricter-blank-guard';
 const PRECACHE = [
   './',
   './index.html',

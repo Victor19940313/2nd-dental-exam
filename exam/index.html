@@ -4092,13 +4092,13 @@
         <div class="nb-toolbar-actions">
           <button class="nb-tb-btn" onclick="showOnboarding()" title="入門指引">📖 入門</button>
           <button class="nb-tb-btn" id="btn-pending" onclick="openPendingModal()" title="之前整理失敗的題目（可一鍵重試）" style="display:none;background:#fef3c7;border-color:#fbbf24;color:#92400e">📥 待整理</button>
-          <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題">🗂 重整目錄</button>
-          <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出相同概念但被切太細的章節,建議合併(圖片絕對保留)" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 整理章節</button>
+          <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題分組（章節內文不會改）">🗂 子主題分組</button>
+          <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出講同件事卻被切太細的章節 → 合併成一章（圖片絕對保留）" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 合併重複章節</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
-          <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目分類,找出誤分章節並一鍵修正">🔧 修復分類</button>
+          <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目（牙三/牙四/牙五/牙六）有沒有分錯，一鍵修正">🔧 修正科目</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
         </div>
@@ -5245,7 +5245,7 @@
           // 詳解被清掉(因為答案改了)+ 標記 pending → 顯示「待補」提示
           const q = qid ? (typeof QS !== 'undefined' ? QS.find(x => x.id === qid) : null) : null;
           if (q && q.explanation_pending) {
-            const regenBtnEmpty = qid ? `<button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}')" title="現在就重生這題的 Gemini 詳解" style="background:#7c3aed;color:white;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;margin-top:.5rem">🔄 現在就重生</button>` : '';
+            const regenBtnEmpty = qid ? `<button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}',this)" title="現在就重生這題的 Gemini 詳解" style="background:#7c3aed;color:white;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;margin-top:.5rem">🔄 現在就重生</button>` : '';
             return `<details class="gemini-expl" open><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。${regenBtnEmpty}</div></details>`;
           }
           return "";
@@ -5258,7 +5258,7 @@
           `<span class="bg-note">📌 背景:${content}</span>`
         );
         formatted = _cleanExplHtml(formatted);
-        const regenBtn = qid ? `<div style="text-align:center;margin-top:.8rem;padding-top:.5rem;border-top:1px dashed #e5e7eb"><button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}')" title="覺得這篇詳解品質不好?用最新版 prompt 重新生成(覆寫舊版)" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.25)">🔄 請 Gemini 重生詳解</button><div style="font-size:.7rem;color:#9ca3af;margin-top:.3rem">覺得這篇寫得太爛?按一下用最新 prompt 重做</div></div>` : '';
+        const regenBtn = qid ? `<div style="text-align:center;margin-top:.8rem;padding-top:.5rem;border-top:1px dashed #e5e7eb"><button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}',this)" title="覺得這篇詳解品質不好?用最新版 prompt 重新生成(覆寫舊版)" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.25)">🔄 請 Gemini 重生詳解</button><div style="font-size:.7rem;color:#9ca3af;margin-top:.3rem">覺得這篇寫得太爛?按一下用最新 prompt 重做</div></div>` : '';
         return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}${regenBtn}</div></details>`;
       }
       // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)
@@ -5438,7 +5438,7 @@ ${(q.options || []).join('\n')}
 
 直接輸出 markdown(不要包 \`\`\` 或前言)。`;
       }
-      async function regenerateGeminiExpl(qid){
+      async function regenerateGeminiExpl(qid, btnEl){
         const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
         if (!q) { showToast('找不到題目'); return; }
         if (!getGeminiKey()) {
@@ -5447,6 +5447,15 @@ ${(q.options || []).join('\n')}
           return;
         }
         if (!confirm(`用「老師教學」新風格重生「${q.meta || q.id}」的 Gemini 詳解?\n\n會覆寫舊版,並同步到 GitHub(所有使用者下次載入會看到新詳解)。NotebookLM 詳解不動。`)) return;
+        // 🛡 v284:按鈕本體顯示「生成中…」,讓使用者知道有在跑(不只 toast,因為 toast 會消失)
+        let _btnOrigHTML = null;
+        if (btnEl && btnEl.tagName === 'BUTTON') {
+          _btnOrigHTML = btnEl.innerHTML;
+          btnEl.disabled = true;
+          btnEl.innerHTML = '🤖 生成中…(約 5-15 秒)';
+          btnEl.style.opacity = '0.75';
+          btnEl.style.cursor = 'wait';
+        }
         showToast('🤖 AI 生成中... 約 5-15 秒');
         _silentResetCooldowns();
         try {
@@ -5495,6 +5504,14 @@ ${(q.options || []).join('\n')}
         } catch (err) {
           console.error('regenerate expl failed', err);
           showToast('❌ 生成失敗: ' + (err.message || '').slice(0, 100));
+        } finally {
+          // 🛡 v284:還原按鈕(成功路徑後 explBox 會被重畫,btnEl 已不在 DOM 也沒關係)
+          if (btnEl && btnEl.isConnected && _btnOrigHTML !== null) {
+            btnEl.disabled = false;
+            btnEl.innerHTML = _btnOrigHTML;
+            btnEl.style.opacity = '';
+            btnEl.style.cursor = '';
+          }
         }
       }
 
@@ -6666,7 +6683,12 @@ ${(q.options || []).join('\n')}
         return `${subjLbl} / ${yearLbl}`;
       }
 
-      function saveExamHistory(correct, total, mode, wrongQs) {
+      async function saveExamHistory(correct, total, mode, wrongQs) {
+        // 🛡 v284:存之前先確保 hydrate 已跑過,避免讀到空狀態洗掉 IDB 既有紀錄
+        //         (場景:hydrate 還沒跑完使用者就交卷 → cache=null + LS=空 → save 從 [] 起手 → 洗掉 IDB 舊紀錄)
+        if (!_examHistoryHydrateDone) {
+          try { await _hydrateExamHistoryFromIdb(); } catch(e){}
+        }
         try {
           const hist = (function(){ _maybeMigrateExamHistory(); return (typeof _readExamHistorySync === 'function') ? _readExamHistorySync() : JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); })();
           const now = new Date();
@@ -6715,20 +6737,18 @@ ${(q.options || []).join('\n')}
           const payload = JSON.stringify(finalHist);
           // 0. 更新 in-memory cache(立即可用,不用等 IDB)
           window._examHistoryCache = finalHist;
-          // 1. 先寫 IDB(主要儲存,沒 quota 限制)
+          // 1. 🛡 v284:同步 await IDB 寫入(主要儲存,確保關頁前真的有寫到)
+          //          以前是 fire-and-forget,如果使用者交卷後立刻關頁,IDB 可能還沒 commit → 紀錄遺失
           if (typeof _idbSet === 'function') {
-            _idbWriteQueue = _idbWriteQueue.then(() => _idbSet(uKey('examHistory'), payload)).catch(err => console.warn('[idb examHistory write failed]', err));
-          }
-          // 2. 試寫 localStorage(舊版相容)
-          try {
-            localStorage.setItem(uKey('examHistory'), payload);
-          } catch (lsErr) {
-            console.warn('[saveExamHistory] localStorage quota exceeded → 只走 IDB:', lsErr.message);
-            // 跳警告告知使用者(不靜默吞掉)
-            if (typeof showToast === 'function') {
-              showToast('⚠️ localStorage 滿了,試卷紀錄寫進 IDB 備援(刷新仍會顯示)');
+            try {
+              await _idbSet(uKey('examHistory'), payload);
+            } catch (idbErr) {
+              console.error('[idb examHistory write failed]', idbErr);
+              if (typeof showToast === 'function') showToast('⚠️ IDB 寫入失敗,紀錄可能未持久化:' + (idbErr.message||'').slice(0,60));
             }
           }
+          // 2. 試寫 localStorage(舊版相容,撞 quota 預期會失敗,靜默處理)
+          try { localStorage.setItem(uKey('examHistory'), payload); } catch (lsErr) {}
         } catch (e) {
           console.error('saveExamHistory:', e);
           if (typeof showToast === 'function') showToast('❌ 試卷紀錄儲存失敗:' + (e.message||'').slice(0,60));
@@ -7483,7 +7503,12 @@ ${(q.options || []).join('\n')}
         const score = (correct * 1.25).toFixed(2);
         const fullScore = (total * 1.25).toFixed(2);
         // 只在實際有作答時記錄到歷史成績
-        if (answered > 0) saveExamHistory(correct, total, modeLabel, wrongQs);
+        // 🛡 v284:用 .then 鏈結,確保 IDB 寫入完成後才 render 歷史,避免畫面少一筆
+        if (answered > 0) {
+          saveExamHistory(correct, total, modeLabel, wrongQs).then(() => {
+            try { renderExamHistory("exam-res-history"); } catch(e){}
+          });
+        }
         document.getElementById("exam-res-score").textContent =
           `${score} 分 / ${fullScore}`;
         let subParts = [`答對 ${correct}/${total} 題`];
@@ -8628,35 +8653,58 @@ ${(q.options || []).join('\n')}
         setTimeout(_hydrateNotebookFromIdb, 0);
       }
 
-      // ── 試卷紀錄(examHistory)IDB 同步:hydrate 進 in-memory cache + 寫回 localStorage ──
+      // ── 試卷紀錄(examHistory)IDB 同步 v284:合併策略 + 防 race ──
+      // 之前 hydrate 會無條件用 IDB 覆蓋 in-memory cache,撞到使用者「剛存完還沒寫進 IDB」就洗掉新紀錄
+      // (109-1 牙五消失就是這個 bug)。新版改用合併:cache + IDB 用 ts 去重併集,新到舊排序
       window._examHistoryCache = null;
-      async function _hydrateExamHistoryFromIdb(){
-        try {
-          const fromIdb = await _idbGet(uKey('examHistory'));
-          if (!fromIdb) {
-            // IDB 沒資料 → 把 localStorage 現有的搬過去(一次性遷移)
-            const lsRaw = localStorage.getItem(uKey('examHistory'));
-            if (lsRaw) {
-              await _idbSet(uKey('examHistory'), lsRaw);
-              try { window._examHistoryCache = JSON.parse(lsRaw); } catch(e){}
-              console.log('[idb examHistory] migrated from localStorage');
-            }
-            return;
-          }
-          try { window._examHistoryCache = JSON.parse(fromIdb); } catch(e){ return; }
-          // 試著寫回 localStorage(避免舊讀取點看到舊資料);失敗無所謂,有 cache 撐著
-          try { localStorage.setItem(uKey('examHistory'), fromIdb); }
-          catch(e) { console.warn('[idb examHistory] localStorage write-back failed (使用 in-memory cache):', e.message); }
-          console.log('[idb examHistory] hydrated', window._examHistoryCache.length, '筆');
-        } catch (e) {
-          console.warn('[idb examHistory] hydrate failed:', e.message);
+      let _examHistoryHydrateDone = false;
+      let _examHistoryHydratePromise = null;
+      function _mergeExamHistRecords(a, b){
+        const seen = new Map();
+        for (const r of [...(a||[]), ...(b||[])]) {
+          if (!r) continue;
+          const key = r.ts || (r.date + '|' + r.label);
+          if (!seen.has(key)) seen.set(key, r);
         }
+        return Array.from(seen.values()).sort((x, y) => (y.ts||0) - (x.ts||0)).slice(0, 100);
       }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => setTimeout(_hydrateExamHistoryFromIdb, 50));
-      } else {
-        setTimeout(_hydrateExamHistoryFromIdb, 50);
+      async function _hydrateExamHistoryFromIdb(){
+        if (_examHistoryHydrateDone) return;
+        if (_examHistoryHydratePromise) return _examHistoryHydratePromise;
+        _examHistoryHydratePromise = (async () => {
+          try {
+            const fromIdb = await _idbGet(uKey('examHistory'));
+            let idbHist = [];
+            if (fromIdb) {
+              try { idbHist = JSON.parse(fromIdb) || []; } catch(e) { idbHist = []; }
+            } else {
+              // IDB 空 → 從 localStorage migrate
+              const lsRaw = localStorage.getItem(uKey('examHistory'));
+              if (lsRaw) {
+                try { idbHist = JSON.parse(lsRaw) || []; } catch(e) {}
+              }
+            }
+            // 🛡 合併:現有 cache(剛存的新紀錄)+ IDB(其他裝置同步來的或舊紀錄)
+            //         用 ts 當 key 去重,新到舊排序,保留前 100 筆
+            const merged = _mergeExamHistRecords(window._examHistoryCache, idbHist);
+            window._examHistoryCache = merged;
+            // 把合併結果寫回 IDB + localStorage(讓兩邊一致)
+            if (merged.length > 0) {
+              const payload = JSON.stringify(merged);
+              try { await _idbSet(uKey('examHistory'), payload); } catch(e){}
+              try { localStorage.setItem(uKey('examHistory'), payload); } catch(e){}
+            }
+            console.log('[idb examHistory] hydrated', merged.length, '筆(合併版)');
+            _examHistoryHydrateDone = true;
+          } catch (e) {
+            console.warn('[idb examHistory] hydrate failed:', e.message);
+            _examHistoryHydrateDone = true; // 失敗也標記完成,避免卡住所有 save
+          }
+        })();
+        return _examHistoryHydratePromise;
       }
+      // 立刻 kick off hydrate,不再延遲 50ms
+      _hydrateExamHistoryFromIdb();
       // 統一讀取:有 IDB cache 用 cache,沒有 fall back localStorage
       window._readExamHistorySync = function(){
         if (window._examHistoryCache) return window._examHistoryCache;
@@ -12211,7 +12259,23 @@ ${JSON.stringify(candidates, null, 2)}
       async function reorganizeChapter(id){
         const ch = notebook.chapters.find(c => c.id === id);
         if (!ch) return;
-        if (!confirm('讓 AI 把這章重新整理一遍？\n（會把所有來源題目全部丟給 AI 重寫）')) return;
+        // 🛡 v284:長章節警告(章節整理是「整章重寫」,輸出有 token 上限,長章節會被截斷)
+        const chLen = (ch.content || '').length;
+        const isLong = chLen >= 6000;
+        if (isLong) {
+          if (!confirm(
+            `⚠️ 這章已經 ${chLen} 字了(算長章節)\n\n` +
+            '「章節整理」會把整章重新寫一遍。長章節有風險:\n' +
+            '・AI 一次最多吐 5000 ~ 8000 中文字 → 可能寫到一半就截斷\n' +
+            '・即使有防呆,改完可能比原本少\n\n' +
+            '建議:\n' +
+            '・按【取消】,改用 💬 那顆按鈕(只改你目前看的那一頁,不會截斷)\n' +
+            '・要繼續就按【確定】,有縮水警告會擋著\n\n' +
+            '要繼續整章重寫嗎?'
+          )) return;
+        } else {
+          if (!confirm('讓 AI 把這章重新整理一遍？\n（會把所有來源題目全部丟給 AI 重寫）')) return;
+        }
         // 重整 = 把章節清空、把所有來源題目一題一題重新跑
         // 簡化做法：把所有題目資料一次給 AI 重寫
         const qs = (ch.qids || []).map(qid => QS.find(x => x.id === qid)).filter(Boolean);
@@ -12271,10 +12335,28 @@ ${(ch.content || '').slice(0, 3000)}
         const btn = event && event.target;
         const orig = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.innerHTML = '⏳'; }
+        // 🛡 v284:dynamic maxOutputTokens — 照題目素材長度估,長章節給更多 token 但有上限
+        const promptLen = prompt.length;
+        const estOutTokens = Math.min(32768, Math.max(8192, Math.ceil(promptLen * 1.2)));
         try {
-          const raw = await callGemini(prompt, REORGANIZE_SCHEMA);
+          const raw = await callGemini(prompt, REORGANIZE_SCHEMA, { maxOutputTokens: estOutTokens });
           const dec = extractJSON(raw);
           if (dec.content) {
+            const oldContent = ch.content || '';
+            let newContent = _preserveImagesIn(oldContent, unescapeIfNeeded(dec.content));
+            // 🛡 v284:縮水防呆 — AI 改完比原本少 50% 以上,跳警告
+            if (oldContent.length > 100 && newContent.length < oldContent.length * 0.5) {
+              if (!confirm(
+                '⚠️ AI 整理完內容大幅縮水\n\n' +
+                `原本 ${oldContent.length} 字 → AI 整理完 ${newContent.length} 字 (剩 ${Math.round(newContent.length/oldContent.length*100)}%)\n\n` +
+                '可能是 AI 輸出被截斷(章節太長),或它真的精簡了。\n\n' +
+                '按【取消】= 不存,保持原樣 (推薦)\n' +
+                '按【確定】= 我就是要覆寫'
+              )) {
+                showToast('已取消整理');
+                return;
+              }
+            }
             // 存舊版到歷史
             notebook.history.unshift({
               ts: Date.now(),
@@ -12283,8 +12365,7 @@ ${(ch.content || '').slice(0, 3000)}
               snapshot: { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] },
               note: '重整章節「' + ch.name + '」'
             });
-            // 圖片安全網：若 AI 刪了任何原本的圖，自動補回章節末尾
-            ch.content = _preserveImagesIn(ch.content, unescapeIfNeeded(dec.content));
+            ch.content = newContent;
             ch.updatedAt = Date.now();
             trimHistory();
             saveNotebook();
@@ -12337,71 +12418,117 @@ ${(ch.content || '').slice(0, 3000)}
           openAISettings();
           return;
         }
+        // 🛡 v284:章節分頁時,只改使用者目前看的那一頁,避免:
+        //   1. 把整章節塞給 AI 燒 quota(配合 [[feedback-quota-scale]])
+        //   2. AI 輸出爆 token 上限被截斷,反而把章節吃掉
+        const fullPages = (typeof paginateMarkdownByH2 === 'function')
+          ? paginateMarkdownByH2(ch.content || '')
+          : [ch.content || ''];
+        const isPaginated = fullPages.length > 1;
+        let pageIdx = 0;
+        let pageContent = ch.content || '';
+        if (isPaginated) {
+          pageIdx = (window._chapterPage && window._chapterPage[chId]) || 0;
+          if (pageIdx >= fullPages.length) pageIdx = 0;
+          pageContent = fullPages[pageIdx];
+        }
+        const pageLabel = isPaginated ? ` (第 ${pageIdx+1} / ${fullPages.length} 頁)` : '';
+        const pageHint = isPaginated
+          ? `\n\n📖 你目前在第 ${pageIdx+1} / ${fullPages.length} 頁,AI 只會改這一頁,其他頁完全不動。\n要改其他頁:先翻過去再按 💬。`
+          : '';
+
         const instruction = await promptMultiline(
-          `💬 告訴 AI 怎麼改「${ch.name}」`,
-          `例如:\n・加一個臨床決策表格\n・把神經 fiber 那段擴充,加傳導速度資料\n・砍掉重複的部分\n・加一個易混淆陷阱 callout\n・最後加「考點對照表」整理所有易考角度\n・把英文補上中文翻譯\n\n按 Cmd+Enter 送出, Esc 取消`,
-          '想要 AI 怎麼改這章…(可以打很多行,不限字數)'
+          `💬 告訴 AI 怎麼改「${ch.name}」${pageLabel}`,
+          `例如:\n・加一個臨床決策表格\n・把神經 fiber 那段擴充,加傳導速度資料\n・砍掉重複的部分\n・加一個易混淆陷阱 callout\n・把英文補上中文翻譯${pageHint}\n\n按 Cmd+Enter 送出, Esc 取消`,
+          isPaginated ? '想要 AI 怎麼改這一頁…' : '想要 AI 怎麼改這章…(可以打很多行,不限字數)'
         );
         if (!instruction || !instruction.trim()) return;
 
         showToast('🤖 AI 改寫中...');
+        // 🛡 動態 maxOutputTokens:照輸入長度估,輸入越短上限越小,省 quota
+        const inputChars = pageContent.length + instruction.length + 1500; // +系統 prompt
+        const estOutTokens = Math.min(32768, Math.max(4096, Math.ceil(inputChars * 1.3)));
+
         const prompt2 = `你是牙醫國考筆記整理員。
 
 【當前章節】
 標題：${ch.name}
 領域：${ch.domain || ''}
 子主題：${ch.subtopic || ''}
-內容：
-${ch.content}
+${isPaginated ? `📖 你只看到「第 ${pageIdx+1} / ${fullPages.length} 頁」的內容(章節有多頁,其他頁不在這次改寫範圍)` : ''}
+
+【內容】
+${pageContent}
 
 【使用者指令】
 ${instruction.trim()}
 
 【任務】
-依使用者指令修改章節內容。維持原有的 Markdown 排版風格：
+依使用者指令修改上面的內容。${isPaginated ? '\n⚠ 只能改「上面這一頁」,不要新增其他頁的內容。' : ''}
+維持原有的 Markdown 排版風格:
 - ## h2 ### h3 #### h4 標題
-- **粗體** 用於重要主項目名稱（會被反白 highlight）
-- **子標籤詞**（特點/功能/機制/臨床 等）接冒號 → 會自動變灰藍小字
-- - 條列為主，每點獨佔一行
+- **粗體** 用於重要主項目名稱
+- - 條列為主,每點獨佔一行
 - | 表格 | 做對照
-- > 💡 重點 / > ⚠️ 警告 / > 🏥 臨床 / > 📝 易考 用 callout 區塊
-- [[概念]] 包關鍵詞 → 變紫色標籤
+- > 💡 重點 / > ⚠️ 警告 / > 🏥 臨床 / > 📝 易考 用 callout
+- [[概念]] 包關鍵詞
 
 【規範】
-- 維持「將來能答對同概念題目」的核心定位（不是寫題目詳解）
-- 不要刪除有用的舊資訊，除非使用者明確要求
-- 結尾保留「### 💡 易考重點」段落
+- 不要刪除有用的舊資訊,除非使用者明確要求
+${isPaginated ? '- 不要把「其他頁」的內容搬進來' : '- 結尾保留「### 💡 易考重點」段落'}
 
 【🖼 圖片必須保留(極重要)】
-章節原本的所有圖片(markdown ![](url) 跟 HTML <img src> 兩種都要)必須完整保留進新版,**一張都不可省略**。
-可以重新調整位置(換到更合適的段落下方),但禁止刪除或改寫成描述文字。
+原本的圖片(markdown ![](url) 跟 HTML <img src> 兩種都要)必須完整保留進新版,**一張都不可省略**。
+可以重新調整位置,但禁止刪除或改寫成描述文字。
 
-【章節既有圖片(必須全部保留)】
-${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
+【既有圖片(必須全部保留)】
+${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
 
 【回 JSON】
 {"content": "完整修改後的 Markdown"}`;
 
         try {
-          const raw = await callGemini(prompt2, REORGANIZE_SCHEMA);
+          const raw = await callGemini(prompt2, REORGANIZE_SCHEMA, { maxOutputTokens: estOutTokens });
           const dec = extractJSON(raw);
           if (!dec.content) throw new Error('AI 沒有回新內容');
+          let newPageContent = _preserveImagesIn(pageContent, unescapeIfNeeded(dec.content));
+          // 🛡 防呆:AI 改完縮水超過 50% → 警告
+          if (pageContent.length > 100 && newPageContent.length < pageContent.length * 0.5) {
+            if (!confirm(
+              '⚠️ AI 改完內容大幅縮水\n\n' +
+              `原本 ${pageContent.length} 字 → AI 改完 ${newPageContent.length} 字 (剩 ${Math.round(newPageContent.length/pageContent.length*100)}%)\n\n` +
+              '可能是 AI 輸出被截斷,或它真的精簡了內容。\n\n' +
+              '按【取消】= 不存,保持原樣(推薦)\n' +
+              '按【確定】= 我就是要覆寫'
+            )) {
+              showToast('已取消改寫');
+              return;
+            }
+          }
+          // 組回完整章節
+          let fullNew;
+          if (isPaginated) {
+            const newPages = [...fullPages];
+            newPages[pageIdx] = newPageContent;
+            fullNew = newPages.join('');
+          } else {
+            fullNew = newPageContent;
+          }
           // 存舊版到歷史
           notebook.history.unshift({
             ts: Date.now(),
             action: 'ai_modify',
             chapterId: chId,
             snapshot: { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] },
-            note: '依指令改寫「' + ch.name + '」',
+            note: '依指令改寫「' + ch.name + '」' + (isPaginated ? ` 第 ${pageIdx+1} 頁` : ''),
             reasoning: '使用者指令：' + instruction.trim()
           });
-          // 圖片安全網:若 AI 刪了任何原本的圖,自動補回章節末尾
-          ch.content = _preserveImagesIn(ch.content, unescapeIfNeeded(dec.content));
+          ch.content = fullNew;
           ch.updatedAt = Date.now();
           trimHistory();
           saveNotebook();
           renderNotebook();
-          showToast('✓ AI 已改寫，不滿意可到 🕓 歷史 撤銷');
+          showToast('✓ AI 已改寫' + (isPaginated ? `第 ${pageIdx+1} 頁` : '') + '，不滿意可到 🕓 歷史 撤銷');
         } catch(err) {
           alert('AI 改寫失敗：\n\n' + err.message);
         }

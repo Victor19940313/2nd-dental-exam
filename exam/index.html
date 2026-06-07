@@ -3701,6 +3701,16 @@
               📃 整頁捲動（答案後給）
             </button>
           </div>
+        <!-- 📅 昨日錯題:有的話才顯示,點下去進複習模式 -->
+        <div id="yesterday-wrong-card" style="display:none;margin-top:.9rem;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:11px;padding:.75rem .95rem;box-shadow:0 2px 8px rgba(245,158,11,.2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+            <div style="flex:1">
+              <div style="font-size:.95rem;color:#92400e;font-weight:800">📅 昨日錯題</div>
+              <div style="font-size:.78rem;color:#78350f;margin-top:.18rem"><span id="yesterday-wrong-count">0</span> 題昨天答錯 → 趁印象還在複習一遍</div>
+            </div>
+            <button onclick="startYesterdayWrong()" style="background:#d97706;color:white;border:none;padding:.5rem 1.05rem;border-radius:8px;font-weight:800;cursor:pointer;font-size:.85rem;white-space:nowrap;box-shadow:0 2px 6px rgba(217,119,6,.35)">複習 →</button>
+          </div>
+        </div>
         <div style="margin-top:1.2rem">
           <h3 style="font-size:.95rem;color:#78716c;margin-bottom:.6rem">📚 學習工具</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
@@ -5820,6 +5830,7 @@ ${(q.options || []).join('\n')}
         updateMatchCount();
         checkLastPos();
         renderDailyLog();
+        try { updateYesterdayWrongCard(); } catch(e) {}
       }
 
       function showBrowse() {
@@ -6030,6 +6041,52 @@ ${(q.options || []).join('\n')}
         }
       }
 
+      // 📅 昨日錯題:從 examHistory 撈昨天的考試紀錄,合併所有 wrongs.qid 去重
+      function getYesterdayWrongQids(){
+        const now = new Date();
+        const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+        const yKey = y.getFullYear() + '-' + String(y.getMonth()+1).padStart(2,'0') + '-' + String(y.getDate()).padStart(2,'0');
+        const hist = (typeof _readExamHistorySync === 'function')
+          ? _readExamHistorySync()
+          : (function(){ try { return JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); } catch(e) { return []; } })();
+        const qids = new Set();
+        (hist || []).forEach(h => {
+          if (!h.date || !h.date.startsWith(yKey)) return;
+          (h.wrongs || []).forEach(w => { if (w.qid) qids.add(w.qid); });
+        });
+        return Array.from(qids);
+      }
+      function updateYesterdayWrongCard(){
+        const card = document.getElementById('yesterday-wrong-card');
+        const countEl = document.getElementById('yesterday-wrong-count');
+        if (!card || !countEl) return;
+        const qids = getYesterdayWrongQids();
+        if (qids.length === 0) {
+          card.style.display = 'none';
+        } else {
+          card.style.display = 'block';
+          countEl.textContent = qids.length;
+        }
+      }
+      function startYesterdayWrong(){
+        const qids = getYesterdayWrongQids();
+        if (qids.length === 0) { showToast('昨天沒有錯題'); return; }
+        const qs = qids.map(qid => (typeof QS !== 'undefined') ? QS.find(q => q.id === qid) : null).filter(Boolean);
+        if (qs.length === 0) { showToast('題目對應不到(題庫可能改過)'); return; }
+        examMode = false;
+        examAnswers = {};
+        qgridSkipped = {};
+        activeTopic = null;
+        practiceList = qs;
+        practiceIdx = 0;
+        resetPracticeScore();
+        clearLastPos();
+        showPractice();
+        const skipBtn = document.getElementById("btn-skip"); if (skipBtn) skipBtn.style.display = "";
+        updatePracticeScoreUI();
+        loadPracticeQ();
+        showToast('📅 進入昨日錯題複習(' + qs.length + ' 題)');
+      }
       function startPractice(shuffle) {
         let list = getHomeFiltered();
         if (!list.length) {
@@ -8802,6 +8859,8 @@ ${(q.options || []).join('\n')}
             }
             console.log('[idb examHistory] hydrated', merged.length, '筆(合併版)');
             _examHistoryHydrateDone = true;
+            // hydrate 完才知道有沒有昨日錯題,補一次卡片更新
+            try { if (typeof updateYesterdayWrongCard === 'function') updateYesterdayWrongCard(); } catch(e) {}
           } catch (e) {
             console.warn('[idb examHistory] hydrate failed:', e.message);
             _examHistoryHydrateDone = true; // 失敗也標記完成,避免卡住所有 save

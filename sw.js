@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v286-wrongbook-and-all-LS-audit';
+const CACHE_NAME = 'dental-all-v287-yesterday-wrong-feature';
 const PRECACHE = [
   './',
   './index.html',

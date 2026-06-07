@@ -8420,10 +8420,165 @@ ${(q.options || []).join('\n')}
           if (cleaned) localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
         } catch (e) { notebook = { chapters: [], history: [] }; }
       }
+      // ── 📦 IndexedDB 筆記本存儲(無痛遷移版,localStorage 仍為 fallback)──
+      const NB_IDB_NAME = 'dental_notebooks_v1';
+      const NB_IDB_STORE = 'notebooks';
+      function _idbOpen(){
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(NB_IDB_NAME, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(NB_IDB_STORE)) {
+              db.createObjectStore(NB_IDB_STORE);
+            }
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+      async function _idbSet(key, value){
+        const db = await _idbOpen();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(NB_IDB_STORE, 'readwrite');
+          tx.objectStore(NB_IDB_STORE).put(value, key);
+          tx.oncomplete = () => { db.close(); resolve(true); };
+          tx.onerror = () => { db.close(); reject(tx.error); };
+        });
+      }
+      async function _idbGet(key){
+        const db = await _idbOpen();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(NB_IDB_STORE, 'readonly');
+          const r = tx.objectStore(NB_IDB_STORE).get(key);
+          r.onsuccess = () => { db.close(); resolve(r.result); };
+          r.onerror = () => { db.close(); reject(r.error); };
+        });
+      }
+      async function _idbDel(key){
+        const db = await _idbOpen();
+        return new Promise((resolve) => {
+          const tx = db.transaction(NB_IDB_STORE, 'readwrite');
+          tx.objectStore(NB_IDB_STORE).delete(key);
+          tx.oncomplete = () => { db.close(); resolve(true); };
+          tx.onerror = () => { db.close(); resolve(false); };
+        });
+      }
+      // 標記:這個瀏覽器已遷移過(避免重複寫,小優化)
+      let _idbWriteQueue = Promise.resolve();
+      // 序列化寫入,避免 race condition
+      function _queueIdbWrite(payload){
+        _idbWriteQueue = _idbWriteQueue
+          .then(() => _idbSet(NOTEBOOK_KEY, payload))
+          .catch(err => console.warn('[idb] write failed', err));
+        return _idbWriteQueue;
+      }
+
       function saveNotebook() {
-        localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
+        const payload = JSON.stringify(notebook);
+        // 1. 先寫 IndexedDB(沒 quota 限制,主要儲存)
+        _queueIdbWrite(payload);
+        // 2. 再試 localStorage(舊版相容,撞 quota 不會跳錯,只是 console warn)
+        try {
+          localStorage.setItem(NOTEBOOK_KEY, payload);
+        } catch (e) {
+          console.warn('[saveNotebook] localStorage quota exceeded → 只走 IDB(沒問題,IDB 容量大):', e.message);
+        }
         if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
       }
+
+      // ── 載入時:先讀 localStorage(瞬間),再 async 讀 IDB 覆寫(取最新)──
+      // 這樣首次載入沒延遲,IDB 有更新時自動接管
+      async function _hydrateNotebookFromIdb(){
+        try {
+          const fromIdb = await _idbGet(NOTEBOOK_KEY);
+          if (!fromIdb) {
+            // IDB 沒資料 → 把 localStorage 現有的搬過去(一次性遷移)
+            const lsRaw = localStorage.getItem(NOTEBOOK_KEY);
+            if (lsRaw) {
+              await _idbSet(NOTEBOOK_KEY, lsRaw);
+              console.log('[idb] migrated', Math.round(lsRaw.length/1024), 'KB from localStorage');
+            }
+            return;
+          }
+          // IDB 有資料 → 比較大小,IDB 比較新就覆寫 in-memory
+          const lsRaw = localStorage.getItem(NOTEBOOK_KEY) || '';
+          if (fromIdb !== lsRaw) {
+            try {
+              const idbData = JSON.parse(fromIdb);
+              notebook = idbData;
+              if (!notebook.chapters) notebook.chapters = [];
+              if (!notebook.history) notebook.history = [];
+              console.log('[idb] loaded', Math.round(fromIdb.length/1024), 'KB from IDB(比 localStorage 新)');
+              // 觸發畫面更新
+              if (typeof renderNotebook === 'function') {
+                const nbEl = document.getElementById('screen-notebook');
+                if (nbEl && nbEl.style.display !== 'none') renderNotebook();
+              }
+            } catch(e) { console.warn('[idb] parse failed', e); }
+          }
+        } catch (e) {
+          console.warn('[idb] hydrate failed (fallback localStorage):', e.message);
+        }
+      }
+      // 頁面開好就跑(loadNotebook 同步部分先用 localStorage 起手,IDB 在背景接管)
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(_hydrateNotebookFromIdb, 0));
+      } else {
+        setTimeout(_hydrateNotebookFromIdb, 0);
+      }
+
+      // ── 手動匯出:直接下載當前筆記本 ──
+      window.exportNotebookBackup = function(){
+        const payload = JSON.stringify(notebook);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+        a.href = url;
+        a.download = `notebook-manual-${_curUserId}-${ts}.json`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+        showToast('📦 已下載備份檔');
+      };
+
+      // ── 從備份檔還原 ──
+      window.importNotebookBackup = function(){
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = '.json';
+        inp.onchange = (e) => {
+          const f = e.target.files[0];
+          if (!f) return;
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              const data = JSON.parse(ev.target.result);
+              if (!data.chapters) throw new Error('檔案格式不對:沒有 chapters');
+              if (!confirm('要把目前的筆記本覆寫成這個備份檔嗎?\n\n備份檔有 ' + data.chapters.length + ' 章\n目前有 ' + (notebook.chapters||[]).length + ' 章\n\n按確定 = 覆寫,按取消 = 不動')) return;
+              notebook = data;
+              saveNotebook();
+              renderNotebook();
+              showToast('✅ 已從備份還原');
+            } catch (err) {
+              alert('❌ 還原失敗:' + err.message);
+            }
+          };
+          reader.readAsText(f);
+        };
+        inp.click();
+      };
+
+      // ── 緊急 rollback:把 IDB 清掉,回去用 localStorage ──
+      window.rollbackToLocalStorageOnly = async function(){
+        if (!confirm('確定要關掉 IndexedDB,只用 localStorage?\n\n這會清掉 IDB 副本,以後存檔只走 localStorage(會再撞 quota)。\n建議只在懷疑 IDB 出問題才用。')) return;
+        try {
+          await _idbDel(NOTEBOOK_KEY);
+          alert('✅ IDB 副本已清除。重新整理頁面後會用 localStorage 載入。');
+        } catch (e) {
+          alert('❌ 清除失敗:' + e.message);
+        }
+      };
       const GEMINI_KEYS_LS = uKey("gemini_api_keys"); // 多把 key（JSON 陣列）
       // 取目前所有 key（會自動從舊單 key 欄位 migrate）
       function getGeminiKeys(){

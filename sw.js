@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v275-quota-error-handling';
+const CACHE_NAME = 'dental-all-v276-indexeddb-storage';
 const PRECACHE = [
   './',
   './index.html',

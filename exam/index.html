@@ -11244,17 +11244,32 @@ ${JSON.stringify(candidates, null, 2)}
           // TipTap 模式:把編輯器內容(HTML)轉回 markdown
           const editorRootEl = document.querySelector('#ch-tiptap .ProseMirror');
           if (!editorRootEl) { showToast('找不到編輯器'); return; }
-          // 🛡 硬擋:TipTap 整個編輯器是空的,但章節原本有內容 → 拒絕儲存
+          // 🛡 硬擋:TipTap 整個編輯器跟 DOM 都是空的,但章節原本有內容 → 拒絕儲存
           const editorHtml = window.NotebookTipTap.getHTML() || '';
           const editorTextOnly = editorHtml.replace(/<[^>]+>/g, '').trim();
           const editorImgCount = (editorHtml.match(/<img/g) || []).length;
+          // 同時檢查 DOM (避免 getHTML 誤判)
+          const domText = (editorRootEl.textContent || '').trim();
+          const domImgCount = editorRootEl.querySelectorAll('img').length;
           const chOldLen = (ch.content || '').trim().length;
-          if (chOldLen > 50 && editorTextOnly.length < 5 && editorImgCount === 0) {
+          // Console log 給除錯用
+          console.log('[saveChapterEdit] check', {
+            chOldLen,
+            getHTML_textLen: editorTextOnly.length,
+            getHTML_imgCount: editorImgCount,
+            dom_textLen: domText.length,
+            dom_imgCount: domImgCount,
+            domInnerHTML_preview: editorRootEl.innerHTML.slice(0, 300)
+          });
+          // 嚴格判定:DOM 跟 getHTML 都認定空白才擋
+          const bothEmpty = (editorTextOnly.length < 5 && editorImgCount === 0) &&
+                            (domText.length < 5 && domImgCount === 0);
+          if (chOldLen > 50 && bothEmpty) {
             const backupKey = 'edit_backup_' + id;
             const backup = sessionStorage.getItem(backupKey);
             alert(
               '❌ 拒絕儲存:TipTap 編輯器目前是空的\n\n' +
-              '章節原本 ' + chOldLen + ' 字,但編輯器只剩 ' + editorTextOnly.length + ' 字、0 張圖片。\n\n' +
+              '章節原本 ' + chOldLen + ' 字,但編輯器(getHTML/DOM 都是空的)。\n\n' +
               '可能原因:\n' +
               '• 插入圖片時 TipTap 內部出錯(常見)\n' +
               '• 編輯器掛掉沒重新載入\n\n' +
@@ -11262,7 +11277,7 @@ ${JSON.stringify(candidates, null, 2)}
               '1. 按 Cmd+R(Mac)/ Ctrl+R(Win) 刷新頁面\n' +
               '2. 章節會回到上次儲存的版本(' + chOldLen + ' 字)\n' +
               '3. 重新進編輯模式加圖片\n\n' +
-              (backup ? '✅ 進入編輯時的備份還在,刷新後章節內容不會丟。' : '⚠️ 沒找到備份(可能是直接從筆記列表進來編輯的)')
+              (backup ? '✅ 進入編輯時的備份還在,刷新後章節內容不會丟。' : '⚠️ 沒找到備份')
             );
             return;
           }
@@ -11330,11 +11345,43 @@ ${JSON.stringify(candidates, null, 2)}
           note: '手動編輯「' + _oldName + '」' + (mode === 'tiptap' ? '(TipTap)' : '')
         });
         trimHistory();
-        editingChapterId = null;
-        if (window.NotebookTipTap) window.NotebookTipTap.destroy();
-        saveNotebook();
-        renderNotebook();
-        showToast('✓ 已儲存');
+        // 🛡 先試存 saveNotebook,失敗(QuotaExceeded)就不毀編輯器,讓使用者有機會清資料
+        let saveOk = false;
+        try {
+          // 先暫存原值,失敗時可 rollback
+          const origContent = (ch.content === newContent) ? null : null; // ch.content 已被 mutate,先不 rollback
+          saveNotebook();
+          saveOk = true;
+        } catch (saveErr) {
+          console.error('saveNotebook failed', saveErr);
+          // 還原 in-memory ch.content (重要!避免使用者繼續編輯時誤以為已存)
+          ch.content = _oldContent;
+          ch.qids = _oldQids;
+          ch.concepts = _oldConcepts;
+          notebook.history.shift(); // 把剛剛 unshift 進去的歷史記錄拿掉
+          const isQuota = /QuotaExceeded|quota|exceeded.*storage/i.test(saveErr.message || '');
+          if (isQuota) {
+            const sizeKB = Math.round(JSON.stringify(notebook).length / 1024);
+            alert(
+              '❌ 儲存失敗:localStorage 額度爆了\n\n' +
+              '你的筆記本目前 ' + sizeKB + ' KB,瀏覽器限制大約 5000 KB(5 MB)。\n\n' +
+              '解決方法:\n' +
+              '1. 進「設定」→「清除舊歷史紀錄」(復原資料)\n' +
+              '2. 用「🧹 整理章節」合併冗餘章節\n' +
+              '3. 刪掉不要的章節\n\n' +
+              '本次編輯內容暫時保留在編輯器裡,你可以複製文字另存,清完空間再貼回來。'
+            );
+          } else {
+            alert('❌ 儲存失敗:' + (saveErr.message || '').slice(0, 200));
+          }
+          return; // 不毀編輯器,讓使用者繼續操作
+        }
+        if (saveOk) {
+          editingChapterId = null;
+          if (window.NotebookTipTap) window.NotebookTipTap.destroy();
+          renderNotebook();
+          showToast('✓ 已儲存');
+        }
       }
       // 編輯器模式:'tiptap'(預設,WYSIWYG) | 'markdown'(舊版)
       function getEditorMode(){

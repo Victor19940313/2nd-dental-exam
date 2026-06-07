@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v273-callout-exit-enter';
+const CACHE_NAME = 'dental-all-v275-quota-error-handling';
 const PRECACHE = [
   './',
   './index.html',

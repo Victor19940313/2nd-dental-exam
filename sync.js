@@ -45,23 +45,50 @@
   // ══════════════════════════════════════════
 
   /** Push to BOTH new path and old data/ path for backward compat */
+  /** v283: notebook 改從 IDB 讀(localStorage 撞 quota 後 stale),其他 key 維持 localStorage */
   function pushToFirebase() {
     if (!_db || !_userId) return Promise.resolve();
     var payload = { _ts: Date.now() };
     var oldPayload = {};
+    // 先把可以從 localStorage 拿的都拿了
     SYNC_KEYS.forEach(function(sk) {
+      if (sk === 'notebook') return; // notebook 走 IDB,稍後處理
       var val = localStorage.getItem(_userId + "_" + sk);
       if (val !== null) {
         payload[sk] = val;
         oldPayload[sk] = val;
       }
     });
+    // notebook 從 IDB 拿(in-memory 才是真實狀態的鏡像)
+    var notebookPromise = (function(){
+      if (window._notebookIdbBridge && window._notebookIdbBridge.getNotebookPayload) {
+        return window._notebookIdbBridge.getNotebookPayload().then(function(idbVal){
+          if (idbVal) {
+            payload.notebook = idbVal;
+            oldPayload.notebook = idbVal;
+          } else {
+            // IDB 沒有 → fallback localStorage
+            var lsVal = localStorage.getItem(_userId + "_notebook");
+            if (lsVal !== null) { payload.notebook = lsVal; oldPayload.notebook = lsVal; }
+          }
+        }).catch(function(){
+          var lsVal = localStorage.getItem(_userId + "_notebook");
+          if (lsVal !== null) { payload.notebook = lsVal; oldPayload.notebook = lsVal; }
+        });
+      } else {
+        // 沒有 IDB bridge(其他頁面) → 走 localStorage
+        var lsVal = localStorage.getItem(_userId + "_notebook");
+        if (lsVal !== null) { payload.notebook = lsVal; oldPayload.notebook = lsVal; }
+        return Promise.resolve();
+      }
+    })();
     _syncing = true;
-    // Write to both paths
-    return Promise.all([
-      userRef().update(payload),
-      userDataRef().update(oldPayload)
-    ])
+    return notebookPromise.then(function(){
+      return Promise.all([
+        userRef().update(payload),
+        userDataRef().update(oldPayload)
+      ]);
+    })
     .catch(function(err) { console.error("[Sync] push error:", err); })
     .finally(function() { _syncing = false; });
   }
@@ -96,7 +123,13 @@
       if (remoteTs > localTs) {
         SYNC_KEYS.forEach(function(sk) {
           if (remote[sk] !== undefined) {
-            localStorage.setItem(_userId + "_" + sk, remote[sk]);
+            // 🛡 v283:notebook 改寫進 IDB(localStorage 可能撞 quota),其他 key 維持
+            if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
+              window._notebookIdbBridge.applyRemoteNotebook(remote[sk]);
+              try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
+            } else {
+              try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
+            }
           }
         });
         localStorage.setItem(_userId + "__ts", String(remoteTs));
@@ -134,7 +167,13 @@
       _syncing = true;
       SYNC_KEYS.forEach(function(sk) {
         if (source[sk] !== undefined && source[sk] !== null) {
-          localStorage.setItem(_userId + "_" + sk, source[sk]);
+          // 🛡 v283:notebook 走 IDB,其他維持 localStorage
+          if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
+            window._notebookIdbBridge.applyRemoteNotebook(source[sk]);
+            try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
+          } else {
+            try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
+          }
         }
       });
       localStorage.setItem(_userId + "__ts", String(remoteTs));
@@ -163,7 +202,13 @@
         if (val[sk] !== undefined && val[sk] !== null) {
           var cur = localStorage.getItem(_userId + "_" + sk);
           if (cur !== val[sk]) {
-            localStorage.setItem(_userId + "_" + sk, val[sk]);
+            // 🛡 v283:notebook 走 IDB,其他維持 localStorage
+            if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
+              window._notebookIdbBridge.applyRemoteNotebook(val[sk]);
+              try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
+            } else {
+              try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
+            }
             changed = true;
           }
         }

@@ -8499,6 +8499,48 @@ ${(q.options || []).join('\n')}
           tx.onerror = () => { db.close(); resolve(false); };
         });
       }
+      // 🛡 v283:給 sync.js 用的橋樑,讓 Firebase 同步可以直接讀寫 IDB
+      //     localStorage 撞 quota 後,IDB 才是真實資料;原本 sync.js 只看 localStorage,雲端會 stale
+      window._notebookIdbBridge = {
+        async getNotebookPayload(){
+          try { return await _idbGet(NOTEBOOK_KEY) || null; }
+          catch(e) { return null; }
+        },
+        async setNotebookPayload(payload){
+          try { await _idbSet(NOTEBOOK_KEY, payload); return true; }
+          catch(e) { console.warn('[idb bridge] set fail', e); return false; }
+        },
+        // 收到雲端(別台裝置)的 notebook 時呼叫:寫進 IDB + 智慧合併到記憶體
+        async applyRemoteNotebook(payload){
+          if (!payload) return false;
+          try {
+            await _idbSet(NOTEBOOK_KEY, payload);
+          } catch(e) { console.warn('[remote apply] IDB write fail', e); }
+          // 🛡 編輯中 → 不蓋:避免使用者改到一半被遠端蓋掉
+          if (typeof editingChapterId !== 'undefined' && editingChapterId) {
+            console.log('[remote apply] 編輯中,延後合併');
+            return false;
+          }
+          try {
+            const remoteData = JSON.parse(payload);
+            const remoteMax = Math.max(0, ...((remoteData.chapters || []).map(c => c.updatedAt || 0)));
+            const memMax = (typeof notebook !== 'undefined' && notebook && notebook.chapters)
+              ? Math.max(0, ...notebook.chapters.map(c => c.updatedAt || 0)) : 0;
+            if (remoteMax > memMax) {
+              notebook.chapters = remoteData.chapters || [];
+              notebook.history = remoteData.history || [];
+              if (remoteData.byId) notebook.byId = remoteData.byId;
+              console.log('[remote apply] 套用遠端較新版本 (remote=' + remoteMax + ' mem=' + memMax + ')');
+              if (typeof renderNotebook === 'function') {
+                const nbEl = document.getElementById('screen-notebook');
+                if (nbEl && nbEl.style.display !== 'none') renderNotebook();
+              }
+              return true;
+            }
+          } catch(e) { console.warn('[remote apply] parse fail', e); }
+          return false;
+        }
+      };
       // 標記:這個瀏覽器已遷移過(避免重複寫,小優化)
       let _idbWriteQueue = Promise.resolve();
       // 序列化寫入,避免 race condition
@@ -8513,11 +8555,11 @@ ${(q.options || []).join('\n')}
         const payload = JSON.stringify(notebook);
         // 1. 先寫 IndexedDB(沒 quota 限制,主要儲存)
         _queueIdbWrite(payload);
-        // 2. 再試 localStorage(舊版相容,撞 quota 不會跳錯,只是 console warn)
+        // 2. 再試 localStorage(舊版相容,撞 quota 預期會失敗,靜默處理免吵)
         try {
           localStorage.setItem(NOTEBOOK_KEY, payload);
         } catch (e) {
-          console.warn('[saveNotebook] localStorage quota exceeded → 只走 IDB(沒問題,IDB 容量大):', e.message);
+          // 撞 quota 是預期狀況(IDB 是主存),不再噴 warn
         }
         if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
       }

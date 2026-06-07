@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v282-stale-localstorage-guard';
+const CACHE_NAME = 'dental-all-v283-cross-device-idb-sync';
 const PRECACHE = [
   './',
   './index.html',

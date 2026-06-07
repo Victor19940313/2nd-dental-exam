@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v284-examhistory-race-fix-and-perpage-ai';
+const CACHE_NAME = 'dental-all-v285-examhistory-cross-device-idb-sync';
 const PRECACHE = [
   './',
   './index.html',

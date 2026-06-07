@@ -8566,6 +8566,40 @@ ${(q.options || []).join('\n')}
           return false;
         }
       };
+      // 🛡 v285:給 sync.js 用的 examHistory 橋樑(v283 漏了這條)
+      //     之前 examHistory 跨裝置同步走 localStorage,撞 quota 就 push 不出去,
+      //     導致使用者 A 在 Mac 考試 → Mac IDB 有 → 但雲端拿不到 → PC 永遠看不到
+      window._examHistoryIdbBridge = {
+        async getExamHistoryPayload(){
+          try { return await _idbGet(uKey('examHistory')) || null; }
+          catch(e) { return null; }
+        },
+        // 收到雲端(別台裝置)的 examHistory 時呼叫:合併進記憶體 + 寫進 IDB
+        async applyRemoteExamHistory(payload){
+          if (!payload) return false;
+          let remote = null;
+          try { remote = JSON.parse(payload); } catch(e) { return false; }
+          if (!Array.isArray(remote)) return false;
+          // 用 ts 去重,合併雲端跟本機
+          const merged = (typeof _mergeExamHistRecords === 'function')
+            ? _mergeExamHistRecords(window._examHistoryCache, remote)
+            : remote;
+          window._examHistoryCache = merged;
+          const payload2 = JSON.stringify(merged);
+          try { await _idbSet(uKey('examHistory'), payload2); } catch(e){}
+          try { localStorage.setItem(uKey('examHistory'), payload2); } catch(e){}
+          // 觸發畫面更新(如果使用者正在看歷史)
+          try {
+            const histEl = document.getElementById('exam-hist-modal-list') || document.getElementById('exam-res-history');
+            if (histEl && typeof renderExamHistory === 'function') {
+              if (document.getElementById('exam-hist-modal-list')) renderExamHistory('exam-hist-modal-list');
+              if (document.getElementById('exam-res-history')) renderExamHistory('exam-res-history');
+            }
+          } catch(e){}
+          console.log('[examHistory remote apply] 合併後 ' + merged.length + ' 筆');
+          return true;
+        }
+      };
       // 標記:這個瀏覽器已遷移過(避免重複寫,小優化)
       let _idbWriteQueue = Promise.resolve();
       // 序列化寫入,避免 race condition

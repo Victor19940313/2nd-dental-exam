@@ -45,29 +45,28 @@
   // ══════════════════════════════════════════
 
   /** Push to BOTH new path and old data/ path for backward compat */
-  /** v283: notebook 改從 IDB 讀(localStorage 撞 quota 後 stale),其他 key 維持 localStorage */
+  /** v283: notebook 改從 IDB 讀(localStorage 撞 quota 後 stale)
+   *  v285: examHistory 也改從 IDB 讀(同樣理由,避免跨裝置同步遺失試卷紀錄) */
   function pushToFirebase() {
     if (!_db || !_userId) return Promise.resolve();
     var payload = { _ts: Date.now() };
     var oldPayload = {};
+    var IDB_KEYS = ['notebook', 'examHistory'];
     // 先把可以從 localStorage 拿的都拿了
     SYNC_KEYS.forEach(function(sk) {
-      if (sk === 'notebook') return; // notebook 走 IDB,稍後處理
+      if (IDB_KEYS.indexOf(sk) >= 0) return; // 這些走 IDB,稍後處理
       var val = localStorage.getItem(_userId + "_" + sk);
       if (val !== null) {
         payload[sk] = val;
         oldPayload[sk] = val;
       }
     });
-    // notebook 從 IDB 拿(in-memory 才是真實狀態的鏡像)
+    // notebook 從 IDB 拿
     var notebookPromise = (function(){
       if (window._notebookIdbBridge && window._notebookIdbBridge.getNotebookPayload) {
         return window._notebookIdbBridge.getNotebookPayload().then(function(idbVal){
-          if (idbVal) {
-            payload.notebook = idbVal;
-            oldPayload.notebook = idbVal;
-          } else {
-            // IDB 沒有 → fallback localStorage
+          if (idbVal) { payload.notebook = idbVal; oldPayload.notebook = idbVal; }
+          else {
             var lsVal = localStorage.getItem(_userId + "_notebook");
             if (lsVal !== null) { payload.notebook = lsVal; oldPayload.notebook = lsVal; }
           }
@@ -75,15 +74,31 @@
           var lsVal = localStorage.getItem(_userId + "_notebook");
           if (lsVal !== null) { payload.notebook = lsVal; oldPayload.notebook = lsVal; }
         });
-      } else {
-        // 沒有 IDB bridge(其他頁面) → 走 localStorage
-        var lsVal = localStorage.getItem(_userId + "_notebook");
-        if (lsVal !== null) { payload.notebook = lsVal; oldPayload.notebook = lsVal; }
-        return Promise.resolve();
       }
+      var lsVal = localStorage.getItem(_userId + "_notebook");
+      if (lsVal !== null) { payload.notebook = lsVal; oldPayload.notebook = lsVal; }
+      return Promise.resolve();
+    })();
+    // examHistory 從 IDB 拿(v285)
+    var examHistPromise = (function(){
+      if (window._examHistoryIdbBridge && window._examHistoryIdbBridge.getExamHistoryPayload) {
+        return window._examHistoryIdbBridge.getExamHistoryPayload().then(function(idbVal){
+          if (idbVal) { payload.examHistory = idbVal; oldPayload.examHistory = idbVal; }
+          else {
+            var lsVal = localStorage.getItem(_userId + "_examHistory");
+            if (lsVal !== null) { payload.examHistory = lsVal; oldPayload.examHistory = lsVal; }
+          }
+        }).catch(function(){
+          var lsVal = localStorage.getItem(_userId + "_examHistory");
+          if (lsVal !== null) { payload.examHistory = lsVal; oldPayload.examHistory = lsVal; }
+        });
+      }
+      var lsVal = localStorage.getItem(_userId + "_examHistory");
+      if (lsVal !== null) { payload.examHistory = lsVal; oldPayload.examHistory = lsVal; }
+      return Promise.resolve();
     })();
     _syncing = true;
-    return notebookPromise.then(function(){
+    return Promise.all([notebookPromise, examHistPromise]).then(function(){
       return Promise.all([
         userRef().update(payload),
         userDataRef().update(oldPayload)
@@ -123,9 +138,12 @@
       if (remoteTs > localTs) {
         SYNC_KEYS.forEach(function(sk) {
           if (remote[sk] !== undefined) {
-            // 🛡 v283:notebook 改寫進 IDB(localStorage 可能撞 quota),其他 key 維持
+            // 🛡 v283/v285:notebook 跟 examHistory 改寫進 IDB(localStorage 可能撞 quota),其他維持
             if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
               window._notebookIdbBridge.applyRemoteNotebook(remote[sk]);
+              try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
+            } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
+              window._examHistoryIdbBridge.applyRemoteExamHistory(remote[sk]);
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
             } else {
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
@@ -167,9 +185,12 @@
       _syncing = true;
       SYNC_KEYS.forEach(function(sk) {
         if (source[sk] !== undefined && source[sk] !== null) {
-          // 🛡 v283:notebook 走 IDB,其他維持 localStorage
+          // 🛡 v283/v285:notebook 跟 examHistory 走 IDB,其他維持 localStorage
           if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
             window._notebookIdbBridge.applyRemoteNotebook(source[sk]);
+            try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
+          } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
+            window._examHistoryIdbBridge.applyRemoteExamHistory(source[sk]);
             try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
           } else {
             try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
@@ -202,9 +223,12 @@
         if (val[sk] !== undefined && val[sk] !== null) {
           var cur = localStorage.getItem(_userId + "_" + sk);
           if (cur !== val[sk]) {
-            // 🛡 v283:notebook 走 IDB,其他維持 localStorage
+            // 🛡 v283/v285:notebook 跟 examHistory 走 IDB,其他維持 localStorage
             if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
               window._notebookIdbBridge.applyRemoteNotebook(val[sk]);
+              try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
+            } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
+              window._examHistoryIdbBridge.applyRemoteExamHistory(val[sk]);
               try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
             } else {
               try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}

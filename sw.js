@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v272-hard-block-blank-save';
+const CACHE_NAME = 'dental-all-v273-callout-exit-enter';
 const PRECACHE = [
   './',
   './index.html',

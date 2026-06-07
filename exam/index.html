@@ -15387,6 +15387,30 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             },
           };
         },
+        // 在空段落按 Enter → 跳出 blockquote(框框)
+        addKeyboardShortcuts(){
+          return {
+            ...this.parent?.(),
+            Enter: () => {
+              const { state, view } = this.editor;
+              const { $from, empty } = state.selection;
+              if (!empty) return false; // 有選取範圍 → 不處理
+              // 找出當前是否在 blockquote 內
+              let inBlockquote = false;
+              for (let d = $from.depth; d > 0; d--) {
+                if ($from.node(d).type.name === 'blockquote') { inBlockquote = true; break; }
+                if ($from.node(d).type.name === 'callout') { inBlockquote = true; break; }
+              }
+              if (!inBlockquote) return false;
+              // 確認當前段落是空的
+              const parent = $from.parent;
+              if (parent.content.size !== 0) return false; // 不是空段落 → 不處理
+              // 退出 blockquote 並插入一個新段落
+              return this.editor.chain().focus().lift('blockquote').run() ||
+                     this.editor.chain().focus().exitCode().run();
+            },
+          };
+        },
       });
       // 可改寬度的圖片(parseHTML 嚴格只抓乾淨百分比、像素值)
       const ResizableImage = Image.extend({

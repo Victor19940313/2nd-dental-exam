@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v276-indexeddb-storage';
+const CACHE_NAME = 'dental-all-v277-paged-save-jump-last';
 const PRECACHE = [
   './',
   './index.html',

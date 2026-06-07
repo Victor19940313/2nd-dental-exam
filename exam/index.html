@@ -8487,8 +8487,10 @@ ${(q.options || []).join('\n')}
       }
 
       // ── 載入時:先讀 localStorage(瞬間),再 async 讀 IDB 覆寫(取最新)──
-      // 這樣首次載入沒延遲,IDB 有更新時自動接管
+      // 防 race condition:1) 編輯中跳過 2) 使用者已操作過跳過 3) in-place 修改不換 reference
+      let _hydrateDone = false;
       async function _hydrateNotebookFromIdb(){
+        if (_hydrateDone) return; // 只跑一次
         try {
           const fromIdb = await _idbGet(NOTEBOOK_KEY);
           if (!fromIdb) {
@@ -8498,27 +8500,48 @@ ${(q.options || []).join('\n')}
               await _idbSet(NOTEBOOK_KEY, lsRaw);
               console.log('[idb] migrated', Math.round(lsRaw.length/1024), 'KB from localStorage');
             }
+            _hydrateDone = true;
             return;
           }
-          // IDB 有資料 → 比較大小,IDB 比較新就覆寫 in-memory
+          // 🛡 防 race:正在編輯 → 跳過(避免覆蓋使用者改到一半的內容)
+          if (typeof editingChapterId !== 'undefined' && editingChapterId) {
+            console.log('[idb] hydrate skipped: 正在編輯中');
+            _hydrateDone = true;
+            return;
+          }
+          // 🛡 防 race:notebook 已被改過(history 有東西)且 IDB 比較舊 → 跳過
+          // 用 updatedAt 比較,取最新的章節時間判斷
           const lsRaw = localStorage.getItem(NOTEBOOK_KEY) || '';
-          if (fromIdb !== lsRaw) {
-            try {
-              const idbData = JSON.parse(fromIdb);
-              notebook = idbData;
-              if (!notebook.chapters) notebook.chapters = [];
-              if (!notebook.history) notebook.history = [];
-              console.log('[idb] loaded', Math.round(fromIdb.length/1024), 'KB from IDB(比 localStorage 新)');
-              // 觸發畫面更新
-              if (typeof renderNotebook === 'function') {
-                const nbEl = document.getElementById('screen-notebook');
-                if (nbEl && nbEl.style.display !== 'none') renderNotebook();
-              }
-            } catch(e) { console.warn('[idb] parse failed', e); }
+          if (fromIdb === lsRaw) {
+            console.log('[idb] hydrate: IDB == localStorage,不用覆寫');
+            _hydrateDone = true;
+            return;
+          }
+          // IDB 跟 localStorage 不一樣 → 取較新的
+          let idbData;
+          try { idbData = JSON.parse(fromIdb); }
+          catch(e) { console.warn('[idb] parse failed', e); _hydrateDone = true; return; }
+          const idbMaxUpdate = Math.max(0, ...(idbData.chapters || []).map(c => c.updatedAt || 0));
+          const memMaxUpdate = Math.max(0, ...(notebook.chapters || []).map(c => c.updatedAt || 0));
+          if (idbMaxUpdate <= memMaxUpdate) {
+            console.log('[idb] hydrate: in-memory 比 IDB 新,不覆寫 (idb=' + idbMaxUpdate + ' mem=' + memMaxUpdate + ')');
+            _hydrateDone = true;
+            return;
+          }
+          // IDB 真的比較新 → in-place 修改 notebook (不換 reference,避免外部引用斷掉)
+          notebook.chapters = idbData.chapters || [];
+          notebook.history = idbData.history || [];
+          if (idbData.byId) notebook.byId = idbData.byId;
+          console.log('[idb] hydrated:', Math.round(fromIdb.length/1024), 'KB from IDB(較新)');
+          // 觸發畫面更新
+          if (typeof renderNotebook === 'function') {
+            const nbEl = document.getElementById('screen-notebook');
+            if (nbEl && nbEl.style.display !== 'none') renderNotebook();
           }
         } catch (e) {
           console.warn('[idb] hydrate failed (fallback localStorage):', e.message);
         }
+        _hydrateDone = true;
       }
       // 頁面開好就跑(loadNotebook 同步部分先用 localStorage 起手,IDB 在背景接管)
       if (document.readyState === 'loading') {
@@ -11534,6 +11557,17 @@ ${JSON.stringify(candidates, null, 2)}
         if (saveOk) {
           editingChapterId = null;
           if (window.NotebookTipTap) window.NotebookTipTap.destroy();
+          // 🛡 分頁章節:儲存後跳到最後一頁,讓使用者看到剛新增的內容
+          // (一般人都在尾巴加東西,如果留在第 1 頁會看不到新加的圖)
+          try {
+            if (typeof paginateMarkdownByH2 === 'function') {
+              const newPages = paginateMarkdownByH2(newContent);
+              if (newPages.length > 1) {
+                window._chapterPage = window._chapterPage || {};
+                window._chapterPage[id] = newPages.length - 1;
+              }
+            }
+          } catch(e) { console.warn('post-save pagination jump failed', e); }
           renderNotebook();
           showToast('✓ 已儲存');
         }

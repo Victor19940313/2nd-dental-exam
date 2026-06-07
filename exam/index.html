@@ -11547,6 +11547,19 @@ ${JSON.stringify(candidates, null, 2)}
         // 🚨 防呆:如果新內容比舊內容縮水超過 50% → 八成是編輯器還沒載完或 bug,擋下來
         const oldLen = (ch.content || '').trim().length;
         const newLen = (newContent || '').trim().length;
+        // 🚨 防呆 v278:新舊內容完全相同 → TipTap 可能炸了,使用者的編輯沒進到 doc model
+        if (oldLen > 100 && Math.abs(newLen - oldLen) < 5 && newContent.trim() === (ch.content||'').trim()) {
+          if (!confirm(
+            '⚠️ 新內容跟舊內容一模一樣\n\n' +
+            '你剛剛的修改可能沒被編輯器收進去(常見:TipTap 內部 bug 讓貼圖失敗)。\n\n' +
+            'F12 Console 有看到紅字 EventEmitter / Cannot read \'apply\' 嗎?\n' +
+            '如果有 → 編輯器掛了,請按 Cmd+Shift+R 刷新頁面再重試\n\n' +
+            '按【取消】= 不存(章節保持原樣,你刷新後重試)\n' +
+            '按【確定】= 我就是要存(等於沒改)'
+          )) {
+            return;
+          }
+        }
         // Console log 方便 debug
         console.log('[saveChapterEdit]', {
           chId: id,
@@ -15679,30 +15692,7 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             },
           };
         },
-        // 在空段落按 Enter → 跳出 blockquote(框框)
-        addKeyboardShortcuts(){
-          return {
-            ...this.parent?.(),
-            Enter: () => {
-              const { state, view } = this.editor;
-              const { $from, empty } = state.selection;
-              if (!empty) return false; // 有選取範圍 → 不處理
-              // 找出當前是否在 blockquote 內
-              let inBlockquote = false;
-              for (let d = $from.depth; d > 0; d--) {
-                if ($from.node(d).type.name === 'blockquote') { inBlockquote = true; break; }
-                if ($from.node(d).type.name === 'callout') { inBlockquote = true; break; }
-              }
-              if (!inBlockquote) return false;
-              // 確認當前段落是空的
-              const parent = $from.parent;
-              if (parent.content.size !== 0) return false; // 不是空段落 → 不處理
-              // 退出 blockquote 並插入一個新段落
-              return this.editor.chain().focus().lift('blockquote').run() ||
-                     this.editor.chain().focus().exitCode().run();
-            },
-          };
-        },
+        // v273 的 Enter 跳出 callout 已移除(疑似跟 TipTap 內部 transaction 衝突,造成 Cannot read 'apply')
       });
       // 可改寬度的圖片(parseHTML 嚴格只抓乾淨百分比、像素值)
       const ResizableImage = Image.extend({

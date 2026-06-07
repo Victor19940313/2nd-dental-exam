@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v278-examhistory-to-idb';
+const CACHE_NAME = 'dental-all-v279-tiptap-bug-fix';
 const PRECACHE = [
   './',
   './index.html',

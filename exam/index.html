@@ -13306,12 +13306,20 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
           if (!remote || typeof remote !== 'object') return 0;
           const local = loadExplPatches();
           let merged = 0;
-          Object.entries(remote).forEach(([qid, expl]) => {
-            if (typeof expl === 'string' && expl.length > 50) {
-              if (!local[qid] || local[qid].length < expl.length) {
-                local[qid] = expl;
-                merged++;
-              }
+          // 支援兩種格式:string(舊版) 跟 {expl, model, ts}(新版)
+          const getExpl = (v) => {
+            if (typeof v === 'string') return v;
+            if (v && typeof v === 'object' && typeof v.expl === 'string') return v.expl;
+            return '';
+          };
+          Object.entries(remote).forEach(([qid, v]) => {
+            const remoteExp = getExpl(v);
+            if (remoteExp.length < 50) return;
+            const cur = local[qid];
+            const curLen = getExpl(cur).length;
+            if (curLen < remoteExp.length) {
+              local[qid] = v; // 保留遠端格式(物件格式優於 string)
+              merged++;
             }
           });
           saveExplPatches(local);

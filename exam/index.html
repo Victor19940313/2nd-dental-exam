@@ -15824,6 +15824,26 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             editorConfig.onUpdate = opts.onUpdate;
           }
           _tt = new Editor(editorConfig);
+          // 🛡 v281:把所有 undefined 監聽器清掉(防 Array.forEach apply 崩潰)
+          //     並包一層 try/catch,事件即使有壞 listener 也不影響 state 已 commit 的事實
+          try {
+            const _origEmit = _tt.emit.bind(_tt);
+            _tt.emit = function(event, ...args) {
+              try {
+                // 把這個 event 的 listener 陣列裡 undefined / 非 function 過濾掉
+                const cbs = _tt._callbacks || _tt.callbacks || _tt._events;
+                if (cbs && Array.isArray(cbs[event])) {
+                  cbs[event] = cbs[event].filter(l => typeof l === 'function');
+                }
+                return _origEmit(event, ...args);
+              } catch (e) {
+                console.warn('[TipTap emit guarded]', event, e.message);
+                return _tt;
+              }
+            };
+          } catch (e) {
+            console.warn('[TipTap emit patch failed]', e.message);
+          }
           return _tt;
         },
         getEditor(){ return _tt; },

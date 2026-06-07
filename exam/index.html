@@ -11200,8 +11200,35 @@ ${JSON.stringify(candidates, null, 2)}
       function startEditChapter(id){
         editingChapterId = id;
         editPreviewMode = false;
+        // 🛡 自動備份:進編輯模式時把原內容存到 sessionStorage,萬一編輯器掛掉可以救
+        try {
+          const ch = notebook.chapters.find(c => c.id === id);
+          if (ch && ch.content) {
+            sessionStorage.setItem('edit_backup_' + id, JSON.stringify({
+              ts: Date.now(),
+              content: ch.content,
+              name: ch.name
+            }));
+          }
+        } catch(e) { console.warn('edit backup failed', e); }
         renderNotebook();
       }
+      // 🛡 救援:在 console 跑這個就能撈回備份
+      window.recoverChapterFromBackup = function(chId){
+        const key = 'edit_backup_' + chId;
+        const raw = sessionStorage.getItem(key);
+        if (!raw) { console.error('沒找到備份:' + chId); return null; }
+        const backup = JSON.parse(raw);
+        const ch = notebook.chapters.find(c => c.id === chId);
+        if (!ch) { console.error('章節已不存在:' + chId); return backup; }
+        if (!confirm('要把「' + ch.name + '」回復到備份時的內容嗎?\n\n備份時間:' + new Date(backup.ts).toLocaleString() + '\n備份字數:' + backup.content.length + '\n目前字數:' + (ch.content || '').length)) return null;
+        ch.content = backup.content;
+        ch.updatedAt = Date.now();
+        saveNotebook();
+        renderNotebook();
+        showToast('✅ 已從備份回復');
+        return backup;
+      };
       function cancelChapterEdit(){
         if (!confirm('放棄這次編輯？未儲存的內容會消失。')) return;
         editingChapterId = null;
@@ -11217,6 +11244,28 @@ ${JSON.stringify(candidates, null, 2)}
           // TipTap 模式:把編輯器內容(HTML)轉回 markdown
           const editorRootEl = document.querySelector('#ch-tiptap .ProseMirror');
           if (!editorRootEl) { showToast('找不到編輯器'); return; }
+          // 🛡 硬擋:TipTap 整個編輯器是空的,但章節原本有內容 → 拒絕儲存
+          const editorHtml = window.NotebookTipTap.getHTML() || '';
+          const editorTextOnly = editorHtml.replace(/<[^>]+>/g, '').trim();
+          const editorImgCount = (editorHtml.match(/<img/g) || []).length;
+          const chOldLen = (ch.content || '').trim().length;
+          if (chOldLen > 50 && editorTextOnly.length < 5 && editorImgCount === 0) {
+            const backupKey = 'edit_backup_' + id;
+            const backup = sessionStorage.getItem(backupKey);
+            alert(
+              '❌ 拒絕儲存:TipTap 編輯器目前是空的\n\n' +
+              '章節原本 ' + chOldLen + ' 字,但編輯器只剩 ' + editorTextOnly.length + ' 字、0 張圖片。\n\n' +
+              '可能原因:\n' +
+              '• 插入圖片時 TipTap 內部出錯(常見)\n' +
+              '• 編輯器掛掉沒重新載入\n\n' +
+              '建議:\n' +
+              '1. 按 Cmd+R(Mac)/ Ctrl+R(Win) 刷新頁面\n' +
+              '2. 章節會回到上次儲存的版本(' + chOldLen + ' 字)\n' +
+              '3. 重新進編輯模式加圖片\n\n' +
+              (backup ? '✅ 進入編輯時的備份還在,刷新後章節內容不會丟。' : '⚠️ 沒找到備份(可能是直接從筆記列表進來編輯的)')
+            );
+            return;
+          }
           try {
             newContent = htmlToMarkdown(editorRootEl);
           } catch (e) {

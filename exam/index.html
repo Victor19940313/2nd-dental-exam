@@ -8403,6 +8403,22 @@ ${(q.options || []).join('\n')}
       function loadNotebook() {
         try {
           const raw = localStorage.getItem(NOTEBOOK_KEY);
+          // 🛡 v282:擋掉「stale localStorage 洗掉 in-memory 新編輯」的 bug
+          //     當 localStorage 撞 quota 寫不進去時,in-memory 才是真實狀態(IDB 也是同步的),
+          //     此時若有人呼叫 loadNotebook(很多地方都會 call),會用舊的 localStorage 覆寫 notebook,
+          //     使用者剛存好的編輯就被回退掉。
+          //     對策:比較 in-memory 跟 localStorage 的最新 updatedAt,in-memory 比較新就不重載。
+          if (typeof notebook !== 'undefined' && notebook && Array.isArray(notebook.chapters) && notebook.chapters.length > 0) {
+            let lsData = null;
+            try { lsData = raw ? JSON.parse(raw) : null; } catch(e) {}
+            const memMax = Math.max(0, ...notebook.chapters.map(c => c.updatedAt || 0));
+            const lsMax = (lsData && Array.isArray(lsData.chapters))
+              ? Math.max(0, ...lsData.chapters.map(c => c.updatedAt || 0)) : 0;
+            if (memMax >= lsMax) {
+              // in-memory 比 localStorage 新或同步 → 不重載,保住剛存的編輯
+              return;
+            }
+          }
           notebook = raw ? JSON.parse(raw) : { chapters: [], history: [] };
           if (!notebook.chapters) notebook.chapters = [];
           if (!notebook.history) notebook.history = [];

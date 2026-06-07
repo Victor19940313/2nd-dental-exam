@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v269-chapter-pagination-and-collapse';
+const CACHE_NAME = 'dental-all-v270-prevent-blank-overwrite';
 const PRECACHE = [
   './',
   './index.html',

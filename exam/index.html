@@ -11246,6 +11246,14 @@ ${JSON.stringify(candidates, null, 2)}
           }
           newContent = ta.value;
         }
+        // 🚨 防呆:如果新內容比舊內容縮水超過 90% → 八成是編輯器還沒載完或圖片上傳中,擋下來
+        const oldLen = (ch.content || '').trim().length;
+        const newLen = (newContent || '').trim().length;
+        if (oldLen > 200 && newLen < oldLen * 0.1) {
+          if (!confirm(`⚠️ 編輯器內容看起來幾乎是空的\n\n原本 ${oldLen} 字 → 現在 ${newLen} 字\n\n常見原因:\n• 編輯器還在載入(等個 2-3 秒再存)\n• 圖片還在上傳\n• TipTap 出 bug 變空白\n\n確定要這樣覆寫舊內容嗎?\n按取消 = 不存(舊內容保住),按確定 = 我就是要清空。`)) {
+            return; // 取消儲存,舊內容保留
+          }
+        }
         // 存入歷史(撤銷用)
         const _oldName = ch.name;
         const _oldContent = ch.content;

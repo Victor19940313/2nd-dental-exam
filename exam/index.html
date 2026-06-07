@@ -6668,7 +6668,7 @@ ${(q.options || []).join('\n')}
 
       function saveExamHistory(correct, total, mode, wrongQs) {
         try {
-          const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
+          const hist = (function(){ _maybeMigrateExamHistory(); return (typeof _readExamHistorySync === 'function') ? _readExamHistorySync() : JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); })();
           const now = new Date();
           const pad = (n) => String(n).padStart(2, '0');
           const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -6711,8 +6711,28 @@ ${(q.options || []).join('\n')}
             })),
           });
           // 只保留最近 100 筆
-          localStorage.setItem(uKey('examHistory'), JSON.stringify(hist.slice(0, 100)));
-        } catch (e) { console.error('saveExamHistory:', e); }
+          const finalHist = hist.slice(0, 100);
+          const payload = JSON.stringify(finalHist);
+          // 0. 更新 in-memory cache(立即可用,不用等 IDB)
+          window._examHistoryCache = finalHist;
+          // 1. 先寫 IDB(主要儲存,沒 quota 限制)
+          if (typeof _idbSet === 'function') {
+            _idbWriteQueue = _idbWriteQueue.then(() => _idbSet(uKey('examHistory'), payload)).catch(err => console.warn('[idb examHistory write failed]', err));
+          }
+          // 2. 試寫 localStorage(舊版相容)
+          try {
+            localStorage.setItem(uKey('examHistory'), payload);
+          } catch (lsErr) {
+            console.warn('[saveExamHistory] localStorage quota exceeded → 只走 IDB:', lsErr.message);
+            // 跳警告告知使用者(不靜默吞掉)
+            if (typeof showToast === 'function') {
+              showToast('⚠️ localStorage 滿了,試卷紀錄寫進 IDB 備援(刷新仍會顯示)');
+            }
+          }
+        } catch (e) {
+          console.error('saveExamHistory:', e);
+          if (typeof showToast === 'function') showToast('❌ 試卷紀錄儲存失敗:' + (e.message||'').slice(0,60));
+        }
       }
 
       // 已複習試卷的記號(per-user localStorage)
@@ -6764,7 +6784,7 @@ ${(q.options || []).join('\n')}
       function renderExamHistory(containerId) {
         const el = document.getElementById(containerId);
         if (!el) return;
-        const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
+        const hist = (function(){ _maybeMigrateExamHistory(); return (typeof _readExamHistorySync === 'function') ? _readExamHistorySync() : JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); })();
         if (!hist.length) { el.innerHTML = ''; return; }
         const LETTERS = ['A','B','C','D','E'];
         const reviewedSet = _getReviewedExams();
@@ -6942,7 +6962,7 @@ ${(q.options || []).join('\n')}
       function renderExamCountList(){
         const el = document.getElementById('exam-count-list');
         if (!el) return;
-        const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
+        const hist = (function(){ _maybeMigrateExamHistory(); return (typeof _readExamHistorySync === 'function') ? _readExamHistorySync() : JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); })();
         if (!hist.length) {
           el.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有任何考試紀錄</div>';
           return;
@@ -7095,7 +7115,7 @@ ${(q.options || []).join('\n')}
         else renderReviewQ(_reviewIdx);
       }
       function openExamReview(histIdx){
-        const hist = JSON.parse((function(){_maybeMigrateExamHistory();return localStorage.getItem(uKey('examHistory'));})() || '[]');
+        const hist = (function(){ _maybeMigrateExamHistory(); return (typeof _readExamHistorySync === 'function') ? _readExamHistorySync() : JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); })();
         const entry = hist[histIdx];
         if (!entry) { showToast('找不到紀錄'); return; }
         // 沒 qids 但有 wrongs → 降級：用 wrongs 重建一個「只有錯題」的快照
@@ -8549,6 +8569,42 @@ ${(q.options || []).join('\n')}
       } else {
         setTimeout(_hydrateNotebookFromIdb, 0);
       }
+
+      // ── 試卷紀錄(examHistory)IDB 同步:hydrate 進 in-memory cache + 寫回 localStorage ──
+      window._examHistoryCache = null;
+      async function _hydrateExamHistoryFromIdb(){
+        try {
+          const fromIdb = await _idbGet(uKey('examHistory'));
+          if (!fromIdb) {
+            // IDB 沒資料 → 把 localStorage 現有的搬過去(一次性遷移)
+            const lsRaw = localStorage.getItem(uKey('examHistory'));
+            if (lsRaw) {
+              await _idbSet(uKey('examHistory'), lsRaw);
+              try { window._examHistoryCache = JSON.parse(lsRaw); } catch(e){}
+              console.log('[idb examHistory] migrated from localStorage');
+            }
+            return;
+          }
+          try { window._examHistoryCache = JSON.parse(fromIdb); } catch(e){ return; }
+          // 試著寫回 localStorage(避免舊讀取點看到舊資料);失敗無所謂,有 cache 撐著
+          try { localStorage.setItem(uKey('examHistory'), fromIdb); }
+          catch(e) { console.warn('[idb examHistory] localStorage write-back failed (使用 in-memory cache):', e.message); }
+          console.log('[idb examHistory] hydrated', window._examHistoryCache.length, '筆');
+        } catch (e) {
+          console.warn('[idb examHistory] hydrate failed:', e.message);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(_hydrateExamHistoryFromIdb, 50));
+      } else {
+        setTimeout(_hydrateExamHistoryFromIdb, 50);
+      }
+      // 統一讀取:有 IDB cache 用 cache,沒有 fall back localStorage
+      window._readExamHistorySync = function(){
+        if (window._examHistoryCache) return window._examHistoryCache;
+        try { return JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); }
+        catch(e) { return []; }
+      };
 
       // ── 手動匯出:直接下載當前筆記本 ──
       window.exportNotebookBackup = function(){

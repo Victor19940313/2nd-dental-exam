@@ -4548,16 +4548,18 @@
       // ════════════════════════════════════════════
       (function migrateOldData(){
         // If user has old unprefixed data and no new prefixed data, copy it over
-        const old = localStorage.getItem("wrongbook_state");
-        const cur = localStorage.getItem(uKey("wrongbook_state"));
-        if(old && !cur){
-          localStorage.setItem(uKey("wrongbook_state"), old);
-        }
-        const oldLog = localStorage.getItem("daily_log");
-        const curLog = localStorage.getItem(uKey("daily_log"));
-        if(oldLog && !curLog){
-          localStorage.setItem(uKey("daily_log"), oldLog);
-        }
+        try {
+          const old = localStorage.getItem("wrongbook_state");
+          const cur = localStorage.getItem(uKey("wrongbook_state"));
+          if(old && !cur){
+            try { localStorage.setItem(uKey("wrongbook_state"), old); } catch(e) {}
+          }
+          const oldLog = localStorage.getItem("daily_log");
+          const curLog = localStorage.getItem(uKey("daily_log"));
+          if(oldLog && !curLog){
+            try { localStorage.setItem(uKey("daily_log"), oldLog); } catch(e) {}
+          }
+        } catch(e) {}
       })();
 
       async function loadState() {
@@ -4573,8 +4575,22 @@
               };
             });
           } else {
-            const s = localStorage.getItem(uKey("wrongbook_state"));
-            if (s) qState = JSON.parse(s);
+            // 🛡 v286:先試 IDB(主存),fallback localStorage
+            let raw = null;
+            if (typeof _idbGet === 'function') {
+              try { raw = await _idbGet(uKey("wrongbook_state")); }
+              catch(e) { console.warn('[wrongbook] IDB read fail', e); }
+            }
+            if (!raw) raw = localStorage.getItem(uKey("wrongbook_state"));
+            if (raw) qState = JSON.parse(raw);
+            // 若 IDB 沒有但 LS 有 → migrate(一次性,寫進 IDB)
+            if (raw && typeof _idbSet === 'function') {
+              const idbCheck = await _idbGet(uKey("wrongbook_state")).catch(() => null);
+              if (!idbCheck) {
+                try { await _idbSet(uKey("wrongbook_state"), raw); }
+                catch(e){}
+              }
+            }
           }
         } catch (e) {
           const s = localStorage.getItem(uKey("wrongbook_state"));
@@ -5118,9 +5134,23 @@
         loadPracticeQ();
       }
 
+      // 🛡 v286:序列化的 IDB 寫入 queue,確保多次連續寫入都不會掉
+      let _wrongbookWriteQueue = Promise.resolve();
+      function _saveQState() {
+        const payload = JSON.stringify(qState);
+        // IDB(沒 quota 限制,主存)
+        if (typeof _idbSet === 'function') {
+          _wrongbookWriteQueue = _wrongbookWriteQueue
+            .then(() => _idbSet(uKey("wrongbook_state"), payload))
+            .catch(e => console.warn('[wrongbook] IDB write failed', e));
+        }
+        // localStorage(舊版相容,撞 quota 預期會失敗,靜默)
+        try { localStorage.setItem(uKey("wrongbook_state"), payload); } catch(e) {}
+        return _wrongbookWriteQueue;
+      }
       async function persist(id) {
         const s = qState[id] || { status: "none", count: 0 };
-        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+        _saveQState();
         // Firebase sync
         if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
         if (!USE_SUPABASE) return;
@@ -5930,7 +5960,7 @@ ${(q.options || []).join('\n')}
         if (!practiceList.length) return;
         const q = practiceList[practiceIdx];
         const modeTag = examMode ? "📋 試卷" : "練習";
-        localStorage.setItem(
+        try { localStorage.setItem(
           LASTPOS_KEY,
           JSON.stringify({
             ids: practiceList.map((q) => q.id),
@@ -5944,7 +5974,7 @@ ${(q.options || []).join('\n')}
               ? `${modeTag}・第 ${practiceIdx + 1} / ${practiceList.length} 題・${q.meta || ""}`
               : "",
           }),
-        );
+        ); } catch(e) { /* LS 滿了,LastPos 是輔助功能不影響主流程 */ }
       }
 
       function clearLastPos() {
@@ -7834,7 +7864,12 @@ ${(q.options || []).join('\n')}
             ex[key].max = Math.max(ex[key].max, q.number);
           }
         }
-        localStorage.setItem(uKey("daily_log"), JSON.stringify(log));
+        // 🛡 v286:daily_log 也走 IDB(可能會累積大),LS 撞 quota 也不會掉
+        const _dlPayload = JSON.stringify(log);
+        if (typeof _idbSet === 'function') {
+          _idbSet(uKey("daily_log"), _dlPayload).catch(e => console.warn('[daily_log] IDB fail', e));
+        }
+        try { localStorage.setItem(uKey("daily_log"), _dlPayload); } catch(e) {}
         renderDailyLog();
       }
 
@@ -8466,7 +8501,9 @@ ${(q.options || []).join('\n')}
               }
             }
           });
-          if (domainMigrated || subjectMigrated) localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
+          if (domainMigrated || subjectMigrated) {
+            try { localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook)); } catch(e) {}
+          }
           // 一進來就掃，把被「AI 雙重編碼」搞壞的章節自動還原（換行從 `\n` 字串改回真換行）
           migrateBrokenChapters();
           // 自動清掉「上傳中」殘留（如果還在這代表前次上傳失敗或被中斷）
@@ -8478,7 +8515,9 @@ ${(q.options || []).join('\n')}
               cleaned = true;
             }
           });
-          if (cleaned) localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook));
+          if (cleaned) {
+            try { localStorage.setItem(NOTEBOOK_KEY, JSON.stringify(notebook)); } catch(e) {}
+          }
         } catch (e) { notebook = { chapters: [], history: [] }; }
       }
       // ── 📦 IndexedDB 筆記本存儲(無痛遷移版,localStorage 仍為 fallback)──
@@ -8597,6 +8636,39 @@ ${(q.options || []).join('\n')}
             }
           } catch(e){}
           console.log('[examHistory remote apply] 合併後 ' + merged.length + ' 筆');
+          return true;
+        }
+      };
+      // 🛡 v286:給 sync.js 用的 wrongbook_state 橋樑(同樣理由:LS quota 滿時靠 IDB)
+      window._wrongbookIdbBridge = {
+        async getWrongbookPayload(){
+          try { return await _idbGet(uKey("wrongbook_state")) || null; }
+          catch(e) { return null; }
+        },
+        async applyRemoteWrongbook(payload){
+          if (!payload) return false;
+          let remote = null;
+          try { remote = JSON.parse(payload); } catch(e) { return false; }
+          if (!remote || typeof remote !== 'object') return false;
+          // 合併:每個 qid 兩邊取「有 status / status 非 none」的優先;count 取較大值
+          const merged = Object.assign({}, qState);
+          Object.keys(remote).forEach(qid => {
+            const r = remote[qid] || {};
+            const m = merged[qid];
+            if (!m) { merged[qid] = r; return; }
+            const mHasStatus = m.status && m.status !== 'none';
+            const rHasStatus = r.status && r.status !== 'none';
+            if (!mHasStatus && rHasStatus) { merged[qid] = r; return; }
+            if (mHasStatus && !rHasStatus) { return; }
+            // 兩邊都有 → 合併,count 取大,其他欄位偏好遠端(假設遠端較新)
+            merged[qid] = Object.assign({}, m, r, { count: Math.max(m.count || 0, r.count || 0) });
+          });
+          qState = merged;
+          const payload2 = JSON.stringify(qState);
+          try { await _idbSet(uKey("wrongbook_state"), payload2); } catch(e){}
+          try { localStorage.setItem(uKey("wrongbook_state"), payload2); } catch(e){}
+          try { if (typeof updateHomeStats === 'function') updateHomeStats(); } catch(e){}
+          console.log('[wrongbook remote apply] 合併後 ' + Object.keys(qState).length + ' 題');
           return true;
         }
       };
@@ -13937,7 +14009,23 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       // ══════════════════════════════════════════
       const EXPL_PATCHES_LS = 'expl_patches_global'; // 跨 user(因為要同步給所有人)
       function loadExplPatches(){ try { return JSON.parse(localStorage.getItem(EXPL_PATCHES_LS) || '{}'); } catch(e) { return {}; } }
-      function saveExplPatches(p){ localStorage.setItem(EXPL_PATCHES_LS, JSON.stringify(p)); }
+      // 🛡 v286:背景 hydrate expl-patches 從 IDB(LS 可能 stale,IDB 才是真相)
+      (async () => {
+        if (typeof _idbGet !== 'function') return;
+        try {
+          const idbRaw = await _idbGet(EXPL_PATCHES_LS);
+          if (!idbRaw) return;
+          try { localStorage.setItem(EXPL_PATCHES_LS, idbRaw); } catch(e) {}
+        } catch(e) {}
+      })();
+      function saveExplPatches(p){
+        // 🛡 v286:expl-patches 可能會很大(全部使用者修正過的詳解),撞 quota 不能擋使用者操作
+        const payload = JSON.stringify(p);
+        if (typeof _idbSet === 'function') {
+          _idbSet(EXPL_PATCHES_LS, payload).catch(e => console.warn('[expl-patches] IDB fail', e));
+        }
+        try { localStorage.setItem(EXPL_PATCHES_LS, payload); } catch(e) {}
+      }
       function applyExplPatchesToQS(){
         const patches = loadExplPatches();
         let n = 0;
@@ -15304,7 +15392,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
           qState[id].status = "none";
           qState[id].count = 0;
         }
-        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+        _saveQState();
         if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
 
         if (USE_SUPABASE) {
@@ -15696,7 +15784,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
                 count++;
               }
             });
-            localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+            _saveQState();
             renderWrongbook();
             showToast('已匯入 ' + count + ' 題');
           }catch(err){
@@ -15793,7 +15881,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         for(var id in qState){
           if(qState[id].flagged) qState[id].flagged = false;
         }
-        localStorage.setItem(uKey("wrongbook_state"), JSON.stringify(qState));
+        _saveQState();
         if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
         renderWrongbook();
         showToast('錯題本已清空');

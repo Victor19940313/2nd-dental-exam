@@ -51,7 +51,7 @@
     if (!_db || !_userId) return Promise.resolve();
     var payload = { _ts: Date.now() };
     var oldPayload = {};
-    var IDB_KEYS = ['notebook', 'examHistory'];
+    var IDB_KEYS = ['notebook', 'examHistory', 'wrongbook_state'];
     // 先把可以從 localStorage 拿的都拿了
     SYNC_KEYS.forEach(function(sk) {
       if (IDB_KEYS.indexOf(sk) >= 0) return; // 這些走 IDB,稍後處理
@@ -97,8 +97,26 @@
       if (lsVal !== null) { payload.examHistory = lsVal; oldPayload.examHistory = lsVal; }
       return Promise.resolve();
     })();
+    // wrongbook_state 從 IDB 拿(v286)
+    var wrongbookPromise = (function(){
+      if (window._wrongbookIdbBridge && window._wrongbookIdbBridge.getWrongbookPayload) {
+        return window._wrongbookIdbBridge.getWrongbookPayload().then(function(idbVal){
+          if (idbVal) { payload.wrongbook_state = idbVal; oldPayload.wrongbook_state = idbVal; }
+          else {
+            var lsVal = localStorage.getItem(_userId + "_wrongbook_state");
+            if (lsVal !== null) { payload.wrongbook_state = lsVal; oldPayload.wrongbook_state = lsVal; }
+          }
+        }).catch(function(){
+          var lsVal = localStorage.getItem(_userId + "_wrongbook_state");
+          if (lsVal !== null) { payload.wrongbook_state = lsVal; oldPayload.wrongbook_state = lsVal; }
+        });
+      }
+      var lsVal = localStorage.getItem(_userId + "_wrongbook_state");
+      if (lsVal !== null) { payload.wrongbook_state = lsVal; oldPayload.wrongbook_state = lsVal; }
+      return Promise.resolve();
+    })();
     _syncing = true;
-    return Promise.all([notebookPromise, examHistPromise]).then(function(){
+    return Promise.all([notebookPromise, examHistPromise, wrongbookPromise]).then(function(){
       return Promise.all([
         userRef().update(payload),
         userDataRef().update(oldPayload)
@@ -144,6 +162,9 @@
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
             } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
               window._examHistoryIdbBridge.applyRemoteExamHistory(remote[sk]);
+              try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
+            } else if (sk === 'wrongbook_state' && window._wrongbookIdbBridge && window._wrongbookIdbBridge.applyRemoteWrongbook) {
+              window._wrongbookIdbBridge.applyRemoteWrongbook(remote[sk]);
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
             } else {
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
@@ -192,6 +213,9 @@
           } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
             window._examHistoryIdbBridge.applyRemoteExamHistory(source[sk]);
             try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
+          } else if (sk === 'wrongbook_state' && window._wrongbookIdbBridge && window._wrongbookIdbBridge.applyRemoteWrongbook) {
+            window._wrongbookIdbBridge.applyRemoteWrongbook(source[sk]);
+            try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
           } else {
             try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
           }
@@ -229,6 +253,9 @@
               try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
             } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
               window._examHistoryIdbBridge.applyRemoteExamHistory(val[sk]);
+              try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
+            } else if (sk === 'wrongbook_state' && window._wrongbookIdbBridge && window._wrongbookIdbBridge.applyRemoteWrongbook) {
+              window._wrongbookIdbBridge.applyRemoteWrongbook(val[sk]);
               try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
             } else {
               try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}

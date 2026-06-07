@@ -15749,7 +15749,8 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               reader.readAsDataURL(blob);
             }
           }
-          _tt = new Editor({
+          // 🛡 v280:只在 opts.onUpdate 是 function 時才傳,避免 undefined listener 炸 EventEmitter
+          const editorConfig = {
             element: domEl,
             extensions: [
               StarterKit.configure({ strike: false, blockquote: false }),
@@ -15762,7 +15763,6 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
               ResizableImage.configure({ inline: true, allowBase64: true }),
             ],
             content: initialHTML || '',
-            onUpdate: opts.onUpdate,
             editorProps: {
               // Enter 改成「同段落內換行」(<br>),不換段落
               handleKeyDown(view, event){
@@ -15818,7 +15818,12 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
                 return false;
               },
             },
-          });
+          };
+          // 🛡 v280:onUpdate 是 function 才掛上去
+          if (typeof opts.onUpdate === 'function') {
+            editorConfig.onUpdate = opts.onUpdate;
+          }
+          _tt = new Editor(editorConfig);
           return _tt;
         },
         getEditor(){ return _tt; },

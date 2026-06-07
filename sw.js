@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v279-tiptap-bug-fix';
+const CACHE_NAME = 'dental-all-v280-undefined-onupdate-fix';
 const PRECACHE = [
   './',
   './index.html',

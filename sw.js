@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v267-fix-patches-format';
+const CACHE_NAME = 'dental-all-v268-abandon-sync-and-clean';
 const PRECACHE = [
   './',
   './index.html',

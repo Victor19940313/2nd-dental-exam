@@ -4097,7 +4097,6 @@
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
-          <button class="nb-tb-btn" onclick="cleanStuckPlaceholders()" title="清掉卡住的「上傳中」">🧹</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目分類,找出誤分章節並一鍵修正">🔧 修復分類</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
@@ -10429,26 +10428,6 @@ ${allImgs.length === 0 ? '(無圖片)' : allImgs.map(im => `- ${im.md}`).join('\
         return newContent;
       }
 
-      // ── 清掉所有殘留的「上傳中」placeholder ──
-      function cleanStuckPlaceholders(){
-        let count = 0;
-        notebook.chapters.forEach(ch => {
-          if (!ch.content) return;
-          const before = ch.content;
-          ch.content = ch.content.replace(/!\[上傳中\.\.\.\]\(uploading-\d+\)/g, '');
-          if (ch.content !== before) {
-            count++;
-            ch.updatedAt = Date.now();
-          }
-        });
-        if (count > 0) {
-          saveNotebook();
-          renderNotebook();
-          showToast('✓ 清掉 ' + count + ' 個章節的「上傳中」殘留');
-        } else {
-          showToast('沒有殘留要清');
-        }
-      }
 
       // ── 圖片 +/- 大小調整 ──
       function _escapeRegExp(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -13578,7 +13557,10 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
             <div style="background:#dbeafe;border:1.5px solid #60a5fa;border-radius:8px;padding:.7rem;margin-bottom:.8rem;font-size:.85rem;color:#1e3a8a">
               <div style="font-weight:700;margin-bottom:.3rem">⏸ 上次中斷的進度</div>
               <div style="font-size:.82rem;line-height:1.7">已跑 ${_bgRegen.curIdx}/${_bgRegen.list.length} 題,剩 <strong>${resumeRemain}</strong> 題未完成</div>
-              <button onclick="closeBgRegenModal();resumeBgRegenFromSaved()" ${setupOK?'':'disabled'} style="background:#2563eb;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.85rem;margin-top:.5rem">▶ 繼續上次的進度</button>
+              <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem">
+                <button onclick="closeBgRegenModal();resumeBgRegenFromSaved()" ${setupOK?'':'disabled'} style="background:#2563eb;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.85rem">▶ 繼續上次的進度</button>
+                <button onclick="abandonAndSyncBgRegen()" title="放棄這份進度,把已跑好的同步到 GitHub,剩 ${resumeRemain} 題會回到下方清單可在別台電腦繼續" style="background:#f59e0b;color:white;border:none;padding:.45rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.85rem">🔄 先這樣,同步並放生剩餘</button>
+              </div>
             </div>` : '';
           const curModel = getBgRegenModel(); // 鎖死 3.5-flash
           // 樹狀結構: 科目 → 年份 → 次別,排除已重生 + 已被別人鎖定
@@ -13859,6 +13841,26 @@ ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
         }
       }
       // 從上次的進度繼續(重整後恢復用)
+      // 🔄 放生剩餘 — 同步已跑好的到 GitHub,清掉本機 saved state,讓未跑題目回到 todo 清單
+      async function abandonAndSyncBgRegen(){
+        if (!_bgRegen.list || _bgRegen.list.length === 0) { showToast('沒有可放生的進度'); return; }
+        const remain = _bgRegen.list.length - _bgRegen.curIdx;
+        if (!confirm(`確定要放生剩 ${remain} 題嗎?\n\n會做這幾件事:\n1. 把已跑好的 ${_bgRegen.curIdx} 題同步到 GitHub\n2. 清掉本機暫存的進度\n3. 那 ${remain} 題會回到下方清單,你換電腦可以重選\n\n換電腦工作時用這個。`)) return;
+        try {
+          if (_bgRegen.done > 0 || (typeof loadExplPatches === 'function' && Object.keys(loadExplPatches()).length > 0)) {
+            showToast('📤 同步到 GitHub...');
+            await pushPatchesToGithub();
+          }
+          // 清掉 saved state
+          try { localStorage.removeItem(BG_REGEN_LS); } catch(e){}
+          _bgRegen = { running: false, paused: false, total: 0, done: 0, failed: 0, lastPushAt: 0, list: [], curIdx: 0, model: getBgRegenModel(), costUSD: 0 };
+          showToast('✅ 已同步並放生,可換電腦繼續');
+          // 重渲染 modal
+          openBgRegenModal();
+        } catch (e) {
+          alert('同步失敗:' + (e.message || '').slice(0, 100) + '\n\n本機進度沒清,可以稍後再試。');
+        }
+      }
       async function resumeBgRegenFromSaved(){
         if (!_bgRegen.list || _bgRegen.list.length === 0 || _bgRegen.curIdx >= _bgRegen.list.length) {
           showToast('沒有可繼續的進度');

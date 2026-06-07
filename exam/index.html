@@ -6031,9 +6031,9 @@ ${(q.options || []).join('\n')}
           practiceList = list;
           practiceIdx = Math.min(pos.idx, list.length - 1);
           showPractice();
-          // 試卷模式要顯示交卷按鈕
+          // 🛡 v287:練習模式也顯示交卷按鈕(讓使用者可以中途交卷,做的部分進歷史)
           const submitBtn = document.getElementById("btn-submit-exam");
-          if (submitBtn) submitBtn.style.display = examMode ? "" : "none";
+          if (submitBtn) submitBtn.style.display = "";
           if (!examMode) updatePracticeScoreUI();
           loadPracticeQ();
         } catch (e) {
@@ -6117,9 +6117,9 @@ ${(q.options || []).join('\n')}
         const q = practiceList[practiceIdx];
         answered = false;
 
-        // 交卷按鈕：只在試卷模式顯示
+        // 🛡 v287:練習模式也顯示交卷按鈕
         const submitBtn = document.getElementById("btn-submit-exam");
-        if (submitBtn) submitBtn.style.display = examMode ? "" : "none";
+        if (submitBtn) submitBtn.style.display = "";
 
         // Progress
         const pct = Math.round((practiceIdx / practiceList.length) * 100);
@@ -6553,13 +6553,18 @@ ${(q.options || []).join('\n')}
       }
 
       function earlySubmitExam() {
-        const answeredCount = Object.keys(examAnswers || {}).length;
+        // 🛡 v287:兩種模式都用,讀對應的答案來源
+        const ansSrc = examMode ? examAnswers : practiceAnswers;
+        const answeredCount = Object.keys(ansSrc || {}).length;
         const total = practiceList.length;
         const remaining = total - answeredCount;
-        let msg = `確定交卷？\n\n`;
+        let msg = `確定要交卷嗎？\n\n`;
         msg += `已作答：${answeredCount} 題\n`;
-        msg += `未作答：${remaining} 題（將計為錯誤）\n\n`;
-        msg += `滿分 100 分，每題 1.25 分。`;
+        msg += `未作答：${remaining} 題（會跳過,不算分）\n\n`;
+        if (examMode) {
+          msg += `滿分 100 分,每題 1.25 分。\n\n`;
+        }
+        msg += `交完試會把你做過的錯題記進「歷史成績」,明天會出現在首頁的「📅 昨日錯題」。`;
         if (!confirm(msg)) return;
         showExamResults();
       }

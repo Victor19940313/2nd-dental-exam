@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v287-yesterday-wrong-feature';
+const CACHE_NAME = 'dental-all-v288-practice-submit-button';
 const PRECACHE = [
   './',
   './index.html',

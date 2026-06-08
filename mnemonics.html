@@ -193,8 +193,10 @@ const VERSIONS_PATH = (u, s) => `mnemonics/${encodeURIComponent(u)}/${s}-version
 const IDB_DB = 'dental_mnemonics_v1';
 const IDB_STORE = 'mnemonics';
 
-const ALLOWED_EDITORS = ['HUA', '腦動大開']; // ← 白名單(編輯任何人區域 + 新增使用者)
-const DEFAULT_USERS = ['HUA', '腦動大開'];   // 第一次載入時的預設使用者
+const ALLOWED_EDITORS = ['HUA', 'Shirley']; // ← 白名單(看 CUR_USER.name 登入名稱)
+const DEFAULT_USERS = ['HUA', '腦動大開'];   // 雲端 namespace 預設清單(顯示名稱)
+// 登入名稱 → 該使用者預設看到的 namespace(編輯區名稱)
+const NAME_TO_NAMESPACE = { 'HUA': 'HUA', 'Shirley': '腦動大開' };
 const VERSION_KEEP_REMOTE = 50;
 const VERSION_KEEP_LOCAL = 20;
 
@@ -207,9 +209,10 @@ const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙�
 function getCurrentUser() {
   try {
     const ulist = JSON.parse(localStorage.getItem('dental_users') || '[]');
-    const curId = localStorage.getItem('dental_current_user_id') || (ulist[0] && ulist[0].id);
+    // 🛡 key 名稱要跟 index.html / exam/index.html 一致(原本錯寫成 dental_current_user_id)
+    const curId = localStorage.getItem('dental_cur_user') || (ulist[0] && ulist[0].id);
     const u = ulist.find(x => x.id === curId);
-    return u || { id: 'guest', name: 'Guest' };
+    return u || { id: curId || 'guest', name: (u && u.name) || 'Guest' };
   } catch(e) { return { id: 'guest', name: 'Guest' }; }
 }
 const CUR_USER = getCurrentUser();
@@ -663,8 +666,13 @@ function refreshStatusUI() {
   const titleInput = document.getElementById('title-input');
   titleInput.disabled = !_editMode || !CAN_EDIT;
   titleInput.style.background = _editMode && CAN_EDIT ? 'rgba(251,191,36,.08)' : 'transparent';
-  // editor editable
-  if (_editor) _editor.setEditable(_editMode && CAN_EDIT);
+  // editor editable — 🛡 v292:只在實際變更時呼叫,避免 setEditable → onUpdate → refreshStatusUI 無限遞迴
+  if (_editor) {
+    const wantEditable = _editMode && CAN_EDIT;
+    if (_editor.isEditable !== wantEditable) {
+      _editor.setEditable(wantEditable);
+    }
+  }
   // 章節列 + 新增按鈕(沒權限就藏)
   const chAdd = document.getElementById('btn-add-ch');
   if (chAdd) chAdd.classList.toggle('hidden', !CAN_EDIT);
@@ -797,22 +805,33 @@ async function saveToCloud() {
   const btn = document.getElementById('save-btn');
   btn.disabled = true;
   btn.textContent = '⏳ 推送中…';
+  let step = 'init';
   try {
+    step = 'JSON.stringify(subj)';
+    const json = JSON.stringify(subj, null, 2);
+    console.log('[saveToCloud] payload size:', json.length, 'chars');
+    step = 'fetchFromGithub(content)';
     const { sha: contentSha } = await fetchFromGithub(CONTENT_PATH(_curUser, _curSubject));
+    console.log('[saveToCloud] got sha:', contentSha);
+    step = 'pushToGithub(content)';
     await pushToGithub(CONTENT_PATH(_curUser, _curSubject), subj, contentSha,
       `[mnemonics] ${_curUser} ${SUBJECT_LABEL[_curSubject]} by ${CUR_USER.name}`);
+    step = 'idbSet(cloud)';
     await idbSet(k.cloud(_curUser, _curSubject), subj);
-    if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
-    // 版本檔失敗不要擋使用者
+    if (_curChapterId) {
+      step = 'idbDel(draft)';
+      await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
+    }
+    step = 'pushVersionsFile';
     try { await pushVersionsFile(_curUser, _curSubject); }
-    catch(verr) { console.warn('versions push failed', verr); }
+    catch(verr) { console.warn('[saveToCloud] versions push failed', verr); }
     _dirty = false;
     refreshStatusUI();
     renderChapterList();
     showToast('✅ 已推到雲端 + 版本快照');
   } catch(e) {
-    console.error('[saveToCloud] failed', e);
-    alert('儲存失敗:' + (e.message || e) + '\n\n本機草稿還在 IDB,不會掉。');
+    console.error('[saveToCloud] failed at step "' + step + '"', e, e && e.stack);
+    alert('儲存失敗 (step=' + step + '):\n' + (e.message || e) + '\n\n本機草稿還在 IDB,不會掉。\n\n👉 開 F12 → Console 看詳細 stack trace');
     btn.disabled = false;
     btn.textContent = '💾 重試';
   }
@@ -1130,9 +1149,10 @@ async function init() {
       };
       toolbar.appendChild(b);
     });    await loadUsersList();
-    // 預設選自己(如果在 list 上),不然第一個
+    // 預設選「自己對應的 namespace」(HUA → HUA、Shirley → 腦動大開)
     const selfName = CUR_USER.name || '';
-    _curUser = _users.includes(selfName) ? selfName : (_users[0] || DEFAULT_USERS[0]);
+    const selfNs = NAME_TO_NAMESPACE[selfName] || selfName;
+    _curUser = _users.includes(selfNs) ? selfNs : (_users[0] || DEFAULT_USERS[0]);
     renderUserTabs();
     await switchSubject('ya3');
     startDraftAutoSave();

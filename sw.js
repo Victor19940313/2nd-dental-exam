@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v292-mnemonics-rename-shirley-move-add';
+const CACHE_NAME = 'dental-all-v293-mnemonics-fix-infinite-recursion';
 const PRECACHE = [
   './',
   './index.html',

@@ -148,20 +148,19 @@ body {
 </head>
 <body>
 
-<div class="topbar">
-  <a href="index.html" class="back">← 選單</a>
-  <h1 class="ns-title">🧠 正在瀏覽
-    <select id="user-select" class="user-select" onchange="onUserSelectChange(this.value)"></select>
-    的口訣區
-  </h1>
-  <span class="user-tag" id="user-tag">--</span>
-</div>
 <div class="nav-row">
   <a href="index.html" class="nav-link nav-pill">回到選單</a>
   <a href="exam/index.html" class="nav-link nav-pill">考試首頁</a>
   <a href="exam/index.html#resume" class="nav-link nav-pill">↩ 回到考題</a>
   <a href="exam/index.html#wrongbook" class="nav-link nav-pill">錯題本</a>
   <a href="exam/index.html#notebook" class="nav-link nav-pill nav-notebook">📒 筆記本</a>
+</div>
+<div class="topbar">
+  <h1 class="ns-title">🧠 正在瀏覽
+    <select id="user-select" class="user-select" onchange="onUserSelectChange(this.value)"></select>
+    的口訣區
+  </h1>
+  <span class="user-tag" id="user-tag">--</span>
 </div>
 
 <div id="info-banner-slot"></div>

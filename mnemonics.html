@@ -40,7 +40,16 @@ body {
   margin: 0 auto;
 }
 .topbar { display: flex; align-items: center; gap: .7rem; padding: .8rem 1rem; background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: .55rem; flex-wrap: wrap; }
-.nav-row { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.nav-row { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+/* v334:正在瀏覽 namespace + 搜尋 + 使用者標籤都並到 nav-row */
+.nav-row .ns-inline { font-size: .92rem; font-weight: 800; display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .65rem; background: white; border: 1.5px solid var(--border); border-radius: 999px; box-shadow: var(--shadow); }
+.nav-row .ns-inline .user-select { background: #f3f4f6; border: 1.5px solid var(--border); color: var(--text); padding: .15rem .55rem; border-radius: 6px; font-weight: 800; font-size: .88rem; cursor: pointer; font-family: inherit; }
+.nav-row .ns-inline .user-select:hover { background: #e5e7eb; }
+.nav-row .ch-search-top { flex: 1; min-width: 180px; padding: .4rem .65rem; border: 1.5px solid var(--border); border-radius: 999px; font-family: inherit; font-size: .85rem; outline: none; background: white; box-shadow: var(--shadow); }
+.nav-row .ch-search-top:focus { border-color: var(--ya5); }
+.nav-row .user-tag { font-size: .78rem; color: var(--text-sub); background: #f3f4f6; padding: .35rem .7rem; border-radius: 999px; font-weight: 600; }
+.nav-row .user-tag.readonly { background: #fef3c7; color: #92400e; }
+@media (max-width: 720px) { .nav-row .ch-search-top { width: 100%; flex-basis: 100%; min-width: 0; } .nav-row .ns-inline { flex-basis: 100%; justify-content: center; } }
 .nav-link { padding: .42rem 1rem; border-radius: 999px; font-size: .85rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all .12s; background: #f3f4f6; color: var(--text); border: 1.5px solid var(--border); }
 .nav-link:hover { background: #e5e7eb; transform: translateY(-1px); }
 .nav-link.nav-notebook { background: #3730a3; color: white; border-color: #3730a3; }
@@ -205,13 +214,12 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
   <a href="exam/index.html#resume" class="nav-link nav-pill">↩ 回到考題</a>
   <a href="exam/index.html#wrongbook" class="nav-link nav-pill">錯題本</a>
   <a href="exam/index.html#notebook" class="nav-link nav-pill nav-notebook">📒 筆記本</a>
-</div>
-<div class="topbar">
-  <h1 class="ns-title">🧠 正在瀏覽
+  <!-- v334:正在瀏覽 namespace 移到 nav-row 並排 -->
+  <span class="ns-inline">🧠 正在瀏覽
     <select id="user-select" class="user-select" onchange="onUserSelectChange(this.value)"></select>
     的口訣區
-  </h1>
-  <!-- v326:Firebase 即時推送後拿掉手動刷新按鈕 -->
+  </span>
+  <input type="search" id="ch-search" class="ch-search-top" placeholder="🔍 跨區跨四科搜尋…" oninput="onChSearch()" />
   <span class="user-tag" id="user-tag">--</span>
 </div>
 
@@ -232,7 +240,6 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
       <strong id="ch-head-label">章節</strong>
       <button id="btn-add-ch" class="ch-add" onclick="addChapter()" title="新增章節">+ 新增</button>
     </div>
-    <input type="search" id="ch-search" class="ch-search" placeholder="🔍 跨四科搜尋…" oninput="onChSearch()" />
     <div id="ch-items"></div>
   </div>
   <div class="editor-card nb-chapter-content">
@@ -1046,34 +1053,52 @@ async function doSearch() {
     renderChapterList();
     return;
   }
-  // 確保四科資料都載過(背景拉)
+  // v334:跨「所有 namespace × 四科」搜尋
   const SUBJECTS = ['ya3','ya4','ya5','ya6'];
-  const promises = SUBJECTS.map(async (s) => {
-    const sk = stateKey(_curUser, s);
-    if (_state[sk] && _state[sk].chapters) return;
-    const cache = await idbGet(k.cloud(_curUser, s));
-    if (cache && cache.chapters) _state[sk] = cache;
-  });
-  await Promise.all(promises);
-  // 跨四科搜尋
-  const hits = [];
-  for (const s of SUBJECTS) {
-    const sj = _state[stateKey(_curUser, s)];
-    if (!sj || !sj.chapters) continue;
-    sj.chapters.forEach(ch => {
-      const title = (ch.title || '').toLowerCase();
-      const plain = (ch.content || '').replace(/<[^>]+>/g, ' ').toLowerCase();
-      if (title.includes(q) || plain.includes(q)) {
-        // 抽 snippet
-        let snippet = '';
-        const idx = plain.indexOf(q);
-        if (idx >= 0) {
-          const start = Math.max(0, idx - 20);
-          snippet = (start > 0 ? '…' : '') + plain.slice(start, idx + q.length + 30).trim();
+  const NAMESPACES = _users.length ? _users.slice() : ['HUA', '腦洞大開'];
+  // 確保每個 (ns, subject) 至少有 IDB cache(沒 Firebase 即時資料也能搜)
+  const promises = [];
+  for (const ns of NAMESPACES) {
+    for (const s of SUBJECTS) {
+      const sk = stateKey(ns, s);
+      if (_state[sk] && _state[sk].chapters) continue;
+      promises.push((async () => {
+        const cache = await idbGet(k.cloud(ns, s));
+        if (cache && cache.chapters) _state[sk] = cache;
+        else {
+          // IDB 沒就拉 Firebase 一次性
+          try {
+            const remote = await fbGet(FB_CONTENT(ns, s));
+            if (remote && remote.chapters) {
+              _state[sk] = remote;
+              await idbSet(k.cloud(ns, s), remote);
+            }
+          } catch(e) {}
         }
-        hits.push({ subj: s, ch, snippet });
-      }
-    });
+      })());
+    }
+  }
+  await Promise.all(promises);
+  // 跨所有區搜尋
+  const hits = [];
+  for (const ns of NAMESPACES) {
+    for (const s of SUBJECTS) {
+      const sj = _state[stateKey(ns, s)];
+      if (!sj || !sj.chapters) continue;
+      sj.chapters.forEach(ch => {
+        const title = (ch.title || '').toLowerCase();
+        const plain = (ch.content || '').replace(/<[^>]+>/g, ' ').toLowerCase();
+        if (title.includes(q) || plain.includes(q)) {
+          let snippet = '';
+          const idx = plain.indexOf(q);
+          if (idx >= 0) {
+            const start = Math.max(0, idx - 20);
+            snippet = (start > 0 ? '…' : '') + plain.slice(start, idx + q.length + 30).trim();
+          }
+          hits.push({ ns, subj: s, ch, snippet });
+        }
+      });
+    }
   }
   renderSearchResults(hits, q);
 }
@@ -1084,12 +1109,16 @@ function renderSearchResults(hits, q) {
     container.innerHTML = `<div style="padding:1rem .5rem;color:var(--text-sub);text-align:center;font-size:.85rem">找不到「${escapeHtml(q)}」</div>`;
     return;
   }
-  container.innerHTML = `<div style="font-size:.74rem;color:var(--text-sub);padding:.3rem .35rem .55rem">🔍 ${hits.length} 個結果</div>` + hits.map(h => {
+  container.innerHTML = `<div style="font-size:.74rem;color:var(--text-sub);padding:.3rem .35rem .55rem">🔍 ${hits.length} 個結果(全區搜尋)</div>` + hits.map(h => {
     const subjLbl = SUBJECT_LABEL[h.subj] || h.subj;
-    return `<div class="ch-item" style="border-left:3px solid var(--ya5);padding-left:.5rem" onclick="gotoSearchHit('${h.subj}','${h.ch.id}')">
+    const sameNs = h.ns === _curUser;
+    const nsBadge = sameNs
+      ? ''
+      : `<span style="background:#7c3aed;color:white;font-size:.62rem;padding:.05rem .35rem;border-radius:8px;font-weight:700;margin-right:.2rem">${escapeHtml(h.ns)}</span>`;
+    return `<div class="ch-item" style="border-left:3px solid var(--ya5);padding-left:.5rem" onclick="gotoSearchHit('${escapeHtml(h.ns)}','${h.subj}','${h.ch.id}')">
       <div style="display:flex;flex-direction:column;gap:.15rem;width:100%">
-        <div style="display:flex;gap:.3rem;align-items:center">
-          <span style="background:var(--ya5);color:white;font-size:.65rem;padding:.05rem .35rem;border-radius:8px;font-weight:700">${subjLbl}</span>
+        <div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">
+          ${nsBadge}<span style="background:var(--ya5);color:white;font-size:.65rem;padding:.05rem .35rem;border-radius:8px;font-weight:700">${subjLbl}</span>
           <span class="ch-title" style="font-weight:700">${escapeHtml(h.ch.title || '(無標題)')}</span>
         </div>
         ${h.snippet ? `<div style="font-size:.74rem;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(h.snippet)}</div>` : ''}
@@ -1097,12 +1126,15 @@ function renderSearchResults(hits, q) {
     </div>`;
   }).join('');
 }
-async function gotoSearchHit(subj, chId) {
-  // 清掉搜尋輸入,切到該科目再跳章節
+async function gotoSearchHit(ns, subj, chId) {
   const inp = document.getElementById('ch-search');
   if (inp) inp.value = '';
+  // v334:跨區搜尋結果可能在別人的 namespace,要先切過去
+  if (ns && ns !== _curUser) {
+    await switchUser(ns);
+  }
   if (_curSubject !== subj) await switchSubject(subj);
-  setTimeout(() => pickChapter(chId), 50);
+  setTimeout(() => pickChapter(chId), 80);
 }
 
 function renderChapterList() {

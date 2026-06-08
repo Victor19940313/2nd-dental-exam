@@ -269,8 +269,8 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
 <button class="comments-open-btn" id="comments-open-btn" onclick="toggleCommentPane(true)" title="展開章節留言">💬 留言 <span id="comments-open-count" style="background:white;color:var(--ya5);padding:.05rem .45rem;border-radius:10px;font-size:.75rem;margin-left:.25rem">0</span></button>
 
 <!-- v324:圖片放大 lightbox -->
-<div id="img-lightbox" style="display:none;position:fixed;inset:0;background:rgba(20,20,30,0.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out" onclick="closeImgLightbox()">
-  <img id="img-lightbox-img" src="" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.35)" />
+<div id="img-lightbox" style="display:none;position:fixed;inset:0;background:rgba(20,20,30,0.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out">
+  <img id="img-lightbox-img" src="" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.35);cursor:zoom-out" />
 </div>
 
 <script>
@@ -1119,6 +1119,7 @@ function refreshStatusUI() {
 }
 
 // v325:圖片放大 lightbox(跟筆記本同樣 UX)
+// v327:改用 addEventListener,確保「點背景任何地方」「點圖片自己」「按 Esc」三種都能關
 function openImgLightbox(src){
   const img = document.getElementById('img-lightbox-img');
   const box = document.getElementById('img-lightbox');
@@ -1130,16 +1131,23 @@ function closeImgLightbox(){
   const box = document.getElementById('img-lightbox');
   if (box) box.style.display = 'none';
 }
-// 閱覽模式下點圖片 → 開 lightbox(用事件代理,view-content 重渲染後也有效)
+// 綁定關閉:整個 lightbox 範圍任何地方點下去都關
+(function bindLightboxClose(){
+  const box = document.getElementById('img-lightbox');
+  if (!box) { setTimeout(bindLightboxClose, 16); return; }
+  box.addEventListener('click', () => closeImgLightbox());
+})();
+// 閱覽模式下點圖片 → 開 lightbox(事件代理,view-content 重渲染後也有效)
 document.addEventListener('click', (e) => {
   if (_editMode) return; // 編輯模式交給 TipTap
   const t = e.target;
   if (t && t.tagName === 'IMG' && t.closest && t.closest('.view-content')) {
     e.preventDefault();
+    e.stopPropagation();
     openImgLightbox(t.src);
   }
 });
-// Esc 關掉 lightbox
+// Esc 關
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeImgLightbox();
 });

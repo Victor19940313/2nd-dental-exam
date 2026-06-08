@@ -1,5 +1,16 @@
 [
   {
+    "ts": 1780891871760,
+    "updatedBy": "HUA",
+    "action": "delete_chapter",
+    "chapterId": "ch_1780889834184_3rdw",
+    "chapterTitleBefore": "rf",
+    "snapshotBefore": {
+      "title": "rf",
+      "content": "<p></p>"
+    }
+  },
+  {
     "ts": 1780891867063,
     "updatedBy": "HUA",
     "action": "delete_chapter",

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v314-mnemonics-bg-prefix';
+const CACHE_NAME = 'dental-all-v316-shirley-lowercase';
 const PRECACHE = [
   './',
   './index.html',

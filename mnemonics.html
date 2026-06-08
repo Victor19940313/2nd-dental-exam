@@ -233,10 +233,12 @@ const VERSIONS_PATH = (u, s) => `mnemonics/${encodeURIComponent(u)}/${s}-version
 const IDB_DB = 'dental_mnemonics_v1';
 const IDB_STORE = 'mnemonics';
 
-const ALLOWED_EDITORS = ['HUA', 'Shirley']; // ← 白名單(看 CUR_USER.name 登入名稱)
+// v315:白名單比對改成大小寫不敏感 + 接受 namespace 別名
+//       (Shirley / shirley / 腦動大開 都算 Shirley;HUA / hua / Hua 都算 HUA)
+const ALLOWED_EDITORS = ['hua', 'shirley', '腦動大開'];
 const DEFAULT_USERS = ['HUA', '腦動大開'];   // 雲端 namespace 預設清單(顯示名稱)
-// 登入名稱 → 該使用者預設看到的 namespace(編輯區名稱)
-const NAME_TO_NAMESPACE = { 'HUA': 'HUA', 'Shirley': '腦動大開' };
+// 登入名稱(小寫) → 該使用者預設看到的 namespace(編輯區名稱)
+const NAME_TO_NAMESPACE = { 'hua': 'HUA', 'shirley': '腦動大開', '腦動大開': '腦動大開' };
 const VERSION_KEEP_REMOTE = 10; // 每章節保留最近 10 個雲端版本(避免歷史檔無限膨脹)
 const VERSION_KEEP_LOCAL = 10;
 
@@ -256,7 +258,8 @@ function getCurrentUser() {
   } catch(e) { return { id: 'guest', name: 'Guest' }; }
 }
 const CUR_USER = getCurrentUser();
-const CAN_EDIT = ALLOWED_EDITORS.includes(CUR_USER.name || '');
+// v315:用小寫比對,大小寫差異不再卡她朋友
+const CAN_EDIT = ALLOWED_EDITORS.includes((CUR_USER.name || '').trim().toLowerCase());
 
 // 🎨 套用使用者的筆記本背景設定(每個使用者各自獨立)
 function _uKey(k) { return CUR_USER.id + '_' + k; }
@@ -301,15 +304,49 @@ window.addEventListener('storage', (e) => {
   if (localStorage.getItem(BANNER_DISMISS_KEY)) {
     slot.style.display = 'none';
   } else if (CAN_EDIT) {
-    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${CUR_USER.name}</strong>,有編輯權限。所有人共同編輯,每次儲存會留版本快照,可從「📜 歷史」回溯。<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
+    const hasToken = !!(localStorage.getItem(CUR_USER.id + '_github_token') || localStorage.getItem('github_token'));
+    const tokenWarn = hasToken ? '' : '<br><span style="color:#dc2626;font-weight:700">⚠ 這台機器還沒設 GitHub token,寫了會存不到雲端。請去「考試 App → ⚙️ 設定 → GitHub」貼上 token</span>';
+    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>,有編輯權限。所有人共同編輯,版本歷史在「📜 歷史」。${tokenWarn}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
   } else {
-    slot.innerHTML = `<div class="info-banner readonly">🔒 唯讀模式 — 目前只有 ${ALLOWED_EDITORS.join('、')} 能編輯。你可以看但不能存。<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
+    slot.innerHTML = `<div class="info-banner readonly">
+      🔒 唯讀模式 — 你的登入名稱是「<strong>${escapeHtml(CUR_USER.name || 'Guest')}</strong>」,只有 HUA / Shirley 能編輯。
+      <br>
+      <span style="font-size:.78rem;color:#92400e">如果你就是 Shirley(或 HUA),按下面按鈕直接開通,不用回去改設定</span>
+      <br>
+      <button onclick="claimEditor('Shirley')" style="margin-top:.5rem;background:#16a34a;color:white;border:none;padding:.4rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;margin-right:.4rem">我是 Shirley</button>
+      <button onclick="claimEditor('HUA')" style="margin-top:.5rem;background:#7c3aed;color:white;border:none;padding:.4rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">我是 HUA</button>
+      <button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button>
+    </div>`;
   }
 })();
 function dismissBanner() {
   try { localStorage.setItem('mnemonics_banner_dismissed_' + (CUR_USER.id || 'guest'), '1'); } catch(e){}
   const slot = document.getElementById('info-banner-slot');
   if (slot) slot.style.display = 'none';
+}
+
+// v315:一鍵宣告自己是 Shirley / HUA 來開通編輯權限
+//      作法:確保本地有這個名字的 user → 把 dental_cur_user 設過去 → reload
+function claimEditor(canonical) {
+  try {
+    const ulist = JSON.parse(localStorage.getItem('dental_users') || '[]');
+    let u = ulist.find(x => (x.name || '').trim().toLowerCase() === canonical.toLowerCase());
+    if (!u) {
+      // 沒有就建一個
+      const id = 'u_' + canonical.toLowerCase() + '_' + Math.random().toString(36).slice(2, 8);
+      u = { id, name: canonical };
+      ulist.push(u);
+      localStorage.setItem('dental_users', JSON.stringify(ulist));
+    } else if (u.name !== canonical) {
+      // 拼字修正(把 shirley → Shirley)
+      u.name = canonical;
+      localStorage.setItem('dental_users', JSON.stringify(ulist));
+    }
+    localStorage.setItem('dental_cur_user', u.id);
+    location.reload();
+  } catch(e) {
+    alert('啟用失敗:' + e.message);
+  }
 }
 
 // ──────────────────────────────────────────────────────────
@@ -758,7 +795,8 @@ function refreshStatusUI() {
 
 // 切換閱覽 / 編輯(編輯模式才 lazy load TipTap)
 async function toggleEditMode() {
-  if (!CAN_EDIT || !_curChapterId) return;
+  if (!CAN_EDIT) { showToast('🔒 沒有編輯權限'); return; }
+  if (!_curChapterId) { showToast('請先從左邊選一章,或按「+ 新增」'); return; }
   if (!_editMode) {
     // 進入編輯:lazy load TipTap(只第一次需要載)
     const body = document.getElementById('editor-body');
@@ -1505,8 +1543,9 @@ async function init() {
       toolbar.appendChild(b);
     });    await loadUsersList();
     // 預設選「自己對應的 namespace」(HUA → HUA、Shirley → 腦動大開)
+    // v315:小寫 lookup,大小寫差異不影響
     const selfName = CUR_USER.name || '';
-    const selfNs = NAME_TO_NAMESPACE[selfName] || selfName;
+    const selfNs = NAME_TO_NAMESPACE[selfName.trim().toLowerCase()] || selfName;
     _curUser = _users.includes(selfNs) ? selfNs : (_users[0] || DEFAULT_USERS[0]);
     renderUserTabs();
     await switchSubject('ya3');

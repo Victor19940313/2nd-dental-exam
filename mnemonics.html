@@ -82,9 +82,10 @@ body {
 .chapter-list .empty { padding: 1.2rem .7rem; color: var(--text-sub); font-size: .82rem; text-align: center; font-style: italic; }
 .editor-card { background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
 .editor-status { display: flex; align-items: center; justify-content: space-between; padding: .55rem .8rem; background: #fafaf5; border-bottom: 1px solid var(--border); font-size: .78rem; color: var(--text-sub); flex-wrap: wrap; gap: .4rem; }
-.editor-status input.title-input { background: transparent; border: none; outline: none; font-size: .95rem; font-weight: 800; color: var(--text); flex: 1; min-width: 120px; padding: .3rem 0; }
+.editor-status input.title-input { background: transparent; border: none; outline: none; font-size: 1.35rem; font-weight: 900; color: var(--text); flex: 1; min-width: 120px; padding: .35rem 0; letter-spacing: -.01em; }
 .editor-status input.title-input:focus { border-bottom: 1.5px solid var(--ya3); }
-.editor-status input.title-input:disabled { color: var(--text-sub); cursor: not-allowed; }
+.editor-status input.title-input:disabled { color: var(--text); cursor: default; }
+@media (max-width: 600px) { .editor-status input.title-input { font-size: 1.15rem; } }
 .editor-status .meta { font-size: .73rem; color: var(--text-sub); white-space: nowrap; }
 .editor-status button { border: none; border-radius: 7px; cursor: pointer; font-weight: 700; }
 .editor-status .save-btn { background: #16a34a; color: white; padding: .4rem .85rem; font-size: .82rem; }

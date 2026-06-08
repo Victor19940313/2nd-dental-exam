@@ -161,7 +161,7 @@ body {
   <div class="editor-card">
     <div class="editor-status">
       <input type="text" id="title-input" class="title-input" placeholder="章節標題..." oninput="onTitleChange()" />
-      <span class="meta" id="meta-text" style="display:none"></span>
+      <button class="history-btn" id="history-btn" onclick="openVersionModal()" title="看完整版本歷史" style="display:none">📜 歷史</button>
       <button class="undo-btn" id="undo-btn" onclick="undoLastSave()" title="回復到上次儲存前的版本" style="display:none">↶ 回復</button>
       <button class="redo-btn" id="redo-btn" onclick="redoLastUndo()" title="取消剛剛的回復" style="display:none">↷ 取消回復</button>
       <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>
@@ -668,15 +668,18 @@ function refreshStatusUI() {
   const abandonBtn = document.getElementById('abandon-btn');
   const undoBtn = document.getElementById('undo-btn');
   const redoBtn = document.getElementById('redo-btn');
+  const histBtn = document.getElementById('history-btn');
   const tb = document.getElementById('toolbar');
   const titleInput = document.getElementById('title-input');
   if (!_curChapterId) {
     editBtn.style.display = 'none'; saveBtn.style.display = 'none'; abandonBtn.style.display = 'none';
-    undoBtn.style.display = 'none'; redoBtn.style.display = 'none';
+    undoBtn.style.display = 'none'; redoBtn.style.display = 'none'; histBtn.style.display = 'none';
     tb.style.display = 'none'; titleInput.disabled = true;
   } else if (!CAN_EDIT) {
+    // 非白名單也是閱覽,可以看歷史
     editBtn.style.display = 'none'; saveBtn.style.display = 'none'; abandonBtn.style.display = 'none';
     undoBtn.style.display = 'none'; redoBtn.style.display = 'none';
+    histBtn.style.display = '';
     tb.style.display = 'none'; titleInput.disabled = true;
   } else if (_editMode) {
     // 編輯模式:只給 儲存 + 放棄儲存
@@ -687,14 +690,16 @@ function refreshStatusUI() {
     abandonBtn.style.display = '';
     undoBtn.style.display = 'none';
     redoBtn.style.display = 'none';
+    histBtn.style.display = 'none';
     tb.style.display = 'flex';
     titleInput.disabled = false;
   } else {
-    // 閱覽模式:編輯 + 回復 + 取消回復
+    // 閱覽模式:歷史 + 編輯 + 回復 + 取消回復
     editBtn.style.display = '';
     editBtn.textContent = '✏ 編輯';
     saveBtn.style.display = 'none';
     abandonBtn.style.display = 'none';
+    histBtn.style.display = '';
     undoBtn.style.display = _undoMap[_curChapterId] ? '' : 'none';
     redoBtn.style.display = _redoMap[_curChapterId] ? '' : 'none';
     tb.style.display = 'none';

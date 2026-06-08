@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v299-mnemonics-hide-meta-and-history';
+const CACHE_NAME = 'dental-all-v300-mnemonics-history-view-only';
 const PRECACHE = [
   './',
   './index.html',

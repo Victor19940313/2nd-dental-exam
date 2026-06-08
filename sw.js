@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v313-mnemonics-theme';
+const CACHE_NAME = 'dental-all-v314-mnemonics-bg-prefix';
 const PRECACHE = [
   './',
   './index.html',

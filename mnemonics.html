@@ -269,9 +269,11 @@ function applyUserTheme() {
   const theme = localStorage.getItem(_uKey('nb_theme'));
   const bg = localStorage.getItem(_uKey('nb_bg_style'));
   const font = localStorage.getItem(_uKey('nb_font_style'));
+  // v314:bg_style 存的是 'marble'/'rice' 等(沒 prefix),要加 'bg-style-' 才會吃到紋路 CSS
+  //       font 同理,存 'serif' 要變 'font-serif'。theme 本來就存完整 class 名稱所以不用加
   if (theme) document.body.classList.add(theme);
-  if (bg) document.body.classList.add(bg);
-  if (font) document.body.classList.add(font);
+  if (bg) document.body.classList.add(bg.startsWith('bg-style-') ? bg : ('bg-style-' + bg));
+  if (font) document.body.classList.add(font.startsWith('font-') ? font : ('font-' + font));
   // 飽和度 / 透明度 / 漸層深淺
   const sat = parseInt(localStorage.getItem(_uKey('nb_theme_sat')) || '100');
   const opa = parseInt(localStorage.getItem(_uKey('nb_theme_opa')) || '100');

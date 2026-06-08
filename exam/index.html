@@ -10983,19 +10983,25 @@ ${JSON.stringify(lite, null, 2)}
         _mergeChState.doneCount = 0;
         openMergeChaptersModal();
 
-        const chById = new Map((notebook.chapters||[]).map(c => [c.id, c]));
         let okCount = 0, failCount = 0;
         const errors = [];
 
         for (const g of groups) {
           try {
-            const oldChs = g.chapter_ids.map(id => chById.get(id)).filter(Boolean);
-            if (oldChs.length < 2) { failCount++; continue; }
+            // v339 fix Bug 2:每次重 build chById,反映 notebook 目前狀態
+            //                 (避免上一輪合併已刪掉的章節在這輪變成 orphan keepCh,把不該刪的章節給刪掉)
+            const chById = new Map((notebook.chapters||[]).map(c => [c.id, c]));
+            // v339 fix Bug 1:dedup chapter_ids
+            //                 (若 AI 回傳 ["A","A"] 重複 id,原本會把 A 自己加進 otherIds 結果整個刪掉)
+            const uniqueIds = Array.from(new Set(g.chapter_ids || []));
+            const oldChs = uniqueIds.map(id => chById.get(id)).filter(Boolean);
+            if (oldChs.length < 2) { failCount++; errors.push((g.new_name||'?') + ': 章節不夠 2 個(可能被別組刪光或重複 id)'); continue; }
             const newContent = await _mergeChapterGroup(oldChs, g);
 
             // 把第一個舊章節改成合併後的章節,其餘的刪掉
             const keepCh = oldChs[0];
-            const otherIds = new Set(oldChs.slice(1).map(c => c.id));
+            // v339 fix:再次過濾 keepCh.id(萬一還有同 id 的)
+            const otherIds = new Set(oldChs.slice(1).map(c => c.id).filter(id => id !== keepCh.id));
             const allQids = Array.from(new Set(oldChs.flatMap(c => c.qids || [])));
             const allConcepts = Array.from(new Set(oldChs.flatMap(c => c.concepts || [])));
 

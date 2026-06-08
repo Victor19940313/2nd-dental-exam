@@ -1,5 +1,16 @@
 [
   {
+    "ts": 1780891867063,
+    "updatedBy": "HUA",
+    "action": "delete_chapter",
+    "chapterId": "ch_1780888325821_tgct",
+    "chapterTitleBefore": "???",
+    "snapshotBefore": {
+      "title": "???",
+      "content": "<p>OK</p>"
+    }
+  },
+  {
     "ts": 1780890587679,
     "updatedBy": "HUA",
     "action": "edit_chapter",

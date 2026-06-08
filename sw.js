@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-comments-default-collapsed';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-comment-minimize-icon';
 const PRECACHE = [
   './',
   './index.html',

@@ -666,16 +666,13 @@ async function pickChapter(chId) {
   if (!subj) { showEmptyEditor(); return; }
   const ch = subj.chapters.find(c => c.id === chId);
   if (!ch) { showEmptyEditor(); return; }
-  // 優先用 draft(如果有,提示使用者按編輯)
-  const draft = await idbGet(k.draft(_curUser, _curSubject, chId));
+  // v311:閱覽模式直接渲染章節內容,不再因為 IDB 有舊草稿就跳 toast
+  //       (草稿仍保留,按「✏ 編輯」時會自動載入)
   const titleInput = document.getElementById('title-input');
   const body = document.getElementById('editor-body');
-  const displayContent = (draft && draft.content) || ch.content || '<p style="color:#9ca3af">(空)</p>';
-  const displayTitle = (draft && draft.title) || ch.title || '';
-  body.innerHTML = '<div class="view-content">' + displayContent + '</div>';
-  titleInput.value = displayTitle;
-  _dirty = !!draft;
-  if (draft) showToast('📝 有未存草稿,按「✏ 編輯」繼續');
+  body.innerHTML = '<div class="view-content">' + (ch.content || '<p style="color:#9ca3af">(空)</p>') + '</div>';
+  titleInput.value = ch.title || '';
+  _dirty = false;
   refreshStatusUI();
   renderChapterList();
 }

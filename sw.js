@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v310-mac-subject-stuck-fix';
+const CACHE_NAME = 'dental-all-v311-no-draft-toast';
 const PRECACHE = [
   './',
   './index.html',

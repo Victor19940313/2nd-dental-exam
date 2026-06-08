@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v307-mnemonics-github-commits-history';
+const CACHE_NAME = 'dental-all-v308-swr-cache-and-lazy-tiptap';
 const PRECACHE = [
   './',
   './index.html',
@@ -48,9 +48,13 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim()).then(() => {
+      // 🛡 v308:新版啟動後通知所有開啟的分頁,讓他們秀「新版本已就緒」toast
+      self.clients.matchAll({ includeUncontrolled: true }).then(cs => {
+        cs.forEach(c => c.postMessage({ type: 'NEW_VERSION_READY', cache: CACHE_NAME }));
+      });
+    })
   );
-  self.clients.claim();
 });
 
 // Data files that update frequently → network first, fall back to cache
@@ -85,7 +89,7 @@ self.addEventListener('fetch', e => {
       e.request.url.includes('gstatic.com')) return;
 
   if (isDataFile(e.request.url)) {
-    // Network first for data files (get updates immediately)
+    // Network first for data files (題庫、各科 data 要拿最新)
     e.respondWith(
       fetch(e.request).then(res => {
         if (res.ok) {
@@ -98,14 +102,20 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Network first for ALL files — always get latest, fall back to cache offline
+  // 🚀 v308:靜態檔(HTML / CSS / JS) 改用 stale-while-revalidate
+  //         立刻回 cache → 同時背景拉新版更新 cache → 下次更新
+  //         好處:第二次以後打開幾乎瞬間;網路慢也不會卡
   e.respondWith(
-    fetch(e.request).then(res => {
-      if (res.ok && e.request.method === 'GET') {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-      }
-      return res;
-    }).catch(() => caches.match(e.request).then(c => c || caches.match('./index.html')))
+    caches.match(e.request).then(cached => {
+      const fetchPromise = fetch(e.request).then(res => {
+        if (res.ok && e.request.method === 'GET') {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
+        return res;
+      }).catch(() => cached || caches.match('./index.html'));
+      // 有 cache 就立刻回(fast path),沒 cache 才等網路
+      return cached || fetchPromise;
+    })
   );
 });

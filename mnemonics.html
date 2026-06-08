@@ -268,6 +268,11 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
 </div>
 <button class="comments-open-btn" id="comments-open-btn" onclick="toggleCommentPane(true)" title="展開章節留言">💬 留言 <span id="comments-open-count" style="background:white;color:var(--ya5);padding:.05rem .45rem;border-radius:10px;font-size:.75rem;margin-left:.25rem">0</span></button>
 
+<!-- v324:圖片放大 lightbox -->
+<div id="img-lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out" onclick="closeImgLightbox()">
+  <img id="img-lightbox-img" src="" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:6px;box-shadow:0 6px 20px rgba(0,0,0,.5)" />
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════
 //  口訣複習區 — 設計原則
@@ -1090,9 +1095,38 @@ function refreshStatusUI() {
   // 章節列 + 新增按鈕(沒權限就藏)
   const chAdd = document.getElementById('btn-add-ch');
   if (chAdd) chAdd.classList.toggle('hidden', !CAN_EDIT);
+  // v325:不在編輯模式時強制收掉圖片寬度工具列(之前儲存後它會殘留)
+  const imgTbar = document.getElementById('img-toolbar');
+  if (imgTbar && !_editMode) imgTbar.classList.remove('visible');
   // 🛡 注意:這裡不呼叫 setEditable,避免 setEditable → onUpdate → refreshStatusUI 遞迴
   //         setEditable 只在 toggleEditMode 顯式呼叫
 }
+
+// v325:圖片放大 lightbox(跟筆記本同樣 UX)
+function openImgLightbox(src){
+  const img = document.getElementById('img-lightbox-img');
+  const box = document.getElementById('img-lightbox');
+  if (!img || !box) return;
+  img.src = src;
+  box.style.display = 'flex';
+}
+function closeImgLightbox(){
+  const box = document.getElementById('img-lightbox');
+  if (box) box.style.display = 'none';
+}
+// 閱覽模式下點圖片 → 開 lightbox(用事件代理,view-content 重渲染後也有效)
+document.addEventListener('click', (e) => {
+  if (_editMode) return; // 編輯模式交給 TipTap
+  const t = e.target;
+  if (t && t.tagName === 'IMG' && t.closest && t.closest('.view-content')) {
+    e.preventDefault();
+    openImgLightbox(t.src);
+  }
+});
+// Esc 關掉 lightbox
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeImgLightbox();
+});
 
 // 切換閱覽 / 編輯(編輯模式才 lazy load TipTap)
 async function toggleEditMode() {

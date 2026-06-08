@@ -9,8 +9,12 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://esm.sh" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="themes.css">
+<script src="version.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 :root {
   --bg: #f8f7f0;
@@ -232,10 +236,27 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
 //  ★ Per-subject 分檔 — mnemonics/{subj}.json + mnemonics/{subj}-versions.json
 // ═══════════════════════════════════════════════════════════
 
-const REPO_DEFAULT = 'Victor19940313/2nd-dental-exam';
-const USERS_PATH = 'mnemonics/_users.json';
-const CONTENT_PATH = (u, s) => `mnemonics/${encodeURIComponent(u)}/${s}.json`;
-const VERSIONS_PATH = (u, s) => `mnemonics/${encodeURIComponent(u)}/${s}-versions.json`;
+// v322:口訣區內容從 GitHub 改成 Firebase RTDB。
+//       為什麼:GitHub 需要每個編輯者有 PAT + repo write 權,Shirley 沒 GitHub 帳號全卡住。
+//       Firebase 跟筆記本同一套,Shirley 不用任何設定就能用。
+//       圖片仍走 GitHub(Firebase 不適合塞 binary blob),沒 token 時禁用圖片功能。
+const REPO_DEFAULT = 'Victor19940313/2nd-dental-exam';     // 只用於圖片上傳
+const IMAGE_DIR    = 'mnemonics-images';                   // GitHub repo 裡的圖片資料夾
+const FB_BASE      = 'users/__mnemonics';                  // Firebase RTDB 共用 namespace
+const FB_CONTENT   = (u, s) => `${FB_BASE}/content/${u}/${s}`;
+const FB_VERSIONS  = (u, s) => `${FB_BASE}/versions/${u}/${s}`;
+const FB_USERS     = `${FB_BASE}/users`;
+const FB_VERSION_KEEP = 30;                                // 每章節最多保留 30 個歷史版本
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyACFnTGWEuhUp0htnMWe8i7XbHiAWjgoAc",
+  authDomain: "dental-exam-sync.firebaseapp.com",
+  databaseURL: "https://dental-exam-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "dental-exam-sync",
+  storageBucket: "dental-exam-sync.firebasestorage.app",
+  messagingSenderId: "136556858599",
+  appId: "1:136556858599:web:de382cbbef5099d63e2642",
+};
 const IDB_DB = 'dental_mnemonics_v1';
 const IDB_STORE = 'mnemonics';
 
@@ -245,8 +266,6 @@ const ALLOWED_EDITORS = ['hua', 'shirley', '腦動大開'];
 const DEFAULT_USERS = ['HUA', '腦動大開'];   // 雲端 namespace 預設清單(顯示名稱)
 // 登入名稱(小寫) → 該使用者預設看到的 namespace(編輯區名稱)
 const NAME_TO_NAMESPACE = { 'hua': 'HUA', 'shirley': '腦動大開', '腦動大開': '腦動大開' };
-const VERSION_KEEP_REMOTE = 10; // 每章節保留最近 10 個雲端版本(避免歷史檔無限膨脹)
-const VERSION_KEEP_LOCAL = 10;
 
 const SUBJECT_NAME = { ya3: '🦷 牙三', ya4: '🩺 牙四', ya5: '🦴 牙五', ya6: '👶 牙六' };
 const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
@@ -310,9 +329,10 @@ window.addEventListener('storage', (e) => {
   if (localStorage.getItem(BANNER_DISMISS_KEY)) {
     slot.style.display = 'none';
   } else if (CAN_EDIT) {
+    // v322:文字內容走 Firebase 不需 token。只有貼圖功能需要 GitHub token,沒設就只是貼圖會關掉
     const hasToken = !!(localStorage.getItem(CUR_USER.id + '_github_token') || localStorage.getItem('github_token'));
-    const tokenWarn = hasToken ? '' : '<br><span style="color:#dc2626;font-weight:700">⚠ 這台機器還沒設 GitHub token,寫了會存不到雲端。請去「考試 App → ⚙️ 設定 → GitHub」貼上 token</span>';
-    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>,有編輯權限。所有人共同編輯,版本歷史在「📜 歷史」。${tokenWarn}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
+    const imgNote = hasToken ? '' : '<br><span style="font-size:.78rem;color:#92400e">(目前沒設 GitHub token → 只能打字,貼圖功能停用。要開圖片功能去「考試 App → ⚙️ 設定 → GitHub」貼 token)</span>';
+    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>,有編輯權限。文字共筆即時同步,版本歷史在「📜 歷史」。${imgNote}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
   } else {
     slot.innerHTML = `<div class="info-banner readonly">
       🔒 唯讀模式 — 你的登入名稱是「<strong>${escapeHtml(CUR_USER.name || 'Guest')}</strong>」,只有 HUA / Shirley 能編輯。
@@ -405,7 +425,40 @@ const k = {
 };
 
 // ──────────────────────────────────────────────────────────
-// GitHub
+// Firebase RTDB(v322:口訣內容主存,跨裝置即時同步,無需 GitHub token)
+// ──────────────────────────────────────────────────────────
+let _fbDb = null;
+function _initFb() {
+  if (_fbDb) return _fbDb;
+  if (typeof firebase === 'undefined') throw new Error('Firebase SDK 沒載入(網路可能擋 gstatic.com)');
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  _fbDb = firebase.database();
+  return _fbDb;
+}
+async function fbGet(path) {
+  const snap = await _initFb().ref(path).once('value');
+  return snap.val();
+}
+async function fbSet(path, data) {
+  await _initFb().ref(path).set(data);
+}
+async function fbPush(path, data) {
+  return await _initFb().ref(path).push(data);
+}
+async function fbAppendVersion(ns, subj, snapshot) {
+  // 把 snapshot 加進 versions 陣列,只保留最近 FB_VERSION_KEEP 個
+  // 用 transaction 避免並發覆寫
+  const ref = _initFb().ref(FB_VERSIONS(ns, subj));
+  await ref.transaction((cur) => {
+    const arr = (cur && Array.isArray(cur)) ? cur : (cur && cur.list ? cur.list : []);
+    arr.push(snapshot);
+    while (arr.length > FB_VERSION_KEEP) arr.shift();
+    return arr;
+  });
+}
+
+// ──────────────────────────────────────────────────────────
+// GitHub(v322:只給圖片上傳用了,內容已搬到 Firebase)
 // ──────────────────────────────────────────────────────────
 function getGithubToken() {
   return localStorage.getItem(CUR_USER.id + '_github_token') || localStorage.getItem('github_token') || '';
@@ -558,28 +611,23 @@ function showToast(msg) {
 function genChId() { return 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
 
 // ──────────────────────────────────────────────────────────
-// 載入
+// 載入(v322:Firebase 即時讀;若 IDB 本地比雲端新,順手回推)
 // ──────────────────────────────────────────────────────────
 async function loadUserSubject(user, subject, opts) {
   const sk = stateKey(user, subject);
   const force = opts && opts.force;
-  // 1. IDB cache 撈
+  // 1. 先放 IDB cache,讓 UI 立刻有東西可顯示
   const cache = await idbGet(k.cloud(user, subject));
   if (cache && cache.chapters) _state[sk] = cache;
   else _state[sk] = { chapters: [], ts: 0, updatedBy: '' };
-  // 2. 背景拉雲端
-  //   v316:拿掉 _loaded 閘門 — 第一次 fetch 失敗(網路抖 / Safari ITP / token revoked)
-  //         之後就再也不抓。改成「每次切就拉一次最新」,網路成本可接受
-  const repo = getGithubRepo();
-  setLoadStatus(`☁️ 拉 ${repo} → ${user}/${subject}…`);
-  fetchFresh(CONTENT_PATH(user, subject)).then(async (remote) => {
-    if (!remote || !remote.chapters) {
-      setLoadStatus(remote ? `雲端是空的(${user} · ${SUBJECT_LABEL[subject]})` : `❌ 拉不到 ${user} · ${SUBJECT_LABEL[subject]}`);
-      return;
-    }
-    const cur = _state[sk];
-    // v316:強制刷新時不比 ts,直接用雲端版
-    if (force || !cur || (remote.ts || 0) >= (cur.ts || 0)) {
+  // 2. 背景拉 Firebase
+  setLoadStatus(`☁️ 拉 ${user} · ${SUBJECT_LABEL[subject]}…`);
+  fbGet(FB_CONTENT(user, subject)).then(async (remote) => {
+    const remoteHasContent = remote && Array.isArray(remote.chapters);
+    const remoteTs = remoteHasContent ? (remote.ts || 0) : 0;
+    const localTs = (cache && cache.ts) ? cache.ts : 0;
+    // 雲端比較新 → 用雲端
+    if (force || (remoteHasContent && remoteTs >= localTs)) {
       _state[sk] = remote;
       await idbSet(k.cloud(user, subject), remote);
       if (_curUser === user && _curSubject === subject) {
@@ -589,8 +637,25 @@ async function loadUserSubject(user, subject, opts) {
           if (ch && _editor) _editor.commands.setContent(ch.content || '<p></p>');
         }
       }
+      setLoadStatus(`✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`);
+      return;
     }
-    setLoadStatus(`✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`);
+    // 本地比較新且有東西 → 把本地推上雲端(Shirley 在 Mac 寫的「咬和干擾」這類會自動上傳)
+    if (CAN_EDIT && cache && cache.chapters && cache.chapters.length > 0 && localTs > remoteTs) {
+      try {
+        await fbSet(FB_CONTENT(user, subject), cache);
+        setLoadStatus(`⬆️ 本地較新,已自動上傳 ${user} · ${SUBJECT_LABEL[subject]} · ${cache.chapters.length} 章`);
+      } catch(e) {
+        setLoadStatus(`⚠ 自動上傳失敗:${(e.message||'').slice(0,80)}`);
+      }
+      return;
+    }
+    // 雲端是空的且本地也沒東西
+    if (!remoteHasContent) {
+      setLoadStatus(`雲端是空的(${user} · ${SUBJECT_LABEL[subject]})`);
+    } else {
+      setLoadStatus(`✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`);
+    }
   }).catch(e => {
     setLoadStatus(`❌ 拉雲端失敗:${(e.message||'').slice(0,80)}`);
   });
@@ -697,18 +762,12 @@ async function addUser() {
   _users.push(clean);
   await idbSet(k.usersList, _users);
   renderUserTabs();
-  // 推 _users.json 到雲端
-  if (getGithubToken()) {
-    try {
-      const { sha } = await fetchFromGithub(USERS_PATH);
-      await pushToGithub(USERS_PATH, { users: _users, ts: Date.now(), updatedBy: CUR_USER.name }, sha,
-        `[mnemonics] add user ${clean} by ${CUR_USER.name}`);
-      showToast('✓ 已新增使用者' + clean);
-    } catch(e) {
-      showToast('✗ 雲端同步失敗(本機已加):' + e.message.slice(0,60));
-    }
-  } else {
-    showToast('✓ 本機已加(沒 token 不推雲端)');
+  // v322:推到 Firebase
+  try {
+    await fbSet(FB_USERS, { users: _users, ts: Date.now(), updatedBy: CUR_USER.name });
+    showToast('✓ 已新增使用者' + clean);
+  } catch(e) {
+    showToast('✗ 雲端同步失敗(本機已加):' + (e.message||'').slice(0,60));
   }
   switchUser(clean);
 }
@@ -730,8 +789,8 @@ async function loadUsersList() {
   else _users = DEFAULT_USERS.slice();
   // 本機遷移後存回
   await idbSet(k.usersList, _users);
-  // 2. 背景拉雲端(同樣 API 優先)
-  fetchFresh(USERS_PATH).then(async (remote) => {
+  // 2. 背景拉 Firebase
+  fbGet(FB_USERS).then(async (remote) => {
     if (!remote || !Array.isArray(remote.users)) return;
     const cleaned = _migrateUsers(remote.users.slice());
     const set = new Set(_users);
@@ -741,7 +800,7 @@ async function loadUsersList() {
       await idbSet(k.usersList, _users);
       renderUserTabs();
     }
-  });
+  }).catch(() => {});
 }
 
 function escapeHtml(s) {
@@ -1053,21 +1112,22 @@ async function deleteChapter(chId) {
     else showEmptyEditor();
   }
   renderChapterList();
-  // 3. 立即推到雲端(不擋 UI)
+  // 3. v322:推到 Firebase
   showToast('🗑 刪除中…');
   try {
-    const { sha } = await fetchFromGithub(CONTENT_PATH(_curUser, _curSubject));
-    await pushToGithub(CONTENT_PATH(_curUser, _curSubject), subj, sha,
-      `[mnemonics] delete ${_curUser} ${SUBJECT_LABEL[_curSubject]} "${ch.title}" by ${CUR_USER.name}`);
+    await fbSet(FB_CONTENT(_curUser, _curSubject), subj);
+    await fbAppendVersion(_curUser, _curSubject, {
+      ts: subj.ts, by: CUR_USER.name, action: `delete「${ch.title}」`, snapshot: subj
+    });
     showToast('🗑 已刪除(雲端同步完成)');
   } catch(e) {
-    console.error('[delete push] fail', e);
+    console.error('[delete fb] fail', e);
     showToast('🗑 本機已刪,雲端同步失敗:' + (e.message||'').slice(0,60));
   }
 }
 
 // ──────────────────────────────────────────────────────────
-// 雲端同步
+// 雲端同步(v322:Firebase)
 // ──────────────────────────────────────────────────────────
 async function refreshFromCloud() {
   if (_dirty) {
@@ -1075,7 +1135,7 @@ async function refreshFromCloud() {
     if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
   }
   showToast('🔄 拉雲端最新…');
-  const remote = await fetchFresh(CONTENT_PATH(_curUser, _curSubject));
+  const remote = await fbGet(FB_CONTENT(_curUser, _curSubject));
   if (remote && remote.chapters) {
     _state[stateKey(_curUser, _curSubject)] = remote;
     await idbSet(k.cloud(_curUser, _curSubject), remote);
@@ -1097,10 +1157,7 @@ async function refreshFromCloud() {
 
 async function saveToCloud() {
   if (!CAN_EDIT) return;
-  if (!getGithubToken()) {
-    alert('沒設定 GitHub token,沒辦法推到雲端。\n\n請先去「考試 App → ⚙️ 設定 → GitHub」設定 token。');
-    return;
-  }
+  // v322:文字內容存 Firebase,不再需要 GitHub token
   const subj = curState();
   if (!subj) { showToast('沒有內容'); return; }
   if (_curChapterId) {
@@ -1120,11 +1177,15 @@ async function saveToCloud() {
   btn.disabled = true;
   btn.textContent = '⏳ 推送中…';
   try {
-    const { sha: contentSha } = await fetchFromGithub(CONTENT_PATH(_curUser, _curSubject));
-    // 🛡 每次 commit 訊息加上章節 + 時間 + 使用者,GitHub commit 歷史就是版本歷史
-    const chMsg = _curChapterId ? subj.chapters.find(c => c.id === _curChapterId)?.title || '' : '';
-    await pushToGithub(CONTENT_PATH(_curUser, _curSubject), subj, contentSha,
-      `[mnemonics] ${_curUser} ${SUBJECT_LABEL[_curSubject]} "${chMsg}" by ${CUR_USER.name}`);
+    // 推 Firebase + 留版本快照
+    await fbSet(FB_CONTENT(_curUser, _curSubject), subj);
+    const chTitle = _curChapterId ? (subj.chapters.find(c => c.id === _curChapterId)?.title || '') : '';
+    await fbAppendVersion(_curUser, _curSubject, {
+      ts: subj.ts,
+      by: CUR_USER.name || 'Guest',
+      action: chTitle ? `編輯「${chTitle}」` : '更新',
+      snapshot: subj,
+    });
     await idbSet(k.cloud(_curUser, _curSubject), subj);
     if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
     _dirty = false;
@@ -1139,122 +1200,66 @@ async function saveToCloud() {
   }
 }
 
-async function appendVersion(user, subject, entry) {
-  const versions = (await idbGet(k.versions(user, subject))) || [];
-  versions.push(entry);
-  if (versions.length > VERSION_KEEP_LOCAL * 2) {
-    versions.splice(0, versions.length - VERSION_KEEP_LOCAL * 2);
-  }
-  await idbSet(k.versions(user, subject), versions);
-}
-
-async function pushVersionsFile(user, subject) {
-  const { data: remoteV, sha } = await fetchFromGithub(VERSIONS_PATH(user, subject));
-  let merged = (remoteV && Array.isArray(remoteV)) ? remoteV.slice() : [];
-  const local = (await idbGet(k.versions(user, subject))) || [];
-  const seen = new Set(merged.map(v => v.ts));
-  local.forEach(v => { if (!seen.has(v.ts)) { merged.push(v); seen.add(v.ts); } });
-  merged.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  if (merged.length > VERSION_KEEP_REMOTE) merged = merged.slice(0, VERSION_KEEP_REMOTE);
-  await pushToGithub(VERSIONS_PATH(user, subject), merged, sha,
-    `[mnemonics-versions] ${user} ${SUBJECT_LABEL[subject]} by ${CUR_USER.name}`);
-  await idbSet(k.versions(user, subject), merged);
-}
-
 // ──────────────────────────────────────────────────────────
-// 版本歷史 modal
+// 版本歷史 modal(v322:存 Firebase,保留最近 30 個快照)
 // ──────────────────────────────────────────────────────────
-// 🛡 改用 GitHub commit 歷史(無上限,GitHub 自己存)
 async function openVersionModal() {
-  showVersionModalContent('<div style="text-align:center;padding:2rem;color:#9ca3af">⏳ 從 GitHub 拉歷史…</div>');
-  const token = getGithubToken();
-  const repo = getGithubRepo();
-  const path = CONTENT_PATH(_curUser, _curSubject);
+  showVersionModalContent('<div style="text-align:center;padding:2rem;color:#9ca3af">⏳ 從雲端拉歷史…</div>');
   try {
-    const url = `https://api.github.com/repos/${repo}/commits?path=${encodeURIComponent(path)}&per_page=30`;
-    const r = await fetch(url, {
-      headers: token ? { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } : { 'Accept': 'application/vnd.github+json' },
-      cache: 'no-store'
-    });
-    if (!r.ok) {
-      const txt = await r.text();
-      showVersionModalContent('<div style="color:#dc2626;padding:1rem">❌ 拉不到歷史: ' + r.status + ' ' + txt.slice(0,200) + '</div>');
-      return;
-    }
-    const commits = await r.json();
-    if (!commits.length) {
+    const arr = await fbGet(FB_VERSIONS(_curUser, _curSubject));
+    const versions = Array.isArray(arr) ? arr : (arr && arr.list ? arr.list : []);
+    if (!versions.length) {
       showVersionModalContent('<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有任何儲存紀錄</div>');
       return;
     }
-    window._commitList = commits;
-    const rows = commits.map((c, i) => {
-      const msg = c.commit && c.commit.message || '(無訊息)';
-      const author = c.commit && c.commit.author && c.commit.author.name || '?';
-      const dt = c.commit && c.commit.author && c.commit.author.date ? new Date(c.commit.author.date).toLocaleString('zh-TW') : '';
-      // 從 commit message 抽出章節標題(我們存的格式: [mnemonics] HUA 牙三 "標題" by HUA)
-      const m = msg.match(/"([^"]+)"/);
-      const chTitle = m ? m[1] : '';
+    // 反序顯示(最新在前)
+    const sorted = versions.slice().reverse();
+    window._versionList = sorted;
+    const rows = sorted.map((v, i) => {
+      const dt = v.ts ? new Date(v.ts).toLocaleString('zh-TW') : '';
+      const action = v.action || '更新';
       return `<div class="version-row">
         <div class="v-info">
-          <div class="v-title">${chTitle ? '「' + escapeHtml(chTitle) + '」' : ''} ${escapeHtml(msg.split('\n')[0].replace(/\[mnemonics\]\s*/, ''))}</div>
-          <div class="v-meta">${escapeHtml(author)} · ${dt}</div>
+          <div class="v-title">${escapeHtml(action)}</div>
+          <div class="v-meta">${escapeHtml(v.by || '?')} · ${dt}</div>
         </div>
         <div class="v-action">
-          <button onclick="previewCommit(${i})">👁 預覽</button>
-          ${CAN_EDIT ? `<button class="restore" onclick="restoreFromCommit(${i})">↶ 還原</button>` : ''}
+          <button onclick="previewVersion(${i})">👁 預覽</button>
+          ${CAN_EDIT ? `<button class="restore" onclick="restoreFromVersion(${i})">↶ 還原</button>` : ''}
         </div>
       </div>`;
     }).join('');
-    showVersionModalContent('<div style="font-size:.85rem;color:#6b7280">共 ' + commits.length + ' 個 GitHub commit(無上限,顯示最近 30)</div><br>' + rows);
+    showVersionModalContent('<div style="font-size:.85rem;color:#6b7280">共 ' + sorted.length + ' 個版本(保留最近 30 個,自動丟最舊)</div><br>' + rows);
   } catch(e) {
     showVersionModalContent('<div style="color:#dc2626;padding:1rem">❌ 拉歷史失敗: ' + e.message + '</div>');
   }
 }
 
-// 從某個 commit 拉該 path 的內容
-async function _fetchFileAtCommit(sha) {
-  const token = getGithubToken();
-  const repo = getGithubRepo();
-  const path = CONTENT_PATH(_curUser, _curSubject);
-  const r = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${sha}`, {
-    headers: token ? { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } : { 'Accept': 'application/vnd.github+json' },
-    cache: 'no-store'
-  });
-  if (!r.ok) throw new Error('拉取 commit 內容失敗 ' + r.status);
-  const d = await r.json();
-  return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, '')))));
-}
-
-async function previewCommit(idx) {
-  const c = window._commitList[idx];
-  if (!c) return;
-  showVersionModalContent('<div style="text-align:center;padding:2rem;color:#9ca3af">⏳ 載入 commit 內容…</div>');
-  try {
-    const data = await _fetchFileAtCommit(c.sha);
-    const ch = _curChapterId ? (data.chapters || []).find(x => x.id === _curChapterId) : (data.chapters || [])[0];
-    if (!ch) {
-      showVersionModalContent('<div style="color:#dc2626;padding:1rem">這版裡找不到目前章節(可能那時還沒建)</div><div style="margin-top:1rem"><button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button></div>');
-      return;
-    }
-    const html = '<h3 style="margin-bottom:.5rem">' + escapeHtml(ch.title || '(無標題)') + '</h3>'
-      + '<div class="version-preview">' + (ch.content || '<p>(空)</p>') + '</div>'
-      + '<div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">'
-      + '<button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button>'
-      + (CAN_EDIT ? '<button onclick="restoreFromCommit(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
-      + '</div>';
-    showVersionModalContent(html);
-  } catch(e) {
-    showVersionModalContent('<div style="color:#dc2626;padding:1rem">❌ ' + e.message + '</div>');
+async function previewVersion(idx) {
+  const v = window._versionList && window._versionList[idx];
+  if (!v || !v.snapshot) return;
+  const data = v.snapshot;
+  const ch = _curChapterId ? (data.chapters || []).find(x => x.id === _curChapterId) : (data.chapters || [])[0];
+  if (!ch) {
+    showVersionModalContent('<div style="color:#dc2626;padding:1rem">這版裡找不到目前章節(可能那時還沒建)</div><div style="margin-top:1rem"><button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button></div>');
+    return;
   }
+  const html = '<h3 style="margin-bottom:.5rem">' + escapeHtml(ch.title || '(無標題)') + '</h3>'
+    + '<div class="version-preview">' + (ch.content || '<p>(空)</p>') + '</div>'
+    + '<div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">'
+    + '<button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button>'
+    + (CAN_EDIT ? '<button onclick="restoreFromVersion(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
+    + '</div>';
+  showVersionModalContent(html);
 }
 
-async function restoreFromCommit(idx) {
+async function restoreFromVersion(idx) {
   if (!CAN_EDIT) return;
-  const c = window._commitList[idx];
-  if (!c) return;
-  if (!confirm('還原到「' + new Date(c.commit.author.date).toLocaleString('zh-TW') + '」的版本?\n\n會覆蓋當前章節內容,但這次還原本身也是新 commit,可以再從歷史救回現在的版本。')) return;
+  const v = window._versionList && window._versionList[idx];
+  if (!v || !v.snapshot) return;
+  if (!confirm('還原到「' + new Date(v.ts || 0).toLocaleString('zh-TW') + '」的版本?\n\n會覆蓋當前章節內容,這次還原本身也會留新版本,之後可以再從歷史救回。')) return;
   try {
-    const data = await _fetchFileAtCommit(c.sha);
+    const data = v.snapshot;
     const ch = (data.chapters || []).find(x => x.id === _curChapterId);
     if (!ch) { alert('這版找不到目前章節'); return; }
     const subj = curState();
@@ -1449,10 +1454,14 @@ function imgStep(delta){
   _editor.chain().updateAttributes('image', { width: n + unit }).setNodeSelection(sel.from).focus().run();
 }
 
-// 🖼 圖片上傳:上傳到 GitHub repo 的 mnemonics-images/ 共用資料夾,回傳 CDN URL
+// 🖼 圖片上傳(v322:固定走 dental-mnemonics-shared,不讀使用者 settings 的 repo)
+//    這樣 HUA 跟 Shirley 兩個人圖片放同一個地方,兩人都看得到。
+//    使用者設定的 github_repo 只給筆記本貼圖用。
+const IMAGE_REPO = 'Victor19940313/dental-mnemonics-shared';
+const IMAGE_DIR_NEW = 'images';
+
 async function uploadImageToGithub(blob) {
   const token = getGithubToken();
-  const repo = getGithubRepo();
   if (!token) throw new Error('沒設定 GitHub token');
   // base64
   const b64 = await new Promise((resolve, reject) => {
@@ -1466,8 +1475,8 @@ async function uploadImageToGithub(blob) {
     + '-' + String(ts.getHours()).padStart(2,'0') + String(ts.getMinutes()).padStart(2,'0') + String(ts.getSeconds()).padStart(2,'0');
   const rand = Math.random().toString(36).slice(2,6);
   const ext = ((blob.type || 'image/png').split('/')[1] || 'png').replace('jpeg','jpg');
-  const path = `mnemonics-images/${stamp}-${rand}.${ext}`;
-  const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+  const path = `${IMAGE_DIR_NEW}/${stamp}-${rand}.${ext}`;
+  const apiUrl = `https://api.github.com/repos/${IMAGE_REPO}/contents/${path}`;
   const res = await fetch(apiUrl, {
     method: 'PUT',
     headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
@@ -1475,27 +1484,42 @@ async function uploadImageToGithub(blob) {
   });
   if (!res.ok) {
     const errTxt = await res.text();
+    if (res.status === 403 && /not accessible/i.test(errTxt)) {
+      throw new Error('你的 token 還沒拿到圖片 repo 的寫入權。請 HUA 把你加成 dental-mnemonics-shared 的 collaborator');
+    }
     throw new Error('GitHub ' + res.status + ': ' + errTxt.slice(0, 200));
   }
-  return `https://cdn.jsdelivr.net/gh/${repo}@main/${path}`;
+  // raw.github 用來顯示(無需 token,任何人讀)
+  return `https://raw.githubusercontent.com/${IMAGE_REPO}/main/${path}`;
 }
 
 async function tryUploadAndInsert(blob) {
   if (!CAN_EDIT) { showToast('你沒有編輯權限'); return; }
   if (!_editor) return;
+  // v322:沒 token 早期擋下,顯示具體解法
+  if (!getGithubToken()) {
+    showToast('🔒 還沒設 GitHub token,圖片功能停用。文字共筆照常用');
+    alert('要貼圖必須設 GitHub token:\n\n1. 去 https://github.com/settings/personal-access-tokens/new 生 token\n   - Repository access:選 Victor19940313/dental-mnemonics-shared\n   - Permissions:Contents → Read and write\n2. 複製 token,回到考試 App → ⚙️ 設定 → GitHub 貼上\n3. repo 填 Victor19940313/dental-mnemonics-shared\n\n(只想打字不貼圖的話,直接按取消就好)');
+    return;
+  }
   showToast('📷 上傳中…(大圖會慢一點)');
   try {
     const url = await uploadImageToGithub(blob);
     _editor.chain().focus().setImage({ src: url }).run();
     showToast('✓ 圖已上傳');
   } catch(e) {
-    showToast('❌ 上傳失敗: ' + e.message.slice(0, 80));
+    showToast('❌ 上傳失敗: ' + (e.message || '').slice(0, 80));
   }
 }
 
 // 📷 工具列觸發檔案選擇
 function pickImageFile() {
   if (!CAN_EDIT) return;
+  // 沒 token 就直接走 tryUploadAndInsert 的 alert 路徑,讓使用者知道為什麼不能貼
+  if (!getGithubToken()) {
+    tryUploadAndInsert(null);
+    return;
+  }
   const inp = document.createElement('input');
   inp.type = 'file';
   inp.accept = 'image/*';

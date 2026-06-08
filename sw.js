@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v297-mnemonics-remove-add-user';
+const CACHE_NAME = 'dental-all-v298-mnemonics-add-user-in-dropdown';
 const PRECACHE = [
   './',
   './index.html',

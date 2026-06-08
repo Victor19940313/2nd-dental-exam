@@ -484,16 +484,22 @@ function renderChapterList() {
 function renderUserTabs() {
   const sel = document.getElementById('user-select');
   if (!sel) return;
-  sel.innerHTML = _users.map(name => {
+  const opts = _users.map(name => {
     const selected = name === _curUser ? ' selected' : '';
     const tag = name === (CUR_USER.name || '') ? '(自己)' : '';
     return `<option value="${escapeHtml(name)}"${selected}>${escapeHtml(name)} ${tag}</option>`;
-  }).join('');
-  const addBtn = document.getElementById('btn-add-user');
-  if (addBtn) addBtn.classList.toggle('hidden', !CAN_EDIT);
+  });
+  if (CAN_EDIT) opts.push('<option value="__add__">+ 新增…</option>');
+  sel.innerHTML = opts.join('');
 }
 
 function onUserSelectChange(name) {
+  if (name === '__add__') {
+    addUser();
+    // 還原下拉到原本選擇,等 addUser 完成自己會 switchUser
+    document.getElementById('user-select').value = _curUser;
+    return;
+  }
   switchUser(name);
 }
 

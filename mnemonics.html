@@ -204,7 +204,7 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
     <select id="user-select" class="user-select" onchange="onUserSelectChange(this.value)"></select>
     的口訣區
   </h1>
-  <button id="btn-force-refresh" class="force-refresh-btn" onclick="forceRefreshCurrent()" title="重新從雲端拉這個科目的最新版">🔄</button>
+  <!-- v326:Firebase 即時推送後拿掉手動刷新按鈕 -->
   <span class="user-tag" id="user-tag">--</span>
 </div>
 
@@ -659,8 +659,15 @@ function showToast(msg) {
 function genChId() { return 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
 
 // ──────────────────────────────────────────────────────────
-// 載入(v322:Firebase 即時讀;若 IDB 本地比雲端新,順手回推)
+// 載入(v326:Firebase realtime — 對方寫東西這邊自動更新,不用按按鈕)
 // ──────────────────────────────────────────────────────────
+let _contentRef = null;
+function detachContent() {
+  if (_contentRef) {
+    try { _contentRef.off('value'); } catch(e){}
+    _contentRef = null;
+  }
+}
 async function loadUserSubject(user, subject, opts) {
   const sk = stateKey(user, subject);
   const force = opts && opts.force;
@@ -668,45 +675,69 @@ async function loadUserSubject(user, subject, opts) {
   const cache = await idbGet(k.cloud(user, subject));
   if (cache && cache.chapters) _state[sk] = cache;
   else _state[sk] = { chapters: [], ts: 0, updatedBy: '' };
-  // 2. 背景拉 Firebase
-  setLoadStatus(`☁️ 拉 ${user} · ${SUBJECT_LABEL[subject]}…`);
-  fbGet(FB_CONTENT(user, subject)).then(async (remote) => {
-    const remoteHasContent = remote && Array.isArray(remote.chapters);
-    const remoteTs = remoteHasContent ? (remote.ts || 0) : 0;
-    const localTs = (cache && cache.ts) ? cache.ts : 0;
-    // 雲端比較新 → 用雲端
-    if (force || (remoteHasContent && remoteTs >= localTs)) {
+  // 2. 掛 Firebase 即時監聽 — 對方任何寫入會自動推來
+  detachContent();
+  setLoadStatus(`☁️ 連線 ${user} · ${SUBJECT_LABEL[subject]}…`);
+  let firstFire = true;
+  try {
+    _contentRef = _initFb().ref(FB_CONTENT(user, subject));
+    _contentRef.on('value', async (snap) => {
+      // 只處理目前選的 user/subject 的訊號;切換時 detachContent 會關掉舊監聽
+      if (_curUser !== user || _curSubject !== subject) return;
+      const remote = snap.val();
+      const remoteHasContent = remote && Array.isArray(remote.chapters);
+      const remoteTs = remoteHasContent ? (remote.ts || 0) : 0;
+      const cur = _state[sk];
+      const curTs = (cur && cur.ts) ? cur.ts : 0;
+      // 第一次觸發 = 載入時的初始狀態,做一次 IDB→Firebase 補同步
+      if (firstFire) {
+        firstFire = false;
+        const localTs = (cache && cache.ts) ? cache.ts : 0;
+        if (CAN_EDIT && cache && cache.chapters && cache.chapters.length > 0 && localTs > remoteTs) {
+          try {
+            await fbSet(FB_CONTENT(user, subject), cache);
+            setLoadStatus(`⬆️ 本地較新,已自動上傳 · ${cache.chapters.length} 章`);
+            return; // 推完後 listener 會再 fire 一次帶到新狀態
+          } catch(e) {
+            setLoadStatus(`⚠ 自動上傳失敗:${(e.message||'').slice(0,80)}`);
+          }
+        }
+      }
+      if (!remoteHasContent) {
+        setLoadStatus(`雲端是空的(${user} · ${SUBJECT_LABEL[subject]})`);
+        return;
+      }
+      // 雲端不新於我們(包含剛剛自己存的 echo)→ 不重畫
+      if (!force && remoteTs <= curTs) {
+        setLoadStatus(`✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`);
+        return;
+      }
+      // 採用雲端版
       _state[sk] = remote;
       await idbSet(k.cloud(user, subject), remote);
-      if (_curUser === user && _curSubject === subject) {
-        renderChapterList();
-        if (_curChapterId && !_dirty) {
-          const ch = remote.chapters.find(c => c.id === _curChapterId);
-          if (ch && _editor) _editor.commands.setContent(ch.content || '<p></p>');
+      renderChapterList();
+      // 閱覽模式且當前章節內容變了 → 更新顯示;編輯中(_dirty 或 _editMode)就先不打擾
+      if (_curChapterId && !_dirty && !_editMode) {
+        const ch = remote.chapters.find(c => c.id === _curChapterId);
+        if (ch) {
+          const body = document.getElementById('editor-body');
+          const ti = document.getElementById('title-input');
+          if (body && body.querySelector('.view-content')) {
+            body.innerHTML = '<div class="view-content">' + (ch.content || '<p style="color:#9ca3af">(空)</p>') + '</div>';
+          }
+          if (ti) ti.value = ch.title || '';
+        } else {
+          // 章節被別人刪了
+          showEmptyEditor();
         }
       }
       setLoadStatus(`✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`);
-      return;
-    }
-    // 本地比較新且有東西 → 把本地推上雲端(Shirley 在 Mac 寫的「咬和干擾」這類會自動上傳)
-    if (CAN_EDIT && cache && cache.chapters && cache.chapters.length > 0 && localTs > remoteTs) {
-      try {
-        await fbSet(FB_CONTENT(user, subject), cache);
-        setLoadStatus(`⬆️ 本地較新,已自動上傳 ${user} · ${SUBJECT_LABEL[subject]} · ${cache.chapters.length} 章`);
-      } catch(e) {
-        setLoadStatus(`⚠ 自動上傳失敗:${(e.message||'').slice(0,80)}`);
-      }
-      return;
-    }
-    // 雲端是空的且本地也沒東西
-    if (!remoteHasContent) {
-      setLoadStatus(`雲端是空的(${user} · ${SUBJECT_LABEL[subject]})`);
-    } else {
-      setLoadStatus(`✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`);
-    }
-  }).catch(e => {
-    setLoadStatus(`❌ 拉雲端失敗:${(e.message||'').slice(0,80)}`);
-  });
+    }, (err) => {
+      setLoadStatus(`❌ Firebase 監聽失敗:${(err.message||'').slice(0,80)}`);
+    });
+  } catch(e) {
+    setLoadStatus(`❌ 連線失敗:${(e.message||'').slice(0,80)}`);
+  }
 }
 
 function setLoadStatus(msg) {
@@ -841,21 +872,6 @@ async function deleteComment(key) {
   } catch(e) {
     showToast('刪除失敗:' + (e.message||'').slice(0,60));
   }
-}
-
-// 強制重抓目前 namespace × subject 的雲端最新版
-async function forceRefreshCurrent() {
-  if (!_curUser || !_curSubject) return;
-  await loadUserSubject(_curUser, _curSubject, { force: true });
-  // wait a tick for renderChapterList to fire async, then refresh UI
-  setTimeout(() => {
-    const subjState = curState();
-    if (subjState && subjState.chapters.length > 0 && !_curChapterId) {
-      pickChapter(subjState.chapters[0].id);
-    } else {
-      renderChapterList();
-    }
-  }, 100);
 }
 
 function curState() {

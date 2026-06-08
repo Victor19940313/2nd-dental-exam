@@ -83,7 +83,8 @@ body {
 .comments-open-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.22); }
 .workspace.comments-collapsed ~ .comments-open-btn,
 body.comments-collapsed .comments-open-btn { display: inline-block; }
-.comment-pane .close-c { background: transparent; border: none; cursor: pointer; color: var(--text-sub); font-size: 1.4rem; line-height: 1; padding: 0 .45rem; margin-left: auto; font-weight: 700; }
+.comment-pane .close-c { background: #f3f4f6; border: 1px solid var(--border); cursor: pointer; color: var(--text-sub); font-size: .78rem; line-height: 1; padding: .35rem .7rem; margin-left: auto; font-weight: 700; border-radius: 6px; }
+.comment-pane .close-c:hover { background: #e5e7eb; color: var(--text); }
 .comment-pane .close-c:hover { color: #ef4444; }
 /* v323:留言區 */
 .comment-pane { background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; max-height: 80vh; min-height: 320px; overflow: hidden; }
@@ -265,7 +266,7 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
   </div>
   <!-- v323:每章節留言區 -->
   <div class="comment-pane no-chapter" id="comment-pane">
-    <div class="comment-head">💬 章節留言 <span class="count" id="comment-count">0</span><button class="close-c" onclick="toggleCommentPane(false)" title="收起留言區">−</button></div>
+    <div class="comment-head">💬 章節留言 <span class="count" id="comment-count">0</span><button class="close-c" onclick="toggleCommentPane(false)" title="收起留言區">收合</button></div>
     <div class="comment-list" id="comment-list"></div>
     <div class="comment-input-row" id="comment-input-row">
       <textarea class="comment-input" id="comment-input" placeholder="留個言給共筆者…(Enter 送出, Shift+Enter 換行)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendComment()}"></textarea>

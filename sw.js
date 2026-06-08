@@ -1,8 +1,9 @@
-const CACHE_NAME = 'dental-all-v290-mnemonics-user-namespace-view-first';
+const CACHE_NAME = 'dental-all-v291-mnemonics-shared-theme';
 const PRECACHE = [
   './',
   './index.html',
   './mnemonics.html',
+  './themes.css',
   './ya3/index.html',
   './ya3/ya3-data.js',
   './ya4/index.html',

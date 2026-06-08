@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="themes.css">
 <style>
 :root {
   --bg: #f8f7f0;
@@ -212,6 +213,37 @@ function getCurrentUser() {
 }
 const CUR_USER = getCurrentUser();
 const CAN_EDIT = ALLOWED_EDITORS.includes(CUR_USER.name || '');
+
+// 🎨 套用使用者的筆記本背景設定(每個使用者各自獨立)
+function _uKey(k) { return CUR_USER.id + '_' + k; }
+function applyUserTheme() {
+  if (!document.body) return;
+  // 清掉舊的 theme/bg/font class
+  document.body.className = document.body.className.split(/\s+/)
+    .filter(c => !c.startsWith('theme-') && !c.startsWith('bg-style-') && !c.startsWith('font-'))
+    .join(' ').trim();
+  const theme = localStorage.getItem(_uKey('nb_theme'));
+  const bg = localStorage.getItem(_uKey('nb_bg_style'));
+  const font = localStorage.getItem(_uKey('nb_font_style'));
+  if (theme) document.body.classList.add(theme);
+  if (bg) document.body.classList.add(bg);
+  if (font) document.body.classList.add(font);
+  // 飽和度 / 透明度 / 漸層深淺
+  const sat = parseInt(localStorage.getItem(_uKey('nb_theme_sat')) || '100');
+  const opa = parseInt(localStorage.getItem(_uKey('nb_theme_opa')) || '100');
+  const gstr = parseInt(localStorage.getItem(_uKey('nb_theme_gstr')) || '100');
+  const parts = [];
+  if (sat !== 100) parts.push(`saturate(${sat}%)`);
+  if (opa !== 100) parts.push(`opacity(${opa}%)`);
+  document.body.style.filter = parts.join(' ');
+  document.documentElement.style.setProperty('--g-strength', String(gstr / 100));
+}
+applyUserTheme();
+// 跨分頁同步:在筆記本改主題會即時反映
+window.addEventListener('storage', (e) => {
+  if (!e.key) return;
+  if (e.key.startsWith(CUR_USER.id + '_nb_')) applyUserTheme();
+});
 
 (function setupUserUI(){
   const tag = document.getElementById('user-tag');

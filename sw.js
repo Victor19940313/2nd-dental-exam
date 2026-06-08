@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v293-mnemonics-fix-infinite-recursion';
+const CACHE_NAME = 'dental-all-v294-mnemonics-simpler-ux';
 const PRECACHE = [
   './',
   './index.html',

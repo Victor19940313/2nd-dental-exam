@@ -41,13 +41,12 @@ body {
 .topbar-add:disabled, .topbar-add.hidden { display: none; }
 .user-tag { font-size: .78rem; color: var(--text-sub); background: #f3f4f6; padding: .35rem .7rem; border-radius: 999px; font-weight: 600; }
 .user-tag.readonly { background: #fef3c7; color: #92400e; }
-.user-tabs { display: flex; gap: .4rem; margin-bottom: .55rem; align-items: center; flex-wrap: wrap; }
-.user-tabs button.u-tab { background: white; border: 1.5px solid var(--border); color: var(--text-sub); padding: .4rem .8rem; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: .82rem; transition: all .12s; }
-.user-tabs button.u-tab.active { background: var(--text); color: white; border-color: var(--text); transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
-.user-tabs button.u-tab.self::before { content: "👤 "; font-size: .82rem; }
-.user-tabs .u-add { background: #fef3c7; border: 1.5px dashed #f59e0b; color: #92400e; padding: .35rem .8rem; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: .8rem; }
-.user-tabs .u-add:hover { background: #fde68a; }
-.user-tabs .u-add:disabled { display: none; }
+.topbar .ns-title { font-size: 1rem; font-weight: 800; flex: 1; display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+.topbar .user-select { background: #f3f4f6; border: 1.5px solid var(--border); color: var(--text); padding: .25rem .65rem; border-radius: 8px; font-weight: 800; font-size: .92rem; cursor: pointer; font-family: inherit; }
+.topbar .user-select:hover { background: #e5e7eb; }
+.topbar .u-add { background: #fef3c7; border: 1.5px dashed #f59e0b; color: #92400e; padding: .35rem .7rem; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: .78rem; }
+.topbar .u-add:hover { background: #fde68a; }
+.topbar .u-add:disabled, .topbar .u-add.hidden { display: none; }
 .subject-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .subject-tabs button { flex: 1; min-width: 110px; background: white; border: 2px solid var(--border); color: var(--text-sub); padding: .7rem .5rem; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: .95rem; transition: all .15s; }
 .subject-tabs button.active { color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
@@ -83,9 +82,6 @@ body {
 .editor-status .save-btn { background: #16a34a; color: white; padding: .4rem .85rem; font-size: .82rem; }
 .editor-status .save-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 .editor-status .refresh-btn, .editor-status .history-btn { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .35rem .65rem; font-size: .78rem; font-weight: 600; }
-.editor-status .edit-btn { background: #7c3aed; color: white; padding: .4rem .8rem; font-size: .82rem; }
-.editor-status .edit-btn.editing { background: #f59e0b; }
-.editor-status .edit-btn:disabled { display: none; }
 .draft-tag { background: #fbbf24; color: #78350f; padding: .15rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
 .toolbar { display: flex; flex-wrap: wrap; gap: .25rem; padding: .5rem .55rem; background: #fafaf5; border-bottom: 1px solid var(--border); }
 .toolbar button { background: white; border: 1px solid var(--border); color: var(--text); padding: .35rem .55rem; border-radius: 6px; cursor: pointer; font-size: .82rem; font-weight: 600; min-width: 32px; }
@@ -131,15 +127,15 @@ body {
 
 <div class="topbar">
   <a href="index.html" class="back">← 返回</a>
-  <h1>🧠 口訣複習區</h1>
+  <h1 class="ns-title">🧠 正在瀏覽
+    <select id="user-select" class="user-select" onchange="onUserSelectChange(this.value)"></select>
+    的口訣區
+  </h1>
+  <button class="u-add" id="btn-add-user" onclick="addUser()" title="新增使用者區域">+ 使用者</button>
   <span class="user-tag" id="user-tag">--</span>
 </div>
 
 <div id="info-banner-slot"></div>
-
-<div class="user-tabs" id="user-tabs">
-  <button class="u-add" id="btn-add-user" onclick="addUser()" title="新增使用者區域">+ 使用者</button>
-</div>
 
 <div class="subject-tabs" id="subject-tabs">
   <button data-subject="ya3" onclick="switchSubject('ya3')">🦷 牙三</button>
@@ -159,14 +155,12 @@ body {
   <div class="editor-card">
     <div class="editor-status">
       <input type="text" id="title-input" class="title-input" placeholder="章節標題..." oninput="onTitleChange()" />
-      <span id="draft-tag" class="draft-tag" style="display:none">未存草稿</span>
+      <span id="draft-tag" class="draft-tag" style="display:none">未存</span>
       <span class="meta" id="meta-text"></span>
       <button class="history-btn" onclick="openVersionModal()" title="看編輯歷史">📜 歷史</button>
-      <button class="refresh-btn" onclick="refreshFromCloud()" title="如果別人剛改過這章,按這個拉他改的版本(會蓋掉你目前看的)">🔄</button>
-      <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>
-      <button class="save-btn" id="save-btn" onclick="saveToCloud()" style="display:none">💾 推到雲端</button>
+      <button class="save-btn" id="save-btn" onclick="saveToCloud()">💾 儲存</button>
     </div>
-    <div class="toolbar" id="toolbar" style="display:none"></div>
+    <div class="toolbar" id="toolbar"></div>
     <div class="editor-body" id="editor-body">
       <div class="empty-pick">
         <div class="em">📒</div>
@@ -401,8 +395,7 @@ let _curChapterId = null;
 let _editor = null;
 let _dirty = false;
 let _draftTimer = null;
-let _loaded = new Set(); // 已經拉過 CDN 的 user_subject
-let _editMode = false;
+let _loaded = new Set();
 const stateKey = (u, s) => u + '|' + s;
 
 function showToast(msg) {
@@ -469,22 +462,19 @@ function renderChapterList() {
 }
 
 function renderUserTabs() {
-  const container = document.getElementById('user-tabs');
+  const sel = document.getElementById('user-select');
+  if (!sel) return;
+  sel.innerHTML = _users.map(name => {
+    const selected = name === _curUser ? ' selected' : '';
+    const tag = name === (CUR_USER.name || '') ? '(自己)' : '';
+    return `<option value="${escapeHtml(name)}"${selected}>${escapeHtml(name)} ${tag}</option>`;
+  }).join('');
   const addBtn = document.getElementById('btn-add-user');
-  // 移除舊 tabs(保留 + 按鈕)
-  Array.from(container.querySelectorAll('.u-tab')).forEach(el => el.remove());
-  // 重新插入
-  _users.forEach(name => {
-    const b = document.createElement('button');
-    b.className = 'u-tab';
-    if (name === _curUser) b.classList.add('active');
-    if (name === (CUR_USER.name || '')) b.classList.add('self');
-    b.textContent = name;
-    b.onclick = () => switchUser(name);
-    container.insertBefore(b, addBtn);
-  });
-  // + 按鈕只在白名單顯示
-  addBtn.disabled = !CAN_EDIT;
+  if (addBtn) addBtn.classList.toggle('hidden', !CAN_EDIT);
+}
+
+function onUserSelectChange(name) {
+  switchUser(name);
 }
 
 async function switchUser(name) {
@@ -493,8 +483,7 @@ async function switchUser(name) {
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curUser = name;
-  _editMode = false;
-  _curChapterId = null;
+_curChapterId = null;
   await loadUserSubject(_curUser, _curSubject);
   renderUserTabs();
   renderChapterList();
@@ -574,8 +563,7 @@ async function switchSubject(subj) {
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curSubject = subj;
-  _editMode = false;
-  document.querySelectorAll('#subject-tabs button').forEach(b => {
+document.querySelectorAll('#subject-tabs button').forEach(b => {
     b.classList.toggle('active', b.dataset.subject === subj);
   });
   await loadUserSubject(_curUser, subj);
@@ -595,8 +583,7 @@ async function pickChapter(chId) {
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curChapterId = chId;
-  _editMode = false;
-  const subj = curState();
+const subj = curState();
   if (!subj) { showEmptyEditor(); return; }
   const ch = subj.chapters.find(c => c.id === chId);
   if (!ch) { showEmptyEditor(); return; }
@@ -646,46 +633,18 @@ function refreshStatusUI() {
     meta.textContent = '';
   }
   document.getElementById('draft-tag').style.display = _dirty ? 'inline-block' : 'none';
-  // 編輯模式才出存檔按鈕
   const saveBtn = document.getElementById('save-btn');
-  saveBtn.style.display = _editMode && CAN_EDIT ? '' : 'none';
+  saveBtn.style.display = CAN_EDIT && _curChapterId ? '' : 'none';
   saveBtn.disabled = !_dirty || !CAN_EDIT || !_curChapterId;
-  saveBtn.textContent = _dirty ? '💾 推到雲端' : '💾 已是最新';
-  // ✏ 編輯 / ✓ 完成 切換按鈕
-  const editBtn = document.getElementById('edit-btn');
-  if (!CAN_EDIT || !_curChapterId) {
-    editBtn.style.display = 'none';
-  } else {
-    editBtn.style.display = '';
-    editBtn.textContent = _editMode ? '👁 閱覽' : '✏ 編輯';
-    editBtn.classList.toggle('editing', _editMode);
-  }
-  // 工具列僅編輯模式顯示
-  document.getElementById('toolbar').style.display = _editMode && CAN_EDIT ? 'flex' : 'none';
-  // title input
+  saveBtn.textContent = _dirty ? '💾 儲存' : '💾 已儲存';
   const titleInput = document.getElementById('title-input');
-  titleInput.disabled = !_editMode || !CAN_EDIT;
-  titleInput.style.background = _editMode && CAN_EDIT ? 'rgba(251,191,36,.08)' : 'transparent';
-  // editor editable — 🛡 v292:只在實際變更時呼叫,避免 setEditable → onUpdate → refreshStatusUI 無限遞迴
-  if (_editor) {
-    const wantEditable = _editMode && CAN_EDIT;
-    if (_editor.isEditable !== wantEditable) {
-      _editor.setEditable(wantEditable);
-    }
-  }
+  titleInput.disabled = !CAN_EDIT;
   // 章節列 + 新增按鈕(沒權限就藏)
   const chAdd = document.getElementById('btn-add-ch');
   if (chAdd) chAdd.classList.toggle('hidden', !CAN_EDIT);
-}
-
-function toggleEditMode() {
-  if (!CAN_EDIT || !_curChapterId) return;
-  if (_editMode && _dirty) {
-    if (!confirm('有未儲存的草稿,要切回閱覽模式嗎?\n\n(草稿會保留在 IDB,下次回來編輯還會在)')) return;
-  }
-  _editMode = !_editMode;
-  refreshStatusUI();
-  if (_editMode && _editor) _editor.commands.focus();
+  // 工具列只給有編輯權限的人看
+  const tb = document.getElementById('toolbar');
+  if (tb) tb.style.display = CAN_EDIT ? 'flex' : 'none';
 }
 
 function onTitleChange() {
@@ -716,9 +675,8 @@ async function addChapter() {
   };
   subj.chapters.push(newCh);
   _dirty = true;
-  await pickChapter(newCh.id);  // 會把 _editMode 設成 false
-  _editMode = true;              // 新增後直接進編輯模式
-  _dirty = true;                  // pickChapter 沒 draft 時會把 dirty 設 false
+  await pickChapter(newCh.id);
+  _dirty = true; // pickChapter 沒 draft 時會把 dirty 設 false
   refreshStatusUI();
   if (_editor) _editor.commands.focus();
   showToast('已新增,寫完按💾推到雲端');

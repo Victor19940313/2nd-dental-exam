@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-shirley-repo-fallback';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-friendly-github-error';
 const PRECACHE = [
   './',
   './index.html',

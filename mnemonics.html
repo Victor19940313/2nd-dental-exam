@@ -514,6 +514,16 @@ async function pushToGithub(path, data, sha, message, retryCount = 0) {
       const fresh = await fetchFromGithub(path);
       return await pushToGithub(path, data, fresh.sha, message, retryCount + 1);
     }
+    // v320:把 GitHub 原文錯誤翻成白話 + 給可執行的下一步
+    if (r.status === 403 && /not accessible/i.test(txt)) {
+      throw new Error(`你的 GitHub token 沒有寫入「${repo}」的權限。\n\n解法二選一:\n① 請 HUA 去 github.com/${repo}/settings/access 把你加成 collaborator,你收到邀請信點 Accept 後就會自動有權限\n② 請 HUA 給你她的 token,你在「考試 App → ⚙️ 設定 → GitHub」貼上覆蓋原本的`);
+    }
+    if (r.status === 401) {
+      throw new Error('GitHub token 失效或拼錯。請去「考試 App → ⚙️ 設定 → GitHub」重新貼一次');
+    }
+    if (r.status === 404) {
+      throw new Error(`找不到 repo「${repo}」。可能 token 沒給 Contents 權限,或 repo 名稱填錯`);
+    }
     throw new Error('PUT 失敗 ' + r.status + ': ' + txt.slice(0, 200));
   }
 }

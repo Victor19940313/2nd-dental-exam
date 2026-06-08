@@ -1,5 +1,16 @@
 [
   {
+    "ts": 1780890492550,
+    "updatedBy": "HUA",
+    "action": "edit_chapter",
+    "chapterId": "ch_1780888325821_tgct",
+    "chapterTitleBefore": "???",
+    "snapshotBefore": {
+      "title": "???",
+      "content": "<h2>12<br></h2><img src=\"https://cdn.jsdelivr.net/gh/Victor19940313/2nd-dental-exam@main/mnemonics-images/20260608-113657-65k3.png\">"
+    }
+  },
+  {
     "ts": 1780890488946,
     "updatedBy": "HUA",
     "action": "edit_chapter",

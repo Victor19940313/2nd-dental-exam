@@ -107,8 +107,13 @@ body {
 .editor-body .ProseMirror table td, .editor-body .ProseMirror table th { border: 1px solid var(--border); padding: .4rem .6rem; }
 .editor-body .ProseMirror table th { background: #f3f4f6; font-weight: 700; }
 .editor-body .ProseMirror strong { color: #b45309; }
-.editor-body .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; margin: .5rem 0; display: block; cursor: pointer; }
+.editor-body .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; margin: .5rem 0; cursor: pointer; }
 .editor-body .ProseMirror img.ProseMirror-selectednode { outline: 3px solid #fbbf24; }
+.img-toolbar { display: none; gap: .3rem; padding: .45rem .55rem; background: #faf5ff; border-bottom: 1px solid #e9d5ff; align-items: center; flex-wrap: wrap; font-size: .78rem; }
+.img-toolbar.visible { display: flex; }
+.img-toolbar button { background: white; border: 1px solid #e9d5ff; color: #6b21a8; padding: .3rem .55rem; border-radius: 6px; cursor: pointer; font-size: .78rem; font-weight: 700; }
+.img-toolbar button:hover { background: #ede9fe; }
+.img-toolbar .img-status { color: #9ca3af; flex: 1; font-style: italic; font-size: .76rem; }
 .editor-body .ProseMirror[contenteditable="false"] { background: #f9fafb; cursor: not-allowed; }
 .empty-pick { padding: 4rem 1.5rem; text-align: center; color: var(--text-sub); }
 .empty-pick .em { font-size: 2.5rem; margin-bottom: .5rem; }
@@ -169,6 +174,16 @@ body {
       <button class="save-btn" id="save-btn" onclick="saveAndExit()" style="display:none">💾 儲存</button>
     </div>
     <div class="toolbar" id="toolbar" style="display:none"></div>
+    <div class="img-toolbar" id="img-toolbar">
+      <strong style="color:#6b21a8">🖼 圖片寬度:</strong>
+      <button onclick="imgWidth('30%')">小</button>
+      <button onclick="imgWidth('60%')">中</button>
+      <button onclick="imgWidth('90%')">大</button>
+      <button onclick="imgWidth('100%')">全寬</button>
+      <button onclick="imgStep(-10)">−10%</button>
+      <button onclick="imgStep(10)">+10%</button>
+      <span class="img-status">點圖片才會出現</span>
+    </div>
     <div class="editor-body" id="editor-body">
       <div class="empty-pick">
         <div class="em">📒</div>
@@ -849,16 +864,41 @@ async function deleteChapter(chId) {
   const ch = subj.chapters.find(c => c.id === chId);
   if (!ch) return;
   if (!confirm(`刪除「${ch.title}」(${_curUser})?\n\n刪掉後可以從「📜 歷史」還原。`)) return;
+  // 1. 留版本快照(刪除前)
+  await appendVersion(_curUser, _curSubject, {
+    ts: Date.now(),
+    updatedBy: CUR_USER.name || 'Guest',
+    action: 'delete_chapter',
+    chapterId: ch.id,
+    chapterTitleBefore: ch.title,
+    snapshotBefore: { title: ch.title, content: ch.content }
+  });
+  // 2. 本機刪除
   subj.chapters = subj.chapters.filter(c => c.id !== chId);
-  _dirty = true;
+  subj.ts = Date.now();
+  subj.updatedBy = CUR_USER.name || 'Guest';
   await idbDel(k.draft(_curUser, _curSubject, chId));
+  await idbSet(k.cloud(_curUser, _curSubject), subj);
   if (_curChapterId === chId) {
     _curChapterId = subj.chapters[0] ? subj.chapters[0].id : null;
-    if (_curChapterId) pickChapter(_curChapterId);
+    _editMode = false;
+    if (_editor) _editor.setEditable(false);
+    if (_curChapterId) await pickChapter(_curChapterId);
     else showEmptyEditor();
   }
   renderChapterList();
-  showToast('已刪除,按💾推到雲端才會真的不見');
+  // 3. 立即推到雲端(不擋 UI)
+  showToast('🗑 刪除中…');
+  try {
+    const { sha } = await fetchFromGithub(CONTENT_PATH(_curUser, _curSubject));
+    await pushToGithub(CONTENT_PATH(_curUser, _curSubject), subj, sha,
+      `[mnemonics] delete ${_curUser} ${SUBJECT_LABEL[_curSubject]} "${ch.title}" by ${CUR_USER.name}`);
+    try { await pushVersionsFile(_curUser, _curSubject); } catch(e){}
+    showToast('🗑 已刪除(雲端同步完成)');
+  } catch(e) {
+    console.error('[delete push] fail', e);
+    showToast('🗑 本機已刪,雲端同步失敗:' + (e.message||'').slice(0,60));
+  }
 }
 
 // ──────────────────────────────────────────────────────────
@@ -1109,8 +1149,54 @@ async function loadTipTapModules() {
   const TableCell = (await import('https://esm.sh/@tiptap/extension-table-cell@2')).default;
   const TextAlign = (await import('https://esm.sh/@tiptap/extension-text-align@2')).default;
   const Image = (await import('https://esm.sh/@tiptap/extension-image@2')).default;
-  _coreModules = { core, StarterKit, Underline, Highlight, Table, TableRow, TableHeader, TableCell, TextAlign, Image };
+  // 🖼 ResizableImage:把 width 當 attribute,渲染成 style:width:XX% — 跟筆記本一樣
+  const ResizableImage = Image.extend({
+    addAttributes(){
+      return {
+        ...this.parent?.(),
+        width: {
+          default: null,
+          parseHTML: el => {
+            const style = el.getAttribute('style') || '';
+            const m = style.match(/width\s*:\s*([^;]+)/);
+            if (m) return m[1].replace(/\s*!important\s*/g, '').trim();
+            return el.getAttribute('width') || null;
+          },
+          renderHTML: attrs => attrs.width ? {
+            style: `width: ${attrs.width} !important; max-width: ${attrs.width} !important;`
+          } : {},
+        },
+      };
+    },
+  });
+  _coreModules = { core, StarterKit, Underline, Highlight, Table, TableRow, TableHeader, TableCell, TextAlign, Image: ResizableImage };
   return _coreModules;
+}
+
+// 🖼 設定/縮放圖片寬度(只對目前選取的圖片生效)
+function imgWidth(w){
+  if (!_editor || !CAN_EDIT) return;
+  const sel = _editor.state.selection;
+  if (!sel) return;
+  const node = _editor.state.doc.nodeAt(sel.from);
+  if (node && node.type.name === 'image') {
+    _editor.chain().updateAttributes('image', { width: w }).setNodeSelection(sel.from).focus().run();
+  } else {
+    showToast('請先點圖片再按尺寸');
+  }
+}
+function imgStep(delta){
+  if (!_editor || !CAN_EDIT) return;
+  const sel = _editor.state.selection;
+  if (!sel) return;
+  const node = _editor.state.doc.nodeAt(sel.from);
+  if (!node || node.type.name !== 'image') { showToast('請先點圖片再按 +/−'); return; }
+  const cur = node.attrs.width || '60%';
+  const m = String(cur).match(/^(\d+)(%|px)?$/);
+  let n = m ? parseInt(m[1]) : 60;
+  const unit = m && m[2] ? m[2] : '%';
+  n = Math.max(10, Math.min(100, n + delta));
+  _editor.chain().updateAttributes('image', { width: n + unit }).setNodeSelection(sel.from).focus().run();
 }
 
 // 🖼 圖片上傳:上傳到 GitHub repo 的 mnemonics-images/ 共用資料夾,回傳 CDN URL
@@ -1184,7 +1270,7 @@ async function initEditorOnce() {
       mods.Table.configure({ resizable: true }),
       mods.TableRow, mods.TableHeader, mods.TableCell,
       mods.TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      mods.Image.configure({ inline: false, allowBase64: false }),
+      mods.Image.configure({ inline: true, allowBase64: false }),
     ],
     content: '<p></p>',
     editable: false, // 預設閱覽模式,按「✏ 編輯」才轉成 true
@@ -1220,6 +1306,20 @@ async function initEditorOnce() {
     onUpdate: () => {
       _dirty = true;
       refreshStatusUI();
+    },
+    onSelectionUpdate: ({ editor }) => {
+      // 🖼 選到圖片才顯示圖片工具列
+      const tbar = document.getElementById('img-toolbar');
+      if (!tbar) return;
+      const sel = editor.state.selection;
+      const node = sel ? editor.state.doc.nodeAt(sel.from) : null;
+      const isImg = node && node.type.name === 'image' && _editMode && CAN_EDIT;
+      tbar.classList.toggle('visible', !!isImg);
+      const statusEl = tbar.querySelector('.img-status');
+      if (statusEl && isImg) {
+        const w = node.attrs.width || '預設';
+        statusEl.textContent = '目前寬度:' + w;
+      }
     }
   });
 }

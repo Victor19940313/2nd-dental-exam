@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v300-mnemonics-history-view-only';
+const CACHE_NAME = 'dental-all-v301-mnemonics-image-resize-and-instant-delete';
 const PRECACHE = [
   './',
   './index.html',

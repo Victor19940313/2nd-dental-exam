@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-chapter-comments';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-collapsible-comments';
 const PRECACHE = [
   './',
   './index.html',

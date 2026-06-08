@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v295-mnemonics-view-first-stable';
+const CACHE_NAME = 'dental-all-v296-mnemonics-banner-undo-discard';
 const PRECACHE = [
   './',
   './index.html',

@@ -54,9 +54,11 @@ body {
 .subject-tabs button.active[data-subject="ya4"] { background: var(--ya4); border-color: var(--ya4); }
 .subject-tabs button.active[data-subject="ya5"] { background: var(--ya5); border-color: var(--ya5); }
 .subject-tabs button.active[data-subject="ya6"] { background: var(--ya6); border-color: var(--ya6); }
-.info-banner { padding: .65rem .85rem; border-radius: 10px; margin-bottom: 1rem; font-size: .82rem; line-height: 1.6; }
+.info-banner { padding: .65rem .85rem; border-radius: 10px; margin-bottom: 1rem; font-size: .82rem; line-height: 1.6; position: relative; padding-right: 2.5rem; }
 .info-banner.editor { background: #f0f9ff; border: 1px solid #bae6fd; color: #0c4a6e; }
 .info-banner.readonly { background: #fef3c7; border: 1px solid #fbbf24; color: #92400e; font-weight: 600; }
+.info-banner .banner-close { position: absolute; top: 50%; right: .55rem; transform: translateY(-50%); background: transparent; border: 1.5px solid currentColor; color: inherit; opacity: .6; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.info-banner .banner-close:hover { opacity: 1; background: rgba(0,0,0,.05); }
 .workspace { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; }
 @media (max-width: 720px) { .workspace { grid-template-columns: 1fr; } }
 .chapter-list { background: white; border: 1px solid var(--border); border-radius: 12px; padding: .55rem; box-shadow: var(--shadow); max-height: 80vh; overflow-y: auto; }
@@ -83,7 +85,10 @@ body {
 .editor-status .save-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 .editor-status .refresh-btn, .editor-status .history-btn { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .35rem .65rem; font-size: .78rem; font-weight: 600; }
 .editor-status .edit-btn { background: #7c3aed; color: white; padding: .4rem .85rem; font-size: .82rem; }
-.editor-status .edit-btn.editing { background: #f59e0b; }
+.editor-status .abandon-btn { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fecaca; padding: .4rem .85rem; font-size: .82rem; }
+.editor-status .abandon-btn:hover { background: #fecaca; }
+.editor-status .undo-btn, .editor-status .redo-btn { background: #ede9fe; color: #5b21b6; border: 1.5px solid #ddd6fe; padding: .35rem .7rem; font-size: .78rem; font-weight: 700; }
+.editor-status .undo-btn:hover, .editor-status .redo-btn:hover { background: #ddd6fe; }
 .draft-tag { background: #fbbf24; color: #78350f; padding: .15rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
 .toolbar { display: flex; flex-wrap: wrap; gap: .25rem; padding: .5rem .55rem; background: #fafaf5; border-bottom: 1px solid var(--border); }
 .toolbar button { background: white; border: 1px solid var(--border); color: var(--text); padding: .35rem .55rem; border-radius: 6px; cursor: pointer; font-size: .82rem; font-weight: 600; min-width: 32px; }
@@ -157,10 +162,12 @@ body {
   <div class="editor-card">
     <div class="editor-status">
       <input type="text" id="title-input" class="title-input" placeholder="章節標題..." oninput="onTitleChange()" />
-      <span id="draft-tag" class="draft-tag" style="display:none">未存</span>
       <span class="meta" id="meta-text"></span>
-      <button class="history-btn" onclick="openVersionModal()" title="看編輯歷史">📜 歷史</button>
+      <button class="history-btn" onclick="openVersionModal()" title="看完整版本歷史">📜 歷史</button>
+      <button class="undo-btn" id="undo-btn" onclick="undoLastSave()" title="回復到上次儲存前的版本" style="display:none">↶ 回復</button>
+      <button class="redo-btn" id="redo-btn" onclick="redoLastUndo()" title="取消剛剛的回復" style="display:none">↷ 取消回復</button>
       <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>
+      <button class="abandon-btn" id="abandon-btn" onclick="discardChanges()" style="display:none">✕ 放棄儲存</button>
       <button class="save-btn" id="save-btn" onclick="saveAndExit()" style="display:none">💾 儲存</button>
     </div>
     <div class="toolbar" id="toolbar" style="display:none"></div>
@@ -252,12 +259,20 @@ window.addEventListener('storage', (e) => {
   if (!CAN_EDIT) tag.classList.add('readonly');
 
   const slot = document.getElementById('info-banner-slot');
-  if (CAN_EDIT) {
-    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${CUR_USER.name}</strong>,有編輯權限。所有人共同編輯,每次儲存會留版本快照,可從「📜 歷史」回溯。</div>`;
+  const BANNER_DISMISS_KEY = 'mnemonics_banner_dismissed_' + (CUR_USER.id || 'guest');
+  if (localStorage.getItem(BANNER_DISMISS_KEY)) {
+    slot.style.display = 'none';
+  } else if (CAN_EDIT) {
+    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${CUR_USER.name}</strong>,有編輯權限。所有人共同編輯,每次儲存會留版本快照,可從「📜 歷史」回溯。<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
   } else {
-    slot.innerHTML = `<div class="info-banner readonly">🔒 唯讀模式 — 目前只有 ${ALLOWED_EDITORS.join('、')} 能編輯。你可以看但不能存。</div>`;
+    slot.innerHTML = `<div class="info-banner readonly">🔒 唯讀模式 — 目前只有 ${ALLOWED_EDITORS.join('、')} 能編輯。你可以看但不能存。<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
   }
 })();
+function dismissBanner() {
+  try { localStorage.setItem('mnemonics_banner_dismissed_' + (CUR_USER.id || 'guest'), '1'); } catch(e){}
+  const slot = document.getElementById('info-banner-slot');
+  if (slot) slot.style.display = 'none';
+}
 
 // ──────────────────────────────────────────────────────────
 // IDB
@@ -400,6 +415,8 @@ let _dirty = false;
 let _draftTimer = null;
 let _loaded = new Set();
 let _editMode = false; // false = 閱覽(預設),true = 編輯
+const _undoMap = {};   // chId → 上次儲存前的內容快照(in-memory)
+const _redoMap = {};   // chId → 剛回復前的內容快照(in-memory)
 const stateKey = (u, s) => u + '|' + s;
 
 function showToast(msg) {
@@ -642,31 +659,40 @@ function refreshStatusUI() {
   } else {
     meta.textContent = '';
   }
-  document.getElementById('draft-tag').style.display = _dirty ? 'inline-block' : 'none';
-  // ✏ 編輯 / 💾 儲存 按鈕切換
   const editBtn = document.getElementById('edit-btn');
   const saveBtn = document.getElementById('save-btn');
+  const abandonBtn = document.getElementById('abandon-btn');
+  const undoBtn = document.getElementById('undo-btn');
+  const redoBtn = document.getElementById('redo-btn');
   const tb = document.getElementById('toolbar');
   const titleInput = document.getElementById('title-input');
-  if (!CAN_EDIT || !_curChapterId) {
-    editBtn.style.display = 'none';
-    saveBtn.style.display = 'none';
-    tb.style.display = 'none';
-    titleInput.disabled = true;
+  if (!_curChapterId) {
+    editBtn.style.display = 'none'; saveBtn.style.display = 'none'; abandonBtn.style.display = 'none';
+    undoBtn.style.display = 'none'; redoBtn.style.display = 'none';
+    tb.style.display = 'none'; titleInput.disabled = true;
+  } else if (!CAN_EDIT) {
+    editBtn.style.display = 'none'; saveBtn.style.display = 'none'; abandonBtn.style.display = 'none';
+    undoBtn.style.display = 'none'; redoBtn.style.display = 'none';
+    tb.style.display = 'none'; titleInput.disabled = true;
   } else if (_editMode) {
-    editBtn.style.display = '';
-    editBtn.textContent = '👁 閱覽';
-    editBtn.classList.add('editing');
+    // 編輯模式:只給 儲存 + 放棄儲存
+    editBtn.style.display = 'none';
     saveBtn.style.display = '';
     saveBtn.disabled = !_dirty;
-    saveBtn.textContent = _dirty ? '💾 儲存' : '💾 已儲存';
+    saveBtn.textContent = _dirty ? '💾 儲存' : '💾 已存';
+    abandonBtn.style.display = '';
+    undoBtn.style.display = 'none';
+    redoBtn.style.display = 'none';
     tb.style.display = 'flex';
     titleInput.disabled = false;
   } else {
+    // 閱覽模式:編輯 + 回復 + 取消回復
     editBtn.style.display = '';
     editBtn.textContent = '✏ 編輯';
-    editBtn.classList.remove('editing');
     saveBtn.style.display = 'none';
+    abandonBtn.style.display = 'none';
+    undoBtn.style.display = _undoMap[_curChapterId] ? '' : 'none';
+    redoBtn.style.display = _redoMap[_curChapterId] ? '' : 'none';
     tb.style.display = 'none';
     titleInput.disabled = true;
   }
@@ -691,12 +717,82 @@ function toggleEditMode() {
 
 // 儲存後切回閱覽
 async function saveAndExit() {
+  if (!_curChapterId) return;
+  // 記下儲存前的內容當作 undo 點
+  const subj = curState();
+  const ch = subj && subj.chapters.find(c => c.id === _curChapterId);
+  if (ch) {
+    _undoMap[_curChapterId] = { title: ch.title, content: ch.content };
+    delete _redoMap[_curChapterId]; // 新的儲存會清掉 redo
+  }
   await saveToCloud();
   if (!_dirty && _editor) {
     _editMode = false;
     _editor.setEditable(false);
     refreshStatusUI();
   }
+}
+
+// 放棄儲存:回到上次儲存的內容,退出編輯
+async function discardChanges() {
+  if (!CAN_EDIT || !_curChapterId) return;
+  if (_dirty && !confirm('放棄目前所有修改,回到上次儲存的版本?')) return;
+  if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
+  const subj = curState();
+  const ch = subj && subj.chapters.find(c => c.id === _curChapterId);
+  if (ch && _editor) {
+    _editor.commands.setContent(ch.content || '<p></p>');
+    document.getElementById('title-input').value = ch.title || '';
+  }
+  _dirty = false;
+  _editMode = false;
+  if (_editor) _editor.setEditable(false);
+  refreshStatusUI();
+  showToast('已放棄修改');
+}
+
+// 回復:把章節內容換回上次儲存前的版本(同時排入 redo)
+async function undoLastSave() {
+  if (!CAN_EDIT || !_curChapterId) return;
+  const prev = _undoMap[_curChapterId];
+  if (!prev) { showToast('沒有可回復的版本'); return; }
+  if (!confirm('回復到上次儲存前的版本?\n\n(目前內容會放進「取消回復」可以救回來)')) return;
+  const subj = curState();
+  const ch = subj && subj.chapters.find(c => c.id === _curChapterId);
+  if (!ch) return;
+  _redoMap[_curChapterId] = { title: ch.title, content: ch.content };
+  ch.title = prev.title;
+  ch.content = prev.content;
+  ch.ts = Date.now();
+  ch.updatedBy = CUR_USER.name || 'Guest';
+  delete _undoMap[_curChapterId];
+  _dirty = true;
+  if (_editor) _editor.commands.setContent(prev.content || '<p></p>');
+  document.getElementById('title-input').value = prev.title || '';
+  await saveToCloud();
+  refreshStatusUI();
+  showToast('已回復');
+}
+
+async function redoLastUndo() {
+  if (!CAN_EDIT || !_curChapterId) return;
+  const r = _redoMap[_curChapterId];
+  if (!r) { showToast('沒有可取消的回復'); return; }
+  const subj = curState();
+  const ch = subj && subj.chapters.find(c => c.id === _curChapterId);
+  if (!ch) return;
+  _undoMap[_curChapterId] = { title: ch.title, content: ch.content };
+  ch.title = r.title;
+  ch.content = r.content;
+  ch.ts = Date.now();
+  ch.updatedBy = CUR_USER.name || 'Guest';
+  delete _redoMap[_curChapterId];
+  _dirty = true;
+  if (_editor) _editor.commands.setContent(r.content || '<p></p>');
+  document.getElementById('title-input').value = r.title || '';
+  await saveToCloud();
+  refreshStatusUI();
+  showToast('已取消回復');
 }
 
 function onTitleChange() {

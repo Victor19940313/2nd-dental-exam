@@ -10569,7 +10569,11 @@ ${dec.reasoning || ''}
           openAISettings();
           return;
         }
-        if (!confirm('讓 AI 幫所有 ' + notebook.chapters.length + ' 個章節重新分配子主題分組？\n\n相同概念的章節會被歸到同一個 subtopic，例如「Pulp 牙髓」「Cementum 牙骨質」這種，讓目錄整齊好找。')) return;
+        if (!confirm('讓 AI 幫所有 ' + notebook.chapters.length + ' 個章節重新分配子主題分組？\n\n相同概念的章節會被歸到同一個 subtopic，例如「Pulp 牙髓」「Cementum 牙骨質」這種，讓目錄整齊好找。\n\n⚠ 重整前會自動備份整本筆記到雲端,可從「🛟 還原備份」回滾')) return;
+
+        // v341:子主題分組前先備份(同 mergeChapters 的安全網)
+        try { await backupNotebookToCloud('子主題分組前'); }
+        catch(e) { console.warn('[reorganize backup] fail (still proceeding)', e); }
 
         const btn = event && event.target;
         const orig = btn ? btn.innerHTML : '';
@@ -10622,10 +10626,13 @@ ${JSON.stringify(list, null, 2)}
             const dec = extractJSON(raw);
             if (dec.assignments) {
               dec.assignments.forEach(a => {
-                const ch = notebook.chapters.find(c => c.id === a.chapter_id);
-                if (ch && a.subtopic) {
-                  if (ch.subtopic !== a.subtopic) {
-                    ch.subtopic = a.subtopic;
+                // v341:trim 防 AI 回傳帶空白的 id 對不上
+                const targetId = (a.chapter_id || '').trim();
+                const newSub = (a.subtopic || '').trim();
+                const ch = notebook.chapters.find(c => c.id === targetId);
+                if (ch && newSub) {
+                  if (ch.subtopic !== newSub) {
+                    ch.subtopic = newSub;
                     ch.updatedAt = Date.now();
                     totalChanged++;
                   }
@@ -10637,7 +10644,9 @@ ${JSON.stringify(list, null, 2)}
           renderNotebook();
           showToast('✓ 已重整 ' + totalChanged + ' 個章節的子主題');
         } catch(err) {
-          alert('AI 重整失敗：\n\n' + err.message);
+          // v341:中斷時把已套用的部分也存起來,不要留 partial state 在記憶體裡
+          try { saveNotebook(); renderNotebook(); } catch(e) {}
+          alert('AI 重整失敗(已套用部分):\n\n' + err.message + '\n\n要還原回重整前,去「🛟 還原備份」選「子主題分組前」');
         } finally {
           if (btn) { btn.disabled = false; btn.innerHTML = orig; }
         }
@@ -10671,7 +10680,16 @@ ${JSON.stringify(list, null, 2)}
         required: ["content"]
       };
 
-      let _mergeChState = { subject: 'ya5', groups: null, scanning: false, executing: false, doneCount: 0, totalCount: 0 };
+      let _mergeChState = {
+        subject: 'ya5', groups: null, scanning: false, executing: false, doneCount: 0, totalCount: 0,
+        // v341:雙模式
+        mode: null,                   // null=選模式;'ai'=AI 掃描;'manual'=手動挑
+        manualStep: null,             // 'pick'=挑章節;'naming'=取新名
+        manualSelected: new Set(),    // 使用者勾的章節 id
+        manualSearch: '',             // 搜尋字串
+        manualNewName: '',
+        manualNewSubtopic: '',
+      };
 
       // ──────────────────────────────────────────────────────────
       // v339:筆記本「合併 / 還原前自動備份」防呆機制
@@ -10795,6 +10813,10 @@ ${JSON.stringify(list, null, 2)}
       window.backupNotebookToCloud = backupNotebookToCloud;
 
       function openMergeChaptersModal(){
+        // v341:重 render 前記住目前 focus 跟 cursor 位置,render 後還原(避免打字搜尋每打一字就失焦)
+        const focused = document.activeElement;
+        const focusedId = focused && focused.id;
+        const cursorPos = (focused && typeof focused.selectionStart === 'number') ? focused.selectionStart : null;
         const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
         let body;
         if (_mergeChState.executing) {
@@ -10848,8 +10870,64 @@ ${JSON.stringify(list, null, 2)}
               <button onclick="executeMergeChapters()" style="flex:2;background:#16a34a;color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">✓ 開始合併勾選的群組</button>
             </div>`;
           }
-        } else {
-          // 初始畫面
+        } else if (_mergeChState.mode === 'manual') {
+          // v341:手動模式
+          if (_mergeChState.manualStep === 'naming') {
+            const cnt = _mergeChState.manualSelected.size;
+            body = `<div style="margin-bottom:.8rem">
+              <button onclick="_mergeChState.manualStep='pick';openMergeChaptersModal()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:.85rem;padding:0">← 上一步(改挑章節)</button>
+            </div>
+            <div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:8px;padding:.7rem;margin-bottom:.8rem;font-size:.85rem;color:#5b21b6">
+              要把 <strong>${cnt}</strong> 個章節合併成 1 個新章節
+            </div>
+            <div style="margin-bottom:.7rem">
+              <label style="display:block;font-size:.82rem;font-weight:700;color:#374151;margin-bottom:.3rem">新章節名稱 *</label>
+              <input id="manual-merge-name" type="text" value="${escapeHtml(_mergeChState.manualNewName)}" oninput="_mergeChState.manualNewName=this.value" placeholder="例:義齒咬合修磨總整理" style="width:100%;padding:.55rem;border:1.5px solid #d1d5db;border-radius:7px;font-size:.92rem;font-family:inherit;box-sizing:border-box">
+            </div>
+            <div style="margin-bottom:.7rem">
+              <label style="display:block;font-size:.82rem;font-weight:700;color:#374151;margin-bottom:.3rem">新 subtopic(可選,留空用第一章的)</label>
+              <input id="manual-merge-subtopic" type="text" value="${escapeHtml(_mergeChState.manualNewSubtopic)}" oninput="_mergeChState.manualNewSubtopic=this.value" placeholder="例:咬合學總論" style="width:100%;padding:.55rem;border:1.5px solid #d1d5db;border-radius:7px;font-size:.92rem;font-family:inherit;box-sizing:border-box">
+            </div>
+            <div style="display:flex;gap:.5rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid #e5e7eb">
+              <button onclick="closeMergeChModal()" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">取消</button>
+              <button onclick="executeManualMerge()" style="flex:2;background:#7c3aed;color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">✓ 開始合併 (${cnt} 章 → 1 章)</button>
+            </div>`;
+          } else {
+            // pick step
+            const q = (_mergeChState.manualSearch||'').toLowerCase();
+            const all = (notebook.chapters||[]).slice();
+            const filtered = q ? all.filter(c => (c.name||'').toLowerCase().includes(q) || (c.subtopic||'').toLowerCase().includes(q) || (c.content||'').toLowerCase().includes(q)) : all;
+            const selCnt = _mergeChState.manualSelected.size;
+            const rowsHtml = filtered.map(c => {
+              const checked = _mergeChState.manualSelected.has(c.id) ? 'checked' : '';
+              const imgCount = ((c.content||'').match(/!\[[^\]]*\]\([^)]+\)/g) || []).length;
+              const imgBadge = imgCount > 0 ? `<span style="background:#fef3c7;color:#92400e;padding:0 5px;border-radius:8px;font-size:.7rem;margin-left:.3rem">🖼 ${imgCount}</span>` : '';
+              return `<label style="display:flex;align-items:flex-start;gap:.55rem;padding:.4rem .55rem;border-radius:7px;cursor:pointer;border:1.5px solid ${checked?'#a78bfa':'#e5e7eb'};background:${checked?'#f5f3ff':'white'};margin-bottom:.3rem">
+                <input type="checkbox" ${checked} onchange="_toggleManualPick('${escapeHtml(c.id)}',this.checked)" style="margin-top:.18rem;width:16px;height:16px;cursor:pointer">
+                <div style="flex:1;min-width:0">
+                  <div style="font-weight:700;font-size:.88rem;color:#374151;word-break:break-word">${escapeHtml(c.name||c.id)}${imgBadge}</div>
+                  <div style="font-size:.74rem;color:#9ca3af;margin-top:.1rem">${escapeHtml(c.subtopic||'無 subtopic')}</div>
+                </div>
+              </label>`;
+            }).join('');
+            body = `<div style="margin-bottom:.8rem">
+              <button onclick="_mergeChState.mode=null;_mergeChState.manualSelected=new Set();_mergeChState.manualSearch='';openMergeChaptersModal()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:.85rem;padding:0">← 返回模式選擇</button>
+            </div>
+            <div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:8px;padding:.7rem;margin-bottom:.7rem;font-size:.85rem;color:#5b21b6">
+              ✋ 手動模式 — 勾選想合併的章節(至少 2 章),點下一步取新章節名
+            </div>
+            <input type="search" id="manual-merge-search" placeholder="🔍 搜尋章節..." value="${escapeHtml(_mergeChState.manualSearch)}" oninput="_mergeChState.manualSearch=this.value;openMergeChaptersModal()" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:7px;font-size:.88rem;margin-bottom:.7rem;box-sizing:border-box;font-family:inherit">
+            <div style="font-size:.78rem;color:#6b7280;margin-bottom:.5rem">${filtered.length} 章可選 · 已選 <strong style="color:#7c3aed">${selCnt}</strong> 章</div>
+            <div style="max-height:48vh;overflow-y:auto;padding-right:.3rem;border:1px solid #e5e7eb;border-radius:8px;padding:.5rem">
+              ${rowsHtml || '<div style="text-align:center;color:#9ca3af;padding:2rem">找不到符合的章節</div>'}
+            </div>
+            <div style="display:flex;gap:.5rem;margin-top:1rem;padding-top:.8rem;border-top:1px solid #e5e7eb">
+              <button onclick="closeMergeChModal()" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">取消</button>
+              <button onclick="_mergeChState.manualStep='naming';openMergeChaptersModal()" ${selCnt<2?'disabled':''} style="flex:2;background:${selCnt<2?'#cbd5e1':'#7c3aed'};color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:${selCnt<2?'not-allowed':'pointer'}">下一步 → 取新章節名 (${selCnt} 章)</button>
+            </div>`;
+          }
+        } else if (_mergeChState.mode === 'ai') {
+          // AI 模式:選科目
           const counts = {};
           (notebook.chapters||[]).forEach(c => {
             for (const s of ['ya3','ya4','ya5','ya6']) {
@@ -10860,8 +10938,11 @@ ${JSON.stringify(list, null, 2)}
             const sel = _mergeChState.subject === s;
             return `<button onclick="_mergeChState.subject='${s}';openMergeChaptersModal()" style="background:${sel?'#16a34a':'#f3f4f6'};color:${sel?'white':'#374151'};border:none;padding:.5rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;font-size:.88rem">${SMAP[s]} <span style="opacity:.7;font-weight:400">(${counts[s]||0})</span></button>`;
           }).join('');
-          body = `<div style="margin-bottom:.8rem;font-size:.88rem;color:#374151;line-height:1.6">
-            這個工具讓 AI 看你的章節清單,找出<strong>講同一個大概念但被切太細</strong>的章節,建議合併。
+          body = `<div style="margin-bottom:.8rem">
+            <button onclick="_mergeChState.mode=null;openMergeChaptersModal()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:.85rem;padding:0">← 返回模式選擇</button>
+          </div>
+          <div style="margin-bottom:.8rem;font-size:.88rem;color:#374151;line-height:1.6">
+            🤖 AI 模式 — 讓 AI 看章節清單,找出<strong>講同一個大概念但被切太細</strong>的章節並建議合併。
             <ul style="margin:.5rem 0 0 1.2rem;padding:0;font-size:.82rem;color:#6b7280">
               <li>第一階段只送章節名/subtopic/關鍵字(省 token)</li>
               <li>你勾選確認後才會送內文給 AI 重整</li>
@@ -10869,12 +10950,30 @@ ${JSON.stringify(list, null, 2)}
             </ul>
           </div>
           <div style="margin-bottom:1rem">
-            <div style="font-size:.85rem;color:#374151;font-weight:700;margin-bottom:.4rem">選擇科目：</div>
+            <div style="font-size:.85rem;color:#374151;font-weight:700;margin-bottom:.4rem">選擇科目:</div>
             <div style="display:flex;gap:.4rem;flex-wrap:wrap">${subjectBtns}</div>
           </div>
           <div style="display:flex;gap:.5rem;margin-top:1rem">
             <button onclick="closeMergeChModal()" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">取消</button>
             <button onclick="analyzeMergeChapters()" style="flex:2;background:#16a34a;color:white;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">🤖 開始掃描 ${SMAP[_mergeChState.subject]}</button>
+          </div>`;
+        } else {
+          // v341:模式選擇(預設畫面)
+          body = `<div style="margin-bottom:1rem;font-size:.88rem;color:#374151;line-height:1.6">
+            選擇整理方式:
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem">
+            <button onclick="_mergeChState.mode='ai';openMergeChaptersModal()" style="background:#dcfce7;border:2px solid #22c55e;color:#166534;padding:1.2rem .8rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.95rem;text-align:left;line-height:1.4">
+              🤖 AI 自動掃描<br>
+              <span style="font-weight:400;font-size:.78rem;color:#15803d">讓 AI 找哪些章節重複,你確認後合併</span>
+            </button>
+            <button onclick="_mergeChState.mode='manual';_mergeChState.manualStep='pick';openMergeChaptersModal()" style="background:#ede9fe;border:2px solid #a78bfa;color:#5b21b6;padding:1.2rem .8rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.95rem;text-align:left;line-height:1.4">
+              ✋ 手動挑章節<br>
+              <span style="font-weight:400;font-size:.78rem;color:#6d28d9">不用 AI 掃,自己搜尋勾選想合的</span>
+            </button>
+          </div>
+          <div style="display:flex;gap:.5rem;margin-top:1rem">
+            <button onclick="closeMergeChModal()" style="flex:1;background:#f3f4f6;color:#374151;border:none;padding:.6rem;border-radius:7px;font-weight:700;cursor:pointer">取消</button>
           </div>`;
         }
 
@@ -10886,11 +10985,33 @@ ${JSON.stringify(list, null, 2)}
           document.body.appendChild(overlay);
         }
         overlay.style.display = 'flex';
+        const titleByMode = (_mergeChState.mode === 'manual')
+          ? '✋ 手動合併章節'
+          : (_mergeChState.mode === 'ai' ? '🤖 AI 合併建議' : '🧹 整理章節');
+        const titleColor = (_mergeChState.mode === 'manual') ? '#5b21b6' : '#166534';
         overlay.innerHTML = `<div style="background:white;border-radius:12px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:1.2rem">
-          <h3 style="margin:0 0 .8rem;color:#166534">🧹 整理章節 (AI 合併建議)</h3>
+          <h3 style="margin:0 0 .8rem;color:${titleColor}">${titleByMode}</h3>
           ${body}
         </div>`;
+        // 還原 focus(搜尋 + 命名輸入框打字時不要每打一字就失焦)
+        if (focusedId) {
+          requestAnimationFrame(() => {
+            const el = document.getElementById(focusedId);
+            if (el) {
+              try { el.focus(); if (cursorPos !== null && el.setSelectionRange) el.setSelectionRange(cursorPos, cursorPos); } catch(e) {}
+            }
+          });
+        }
       }
+
+      // v341:手動模式 — 勾/取消章節
+      function _toggleManualPick(chId, checked){
+        if (checked) _mergeChState.manualSelected.add(chId);
+        else _mergeChState.manualSelected.delete(chId);
+        // 只更新底部計數,不重 render(怕打字 input 失焦)
+        openMergeChaptersModal();
+      }
+      window._toggleManualPick = _toggleManualPick;
 
       function closeMergeChModal(){
         const o = document.getElementById('merge-ch-overlay');
@@ -10900,6 +11021,13 @@ ${JSON.stringify(list, null, 2)}
         _mergeChState.executing = false;
         _mergeChState.doneCount = 0;
         _mergeChState.totalCount = 0;
+        // v341:也清掉手動模式狀態
+        _mergeChState.mode = null;
+        _mergeChState.manualStep = null;
+        _mergeChState.manualSelected = new Set();
+        _mergeChState.manualSearch = '';
+        _mergeChState.manualNewName = '';
+        _mergeChState.manualNewSubtopic = '';
       }
 
       async function analyzeMergeChapters(){
@@ -10966,6 +11094,67 @@ ${JSON.stringify(lite, null, 2)}
         }
       }
 
+      // v341:把單組合併邏輯抽出來,AI 模式跟手動模式共用
+      async function _runOneGroupMerge(g){
+        try {
+          // v339 fix Bug 2:每次重 build chById,反映 notebook 目前狀態
+          const chById = new Map((notebook.chapters||[]).map(c => [c.id, c]));
+          // v339 fix Bug 1:dedup chapter_ids
+          const uniqueIds = Array.from(new Set(g.chapter_ids || []));
+          const oldChs = uniqueIds.map(id => chById.get(id)).filter(Boolean);
+          if (oldChs.length < 2) return { ok: false, error: '章節不夠 2 個(可能被別組刪光或重複 id)' };
+          const newContent = await _mergeChapterGroup(oldChs, g);
+          const keepCh = oldChs[0];
+          // v339 fix:再次過濾 keepCh.id(萬一還有同 id 的)
+          const otherIds = new Set(oldChs.slice(1).map(c => c.id).filter(id => id !== keepCh.id));
+          const allQids = Array.from(new Set(oldChs.flatMap(c => c.qids || [])));
+          const allConcepts = Array.from(new Set(oldChs.flatMap(c => c.concepts || [])));
+          keepCh.name = g.new_name || keepCh.name;
+          keepCh.subtopic = g.new_subtopic || keepCh.subtopic;
+          keepCh.content = newContent;
+          keepCh.qids = allQids;
+          keepCh.concepts = allConcepts;
+          keepCh.updatedAt = Date.now();
+          notebook.chapters = (notebook.chapters||[]).filter(c => !otherIds.has(c.id));
+          saveNotebook();
+          return { ok: true, error: null };
+        } catch(err) {
+          console.error('[_runOneGroupMerge]', err);
+          return { ok: false, error: err.message };
+        }
+      }
+
+      // v341:手動模式 — 使用者自己挑章節合併,跳過 AI 掃描
+      async function executeManualMerge(){
+        const ids = Array.from(_mergeChState.manualSelected);
+        if (ids.length < 2) { showToast('至少選 2 章才能合併'); return; }
+        const newName = (_mergeChState.manualNewName || '').trim();
+        if (!newName) { showToast('要先取一個新章節名'); return; }
+        if (!confirm(`要把 ${ids.length} 個章節合併成「${newName}」?\n\n圖片絕對保留(會自動驗證)\n⚠ 合併前會自動備份到雲端`)) return;
+
+        try { await backupNotebookToCloud('手動合併前'); }
+        catch(e) { console.warn('[manual merge backup]', e); }
+
+        _mergeChState.executing = true;
+        _mergeChState.totalCount = 1;
+        _mergeChState.doneCount = 0;
+        openMergeChaptersModal();
+
+        const group = {
+          chapter_ids: ids,
+          new_name: newName,
+          new_subtopic: (_mergeChState.manualNewSubtopic||'').trim() || undefined,
+          reason: '使用者手動指定',
+        };
+        const r = await _runOneGroupMerge(group);
+        _mergeChState.doneCount = 1;
+        renderNotebook();
+        closeMergeChModal();
+        if (r.ok) showToast(`✓ 合併完成:${ids.length} 章 → 「${newName}」`);
+        else alert('合併失敗:' + (r.error || '未知錯誤') + '\n\n本機資料未動,可從「🛟 還原備份」確認');
+      }
+      window.executeManualMerge = executeManualMerge;
+
       async function executeMergeChapters(){
         const checked = Array.from(document.querySelectorAll('.merge-group-cb:checked')).map(cb => parseInt(cb.dataset.gi));
         const groups = checked.map(gi => _mergeChState.groups[gi]).filter(Boolean);
@@ -10987,39 +11176,9 @@ ${JSON.stringify(lite, null, 2)}
         const errors = [];
 
         for (const g of groups) {
-          try {
-            // v339 fix Bug 2:每次重 build chById,反映 notebook 目前狀態
-            //                 (避免上一輪合併已刪掉的章節在這輪變成 orphan keepCh,把不該刪的章節給刪掉)
-            const chById = new Map((notebook.chapters||[]).map(c => [c.id, c]));
-            // v339 fix Bug 1:dedup chapter_ids
-            //                 (若 AI 回傳 ["A","A"] 重複 id,原本會把 A 自己加進 otherIds 結果整個刪掉)
-            const uniqueIds = Array.from(new Set(g.chapter_ids || []));
-            const oldChs = uniqueIds.map(id => chById.get(id)).filter(Boolean);
-            if (oldChs.length < 2) { failCount++; errors.push((g.new_name||'?') + ': 章節不夠 2 個(可能被別組刪光或重複 id)'); continue; }
-            const newContent = await _mergeChapterGroup(oldChs, g);
-
-            // 把第一個舊章節改成合併後的章節,其餘的刪掉
-            const keepCh = oldChs[0];
-            // v339 fix:再次過濾 keepCh.id(萬一還有同 id 的)
-            const otherIds = new Set(oldChs.slice(1).map(c => c.id).filter(id => id !== keepCh.id));
-            const allQids = Array.from(new Set(oldChs.flatMap(c => c.qids || [])));
-            const allConcepts = Array.from(new Set(oldChs.flatMap(c => c.concepts || [])));
-
-            keepCh.name = g.new_name || keepCh.name;
-            keepCh.subtopic = g.new_subtopic || keepCh.subtopic;
-            keepCh.content = newContent;
-            keepCh.qids = allQids;
-            keepCh.concepts = allConcepts;
-            keepCh.updatedAt = Date.now();
-
-            notebook.chapters = (notebook.chapters||[]).filter(c => !otherIds.has(c.id));
-            saveNotebook();
-            okCount++;
-          } catch (err) {
-            failCount++;
-            errors.push((g.new_name || g.chapter_ids.join(',')) + ': ' + err.message);
-            console.error('[mergeChapter] ', err);
-          }
+          const r = await _runOneGroupMerge(g);
+          if (r.ok) okCount++;
+          else { failCount++; errors.push((g.new_name || (g.chapter_ids||[]).join(',')) + ': ' + (r.error||'未知錯誤')); }
           _mergeChState.doneCount++;
           openMergeChaptersModal();
         }

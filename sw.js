@@ -1,7 +1,8 @@
-const CACHE_NAME = 'dental-all-v288-practice-submit-button';
+const CACHE_NAME = 'dental-all-v289-mnemonics-shared-area';
 const PRECACHE = [
   './',
   './index.html',
+  './mnemonics.html',
   './ya3/index.html',
   './ya3/ya3-data.js',
   './ya4/index.html',

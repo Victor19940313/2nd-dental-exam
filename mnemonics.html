@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>口訣複習區 — 牙醫國考</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f8f7f0">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8f7f0;
+  --bg-card: #ffffff;
+  --text: #2d2a22;
+  --text-sub: #7a7060;
+  --border: #e4e0d4;
+  --shadow: 0 2px 10px rgba(0,0,0,.07);
+  --ya3: #0e7490;
+  --ya4: #7c3aed;
+  --ya5: #3730a3;
+  --ya6: #166534;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.topbar { display: flex; align-items: center; gap: .7rem; padding: .8rem 1rem; background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 1rem; }
+.topbar h1 { font-size: 1.15rem; font-weight: 800; flex: 1; }
+.topbar .back { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .45rem .85rem; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; font-size: .85rem; }
+.user-tag { font-size: .78rem; color: var(--text-sub); background: #f3f4f6; padding: .35rem .7rem; border-radius: 999px; font-weight: 600; }
+.user-tag.readonly { background: #fef3c7; color: #92400e; }
+.subject-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.subject-tabs button { flex: 1; min-width: 110px; background: white; border: 2px solid var(--border); color: var(--text-sub); padding: .7rem .5rem; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: .95rem; transition: all .15s; }
+.subject-tabs button.active { color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+.subject-tabs button.active[data-subject="ya3"] { background: var(--ya3); border-color: var(--ya3); }
+.subject-tabs button.active[data-subject="ya4"] { background: var(--ya4); border-color: var(--ya4); }
+.subject-tabs button.active[data-subject="ya5"] { background: var(--ya5); border-color: var(--ya5); }
+.subject-tabs button.active[data-subject="ya6"] { background: var(--ya6); border-color: var(--ya6); }
+.info-banner { padding: .65rem .85rem; border-radius: 10px; margin-bottom: 1rem; font-size: .82rem; line-height: 1.6; }
+.info-banner.editor { background: #f0f9ff; border: 1px solid #bae6fd; color: #0c4a6e; }
+.info-banner.readonly { background: #fef3c7; border: 1px solid #fbbf24; color: #92400e; font-weight: 600; }
+.workspace { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; }
+@media (max-width: 720px) { .workspace { grid-template-columns: 1fr; } }
+.chapter-list { background: white; border: 1px solid var(--border); border-radius: 12px; padding: .55rem; box-shadow: var(--shadow); max-height: 80vh; overflow-y: auto; }
+.chapter-list .ch-head { display: flex; align-items: center; gap: .4rem; padding: .35rem .45rem .55rem; }
+.chapter-list .ch-head strong { font-size: .82rem; color: var(--text-sub); flex: 1; }
+.chapter-list .ch-head button { background: #16a34a; color: white; border: none; padding: .3rem .65rem; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: .78rem; }
+.chapter-list .ch-head button:disabled { background: #9ca3af; cursor: not-allowed; }
+.chapter-list .ch-item { padding: .55rem .65rem; border-radius: 8px; cursor: pointer; font-size: .87rem; color: var(--text); margin-bottom: .15rem; display: flex; align-items: center; gap: .4rem; transition: background .12s; }
+.chapter-list .ch-item:hover { background: #f9fafb; }
+.chapter-list .ch-item.active { background: #fef3c7; font-weight: 700; }
+.chapter-list .ch-item .ch-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chapter-list .ch-item .ch-del { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: .15rem .35rem; border-radius: 4px; font-size: .85rem; }
+.chapter-list .ch-item .ch-del:hover { color: #ef4444; background: #fef2f2; }
+.chapter-list .empty { padding: 1.2rem .7rem; color: var(--text-sub); font-size: .82rem; text-align: center; font-style: italic; }
+.editor-card { background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+.editor-status { display: flex; align-items: center; justify-content: space-between; padding: .55rem .8rem; background: #fafaf5; border-bottom: 1px solid var(--border); font-size: .78rem; color: var(--text-sub); flex-wrap: wrap; gap: .4rem; }
+.editor-status input.title-input { background: transparent; border: none; outline: none; font-size: .95rem; font-weight: 800; color: var(--text); flex: 1; min-width: 120px; padding: .3rem 0; }
+.editor-status input.title-input:focus { border-bottom: 1.5px solid var(--ya3); }
+.editor-status input.title-input:disabled { color: var(--text-sub); cursor: not-allowed; }
+.editor-status .meta { font-size: .73rem; color: var(--text-sub); white-space: nowrap; }
+.editor-status button { border: none; border-radius: 7px; cursor: pointer; font-weight: 700; }
+.editor-status .save-btn { background: #16a34a; color: white; padding: .4rem .85rem; font-size: .82rem; }
+.editor-status .save-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+.editor-status .refresh-btn, .editor-status .history-btn { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .35rem .65rem; font-size: .78rem; font-weight: 600; }
+.draft-tag { background: #fbbf24; color: #78350f; padding: .15rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .25rem; padding: .5rem .55rem; background: #fafaf5; border-bottom: 1px solid var(--border); }
+.toolbar button { background: white; border: 1px solid var(--border); color: var(--text); padding: .35rem .55rem; border-radius: 6px; cursor: pointer; font-size: .82rem; font-weight: 600; min-width: 32px; }
+.toolbar button:hover:not(:disabled) { background: #f3f4f6; }
+.toolbar button:disabled { opacity: .4; cursor: not-allowed; }
+.toolbar .sep { width: 1px; background: var(--border); margin: 0 .15rem; }
+.editor-body { padding: 1rem 1.2rem; min-height: 50vh; max-height: 75vh; overflow-y: auto; }
+.editor-body .ProseMirror { outline: none; font-size: 1rem; line-height: 1.75; min-height: 45vh; }
+.editor-body .ProseMirror h2 { font-size: 1.3rem; margin: 1rem 0 .5rem; font-weight: 800; }
+.editor-body .ProseMirror h3 { font-size: 1.1rem; margin: .8rem 0 .3rem; font-weight: 700; color: #6b21a8; }
+.editor-body .ProseMirror p { margin: .35rem 0; }
+.editor-body .ProseMirror ul, .editor-body .ProseMirror ol { margin: .3rem 0 .3rem 1.5rem; }
+.editor-body .ProseMirror li { margin: .15rem 0; }
+.editor-body .ProseMirror blockquote { border-left: 4px solid #fbbf24; background: #fef3c7; padding: .4rem .8rem; margin: .6rem 0; border-radius: 4px; color: #92400e; }
+.editor-body .ProseMirror table { border-collapse: collapse; margin: .6rem 0; }
+.editor-body .ProseMirror table td, .editor-body .ProseMirror table th { border: 1px solid var(--border); padding: .4rem .6rem; }
+.editor-body .ProseMirror table th { background: #f3f4f6; font-weight: 700; }
+.editor-body .ProseMirror strong { color: #b45309; }
+.editor-body .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; margin: .5rem 0; display: block; cursor: pointer; }
+.editor-body .ProseMirror img.ProseMirror-selectednode { outline: 3px solid #fbbf24; }
+.editor-body .ProseMirror[contenteditable="false"] { background: #f9fafb; cursor: not-allowed; }
+.empty-pick { padding: 4rem 1.5rem; text-align: center; color: var(--text-sub); }
+.empty-pick .em { font-size: 2.5rem; margin-bottom: .5rem; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.65); backdrop-filter: blur(4px); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal { background: white; border-radius: 14px; padding: 1.2rem 1.4rem; max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,.35); }
+.modal h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: .8rem; color: var(--text); }
+.modal .close-x { float: right; background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-sub); }
+.version-row { display: flex; gap: .7rem; padding: .65rem; border: 1px solid var(--border); border-radius: 10px; margin-bottom: .5rem; align-items: center; }
+.version-row .v-info { flex: 1; }
+.version-row .v-info .v-title { font-weight: 700; color: var(--text); font-size: .9rem; }
+.version-row .v-info .v-meta { font-size: .75rem; color: var(--text-sub); margin-top: .15rem; }
+.version-row .v-action { display: flex; gap: .35rem; }
+.version-row .v-action button { background: #f3f4f6; border: 1px solid var(--border); color: var(--text); padding: .35rem .7rem; border-radius: 7px; cursor: pointer; font-size: .8rem; font-weight: 600; }
+.version-row .v-action button.restore { background: #16a34a; color: white; border-color: #16a34a; }
+.version-preview { background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; max-height: 50vh; overflow-y: auto; font-size: .92rem; line-height: 1.7; }
+
+.toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: .65rem 1.2rem; border-radius: 8px; font-size: .88rem; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html" class="back">← 返回</a>
+  <h1>🧠 口訣複習區</h1>
+  <span class="user-tag" id="user-tag">--</span>
+</div>
+
+<div id="info-banner-slot"></div>
+
+<div class="subject-tabs" id="subject-tabs">
+  <button data-subject="ya3" onclick="switchSubject('ya3')">🦷 牙三</button>
+  <button data-subject="ya4" onclick="switchSubject('ya4')">🩺 牙四</button>
+  <button data-subject="ya5" onclick="switchSubject('ya5')">🦴 牙五</button>
+  <button data-subject="ya6" onclick="switchSubject('ya6')">👶 牙六</button>
+</div>
+
+<div class="workspace">
+  <div class="chapter-list">
+    <div class="ch-head">
+      <strong id="ch-head-label">章節</strong>
+      <button id="btn-add-ch" onclick="addChapter()">+ 新增</button>
+    </div>
+    <div id="ch-items"></div>
+  </div>
+  <div class="editor-card">
+    <div class="editor-status">
+      <input type="text" id="title-input" class="title-input" placeholder="章節標題..." oninput="onTitleChange()" />
+      <span id="draft-tag" class="draft-tag" style="display:none">未存草稿</span>
+      <span class="meta" id="meta-text"></span>
+      <button class="history-btn" onclick="openVersionModal()" title="看編輯歷史">📜 歷史</button>
+      <button class="refresh-btn" onclick="refreshFromCloud()" title="拉雲端最新版">🔄</button>
+      <button class="save-btn" id="save-btn" onclick="saveToCloud()">💾 推到雲端</button>
+    </div>
+    <div class="toolbar" id="toolbar"></div>
+    <div class="editor-body" id="editor-body">
+      <div class="empty-pick">
+        <div class="em">📒</div>
+        <div>從左邊選一章開始,或按「+ 新增」</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  口訣複習區 — 設計原則
+//  ★ 多章節結構(per-subject) — 內容大時可拆細,只載當前章節
+//  ★ 白名單編輯 — HUA + Shirley 才能推雲端;其他人唯讀
+//  ★ 完整版本歷史 — 每次儲存留 snapshot,可預覽 / 一鍵還原
+//  ★ IDB 本機快取 — LS 撞 quota 也不影響,離線可看
+//  ★ Per-subject 分檔 — mnemonics/{subj}.json + mnemonics/{subj}-versions.json
+// ═══════════════════════════════════════════════════════════
+
+const REPO_DEFAULT = 'Victor19940313/2nd-dental-exam';
+const CONTENT_PATH = (s) => `mnemonics/${s}.json`;
+const VERSIONS_PATH = (s) => `mnemonics/${s}-versions.json`;
+const IDB_DB = 'dental_mnemonics_v1';
+const IDB_STORE = 'mnemonics';
+
+const ALLOWED_EDITORS = ['HUA', 'Shirley']; // ← 白名單
+const VERSION_KEEP_REMOTE = 50;  // GitHub 上最多留 50 版(避免檔案無限長)
+const VERSION_KEEP_LOCAL = 20;   // 本機 IDB 留 20 版
+
+const SUBJECT_NAME = { ya3: '🦷 牙三', ya4: '🩺 牙四', ya5: '🦴 牙五', ya6: '👶 牙六' };
+const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
+
+// ──────────────────────────────────────────────────────────
+// 使用者 + 權限
+// ──────────────────────────────────────────────────────────
+function getCurrentUser() {
+  try {
+    const ulist = JSON.parse(localStorage.getItem('dental_users') || '[]');
+    const curId = localStorage.getItem('dental_current_user_id') || (ulist[0] && ulist[0].id);
+    const u = ulist.find(x => x.id === curId);
+    return u || { id: 'guest', name: 'Guest' };
+  } catch(e) { return { id: 'guest', name: 'Guest' }; }
+}
+const CUR_USER = getCurrentUser();
+const CAN_EDIT = ALLOWED_EDITORS.includes(CUR_USER.name || '');
+
+(function setupUserUI(){
+  const tag = document.getElementById('user-tag');
+  tag.textContent = CUR_USER.name || 'Guest';
+  if (!CAN_EDIT) tag.classList.add('readonly');
+
+  const slot = document.getElementById('info-banner-slot');
+  if (CAN_EDIT) {
+    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${CUR_USER.name}</strong>,有編輯權限。所有人共同編輯,每次儲存會留版本快照,可從「📜 歷史」回溯。</div>`;
+  } else {
+    slot.innerHTML = `<div class="info-banner readonly">🔒 唯讀模式 — 目前只有 ${ALLOWED_EDITORS.join('、')} 能編輯。你可以看但不能存。</div>`;
+  }
+})();
+
+// ──────────────────────────────────────────────────────────
+// IDB
+// ──────────────────────────────────────────────────────────
+function _idbOpen() {
+  return new Promise((resolve, reject) => {
+    const r = indexedDB.open(IDB_DB, 1);
+    r.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+}
+async function idbGet(key) {
+  const db = await _idbOpen();
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const r = tx.objectStore(IDB_STORE).get(key);
+    r.onsuccess = () => { db.close(); resolve(r.result || null); };
+    r.onerror = () => { db.close(); resolve(null); };
+  });
+}
+async function idbSet(key, val) {
+  const db = await _idbOpen();
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(val, key);
+    tx.oncomplete = () => { db.close(); resolve(true); };
+    tx.onerror = () => { db.close(); resolve(false); };
+  });
+}
+async function idbDel(key) {
+  const db = await _idbOpen();
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(key);
+    tx.oncomplete = () => { db.close(); resolve(true); };
+    tx.onerror = () => { db.close(); resolve(false); };
+  });
+}
+
+const k = {
+  cloud:    (s) => `cloud_${s}`,         // 雲端版內容(章節清單)
+  draft:    (s, chId) => `draft_${s}_${chId}`,  // 每章節的草稿
+  versions: (s) => `versions_${s}`,      // 該科版本歷史
+};
+
+// ──────────────────────────────────────────────────────────
+// GitHub
+// ──────────────────────────────────────────────────────────
+function getGithubToken() {
+  return localStorage.getItem(CUR_USER.id + '_github_token') || localStorage.getItem('github_token') || '';
+}
+function getGithubRepo() {
+  return localStorage.getItem(CUR_USER.id + '_github_repo') || localStorage.getItem('github_repo') || REPO_DEFAULT;
+}
+function utf8ToBase64(s) { return btoa(unescape(encodeURIComponent(s))); }
+
+async function fetchFromCdn(path) {
+  const repo = getGithubRepo();
+  const url = `https://cdn.jsdelivr.net/gh/${repo}@main/${path}?_=${Date.now()}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+async function fetchFromGithub(path) {
+  const token = getGithubToken();
+  const repo = getGithubRepo();
+  if (!token) return { data: null, sha: null };
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' },
+      cache: 'no-store'
+    });
+    if (r.status === 404) return { data: null, sha: null };
+    if (!r.ok) return { data: null, sha: null };
+    const d = await r.json();
+    let parsed = null;
+    try { parsed = JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, ''))))); } catch(e) {}
+    return { data: parsed, sha: d.sha };
+  } catch(e) { return { data: null, sha: null }; }
+}
+
+async function pushToGithub(path, data, sha, message, retryCount = 0) {
+  const token = getGithubToken();
+  const repo = getGithubRepo();
+  if (!token) throw new Error('沒設定 GitHub token(去考試 App → 設定 → GitHub)');
+  const body = {
+    message: message || `[mnemonics] update`,
+    content: utf8ToBase64(JSON.stringify(data, null, 2))
+  };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const txt = await r.text();
+    if ((r.status === 409 || /sha/i.test(txt)) && retryCount < 2) {
+      const fresh = await fetchFromGithub(path);
+      return await pushToGithub(path, data, fresh.sha, message, retryCount + 1);
+    }
+    throw new Error('PUT 失敗 ' + r.status + ': ' + txt.slice(0, 200));
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+// 狀態
+// ──────────────────────────────────────────────────────────
+// 結構: _state[subject] = { chapters: [{id, title, content, ts, updatedBy}], ts, updatedBy }
+let _state = { ya3: null, ya4: null, ya5: null, ya6: null };
+let _curSubject = 'ya3';
+let _curChapterId = null;
+let _editor = null;
+let _dirty = false;
+let _draftTimer = null;
+let _loaded = new Set(); // 已經拉過 CDN 的科目
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function genChId() { return 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
+
+// ──────────────────────────────────────────────────────────
+// 載入
+// ──────────────────────────────────────────────────────────
+async function loadSubject(subject) {
+  // 1. IDB cache 撈
+  const cache = await idbGet(k.cloud(subject));
+  if (cache && cache.chapters) _state[subject] = cache;
+  else _state[subject] = { chapters: [], ts: 0, updatedBy: '' };
+  // 2. 背景拉 CDN
+  if (!_loaded.has(subject)) {
+    _loaded.add(subject);
+    fetchFromCdn(CONTENT_PATH(subject)).then(async (remote) => {
+      if (!remote || !remote.chapters) return;
+      const cur = _state[subject];
+      if (!cur || (remote.ts || 0) > (cur.ts || 0)) {
+        _state[subject] = remote;
+        await idbSet(k.cloud(subject), remote);
+        if (_curSubject === subject) {
+          renderChapterList();
+          // 若目前章節在新雲端版裡也存在,reload 內容(除非有 dirty)
+          if (_curChapterId && !_dirty) {
+            const ch = remote.chapters.find(c => c.id === _curChapterId);
+            if (ch && _editor) _editor.commands.setContent(ch.content || '<p></p>');
+          }
+        }
+      }
+    });
+  }
+}
+
+function renderChapterList() {
+  const subj = _state[_curSubject] || { chapters: [] };
+  const container = document.getElementById('ch-items');
+  const head = document.getElementById('ch-head-label');
+  head.textContent = `${SUBJECT_LABEL[_curSubject]} · ${subj.chapters.length} 章`;
+  if (subj.chapters.length === 0) {
+    container.innerHTML = '<div class="empty">還沒有章節<br>按「+ 新增」開始</div>';
+    return;
+  }
+  container.innerHTML = subj.chapters.map(ch => {
+    const active = ch.id === _curChapterId;
+    return `<div class="ch-item ${active ? 'active' : ''}" onclick="pickChapter('${ch.id}')">
+      <span class="ch-title">${escapeHtml(ch.title || '(無標題)')}</span>
+      ${CAN_EDIT ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+}
+
+async function switchSubject(subj) {
+  if (_dirty && _curChapterId) {
+    await idbSet(k.draft(_curSubject, _curChapterId), { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
+  }
+  _curSubject = subj;
+  document.querySelectorAll('#subject-tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.subject === subj);
+  });
+  await loadSubject(subj);
+  renderChapterList();
+  // 自動選第一章(如果有)
+  const subjState = _state[subj];
+  if (subjState && subjState.chapters.length > 0) {
+    pickChapter(subjState.chapters[0].id);
+  } else {
+    _curChapterId = null;
+    showEmptyEditor();
+  }
+}
+
+async function pickChapter(chId) {
+  if (_dirty && _curChapterId) {
+    await idbSet(k.draft(_curSubject, _curChapterId), { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
+  }
+  _curChapterId = chId;
+  const subj = _state[_curSubject];
+  const ch = subj.chapters.find(c => c.id === chId);
+  if (!ch) { showEmptyEditor(); return; }
+  // 優先用 draft
+  const draft = await idbGet(k.draft(_curSubject, chId));
+  const titleInput = document.getElementById('title-input');
+  if (_editor) {
+    if (draft) {
+      _editor.commands.setContent(draft.content || '<p></p>');
+      titleInput.value = draft.title || ch.title || '';
+      _dirty = true;
+      showToast('📝 載入未存草稿');
+    } else {
+      _editor.commands.setContent(ch.content || '<p></p>');
+      titleInput.value = ch.title || '';
+      _dirty = false;
+    }
+  }
+  refreshStatusUI();
+  renderChapterList();
+}
+
+function showEmptyEditor() {
+  const body = document.getElementById('editor-body');
+  if (_editor) {
+    try { _editor.destroy(); } catch(e) {}
+    _editor = null;
+  }
+  body.innerHTML = '<div class="empty-pick"><div class="em">📒</div><div>從左邊選一章開始' + (CAN_EDIT ? ',或按「+ 新增」' : '') + '</div></div>';
+  document.getElementById('title-input').value = '';
+  document.getElementById('title-input').placeholder = '章節標題...';
+  document.getElementById('meta-text').textContent = '';
+  refreshStatusUI();
+  // 沒章節時也要把 editor 重新做出來(下次 pick 時用)
+  if (!_editor) initEditorOnce();
+}
+
+function refreshStatusUI() {
+  const subj = _state[_curSubject];
+  const ch = subj && _curChapterId ? subj.chapters.find(c => c.id === _curChapterId) : null;
+  const meta = document.getElementById('meta-text');
+  if (ch) {
+    const lastEditor = ch.updatedBy || '(未知)';
+    const lastTs = ch.ts ? new Date(ch.ts).toLocaleString('zh-TW') : '(未存)';
+    meta.textContent = `${lastEditor} · ${lastTs}`;
+  } else {
+    meta.textContent = '';
+  }
+  document.getElementById('draft-tag').style.display = _dirty ? 'inline-block' : 'none';
+  const btn = document.getElementById('save-btn');
+  btn.disabled = !_dirty || !CAN_EDIT || !_curChapterId;
+  btn.textContent = _dirty ? '💾 推到雲端' : '💾 已是最新';
+  // title input + editor read-only state
+  const titleInput = document.getElementById('title-input');
+  titleInput.disabled = !CAN_EDIT;
+  if (_editor) _editor.setEditable(CAN_EDIT);
+  // 新增按鈕
+  document.getElementById('btn-add-ch').disabled = !CAN_EDIT;
+}
+
+function onTitleChange() {
+  if (!_curChapterId || !CAN_EDIT) return;
+  _dirty = true;
+  refreshStatusUI();
+}
+
+// ──────────────────────────────────────────────────────────
+// 章節操作
+// ──────────────────────────────────────────────────────────
+function addChapter() {
+  if (!CAN_EDIT) { showToast('你沒有編輯權限'); return; }
+  const title = prompt('新章節標題:', '新章節');
+  if (!title || !title.trim()) return;
+  const subj = _state[_curSubject];
+  if (!subj.chapters) subj.chapters = [];
+  const newCh = {
+    id: genChId(),
+    title: title.trim(),
+    content: '<p></p>',
+    ts: Date.now(),
+    updatedBy: CUR_USER.name || 'Guest'
+  };
+  subj.chapters.push(newCh);
+  _curChapterId = newCh.id;
+  _dirty = true;
+  renderChapterList();
+  pickChapter(newCh.id);
+  showToast('已新增,記得按💾推到雲端');
+}
+
+async function deleteChapter(chId) {
+  if (!CAN_EDIT) return;
+  const subj = _state[_curSubject];
+  const ch = subj.chapters.find(c => c.id === chId);
+  if (!ch) return;
+  if (!confirm(`刪除「${ch.title}」?\n\n刪掉後可以從「📜 歷史」還原。`)) return;
+  // 把刪除前狀態存進歷史(待會 saveToCloud 會記)
+  subj.chapters = subj.chapters.filter(c => c.id !== chId);
+  _dirty = true;
+  await idbDel(k.draft(_curSubject, chId));
+  if (_curChapterId === chId) {
+    _curChapterId = subj.chapters[0] ? subj.chapters[0].id : null;
+    if (_curChapterId) pickChapter(_curChapterId);
+    else showEmptyEditor();
+  }
+  renderChapterList();
+  showToast('已刪除,按💾推到雲端才會真的不見');
+}
+
+// ──────────────────────────────────────────────────────────
+// 雲端同步
+// ──────────────────────────────────────────────────────────
+async function refreshFromCloud() {
+  if (_dirty) {
+    if (!confirm('有未儲存草稿,刷新會用雲端版覆蓋。要繼續?')) return;
+    if (_curChapterId) await idbDel(k.draft(_curSubject, _curChapterId));
+  }
+  showToast('🔄 拉雲端最新…');
+  const remote = await fetchFromCdn(CONTENT_PATH(_curSubject));
+  if (remote && remote.chapters) {
+    _state[_curSubject] = remote;
+    await idbSet(k.cloud(_curSubject), remote);
+    renderChapterList();
+    if (_curChapterId) {
+      const ch = remote.chapters.find(c => c.id === _curChapterId);
+      if (ch && _editor) {
+        _editor.commands.setContent(ch.content || '<p></p>');
+        document.getElementById('title-input').value = ch.title || '';
+      }
+    }
+    _dirty = false;
+    refreshStatusUI();
+    showToast('✓ 已是最新');
+  } else {
+    showToast('❌ 拉不到(可能還沒人推過)');
+  }
+}
+
+async function saveToCloud() {
+  if (!CAN_EDIT) return;
+  if (!getGithubToken()) {
+    alert('沒設定 GitHub token,沒辦法推到雲端。\n\n請先去「考試 App → ⚙️ 設定 → GitHub」設定 token。');
+    return;
+  }
+  // 先把當前章節最新內容寫進 state
+  const subj = _state[_curSubject];
+  if (_curChapterId) {
+    const ch = subj.chapters.find(c => c.id === _curChapterId);
+    if (ch && _editor) {
+      // 先把舊版加進 version snapshot(BEFORE 變更)
+      const oldSnapshot = {
+        ts: Date.now(),
+        updatedBy: CUR_USER.name || 'Guest',
+        action: 'edit_chapter',
+        chapterId: ch.id,
+        chapterTitleBefore: ch.title,
+        snapshotBefore: { title: ch.title, content: ch.content }
+      };
+      const newTitle = document.getElementById('title-input').value.trim() || ch.title;
+      ch.title = newTitle;
+      ch.content = _editor.getHTML();
+      ch.ts = Date.now();
+      ch.updatedBy = CUR_USER.name || 'Guest';
+      // 把這個 snapshot 排入待推
+      await appendVersion(_curSubject, oldSnapshot);
+    }
+  }
+  subj.ts = Date.now();
+  subj.updatedBy = CUR_USER.name || 'Guest';
+
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 推送中…';
+  try {
+    // 1. push 內容檔
+    const { sha: contentSha } = await fetchFromGithub(CONTENT_PATH(_curSubject));
+    await pushToGithub(CONTENT_PATH(_curSubject), subj, contentSha,
+      `[mnemonics] ${SUBJECT_LABEL[_curSubject]} by ${CUR_USER.name}`);
+    await idbSet(k.cloud(_curSubject), subj);
+    if (_curChapterId) await idbDel(k.draft(_curSubject, _curChapterId));
+    // 2. push 版本歷史檔(append-only,但 cap 50)
+    await pushVersionsFile(_curSubject);
+    _dirty = false;
+    refreshStatusUI();
+    renderChapterList();
+    showToast('✅ 已推到雲端 + 版本快照');
+  } catch(e) {
+    console.error(e);
+    alert('儲存失敗:' + e.message + '\n\n本機草稿還在 IDB,不會掉。');
+    btn.disabled = false;
+    btn.textContent = '💾 重試';
+  }
+}
+
+async function appendVersion(subject, entry) {
+  const versions = (await idbGet(k.versions(subject))) || [];
+  versions.push(entry);
+  // 本機只留最近 N 個
+  if (versions.length > VERSION_KEEP_LOCAL * 2) {
+    versions.splice(0, versions.length - VERSION_KEEP_LOCAL * 2);
+  }
+  await idbSet(k.versions(subject), versions);
+}
+
+async function pushVersionsFile(subject) {
+  // 拉雲端版本檔
+  const { data: remoteV, sha } = await fetchFromGithub(VERSIONS_PATH(subject));
+  let merged = (remoteV && Array.isArray(remoteV)) ? remoteV.slice() : [];
+  const local = (await idbGet(k.versions(subject))) || [];
+  // 合併:用 ts 去重
+  const seen = new Set(merged.map(v => v.ts));
+  local.forEach(v => { if (!seen.has(v.ts)) { merged.push(v); seen.add(v.ts); } });
+  // 按 ts 降序排,cap 50
+  merged.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  if (merged.length > VERSION_KEEP_REMOTE) merged = merged.slice(0, VERSION_KEEP_REMOTE);
+  await pushToGithub(VERSIONS_PATH(subject), merged, sha,
+    `[mnemonics-versions] ${SUBJECT_LABEL[subject]} by ${CUR_USER.name}`);
+  await idbSet(k.versions(subject), merged);
+}
+
+// ──────────────────────────────────────────────────────────
+// 版本歷史 modal
+// ──────────────────────────────────────────────────────────
+async function openVersionModal() {
+  // 同時撈本機 + 雲端 versions
+  const [local, remote] = await Promise.all([
+    idbGet(k.versions(_curSubject)),
+    fetchFromCdn(VERSIONS_PATH(_curSubject))
+  ]);
+  let merged = (Array.isArray(remote) ? remote : []).slice();
+  (local || []).forEach(v => {
+    if (!merged.find(m => m.ts === v.ts)) merged.push(v);
+  });
+  merged.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  if (merged.length === 0) {
+    showVersionModalContent('<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有版本歷史</div>');
+    return;
+  }
+  const rows = merged.map((v, i) => {
+    const dt = new Date(v.ts).toLocaleString('zh-TW');
+    const chTitle = v.chapterTitleBefore || '(該章節)';
+    const action = v.action === 'edit_chapter' ? '編輯' : (v.action || '改動');
+    return `<div class="version-row">
+      <div class="v-info">
+        <div class="v-title">「${escapeHtml(chTitle)}」 - ${action}</div>
+        <div class="v-meta">${escapeHtml(v.updatedBy || '(未知)')} · ${dt}</div>
+      </div>
+      <div class="v-action">
+        <button onclick="previewVersion(${i})">👁 預覽</button>
+        ${CAN_EDIT ? `<button class="restore" onclick="restoreVersion(${i})">↶ 還原</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  window._versionList = merged;
+  showVersionModalContent('<div>共 ' + merged.length + ' 個版本(只留最近 ' + VERSION_KEEP_REMOTE + ' 個)</div><br>' + rows);
+}
+
+function showVersionModalContent(html) {
+  let overlay = document.getElementById('version-modal');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'version-modal';
+    overlay.className = 'modal-overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `<div class="modal">
+    <button class="close-x" onclick="closeVersionModal()">✕</button>
+    <h2>📜 ${SUBJECT_NAME[_curSubject]} 編輯歷史</h2>
+    <div id="version-body">${html}</div>
+  </div>`;
+  overlay.onclick = (e) => { if (e.target === overlay) closeVersionModal(); };
+}
+function closeVersionModal() {
+  const o = document.getElementById('version-modal');
+  if (o) o.remove();
+}
+
+function previewVersion(idx) {
+  const v = window._versionList[idx];
+  if (!v || !v.snapshotBefore) return;
+  const html = '<h3 style="margin-bottom:.5rem">' + escapeHtml(v.snapshotBefore.title || '(無標題)') + '</h3>'
+    + '<div class="version-preview">' + (v.snapshotBefore.content || '<p>(空)</p>') + '</div>'
+    + '<div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">'
+    + '<button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button>'
+    + (CAN_EDIT ? '<button onclick="restoreVersion(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
+    + '</div>';
+  showVersionModalContent(html);
+}
+
+async function restoreVersion(idx) {
+  if (!CAN_EDIT) return;
+  const v = window._versionList[idx];
+  if (!v || !v.snapshotBefore) return;
+  if (!confirm('確定還原「' + (v.snapshotBefore.title || '該章節') + '」到 ' + new Date(v.ts).toLocaleString('zh-TW') + ' 的版本?\n\n會覆蓋當前內容,但會另外留新版本快照,可以再還原回現在。')) return;
+  const subj = _state[_curSubject];
+  // 找對應章節
+  let ch = subj.chapters.find(c => c.id === v.chapterId);
+  if (!ch) {
+    // 章節已被刪 → 還原 = 新增回去
+    ch = {
+      id: v.chapterId,
+      title: v.snapshotBefore.title,
+      content: v.snapshotBefore.content,
+      ts: Date.now(),
+      updatedBy: CUR_USER.name || 'Guest'
+    };
+    subj.chapters.push(ch);
+  } else {
+    ch.title = v.snapshotBefore.title;
+    ch.content = v.snapshotBefore.content;
+    ch.ts = Date.now();
+    ch.updatedBy = CUR_USER.name || 'Guest';
+  }
+  _curChapterId = ch.id;
+  _dirty = true;
+  closeVersionModal();
+  renderChapterList();
+  pickChapter(ch.id);
+  showToast('已還原,記得按 💾 推到雲端');
+}
+
+// ──────────────────────────────────────────────────────────
+// 自動草稿 (3 秒)
+// ──────────────────────────────────────────────────────────
+function startDraftAutoSave() {
+  if (_draftTimer) clearInterval(_draftTimer);
+  _draftTimer = setInterval(async () => {
+    if (_dirty && _editor && _curChapterId) {
+      await idbSet(k.draft(_curSubject, _curChapterId), {
+        content: _editor.getHTML(),
+        title: document.getElementById('title-input').value,
+        ts: Date.now()
+      });
+    }
+  }, 3000);
+}
+
+// ──────────────────────────────────────────────────────────
+// 編輯器初始化
+// ──────────────────────────────────────────────────────────
+let _coreModules = null;
+async function loadTipTapModules() {
+  if (_coreModules) return _coreModules;
+  const core = await import('https://esm.sh/@tiptap/core@2');
+  const StarterKit = (await import('https://esm.sh/@tiptap/starter-kit@2')).default;
+  const Underline = (await import('https://esm.sh/@tiptap/extension-underline@2')).default;
+  const Highlight = (await import('https://esm.sh/@tiptap/extension-highlight@2')).default;
+  const Table = (await import('https://esm.sh/@tiptap/extension-table@2')).default;
+  const TableRow = (await import('https://esm.sh/@tiptap/extension-table-row@2')).default;
+  const TableHeader = (await import('https://esm.sh/@tiptap/extension-table-header@2')).default;
+  const TableCell = (await import('https://esm.sh/@tiptap/extension-table-cell@2')).default;
+  const TextAlign = (await import('https://esm.sh/@tiptap/extension-text-align@2')).default;
+  const Image = (await import('https://esm.sh/@tiptap/extension-image@2')).default;
+  _coreModules = { core, StarterKit, Underline, Highlight, Table, TableRow, TableHeader, TableCell, TextAlign, Image };
+  return _coreModules;
+}
+
+// 🖼 圖片上傳:上傳到 GitHub repo 的 mnemonics-images/ 共用資料夾,回傳 CDN URL
+async function uploadImageToGithub(blob) {
+  const token = getGithubToken();
+  const repo = getGithubRepo();
+  if (!token) throw new Error('沒設定 GitHub token');
+  // base64
+  const b64 = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1]);
+    r.onerror = () => reject(new Error('讀檔失敗'));
+    r.readAsDataURL(blob);
+  });
+  const ts = new Date();
+  const stamp = ts.getFullYear() + String(ts.getMonth()+1).padStart(2,'0') + String(ts.getDate()).padStart(2,'0')
+    + '-' + String(ts.getHours()).padStart(2,'0') + String(ts.getMinutes()).padStart(2,'0') + String(ts.getSeconds()).padStart(2,'0');
+  const rand = Math.random().toString(36).slice(2,6);
+  const ext = ((blob.type || 'image/png').split('/')[1] || 'png').replace('jpeg','jpg');
+  const path = `mnemonics-images/${stamp}-${rand}.${ext}`;
+  const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
+  const res = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: `upload mnemonics image (${CUR_USER.name})`, content: b64 })
+  });
+  if (!res.ok) {
+    const errTxt = await res.text();
+    throw new Error('GitHub ' + res.status + ': ' + errTxt.slice(0, 200));
+  }
+  return `https://cdn.jsdelivr.net/gh/${repo}@main/${path}`;
+}
+
+async function tryUploadAndInsert(blob) {
+  if (!CAN_EDIT) { showToast('你沒有編輯權限'); return; }
+  if (!_editor) return;
+  showToast('📷 上傳中…(大圖會慢一點)');
+  try {
+    const url = await uploadImageToGithub(blob);
+    _editor.chain().focus().setImage({ src: url }).run();
+    showToast('✓ 圖已上傳');
+  } catch(e) {
+    showToast('❌ 上傳失敗: ' + e.message.slice(0, 80));
+  }
+}
+
+// 📷 工具列觸發檔案選擇
+function pickImageFile() {
+  if (!CAN_EDIT) return;
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.onchange = (e) => {
+    const f = e.target.files[0];
+    if (f) tryUploadAndInsert(f);
+  };
+  inp.click();
+}
+
+async function initEditorOnce() {
+  if (_editor) return;
+  const mods = await loadTipTapModules();
+  const body = document.getElementById('editor-body');
+  body.innerHTML = '';
+  _editor = new mods.core.Editor({
+    element: body,
+    extensions: [
+      mods.StarterKit,
+      mods.Underline,
+      mods.Highlight,
+      mods.Table.configure({ resizable: true }),
+      mods.TableRow, mods.TableHeader, mods.TableCell,
+      mods.TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      mods.Image.configure({ inline: false, allowBase64: false }),
+    ],
+    content: '<p></p>',
+    editable: CAN_EDIT,
+    editorProps: {
+      handlePaste(view, event) {
+        if (!CAN_EDIT) return false;
+        const cd = event.clipboardData;
+        if (!cd) return false;
+        for (const item of cd.items || []) {
+          if (item.type && item.type.startsWith('image/')) {
+            event.preventDefault();
+            const blob = item.getAsFile();
+            if (blob) tryUploadAndInsert(blob);
+            return true;
+          }
+        }
+        return false;
+      },
+      handleDrop(view, event) {
+        if (!CAN_EDIT) return false;
+        const files = event.dataTransfer && event.dataTransfer.files;
+        if (!files || !files.length) return false;
+        for (const file of files) {
+          if (file.type && file.type.startsWith('image/')) {
+            event.preventDefault();
+            tryUploadAndInsert(file);
+            return true;
+          }
+        }
+        return false;
+      }
+    },
+    onUpdate: () => {
+      _dirty = true;
+      refreshStatusUI();
+    }
+  });
+}
+
+async function init() {
+  try {
+    await initEditorOnce();
+    // 工具列
+    const toolbar = document.getElementById('toolbar');
+    const TOOLS = [
+      { cmd: 'toggleBold', label: 'B', title: '粗體' },
+      { cmd: 'toggleItalic', label: 'I', title: '斜體' },
+      { cmd: 'toggleUnderline', label: 'U', title: '底線' },
+      { cmd: 'toggleStrike', label: 'S̶', title: '刪除線' },
+      { cmd: 'toggleHighlight', label: '🖍', title: '螢光' },
+      { sep: true },
+      { cmd: ['toggleHeading', { level: 2 }], label: 'H2', title: '大標' },
+      { cmd: ['toggleHeading', { level: 3 }], label: 'H3', title: '中標' },
+      { sep: true },
+      { cmd: 'toggleBulletList', label: '•', title: '項目' },
+      { cmd: 'toggleOrderedList', label: '1.', title: '編號' },
+      { cmd: 'toggleBlockquote', label: '"', title: '口訣框' },
+      { sep: true },
+      { cmd: 'insertTable', label: '⊞', title: '表格', arg: { rows: 3, cols: 3, withHeaderRow: true } },
+      { custom: 'pickImage', label: '📷', title: '插入圖片(也可直接貼上 / 拖拉)' },
+      { sep: true },
+      { cmd: 'undo', label: '↶', title: '復原' },
+      { cmd: 'redo', label: '↷', title: '重做' },
+    ];
+    TOOLS.forEach(t => {
+      if (t.sep) {
+        const s = document.createElement('div'); s.className = 'sep'; toolbar.appendChild(s); return;
+      }
+      const b = document.createElement('button');
+      b.textContent = t.label;
+      b.title = t.title || '';
+      b.disabled = !CAN_EDIT;
+      b.onclick = () => {
+        if (!CAN_EDIT) return;
+        if (t.custom === 'pickImage') { pickImageFile(); return; }
+        const chain = _editor.chain().focus();
+        const cmdName = Array.isArray(t.cmd) ? t.cmd[0] : t.cmd;
+        const cmdArg = Array.isArray(t.cmd) ? t.cmd[1] : t.arg;
+        if (cmdArg) chain[cmdName](cmdArg).run(); else chain[cmdName]().run();
+      };
+      toolbar.appendChild(b);
+    });
+    await switchSubject('ya3');
+    startDraftAutoSave();
+  } catch (err) {
+    document.getElementById('editor-body').innerHTML =
+      '<div style="padding:1.5rem;color:#dc2626;text-align:center">❌ 載入失敗:' + err.message + '<br><br>網路問題,刷新重試</div>';
+  }
+}
+init();
+
+window.addEventListener('beforeunload', (e) => {
+  if (_dirty) { e.preventDefault(); e.returnValue = '有未儲存草稿,確定離開?'; }
+});
+</script>
+
+</body>
+</html>

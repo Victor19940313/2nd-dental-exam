@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-realtime-content';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-lightbox-softer';
 const PRECACHE = [
   './',
   './index.html',

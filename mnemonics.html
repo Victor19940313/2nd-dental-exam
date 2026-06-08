@@ -659,9 +659,8 @@ function showEmptyEditor() {
     _editor = null;
   }
   body.innerHTML = '<div class="empty-pick"><div class="em">📒</div><div>從左邊選一章開始' + (CAN_EDIT ? ',或按「+ 新增」' : '') + '</div></div>';
-  document.getElementById('title-input').value = '';
-  document.getElementById('title-input').placeholder = '章節標題...';
-  document.getElementById('meta-text').textContent = '';
+  const ti = document.getElementById('title-input');
+  if (ti) { ti.value = ''; ti.placeholder = '章節標題...'; }
   refreshStatusUI();
   // 沒章節時也要把 editor 重新做出來(下次 pick 時用)
   if (!_editor) initEditorOnce();
@@ -670,14 +669,7 @@ function showEmptyEditor() {
 function refreshStatusUI() {
   const subj = curState();
   const ch = subj && _curChapterId ? subj.chapters.find(c => c.id === _curChapterId) : null;
-  const meta = document.getElementById('meta-text');
-  if (ch) {
-    const lastEditor = ch.updatedBy || '(未知)';
-    const lastTs = ch.ts ? new Date(ch.ts).toLocaleString('zh-TW') : '(未存)';
-    meta.textContent = `${_curUser} 區・${lastEditor} · ${lastTs}`;
-  } else {
-    meta.textContent = '';
-  }
+  // meta-text 已經移除,不再使用
   const editBtn = document.getElementById('edit-btn');
   const saveBtn = document.getElementById('save-btn');
   const abandonBtn = document.getElementById('abandon-btn');

@@ -33,7 +33,15 @@ body {
   max-width: 1100px;
   margin: 0 auto;
 }
-.topbar { display: flex; align-items: center; gap: .7rem; padding: .8rem 1rem; background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 1rem; }
+.topbar { display: flex; align-items: center; gap: .7rem; padding: .8rem 1rem; background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: .55rem; flex-wrap: wrap; }
+.nav-row { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.nav-link { padding: .42rem .85rem; border-radius: 10px; font-size: .82rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all .12s; }
+.nav-link:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+.nav-link.nav-exam { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; }
+.nav-link.nav-ya3 { background: white; border: 1.5px solid var(--ya3); color: var(--ya3); }
+.nav-link.nav-ya4 { background: white; border: 1.5px solid var(--ya4); color: var(--ya4); }
+.nav-link.nav-ya5 { background: white; border: 1.5px solid var(--ya5); color: var(--ya5); }
+.nav-link.nav-ya6 { background: white; border: 1.5px solid var(--ya6); color: var(--ya6); }
 .topbar h1 { font-size: 1.15rem; font-weight: 800; flex: 1; }
 .topbar .back { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .45rem .85rem; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; font-size: .85rem; }
 .topbar-add { background: #16a34a; color: white; border: none; padding: .5rem 1rem; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: .9rem; box-shadow: 0 2px 6px rgba(22,163,74,.3); }
@@ -138,12 +146,19 @@ body {
 <body>
 
 <div class="topbar">
-  <a href="index.html" class="back">← 返回</a>
+  <a href="index.html" class="back">← 選單</a>
   <h1 class="ns-title">🧠 正在瀏覽
     <select id="user-select" class="user-select" onchange="onUserSelectChange(this.value)"></select>
     的口訣區
   </h1>
   <span class="user-tag" id="user-tag">--</span>
+</div>
+<div class="nav-row">
+  <a href="exam/index.html" class="nav-link nav-exam">📝 考試 App</a>
+  <a href="ya3/index.html" class="nav-link nav-ya3">🦷 牙三</a>
+  <a href="ya4/index.html" class="nav-link nav-ya4">🩺 牙四</a>
+  <a href="ya5/index.html" class="nav-link nav-ya5">🦴 牙五</a>
+  <a href="ya6/index.html" class="nav-link nav-ya6">👶 牙六</a>
 </div>
 
 <div id="info-banner-slot"></div>

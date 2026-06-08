@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v302-mnemonics-fix-null-meta-text';
+const CACHE_NAME = 'dental-all-v303-mnemonics-nav-row';
 const PRECACHE = [
   './',
   './index.html',

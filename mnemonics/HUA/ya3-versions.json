@@ -1,5 +1,16 @@
 [
   {
+    "ts": 1780892009130,
+    "updatedBy": "HUA",
+    "action": "edit_chapter",
+    "chapterId": "ch_1780892002959_zr46",
+    "chapterTitleBefore": "咬合干擾的修磨",
+    "snapshotBefore": {
+      "title": "咬合干擾的修磨",
+      "content": "<p></p>"
+    }
+  },
+  {
     "ts": 1780891938139,
     "updatedBy": "HUA",
     "action": "delete_chapter",

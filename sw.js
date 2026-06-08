@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-toolbar-init-fix';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-notebook-backup';
 const PRECACHE = [
   './',
   './index.html',

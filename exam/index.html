@@ -4105,6 +4105,7 @@
           <button class="nb-tb-btn" id="btn-pending" onclick="openPendingModal()" title="之前整理失敗的題目（可一鍵重試）" style="display:none;background:#fef3c7;border-color:#fbbf24;color:#92400e">📥 待整理</button>
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題分組（章節內文不會改）">🗂 子主題分組</button>
           <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出講同件事卻被切太細的章節 → 合併成一章（圖片絕對保留）" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 合併重複章節</button>
+          <button class="nb-tb-btn" onclick="openNotebookBackupModal()" title="合併/AI 整理之前的筆記快照,出事可一鍵還原" style="background:#fee2e2;border-color:#ef4444;color:#991b1b">🛟 還原備份</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
@@ -10672,6 +10673,127 @@ ${JSON.stringify(list, null, 2)}
 
       let _mergeChState = { subject: 'ya5', groups: null, scanning: false, executing: false, doneCount: 0, totalCount: 0 };
 
+      // ──────────────────────────────────────────────────────────
+      // v339:筆記本「合併 / 還原前自動備份」防呆機制
+      //      Firebase 路徑:users/{uid}/notebook_backups/{push_id} = { ts, label, payload }
+      //      保留最近 5 個快照
+      // ──────────────────────────────────────────────────────────
+      const NB_BACKUP_KEEP = 5;
+      async function backupNotebookToCloud(label){
+        try {
+          const uid = (typeof DentalSync !== 'undefined' && DentalSync.getUserId) ? DentalSync.getUserId() : null;
+          if (!uid) throw new Error('未登入');
+          if (typeof firebase === 'undefined' || !firebase.database) throw new Error('Firebase SDK 沒載入');
+          const payload = (typeof notebook !== 'undefined') ? JSON.stringify(notebook) : null;
+          if (!payload || payload === '{}') throw new Error('筆記是空的,不備份');
+          const db = firebase.database();
+          await db.ref(`users/${uid}/notebook_backups`).push({
+            ts: Date.now(),
+            label: label || '備份',
+            payload: payload,
+            count: (notebook.chapters || []).length,
+          });
+          // 修剪舊備份
+          const snap = await db.ref(`users/${uid}/notebook_backups`).once('value');
+          const all = [];
+          snap.forEach(c => { all.push({ key: c.key, ts: c.val().ts || 0 }); });
+          all.sort((a,b) => b.ts - a.ts);
+          if (all.length > NB_BACKUP_KEEP) {
+            for (const x of all.slice(NB_BACKUP_KEEP)) {
+              await db.ref(`users/${uid}/notebook_backups/${x.key}`).remove();
+            }
+          }
+          console.log('[backup] saved:', label, all.length, '/', NB_BACKUP_KEEP);
+        } catch(e) {
+          console.warn('[backupNotebookToCloud]', e);
+          throw e;
+        }
+      }
+      async function listNotebookBackups(){
+        const uid = DentalSync.getUserId();
+        if (!uid) return [];
+        const snap = await firebase.database().ref(`users/${uid}/notebook_backups`).once('value');
+        const arr = [];
+        snap.forEach(c => { arr.push({ key: c.key, ...c.val() }); });
+        arr.sort((a,b) => (b.ts||0) - (a.ts||0));
+        return arr;
+      }
+      async function restoreNotebookBackup(key){
+        const uid = DentalSync.getUserId();
+        if (!uid) throw new Error('未登入');
+        const snap = await firebase.database().ref(`users/${uid}/notebook_backups/${key}`).once('value');
+        const v = snap.val();
+        if (!v || !v.payload) throw new Error('找不到這個備份');
+        let parsed;
+        try { parsed = JSON.parse(v.payload); }
+        catch(e) { throw new Error('備份內容毀損'); }
+        if (!parsed || !Array.isArray(parsed.chapters)) throw new Error('備份格式錯誤');
+        // 還原前再備份一次當前狀態(以防萬一)
+        try { await backupNotebookToCloud('還原前自動備份'); } catch(e) { console.warn('[pre-restore backup]', e); }
+        // 原地覆寫 notebook(保持 reference)
+        Object.keys(notebook).forEach(k => delete notebook[k]);
+        Object.assign(notebook, parsed);
+        saveNotebook();
+        if (typeof renderNotebook === 'function') renderNotebook();
+      }
+
+      async function openNotebookBackupModal(){
+        const overlay = document.getElementById('ai-settings-overlay') || document.body;
+        // 簡易自製 modal
+        let modal = document.getElementById('nb-backup-modal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'nb-backup-modal';
+          modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99998;display:flex;align-items:center;justify-content:center;padding:1rem';
+          modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+          document.body.appendChild(modal);
+        }
+        modal.innerHTML = '<div style="background:white;border-radius:14px;padding:1.3rem;max-width:680px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;flex-wrap:wrap;gap:.5rem"><h2 style="margin:0;font-size:1.1rem">🛟 筆記備份 / 還原</h2><div style="display:flex;gap:.4rem"><button onclick="doManualBackup()" style="background:#16a34a;color:white;border:none;padding:.4rem .9rem;border-radius:7px;cursor:pointer;font-weight:700;font-size:.85rem">📦 立刻備份</button><button onclick="document.getElementById(\'nb-backup-modal\').remove()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.4rem .85rem;border-radius:7px;cursor:pointer;font-weight:700">關閉</button></div></div><div id="nb-backup-list" style="color:#6b7280">⏳ 載入中…</div></div>';
+        try {
+          const list = await listNotebookBackups();
+          const listEl = document.getElementById('nb-backup-list');
+          if (!listEl) return;
+          if (!list.length) {
+            listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:#9ca3af">還沒有任何備份。<br><br>下次按「🧹 合併重複章節」時會自動建立備份,出事可從這裡還原。</div>';
+            return;
+          }
+          listEl.innerHTML = '<div style="font-size:.8rem;color:#6b7280;margin-bottom:.7rem">最近 ' + list.length + ' 個備份(超過會自動丟最舊)</div>' + list.map(b => {
+            const dt = b.ts ? new Date(b.ts).toLocaleString('zh-TW') : '?';
+            const cnt = b.count != null ? b.count : '?';
+            return '<div style="border:1px solid #e5e7eb;border-radius:10px;padding:.7rem .9rem;margin-bottom:.55rem;display:flex;align-items:center;gap:.7rem"><div style="flex:1"><div style="font-weight:700;font-size:.95rem;color:#374151">' + escapeHtml(b.label || '備份') + '</div><div style="font-size:.78rem;color:#6b7280;margin-top:.15rem">' + dt + ' · ' + cnt + ' 章</div></div><button onclick="doRestoreBackup(\'' + b.key + '\',\'' + escapeHtml(b.label).replace(/\'/g,'') + '\')" style="background:#dc2626;color:white;border:none;padding:.4rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原這版</button></div>';
+          }).join('');
+        } catch(e) {
+          const el = document.getElementById('nb-backup-list');
+          if (el) el.innerHTML = '<div style="color:#dc2626">❌ 讀取備份失敗:' + (e.message||e) + '</div>';
+        }
+      }
+      async function doRestoreBackup(key, label){
+        if (!confirm('確定還原成「' + label + '」這版?\n\n會覆寫目前的整本筆記。\n(還原前會把目前狀態也存成一筆「還原前自動備份」,反悔還可救)')) return;
+        try {
+          await restoreNotebookBackup(key);
+          const m = document.getElementById('nb-backup-modal');
+          if (m) m.remove();
+          showToast('✅ 還原完成');
+        } catch(e) {
+          alert('還原失敗:' + (e.message||e));
+        }
+      }
+      async function doManualBackup(){
+        const lbl = prompt('幫這次備份取個名(可選):', '手動備份 ' + new Date().toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}));
+        if (lbl === null) return;
+        try {
+          await backupNotebookToCloud(lbl || '手動備份');
+          showToast('📦 備份完成');
+          openNotebookBackupModal();
+        } catch(e) {
+          alert('備份失敗:' + (e.message||e));
+        }
+      }
+      window.openNotebookBackupModal = openNotebookBackupModal;
+      window.doRestoreBackup = doRestoreBackup;
+      window.doManualBackup = doManualBackup;
+      window.backupNotebookToCloud = backupNotebookToCloud;
+
       function openMergeChaptersModal(){
         const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
         let body;
@@ -10850,7 +10972,11 @@ ${JSON.stringify(lite, null, 2)}
         if (!groups.length) { showToast('沒有勾選任何群組'); return; }
 
         const totalChs = groups.reduce((sum, g) => sum + g.chapter_ids.length, 0);
-        if (!confirm(`要合併 ${groups.length} 組(共 ${totalChs} 個舊章節變成 ${groups.length} 個新章節)?\n\n圖片絕對保留(會自動驗證)`)) return;
+        if (!confirm(`要合併 ${groups.length} 組(共 ${totalChs} 個舊章節變成 ${groups.length} 個新章節)?\n\n圖片絕對保留(會自動驗證)\n\n⚠ 合併前會自動備份整本筆記到雲端,若出事可從「🛟 還原備份」回滾`)) return;
+
+        // v339:合併前先把整本筆記快照到雲端,出事可一鍵還原
+        try { await backupNotebookToCloud('合併重複章節前'); }
+        catch(e) { console.warn('[merge backup] fail (still proceeding)', e); }
 
         _mergeChState.executing = true;
         _mergeChState.totalCount = groups.length;

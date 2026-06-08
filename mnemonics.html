@@ -11,11 +11,6 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="themes.css">
-<!-- 🚀 提前告知瀏覽器要載 TipTap 模組(可在 HTML parse 階段就開始抓) -->
-<link rel="modulepreload" href="https://esm.sh/@tiptap/core@2">
-<link rel="modulepreload" href="https://esm.sh/@tiptap/starter-kit@2">
-<link rel="modulepreload" href="https://esm.sh/@tiptap/extension-image@2">
-<link rel="modulepreload" href="https://esm.sh/@tiptap/extension-table@2">
 <style>
 :root {
   --bg: #f8f7f0;
@@ -58,8 +53,8 @@ body {
 .topbar .u-add { background: #fef3c7; border: 1.5px dashed #f59e0b; color: #92400e; padding: .35rem .7rem; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: .78rem; }
 .topbar .u-add:hover { background: #fde68a; }
 .topbar .u-add:disabled, .topbar .u-add.hidden { display: none; }
-.subject-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.subject-tabs button { flex: 1; min-width: 110px; background: white; border: 2px solid var(--border); color: var(--text-sub); padding: .7rem .5rem; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: .95rem; transition: all .15s; }
+.subject-tabs { display: flex; gap: .4rem; margin-bottom: 1rem; }
+.subject-tabs button { flex: 1; min-width: 0; background: white; border: 2px solid var(--border); color: var(--text-sub); padding: .65rem .3rem; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: .92rem; transition: all .15s; white-space: nowrap; }
 .subject-tabs button.active { color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
 .subject-tabs button.active[data-subject="ya3"] { background: var(--ya3); border-color: var(--ya3); }
 .subject-tabs button.active[data-subject="ya4"] { background: var(--ya4); border-color: var(--ya4); }
@@ -166,10 +161,10 @@ body {
 <div id="info-banner-slot"></div>
 
 <div class="subject-tabs" id="subject-tabs">
-  <button data-subject="ya3" onclick="switchSubject('ya3')">🦷 牙三</button>
-  <button data-subject="ya4" onclick="switchSubject('ya4')">🩺 牙四</button>
-  <button data-subject="ya5" onclick="switchSubject('ya5')">🦴 牙五</button>
-  <button data-subject="ya6" onclick="switchSubject('ya6')">👶 牙六</button>
+  <button data-subject="ya3" onclick="switchSubject('ya3')">牙三</button>
+  <button data-subject="ya4" onclick="switchSubject('ya4')">牙四</button>
+  <button data-subject="ya5" onclick="switchSubject('ya5')">牙五</button>
+  <button data-subject="ya6" onclick="switchSubject('ya6')">牙六</button>
 </div>
 
 <div class="workspace">
@@ -231,8 +226,8 @@ const ALLOWED_EDITORS = ['HUA', 'Shirley']; // ← 白名單(看 CUR_USER.name �
 const DEFAULT_USERS = ['HUA', '腦動大開'];   // 雲端 namespace 預設清單(顯示名稱)
 // 登入名稱 → 該使用者預設看到的 namespace(編輯區名稱)
 const NAME_TO_NAMESPACE = { 'HUA': 'HUA', 'Shirley': '腦動大開' };
-const VERSION_KEEP_REMOTE = 50;
-const VERSION_KEEP_LOCAL = 20;
+const VERSION_KEEP_REMOTE = 10; // 每章節保留最近 10 個雲端版本(避免歷史檔無限膨脹)
+const VERSION_KEEP_LOCAL = 10;
 
 const SUBJECT_NAME = { ya3: '🦷 牙三', ya4: '🩺 牙四', ya5: '🦴 牙五', ya6: '👶 牙六' };
 const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
@@ -1152,20 +1147,35 @@ function startDraftAutoSave() {
 // 編輯器初始化
 // ──────────────────────────────────────────────────────────
 let _coreModules = null;
+// 🛡 esm.sh 偶爾在手機掛掉,加 fallback CDN + 自動重試
+const CDN_BASES = [
+  'https://esm.sh/',
+  'https://esm.run/',
+  'https://cdn.skypack.dev/'
+];
+async function importWithFallback(path) {
+  let lastErr = null;
+  for (const base of CDN_BASES) {
+    try { return await import(base + path); }
+    catch(e) { lastErr = e; console.warn('[import retry]', base + path, e.message); }
+  }
+  // 全部失敗 → 再試 esm.sh 一次(也許是暫時 hiccup)
+  try { return await import('https://esm.sh/' + path); }
+  catch(e) { throw lastErr || e; }
+}
 async function loadTipTapModules() {
   if (_coreModules) return _coreModules;
-  // 🚀 並行載入(原本是 await 一個等一個,慢 5-10 倍)
   const [core, StarterKitMod, UnderlineMod, HighlightMod, TableMod, TableRowMod, TableHeaderMod, TableCellMod, TextAlignMod, ImageMod] = await Promise.all([
-    import('https://esm.sh/@tiptap/core@2'),
-    import('https://esm.sh/@tiptap/starter-kit@2'),
-    import('https://esm.sh/@tiptap/extension-underline@2'),
-    import('https://esm.sh/@tiptap/extension-highlight@2'),
-    import('https://esm.sh/@tiptap/extension-table@2'),
-    import('https://esm.sh/@tiptap/extension-table-row@2'),
-    import('https://esm.sh/@tiptap/extension-table-header@2'),
-    import('https://esm.sh/@tiptap/extension-table-cell@2'),
-    import('https://esm.sh/@tiptap/extension-text-align@2'),
-    import('https://esm.sh/@tiptap/extension-image@2'),
+    importWithFallback('@tiptap/core@2'),
+    importWithFallback('@tiptap/starter-kit@2'),
+    importWithFallback('@tiptap/extension-underline@2'),
+    importWithFallback('@tiptap/extension-highlight@2'),
+    importWithFallback('@tiptap/extension-table@2'),
+    importWithFallback('@tiptap/extension-table-row@2'),
+    importWithFallback('@tiptap/extension-table-header@2'),
+    importWithFallback('@tiptap/extension-table-cell@2'),
+    importWithFallback('@tiptap/extension-text-align@2'),
+    importWithFallback('@tiptap/extension-image@2'),
   ]);
   const StarterKit = StarterKitMod.default;
   const Underline = UnderlineMod.default;

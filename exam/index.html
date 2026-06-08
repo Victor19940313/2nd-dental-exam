@@ -4286,10 +4286,21 @@
           </details>
           <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">GitHub Personal Access Token</label>
           <input type="password" id="gh-token-input" placeholder="github_pat_..." style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
-          <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">圖檔要存到哪個 repo</label>
-          <input type="text" id="gh-repo-input" placeholder="你的GitHub帳號/你的repo名稱" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
-          <p style="font-size:.72rem;color:#9ca3af;margin-top:.3rem">不確定填什麼 → 留空也可以，貼圖功能會 disable</p>
+          <label style="display:block;font-size:.78rem;font-weight:700;margin-top:.5rem;margin-bottom:.2rem">圖檔要存到哪個 repo <span style="color:#dc2626;font-weight:400">⚠ 必須是「帳號/repo名稱」格式,中間有斜線</span></label>
+          <input type="text" id="gh-repo-input" placeholder="例:Victor19940313/2nd-dental-exam" oninput="_validateRepoInput(this)" style="width:100%;padding:.5rem .7rem;border:1.5px solid #d1d5db;border-radius:6px;font-family:monospace;font-size:.85rem" />
+          <p id="gh-repo-hint" style="font-size:.72rem;color:#9ca3af;margin-top:.3rem">不確定填什麼 → 留空也可以,圖床功能會 disable(口訣區會用預設 repo)</p>
         </details>
+        <script>
+          // v319:即時驗證 repo 格式,避免再有人填 'shirleyy' 這種錯誤格式
+          window._validateRepoInput = function(input){
+            const v = (input.value || '').trim();
+            const hint = document.getElementById('gh-repo-hint');
+            if (!v) { input.style.borderColor = '#d1d5db'; if (hint) { hint.textContent = '留空也可以,圖床功能會 disable'; hint.style.color = '#9ca3af'; } return; }
+            const ok = /^[\w.-]+\/[\w.-]+$/.test(v);
+            if (ok) { input.style.borderColor = '#16a34a'; if (hint) { hint.textContent = '✓ 格式正確'; hint.style.color = '#16a34a'; } }
+            else { input.style.borderColor = '#dc2626'; if (hint) { hint.textContent = '❌ 格式錯誤!要寫成「帳號/repo名稱」,例如 Victor19940313/2nd-dental-exam(中間必須有斜線)'; hint.style.color = '#dc2626'; } }
+          };
+        </script>
 
         <label style="display:flex;gap:.3rem;align-items:center;margin-top:.7rem;font-size:.78rem;color:#6b7280;cursor:pointer">
           <input type="checkbox" id="ai-key-show" onchange="document.querySelectorAll('#ai-key-input, #gh-token-input').forEach(e=>e.type=this.checked?'text':'password')"> 顯示輸入內容
@@ -9026,7 +9037,12 @@ ${(q.options || []).join('\n')}
         if (t) localStorage.setItem(GITHUB_TOKEN_LS, t);
         else localStorage.removeItem(GITHUB_TOKEN_LS);
       }
-      function getGithubRepo(){ return localStorage.getItem(GITHUB_REPO_LS) || ''; }
+      // v319:必須是 owner/repo 格式才生效,只填帳號名(如 "shirleyy")會讓所有 GitHub 讀寫失敗
+      function _isValidGhRepo(s){ return typeof s === 'string' && /^[\w.-]+\/[\w.-]+$/.test(s.trim()); }
+      function getGithubRepo(){
+        const v = localStorage.getItem(GITHUB_REPO_LS) || '';
+        return _isValidGhRepo(v) ? v.trim() : '';
+      }
       function setGithubRepo(r){
         if (r) localStorage.setItem(GITHUB_REPO_LS, r);
         else localStorage.removeItem(GITHUB_REPO_LS);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v318-sw-skip-github';
+const CACHE_NAME = 'dental-all-v319-repo-format-guard';
 const PRECACHE = [
   './',
   './index.html',

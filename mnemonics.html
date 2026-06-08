@@ -410,8 +410,17 @@ const k = {
 function getGithubToken() {
   return localStorage.getItem(CUR_USER.id + '_github_token') || localStorage.getItem('github_token') || '';
 }
+// v319:必須是 owner/repo 格式才生效;只填 'shirleyy' 這種帳號名會讓所有 GitHub 讀寫都失敗
+//       這裡強制驗證,不合法的就回退到 REPO_DEFAULT
+function _isValidRepo(s) {
+  return typeof s === 'string' && /^[\w.-]+\/[\w.-]+$/.test(s.trim());
+}
 function getGithubRepo() {
-  return localStorage.getItem(CUR_USER.id + '_github_repo') || localStorage.getItem('github_repo') || REPO_DEFAULT;
+  const userRepo = localStorage.getItem(CUR_USER.id + '_github_repo');
+  if (_isValidRepo(userRepo)) return userRepo.trim();
+  const globalRepo = localStorage.getItem('github_repo');
+  if (_isValidRepo(globalRepo)) return globalRepo.trim();
+  return REPO_DEFAULT;
 }
 // 🛡 chunked base64:避免大字串時 btoa/unescape 鏈炸掉 stack
 function utf8ToBase64(s) {
@@ -551,7 +560,8 @@ async function loadUserSubject(user, subject, opts) {
   // 2. 背景拉雲端
   //   v316:拿掉 _loaded 閘門 — 第一次 fetch 失敗(網路抖 / Safari ITP / token revoked)
   //         之後就再也不抓。改成「每次切就拉一次最新」,網路成本可接受
-  setLoadStatus(`☁️ 同步 ${user} · ${SUBJECT_LABEL[subject]}…`);
+  const repo = getGithubRepo();
+  setLoadStatus(`☁️ 拉 ${repo} → ${user}/${subject}…`);
   fetchFresh(CONTENT_PATH(user, subject)).then(async (remote) => {
     if (!remote || !remote.chapters) {
       setLoadStatus(remote ? `雲端是空的(${user} · ${SUBJECT_LABEL[subject]})` : `❌ 拉不到 ${user} · ${SUBJECT_LABEL[subject]}`);
@@ -999,13 +1009,17 @@ async function addChapter() {
     updatedBy: CUR_USER.name || 'Guest'
   };
   subj.chapters.push(newCh);
+  subj.ts = Date.now();
+  subj.updatedBy = CUR_USER.name || 'Guest';
+  // v318:立刻持久化到本機,避免關頁就消失
+  await idbSet(k.cloud(_curUser, _curSubject), subj);
   _dirty = true;
   await pickChapter(newCh.id);
   // 新增完自動進編輯模式(lazy load TipTap)
   await toggleEditMode();
   _dirty = true;
   refreshStatusUI();
-  showToast('新章節已建立,寫完按💾儲存');
+  showToast('新章節已建立,寫完按💾儲存(會推到雲端讓其他人看到)');
 }
 
 async function deleteChapter(chId) {

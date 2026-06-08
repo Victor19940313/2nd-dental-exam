@@ -35,8 +35,18 @@ body {
 .topbar { display: flex; align-items: center; gap: .7rem; padding: .8rem 1rem; background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 1rem; }
 .topbar h1 { font-size: 1.15rem; font-weight: 800; flex: 1; }
 .topbar .back { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .45rem .85rem; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; font-size: .85rem; }
+.topbar-add { background: #16a34a; color: white; border: none; padding: .5rem 1rem; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: .9rem; box-shadow: 0 2px 6px rgba(22,163,74,.3); }
+.topbar-add:hover { background: #15803d; }
+.topbar-add:disabled, .topbar-add.hidden { display: none; }
 .user-tag { font-size: .78rem; color: var(--text-sub); background: #f3f4f6; padding: .35rem .7rem; border-radius: 999px; font-weight: 600; }
 .user-tag.readonly { background: #fef3c7; color: #92400e; }
+.user-tabs { display: flex; gap: .4rem; margin-bottom: .55rem; align-items: center; flex-wrap: wrap; }
+.user-tabs button.u-tab { background: white; border: 1.5px solid var(--border); color: var(--text-sub); padding: .4rem .8rem; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: .82rem; transition: all .12s; }
+.user-tabs button.u-tab.active { background: var(--text); color: white; border-color: var(--text); transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+.user-tabs button.u-tab.self::before { content: "👤 "; font-size: .82rem; }
+.user-tabs .u-add { background: #fef3c7; border: 1.5px dashed #f59e0b; color: #92400e; padding: .35rem .8rem; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: .8rem; }
+.user-tabs .u-add:hover { background: #fde68a; }
+.user-tabs .u-add:disabled { display: none; }
 .subject-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .subject-tabs button { flex: 1; min-width: 110px; background: white; border: 2px solid var(--border); color: var(--text-sub); padding: .7rem .5rem; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: .95rem; transition: all .15s; }
 .subject-tabs button.active { color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
@@ -71,6 +81,9 @@ body {
 .editor-status .save-btn { background: #16a34a; color: white; padding: .4rem .85rem; font-size: .82rem; }
 .editor-status .save-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 .editor-status .refresh-btn, .editor-status .history-btn { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .35rem .65rem; font-size: .78rem; font-weight: 600; }
+.editor-status .edit-btn { background: #7c3aed; color: white; padding: .4rem .8rem; font-size: .82rem; }
+.editor-status .edit-btn.editing { background: #f59e0b; }
+.editor-status .edit-btn:disabled { display: none; }
 .draft-tag { background: #fbbf24; color: #78350f; padding: .15rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
 .toolbar { display: flex; flex-wrap: wrap; gap: .25rem; padding: .5rem .55rem; background: #fafaf5; border-bottom: 1px solid var(--border); }
 .toolbar button { background: white; border: 1px solid var(--border); color: var(--text); padding: .35rem .55rem; border-radius: 6px; cursor: pointer; font-size: .82rem; font-weight: 600; min-width: 32px; }
@@ -117,10 +130,15 @@ body {
 <div class="topbar">
   <a href="index.html" class="back">← 返回</a>
   <h1>🧠 口訣複習區</h1>
+  <button id="topbar-add" class="topbar-add" onclick="addChapter()" title="新增章節">+ 新增</button>
   <span class="user-tag" id="user-tag">--</span>
 </div>
 
 <div id="info-banner-slot"></div>
+
+<div class="user-tabs" id="user-tabs">
+  <button class="u-add" id="btn-add-user" onclick="addUser()" title="新增使用者區域">+ 使用者</button>
+</div>
 
 <div class="subject-tabs" id="subject-tabs">
   <button data-subject="ya3" onclick="switchSubject('ya3')">🦷 牙三</button>
@@ -133,7 +151,6 @@ body {
   <div class="chapter-list">
     <div class="ch-head">
       <strong id="ch-head-label">章節</strong>
-      <button id="btn-add-ch" onclick="addChapter()">+ 新增</button>
     </div>
     <div id="ch-items"></div>
   </div>
@@ -144,9 +161,10 @@ body {
       <span class="meta" id="meta-text"></span>
       <button class="history-btn" onclick="openVersionModal()" title="看編輯歷史">📜 歷史</button>
       <button class="refresh-btn" onclick="refreshFromCloud()" title="拉雲端最新版">🔄</button>
-      <button class="save-btn" id="save-btn" onclick="saveToCloud()">💾 推到雲端</button>
+      <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>
+      <button class="save-btn" id="save-btn" onclick="saveToCloud()" style="display:none">💾 推到雲端</button>
     </div>
-    <div class="toolbar" id="toolbar"></div>
+    <div class="toolbar" id="toolbar" style="display:none"></div>
     <div class="editor-body" id="editor-body">
       <div class="empty-pick">
         <div class="em">📒</div>
@@ -167,14 +185,16 @@ body {
 // ═══════════════════════════════════════════════════════════
 
 const REPO_DEFAULT = 'Victor19940313/2nd-dental-exam';
-const CONTENT_PATH = (s) => `mnemonics/${s}.json`;
-const VERSIONS_PATH = (s) => `mnemonics/${s}-versions.json`;
+const USERS_PATH = 'mnemonics/_users.json';
+const CONTENT_PATH = (u, s) => `mnemonics/${encodeURIComponent(u)}/${s}.json`;
+const VERSIONS_PATH = (u, s) => `mnemonics/${encodeURIComponent(u)}/${s}-versions.json`;
 const IDB_DB = 'dental_mnemonics_v1';
 const IDB_STORE = 'mnemonics';
 
-const ALLOWED_EDITORS = ['HUA', 'Shirley']; // ← 白名單
-const VERSION_KEEP_REMOTE = 50;  // GitHub 上最多留 50 版(避免檔案無限長)
-const VERSION_KEEP_LOCAL = 20;   // 本機 IDB 留 20 版
+const ALLOWED_EDITORS = ['HUA', 'Shirley']; // ← 白名單(編輯任何人區域 + 新增使用者)
+const DEFAULT_USERS = ['HUA', 'Shirley'];   // 第一次載入時的預設使用者
+const VERSION_KEEP_REMOTE = 50;
+const VERSION_KEEP_LOCAL = 20;
 
 const SUBJECT_NAME = { ya3: '🦷 牙三', ya4: '🩺 牙四', ya5: '🦴 牙五', ya6: '👶 牙六' };
 const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
@@ -249,9 +269,10 @@ async function idbDel(key) {
 }
 
 const k = {
-  cloud:    (s) => `cloud_${s}`,         // 雲端版內容(章節清單)
-  draft:    (s, chId) => `draft_${s}_${chId}`,  // 每章節的草稿
-  versions: (s) => `versions_${s}`,      // 該科版本歷史
+  usersList: 'users_list',
+  cloud:    (u, s) => `cloud_${u}_${s}`,
+  draft:    (u, s, chId) => `draft_${u}_${s}_${chId}`,
+  versions: (u, s) => `versions_${u}_${s}`,
 };
 
 // ──────────────────────────────────────────────────────────
@@ -263,7 +284,21 @@ function getGithubToken() {
 function getGithubRepo() {
   return localStorage.getItem(CUR_USER.id + '_github_repo') || localStorage.getItem('github_repo') || REPO_DEFAULT;
 }
-function utf8ToBase64(s) { return btoa(unescape(encodeURIComponent(s))); }
+// 🛡 chunked base64:避免大字串時 btoa/unescape 鏈炸掉 stack
+function utf8ToBase64(s) {
+  try {
+    const bytes = new TextEncoder().encode(s);
+    let binary = '';
+    const chunkSize = 0x8000; // 32KB 一塊
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  } catch(e) {
+    console.error('[utf8ToBase64] fail', e);
+    throw new Error('內容編碼失敗:' + e.message);
+  }
+}
 
 async function fetchFromCdn(path) {
   const repo = getGithubRepo();
@@ -321,13 +356,18 @@ async function pushToGithub(path, data, sha, message, retryCount = 0) {
 // 狀態
 // ──────────────────────────────────────────────────────────
 // 結構: _state[subject] = { chapters: [{id, title, content, ts, updatedBy}], ts, updatedBy }
-let _state = { ya3: null, ya4: null, ya5: null, ya6: null };
+// _state['userX_ya3'] = { chapters: [...], ts, updatedBy }
+let _state = {};
+let _users = [];
+let _curUser = '';
 let _curSubject = 'ya3';
 let _curChapterId = null;
 let _editor = null;
 let _dirty = false;
 let _draftTimer = null;
-let _loaded = new Set(); // 已經拉過 CDN 的科目
+let _loaded = new Set(); // 已經拉過 CDN 的 user_subject
+let _editMode = false;
+const stateKey = (u, s) => u + '|' + s;
 
 function showToast(msg) {
   const t = document.createElement('div');
@@ -342,23 +382,23 @@ function genChId() { return 'ch_' + Date.now() + '_' + Math.random().toString(36
 // ──────────────────────────────────────────────────────────
 // 載入
 // ──────────────────────────────────────────────────────────
-async function loadSubject(subject) {
+async function loadUserSubject(user, subject) {
+  const sk = stateKey(user, subject);
   // 1. IDB cache 撈
-  const cache = await idbGet(k.cloud(subject));
-  if (cache && cache.chapters) _state[subject] = cache;
-  else _state[subject] = { chapters: [], ts: 0, updatedBy: '' };
+  const cache = await idbGet(k.cloud(user, subject));
+  if (cache && cache.chapters) _state[sk] = cache;
+  else _state[sk] = { chapters: [], ts: 0, updatedBy: '' };
   // 2. 背景拉 CDN
-  if (!_loaded.has(subject)) {
-    _loaded.add(subject);
-    fetchFromCdn(CONTENT_PATH(subject)).then(async (remote) => {
+  if (!_loaded.has(sk)) {
+    _loaded.add(sk);
+    fetchFromCdn(CONTENT_PATH(user, subject)).then(async (remote) => {
       if (!remote || !remote.chapters) return;
-      const cur = _state[subject];
+      const cur = _state[sk];
       if (!cur || (remote.ts || 0) > (cur.ts || 0)) {
-        _state[subject] = remote;
-        await idbSet(k.cloud(subject), remote);
-        if (_curSubject === subject) {
+        _state[sk] = remote;
+        await idbSet(k.cloud(user, subject), remote);
+        if (_curUser === user && _curSubject === subject) {
           renderChapterList();
-          // 若目前章節在新雲端版裡也存在,reload 內容(除非有 dirty)
           if (_curChapterId && !_dirty) {
             const ch = remote.chapters.find(c => c.id === _curChapterId);
             if (ch && _editor) _editor.commands.setContent(ch.content || '<p></p>');
@@ -369,13 +409,18 @@ async function loadSubject(subject) {
   }
 }
 
+function curState() {
+  return _state[stateKey(_curUser, _curSubject)];
+}
+
 function renderChapterList() {
-  const subj = _state[_curSubject] || { chapters: [] };
+  const subj = curState() || { chapters: [] };
   const container = document.getElementById('ch-items');
   const head = document.getElementById('ch-head-label');
-  head.textContent = `${SUBJECT_LABEL[_curSubject]} · ${subj.chapters.length} 章`;
+  head.textContent = `${_curUser} · ${SUBJECT_LABEL[_curSubject]} · ${subj.chapters.length} 章`;
   if (subj.chapters.length === 0) {
-    container.innerHTML = '<div class="empty">還沒有章節<br>按「+ 新增」開始</div>';
+    const tip = CAN_EDIT ? '按右上「+ 新增」開始' : `${_curUser} 還沒寫東西`;
+    container.innerHTML = `<div class="empty">還沒有章節<br>${tip}</div>`;
     return;
   }
   container.innerHTML = subj.chapters.map(ch => {
@@ -387,22 +432,107 @@ function renderChapterList() {
   }).join('');
 }
 
+function renderUserTabs() {
+  const container = document.getElementById('user-tabs');
+  const addBtn = document.getElementById('btn-add-user');
+  // 移除舊 tabs(保留 + 按鈕)
+  Array.from(container.querySelectorAll('.u-tab')).forEach(el => el.remove());
+  // 重新插入
+  _users.forEach(name => {
+    const b = document.createElement('button');
+    b.className = 'u-tab';
+    if (name === _curUser) b.classList.add('active');
+    if (name === (CUR_USER.name || '')) b.classList.add('self');
+    b.textContent = name;
+    b.onclick = () => switchUser(name);
+    container.insertBefore(b, addBtn);
+  });
+  // + 按鈕只在白名單顯示
+  addBtn.disabled = !CAN_EDIT;
+}
+
+async function switchUser(name) {
+  if (_dirty && _curChapterId) {
+    await idbSet(k.draft(_curUser, _curSubject, _curChapterId),
+      { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
+  }
+  _curUser = name;
+  _editMode = false;
+  _curChapterId = null;
+  await loadUserSubject(_curUser, _curSubject);
+  renderUserTabs();
+  renderChapterList();
+  // 自動選第一章
+  const ss = curState();
+  if (ss && ss.chapters.length > 0) {
+    pickChapter(ss.chapters[0].id);
+  } else {
+    showEmptyEditor();
+  }
+}
+
+async function addUser() {
+  if (!CAN_EDIT) { showToast('沒有新增權限'); return; }
+  const name = prompt('新使用者名稱:', '');
+  if (!name || !name.trim()) return;
+  const clean = name.trim();
+  if (_users.includes(clean)) { showToast('已存在這個使用者'); return; }
+  if (clean.length > 30 || /[\/\\:*?"<>|]/.test(clean)) { showToast('名稱不能太長 / 不能有特殊字元'); return; }
+  _users.push(clean);
+  await idbSet(k.usersList, _users);
+  renderUserTabs();
+  // 推 _users.json 到雲端
+  if (getGithubToken()) {
+    try {
+      const { sha } = await fetchFromGithub(USERS_PATH);
+      await pushToGithub(USERS_PATH, { users: _users, ts: Date.now(), updatedBy: CUR_USER.name }, sha,
+        `[mnemonics] add user ${clean} by ${CUR_USER.name}`);
+      showToast('✓ 已新增使用者' + clean);
+    } catch(e) {
+      showToast('✗ 雲端同步失敗(本機已加):' + e.message.slice(0,60));
+    }
+  } else {
+    showToast('✓ 本機已加(沒 token 不推雲端)');
+  }
+  switchUser(clean);
+}
+
+async function loadUsersList() {
+  // 1. 本機 IDB
+  const cache = await idbGet(k.usersList);
+  if (cache && Array.isArray(cache) && cache.length) _users = cache.slice();
+  else _users = DEFAULT_USERS.slice();
+  // 2. 背景拉雲端
+  fetchFromCdn(USERS_PATH).then(async (remote) => {
+    if (!remote || !Array.isArray(remote.users)) return;
+    // 合併:聯集 + 保持本機現有順序在前
+    const set = new Set(_users);
+    let added = false;
+    remote.users.forEach(u => { if (!set.has(u)) { _users.push(u); set.add(u); added = true; } });
+    if (added) {
+      await idbSet(k.usersList, _users);
+      renderUserTabs();
+    }
+  });
+}
+
 function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
 }
 
 async function switchSubject(subj) {
   if (_dirty && _curChapterId) {
-    await idbSet(k.draft(_curSubject, _curChapterId), { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
+    await idbSet(k.draft(_curUser, _curSubject, _curChapterId),
+      { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curSubject = subj;
+  _editMode = false;
   document.querySelectorAll('#subject-tabs button').forEach(b => {
     b.classList.toggle('active', b.dataset.subject === subj);
   });
-  await loadSubject(subj);
+  await loadUserSubject(_curUser, subj);
   renderChapterList();
-  // 自動選第一章(如果有)
-  const subjState = _state[subj];
+  const subjState = curState();
   if (subjState && subjState.chapters.length > 0) {
     pickChapter(subjState.chapters[0].id);
   } else {
@@ -413,21 +543,24 @@ async function switchSubject(subj) {
 
 async function pickChapter(chId) {
   if (_dirty && _curChapterId) {
-    await idbSet(k.draft(_curSubject, _curChapterId), { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
+    await idbSet(k.draft(_curUser, _curSubject, _curChapterId),
+      { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curChapterId = chId;
-  const subj = _state[_curSubject];
+  _editMode = false;
+  const subj = curState();
+  if (!subj) { showEmptyEditor(); return; }
   const ch = subj.chapters.find(c => c.id === chId);
   if (!ch) { showEmptyEditor(); return; }
   // 優先用 draft
-  const draft = await idbGet(k.draft(_curSubject, chId));
+  const draft = await idbGet(k.draft(_curUser, _curSubject, chId));
   const titleInput = document.getElementById('title-input');
   if (_editor) {
     if (draft) {
       _editor.commands.setContent(draft.content || '<p></p>');
       titleInput.value = draft.title || ch.title || '';
       _dirty = true;
-      showToast('📝 載入未存草稿');
+      showToast('📝 有未存草稿,按「✏ 編輯」進入編輯模式');
     } else {
       _editor.commands.setContent(ch.content || '<p></p>');
       titleInput.value = ch.title || '';
@@ -454,26 +587,52 @@ function showEmptyEditor() {
 }
 
 function refreshStatusUI() {
-  const subj = _state[_curSubject];
+  const subj = curState();
   const ch = subj && _curChapterId ? subj.chapters.find(c => c.id === _curChapterId) : null;
   const meta = document.getElementById('meta-text');
   if (ch) {
     const lastEditor = ch.updatedBy || '(未知)';
     const lastTs = ch.ts ? new Date(ch.ts).toLocaleString('zh-TW') : '(未存)';
-    meta.textContent = `${lastEditor} · ${lastTs}`;
+    meta.textContent = `${_curUser} 區・${lastEditor} · ${lastTs}`;
   } else {
     meta.textContent = '';
   }
   document.getElementById('draft-tag').style.display = _dirty ? 'inline-block' : 'none';
-  const btn = document.getElementById('save-btn');
-  btn.disabled = !_dirty || !CAN_EDIT || !_curChapterId;
-  btn.textContent = _dirty ? '💾 推到雲端' : '💾 已是最新';
-  // title input + editor read-only state
+  // 編輯模式才出存檔按鈕
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.style.display = _editMode && CAN_EDIT ? '' : 'none';
+  saveBtn.disabled = !_dirty || !CAN_EDIT || !_curChapterId;
+  saveBtn.textContent = _dirty ? '💾 推到雲端' : '💾 已是最新';
+  // ✏ 編輯 / ✓ 完成 切換按鈕
+  const editBtn = document.getElementById('edit-btn');
+  if (!CAN_EDIT || !_curChapterId) {
+    editBtn.style.display = 'none';
+  } else {
+    editBtn.style.display = '';
+    editBtn.textContent = _editMode ? '👁 閱覽' : '✏ 編輯';
+    editBtn.classList.toggle('editing', _editMode);
+  }
+  // 工具列僅編輯模式顯示
+  document.getElementById('toolbar').style.display = _editMode && CAN_EDIT ? 'flex' : 'none';
+  // title input
   const titleInput = document.getElementById('title-input');
-  titleInput.disabled = !CAN_EDIT;
-  if (_editor) _editor.setEditable(CAN_EDIT);
-  // 新增按鈕
-  document.getElementById('btn-add-ch').disabled = !CAN_EDIT;
+  titleInput.disabled = !_editMode || !CAN_EDIT;
+  titleInput.style.background = _editMode && CAN_EDIT ? 'rgba(251,191,36,.08)' : 'transparent';
+  // editor editable
+  if (_editor) _editor.setEditable(_editMode && CAN_EDIT);
+  // 右上角 + 新增按鈕(沒權限就藏)
+  const topbarAdd = document.getElementById('topbar-add');
+  if (topbarAdd) topbarAdd.classList.toggle('hidden', !CAN_EDIT);
+}
+
+function toggleEditMode() {
+  if (!CAN_EDIT || !_curChapterId) return;
+  if (_editMode && _dirty) {
+    if (!confirm('有未儲存的草稿,要切回閱覽模式嗎?\n\n(草稿會保留在 IDB,下次回來編輯還會在)')) return;
+  }
+  _editMode = !_editMode;
+  refreshStatusUI();
+  if (_editMode && _editor) _editor.commands.focus();
 }
 
 function onTitleChange() {
@@ -485,11 +644,15 @@ function onTitleChange() {
 // ──────────────────────────────────────────────────────────
 // 章節操作
 // ──────────────────────────────────────────────────────────
-function addChapter() {
+async function addChapter() {
   if (!CAN_EDIT) { showToast('你沒有編輯權限'); return; }
-  const title = prompt('新章節標題:', '新章節');
+  const title = prompt(`在「${_curUser}・${SUBJECT_LABEL[_curSubject]}」新增章節,標題:`, '新章節');
   if (!title || !title.trim()) return;
-  const subj = _state[_curSubject];
+  let subj = curState();
+  if (!subj) {
+    subj = { chapters: [], ts: 0, updatedBy: '' };
+    _state[stateKey(_curUser, _curSubject)] = subj;
+  }
   if (!subj.chapters) subj.chapters = [];
   const newCh = {
     id: genChId(),
@@ -499,23 +662,25 @@ function addChapter() {
     updatedBy: CUR_USER.name || 'Guest'
   };
   subj.chapters.push(newCh);
-  _curChapterId = newCh.id;
   _dirty = true;
-  renderChapterList();
-  pickChapter(newCh.id);
-  showToast('已新增,記得按💾推到雲端');
+  await pickChapter(newCh.id);  // 會把 _editMode 設成 false
+  _editMode = true;              // 新增後直接進編輯模式
+  _dirty = true;                  // pickChapter 沒 draft 時會把 dirty 設 false
+  refreshStatusUI();
+  if (_editor) _editor.commands.focus();
+  showToast('已新增,寫完按💾推到雲端');
 }
 
 async function deleteChapter(chId) {
   if (!CAN_EDIT) return;
-  const subj = _state[_curSubject];
+  const subj = curState();
+  if (!subj) return;
   const ch = subj.chapters.find(c => c.id === chId);
   if (!ch) return;
-  if (!confirm(`刪除「${ch.title}」?\n\n刪掉後可以從「📜 歷史」還原。`)) return;
-  // 把刪除前狀態存進歷史(待會 saveToCloud 會記)
+  if (!confirm(`刪除「${ch.title}」(${_curUser})?\n\n刪掉後可以從「📜 歷史」還原。`)) return;
   subj.chapters = subj.chapters.filter(c => c.id !== chId);
   _dirty = true;
-  await idbDel(k.draft(_curSubject, chId));
+  await idbDel(k.draft(_curUser, _curSubject, chId));
   if (_curChapterId === chId) {
     _curChapterId = subj.chapters[0] ? subj.chapters[0].id : null;
     if (_curChapterId) pickChapter(_curChapterId);
@@ -531,13 +696,13 @@ async function deleteChapter(chId) {
 async function refreshFromCloud() {
   if (_dirty) {
     if (!confirm('有未儲存草稿,刷新會用雲端版覆蓋。要繼續?')) return;
-    if (_curChapterId) await idbDel(k.draft(_curSubject, _curChapterId));
+    if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
   }
   showToast('🔄 拉雲端最新…');
-  const remote = await fetchFromCdn(CONTENT_PATH(_curSubject));
+  const remote = await fetchFromCdn(CONTENT_PATH(_curUser, _curSubject));
   if (remote && remote.chapters) {
-    _state[_curSubject] = remote;
-    await idbSet(k.cloud(_curSubject), remote);
+    _state[stateKey(_curUser, _curSubject)] = remote;
+    await idbSet(k.cloud(_curUser, _curSubject), remote);
     renderChapterList();
     if (_curChapterId) {
       const ch = remote.chapters.find(c => c.id === _curChapterId);
@@ -560,12 +725,11 @@ async function saveToCloud() {
     alert('沒設定 GitHub token,沒辦法推到雲端。\n\n請先去「考試 App → ⚙️ 設定 → GitHub」設定 token。');
     return;
   }
-  // 先把當前章節最新內容寫進 state
-  const subj = _state[_curSubject];
+  const subj = curState();
+  if (!subj) { showToast('沒有內容'); return; }
   if (_curChapterId) {
     const ch = subj.chapters.find(c => c.id === _curChapterId);
     if (ch && _editor) {
-      // 先把舊版加進 version snapshot(BEFORE 變更)
       const oldSnapshot = {
         ts: Date.now(),
         updatedBy: CUR_USER.name || 'Guest',
@@ -579,8 +743,7 @@ async function saveToCloud() {
       ch.content = _editor.getHTML();
       ch.ts = Date.now();
       ch.updatedBy = CUR_USER.name || 'Guest';
-      // 把這個 snapshot 排入待推
-      await appendVersion(_curSubject, oldSnapshot);
+      await appendVersion(_curUser, _curSubject, oldSnapshot);
     }
   }
   subj.ts = Date.now();
@@ -590,60 +753,55 @@ async function saveToCloud() {
   btn.disabled = true;
   btn.textContent = '⏳ 推送中…';
   try {
-    // 1. push 內容檔
-    const { sha: contentSha } = await fetchFromGithub(CONTENT_PATH(_curSubject));
-    await pushToGithub(CONTENT_PATH(_curSubject), subj, contentSha,
-      `[mnemonics] ${SUBJECT_LABEL[_curSubject]} by ${CUR_USER.name}`);
-    await idbSet(k.cloud(_curSubject), subj);
-    if (_curChapterId) await idbDel(k.draft(_curSubject, _curChapterId));
-    // 2. push 版本歷史檔(append-only,但 cap 50)
-    await pushVersionsFile(_curSubject);
+    const { sha: contentSha } = await fetchFromGithub(CONTENT_PATH(_curUser, _curSubject));
+    await pushToGithub(CONTENT_PATH(_curUser, _curSubject), subj, contentSha,
+      `[mnemonics] ${_curUser} ${SUBJECT_LABEL[_curSubject]} by ${CUR_USER.name}`);
+    await idbSet(k.cloud(_curUser, _curSubject), subj);
+    if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
+    // 版本檔失敗不要擋使用者
+    try { await pushVersionsFile(_curUser, _curSubject); }
+    catch(verr) { console.warn('versions push failed', verr); }
     _dirty = false;
     refreshStatusUI();
     renderChapterList();
     showToast('✅ 已推到雲端 + 版本快照');
   } catch(e) {
-    console.error(e);
-    alert('儲存失敗:' + e.message + '\n\n本機草稿還在 IDB,不會掉。');
+    console.error('[saveToCloud] failed', e);
+    alert('儲存失敗:' + (e.message || e) + '\n\n本機草稿還在 IDB,不會掉。');
     btn.disabled = false;
     btn.textContent = '💾 重試';
   }
 }
 
-async function appendVersion(subject, entry) {
-  const versions = (await idbGet(k.versions(subject))) || [];
+async function appendVersion(user, subject, entry) {
+  const versions = (await idbGet(k.versions(user, subject))) || [];
   versions.push(entry);
-  // 本機只留最近 N 個
   if (versions.length > VERSION_KEEP_LOCAL * 2) {
     versions.splice(0, versions.length - VERSION_KEEP_LOCAL * 2);
   }
-  await idbSet(k.versions(subject), versions);
+  await idbSet(k.versions(user, subject), versions);
 }
 
-async function pushVersionsFile(subject) {
-  // 拉雲端版本檔
-  const { data: remoteV, sha } = await fetchFromGithub(VERSIONS_PATH(subject));
+async function pushVersionsFile(user, subject) {
+  const { data: remoteV, sha } = await fetchFromGithub(VERSIONS_PATH(user, subject));
   let merged = (remoteV && Array.isArray(remoteV)) ? remoteV.slice() : [];
-  const local = (await idbGet(k.versions(subject))) || [];
-  // 合併:用 ts 去重
+  const local = (await idbGet(k.versions(user, subject))) || [];
   const seen = new Set(merged.map(v => v.ts));
   local.forEach(v => { if (!seen.has(v.ts)) { merged.push(v); seen.add(v.ts); } });
-  // 按 ts 降序排,cap 50
   merged.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   if (merged.length > VERSION_KEEP_REMOTE) merged = merged.slice(0, VERSION_KEEP_REMOTE);
-  await pushToGithub(VERSIONS_PATH(subject), merged, sha,
-    `[mnemonics-versions] ${SUBJECT_LABEL[subject]} by ${CUR_USER.name}`);
-  await idbSet(k.versions(subject), merged);
+  await pushToGithub(VERSIONS_PATH(user, subject), merged, sha,
+    `[mnemonics-versions] ${user} ${SUBJECT_LABEL[subject]} by ${CUR_USER.name}`);
+  await idbSet(k.versions(user, subject), merged);
 }
 
 // ──────────────────────────────────────────────────────────
 // 版本歷史 modal
 // ──────────────────────────────────────────────────────────
 async function openVersionModal() {
-  // 同時撈本機 + 雲端 versions
   const [local, remote] = await Promise.all([
-    idbGet(k.versions(_curSubject)),
-    fetchFromCdn(VERSIONS_PATH(_curSubject))
+    idbGet(k.versions(_curUser, _curSubject)),
+    fetchFromCdn(VERSIONS_PATH(_curUser, _curSubject))
   ]);
   let merged = (Array.isArray(remote) ? remote : []).slice();
   (local || []).forEach(v => {
@@ -683,7 +841,7 @@ function showVersionModalContent(html) {
   }
   overlay.innerHTML = `<div class="modal">
     <button class="close-x" onclick="closeVersionModal()">✕</button>
-    <h2>📜 ${SUBJECT_NAME[_curSubject]} 編輯歷史</h2>
+    <h2>📜 ${_curUser} · ${SUBJECT_NAME[_curSubject]} 編輯歷史</h2>
     <div id="version-body">${html}</div>
   </div>`;
   overlay.onclick = (e) => { if (e.target === overlay) closeVersionModal(); };
@@ -710,8 +868,8 @@ async function restoreVersion(idx) {
   const v = window._versionList[idx];
   if (!v || !v.snapshotBefore) return;
   if (!confirm('確定還原「' + (v.snapshotBefore.title || '該章節') + '」到 ' + new Date(v.ts).toLocaleString('zh-TW') + ' 的版本?\n\n會覆蓋當前內容,但會另外留新版本快照,可以再還原回現在。')) return;
-  const subj = _state[_curSubject];
-  // 找對應章節
+  const subj = curState();
+  if (!subj) return;
   let ch = subj.chapters.find(c => c.id === v.chapterId);
   if (!ch) {
     // 章節已被刪 → 還原 = 新增回去
@@ -744,7 +902,7 @@ function startDraftAutoSave() {
   if (_draftTimer) clearInterval(_draftTimer);
   _draftTimer = setInterval(async () => {
     if (_dirty && _editor && _curChapterId) {
-      await idbSet(k.draft(_curSubject, _curChapterId), {
+      await idbSet(k.draft(_curUser, _curSubject, _curChapterId), {
         content: _editor.getHTML(),
         title: document.getElementById('title-input').value,
         ts: Date.now()
@@ -926,7 +1084,11 @@ async function init() {
         if (cmdArg) chain[cmdName](cmdArg).run(); else chain[cmdName]().run();
       };
       toolbar.appendChild(b);
-    });
+    });    await loadUsersList();
+    // 預設選自己(如果在 list 上),不然第一個
+    const selfName = CUR_USER.name || '';
+    _curUser = _users.includes(selfName) ? selfName : (_users[0] || DEFAULT_USERS[0]);
+    renderUserTabs();
     await switchSubject('ya3');
     startDraftAutoSave();
   } catch (err) {

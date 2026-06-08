@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-img-use-user-repo';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-mobile-layout-fix';
 const PRECACHE = [
   './',
   './index.html',

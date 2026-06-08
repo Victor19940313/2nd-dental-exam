@@ -82,6 +82,8 @@ body {
 .editor-status .save-btn { background: #16a34a; color: white; padding: .4rem .85rem; font-size: .82rem; }
 .editor-status .save-btn:disabled { background: #9ca3af; cursor: not-allowed; }
 .editor-status .refresh-btn, .editor-status .history-btn { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .35rem .65rem; font-size: .78rem; font-weight: 600; }
+.editor-status .edit-btn { background: #7c3aed; color: white; padding: .4rem .85rem; font-size: .82rem; }
+.editor-status .edit-btn.editing { background: #f59e0b; }
 .draft-tag { background: #fbbf24; color: #78350f; padding: .15rem .55rem; border-radius: 999px; font-size: .7rem; font-weight: 700; }
 .toolbar { display: flex; flex-wrap: wrap; gap: .25rem; padding: .5rem .55rem; background: #fafaf5; border-bottom: 1px solid var(--border); }
 .toolbar button { background: white; border: 1px solid var(--border); color: var(--text); padding: .35rem .55rem; border-radius: 6px; cursor: pointer; font-size: .82rem; font-weight: 600; min-width: 32px; }
@@ -158,9 +160,10 @@ body {
       <span id="draft-tag" class="draft-tag" style="display:none">未存</span>
       <span class="meta" id="meta-text"></span>
       <button class="history-btn" onclick="openVersionModal()" title="看編輯歷史">📜 歷史</button>
-      <button class="save-btn" id="save-btn" onclick="saveToCloud()">💾 儲存</button>
+      <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>
+      <button class="save-btn" id="save-btn" onclick="saveAndExit()" style="display:none">💾 儲存</button>
     </div>
-    <div class="toolbar" id="toolbar"></div>
+    <div class="toolbar" id="toolbar" style="display:none"></div>
     <div class="editor-body" id="editor-body">
       <div class="empty-pick">
         <div class="em">📒</div>
@@ -396,6 +399,7 @@ let _editor = null;
 let _dirty = false;
 let _draftTimer = null;
 let _loaded = new Set();
+let _editMode = false; // false = 閱覽(預設),true = 編輯
 const stateKey = (u, s) => u + '|' + s;
 
 function showToast(msg) {
@@ -483,11 +487,12 @@ async function switchUser(name) {
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curUser = name;
-_curChapterId = null;
+  _curChapterId = null;
+  _editMode = false;
+  if (_editor) _editor.setEditable(false);
   await loadUserSubject(_curUser, _curSubject);
   renderUserTabs();
   renderChapterList();
-  // 自動選第一章
   const ss = curState();
   if (ss && ss.chapters.length > 0) {
     pickChapter(ss.chapters[0].id);
@@ -563,7 +568,9 @@ async function switchSubject(subj) {
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curSubject = subj;
-document.querySelectorAll('#subject-tabs button').forEach(b => {
+  _editMode = false;
+  if (_editor) _editor.setEditable(false);
+  document.querySelectorAll('#subject-tabs button').forEach(b => {
     b.classList.toggle('active', b.dataset.subject === subj);
   });
   await loadUserSubject(_curUser, subj);
@@ -583,7 +590,10 @@ async function pickChapter(chId) {
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
   _curChapterId = chId;
-const subj = curState();
+  // 切章節時自動回到閱覽模式(安全:避免不小心改到別人的)
+  _editMode = false;
+  if (_editor) _editor.setEditable(false);
+  const subj = curState();
   if (!subj) { showEmptyEditor(); return; }
   const ch = subj.chapters.find(c => c.id === chId);
   if (!ch) { showEmptyEditor(); return; }
@@ -633,18 +643,60 @@ function refreshStatusUI() {
     meta.textContent = '';
   }
   document.getElementById('draft-tag').style.display = _dirty ? 'inline-block' : 'none';
+  // ✏ 編輯 / 💾 儲存 按鈕切換
+  const editBtn = document.getElementById('edit-btn');
   const saveBtn = document.getElementById('save-btn');
-  saveBtn.style.display = CAN_EDIT && _curChapterId ? '' : 'none';
-  saveBtn.disabled = !_dirty || !CAN_EDIT || !_curChapterId;
-  saveBtn.textContent = _dirty ? '💾 儲存' : '💾 已儲存';
+  const tb = document.getElementById('toolbar');
   const titleInput = document.getElementById('title-input');
-  titleInput.disabled = !CAN_EDIT;
+  if (!CAN_EDIT || !_curChapterId) {
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'none';
+    tb.style.display = 'none';
+    titleInput.disabled = true;
+  } else if (_editMode) {
+    editBtn.style.display = '';
+    editBtn.textContent = '👁 閱覽';
+    editBtn.classList.add('editing');
+    saveBtn.style.display = '';
+    saveBtn.disabled = !_dirty;
+    saveBtn.textContent = _dirty ? '💾 儲存' : '💾 已儲存';
+    tb.style.display = 'flex';
+    titleInput.disabled = false;
+  } else {
+    editBtn.style.display = '';
+    editBtn.textContent = '✏ 編輯';
+    editBtn.classList.remove('editing');
+    saveBtn.style.display = 'none';
+    tb.style.display = 'none';
+    titleInput.disabled = true;
+  }
   // 章節列 + 新增按鈕(沒權限就藏)
   const chAdd = document.getElementById('btn-add-ch');
   if (chAdd) chAdd.classList.toggle('hidden', !CAN_EDIT);
-  // 工具列只給有編輯權限的人看
-  const tb = document.getElementById('toolbar');
-  if (tb) tb.style.display = CAN_EDIT ? 'flex' : 'none';
+  // 🛡 注意:這裡不呼叫 setEditable,避免 setEditable → onUpdate → refreshStatusUI 遞迴
+  //         setEditable 只在 toggleEditMode 顯式呼叫
+}
+
+// 切換閱覽 / 編輯
+function toggleEditMode() {
+  if (!CAN_EDIT || !_curChapterId) return;
+  if (_editMode && _dirty) {
+    if (!confirm('有未儲存的草稿,要切回閱覽嗎?(草稿會保留在 IDB,不會掉)')) return;
+  }
+  _editMode = !_editMode;
+  if (_editor) _editor.setEditable(_editMode); // ★ 只在這裡呼叫
+  refreshStatusUI();
+  if (_editMode && _editor) _editor.commands.focus();
+}
+
+// 儲存後切回閱覽
+async function saveAndExit() {
+  await saveToCloud();
+  if (!_dirty && _editor) {
+    _editMode = false;
+    _editor.setEditable(false);
+    refreshStatusUI();
+  }
 }
 
 function onTitleChange() {
@@ -676,10 +728,13 @@ async function addChapter() {
   subj.chapters.push(newCh);
   _dirty = true;
   await pickChapter(newCh.id);
-  _dirty = true; // pickChapter 沒 draft 時會把 dirty 設 false
+  // 新增完自動進入編輯模式(此時編輯器才有意義)
+  _editMode = true;
+  if (_editor) _editor.setEditable(true);
+  _dirty = true;
   refreshStatusUI();
   if (_editor) _editor.commands.focus();
-  showToast('已新增,寫完按💾推到雲端');
+  showToast('新章節已建立,寫完按💾儲存');
 }
 
 async function deleteChapter(chId) {
@@ -1027,7 +1082,7 @@ async function initEditorOnce() {
       mods.Image.configure({ inline: false, allowBase64: false }),
     ],
     content: '<p></p>',
-    editable: CAN_EDIT,
+    editable: false, // 預設閱覽模式,按「✏ 編輯」才轉成 true
     editorProps: {
       handlePaste(view, event) {
         if (!CAN_EDIT) return false;

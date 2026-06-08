@@ -389,6 +389,16 @@ async function fetchFromCdn(path) {
   } catch(e) { return null; }
 }
 
+// 🚀 v310:有 token 走 API(api.github.com,無 CDN cache,跨裝置同步幾秒內就到)
+//         沒 token 才退回 raw(可能延遲 1~5 分鐘)
+async function fetchFresh(path) {
+  if (getGithubToken()) {
+    const { data } = await fetchFromGithub(path);
+    if (data) return data;
+  }
+  return await fetchFromCdn(path);
+}
+
 async function fetchFromGithub(path) {
   const token = getGithubToken();
   const repo = getGithubRepo();
@@ -469,10 +479,10 @@ async function loadUserSubject(user, subject) {
   const cache = await idbGet(k.cloud(user, subject));
   if (cache && cache.chapters) _state[sk] = cache;
   else _state[sk] = { chapters: [], ts: 0, updatedBy: '' };
-  // 2. 背景拉 CDN
+  // 2. 背景拉雲端(有 token 走 API,即時;沒 token 退 raw)
   if (!_loaded.has(sk)) {
     _loaded.add(sk);
-    fetchFromCdn(CONTENT_PATH(user, subject)).then(async (remote) => {
+    fetchFresh(CONTENT_PATH(user, subject)).then(async (remote) => {
       if (!remote || !remote.chapters) return;
       const cur = _state[sk];
       if (!cur || (remote.ts || 0) > (cur.ts || 0)) {
@@ -536,7 +546,8 @@ function onUserSelectChange(name) {
 }
 
 async function switchUser(name) {
-  if (_dirty && _curChapterId) {
+  // 🛡 v310:同 switchSubject,閱覽模式下 _editor=null,不能直接 .getHTML()
+  if (_dirty && _curChapterId && _editor) {
     await idbSet(k.draft(_curUser, _curSubject, _curChapterId),
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
@@ -598,8 +609,8 @@ async function loadUsersList() {
   else _users = DEFAULT_USERS.slice();
   // 本機遷移後存回
   await idbSet(k.usersList, _users);
-  // 2. 背景拉雲端
-  fetchFromCdn(USERS_PATH).then(async (remote) => {
+  // 2. 背景拉雲端(同樣 API 優先)
+  fetchFresh(USERS_PATH).then(async (remote) => {
     if (!remote || !Array.isArray(remote.users)) return;
     const cleaned = _migrateUsers(remote.users.slice());
     const set = new Set(_users);
@@ -617,7 +628,9 @@ function escapeHtml(s) {
 }
 
 async function switchSubject(subj) {
-  if (_dirty && _curChapterId) {
+  // 🛡 v310:閱覽模式下 _editor 已被 destroy,呼叫 .getHTML() 會丟 TypeError
+  //         導致整個 switchSubject 斷掉,後續按其他科目「沒反應」
+  if (_dirty && _curChapterId && _editor) {
     await idbSet(k.draft(_curUser, _curSubject, _curChapterId),
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
   }
@@ -639,6 +652,7 @@ async function switchSubject(subj) {
 }
 
 async function pickChapter(chId) {
+  // 🛡 v310:_editor 檢查保留,避免閱覽模式 NPE
   if (_dirty && _curChapterId && _editor) {
     await idbSet(k.draft(_curUser, _curSubject, _curChapterId),
       { content: _editor.getHTML(), title: document.getElementById('title-input').value, ts: Date.now() });
@@ -938,7 +952,7 @@ async function refreshFromCloud() {
     if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
   }
   showToast('🔄 拉雲端最新…');
-  const remote = await fetchFromCdn(CONTENT_PATH(_curUser, _curSubject));
+  const remote = await fetchFresh(CONTENT_PATH(_curUser, _curSubject));
   if (remote && remote.chapters) {
     _state[stateKey(_curUser, _curSubject)] = remote;
     await idbSet(k.cloud(_curUser, _curSubject), remote);

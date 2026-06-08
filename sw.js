@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v309-fix-spurious-leave-prompt';
+const CACHE_NAME = 'dental-all-v310-mac-subject-stuck-fix';
 const PRECACHE = [
   './',
   './index.html',

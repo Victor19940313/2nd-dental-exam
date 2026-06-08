@@ -2171,9 +2171,10 @@ async function init() {
       const b = document.createElement('button');
       b.textContent = t.label;
       b.title = t.title || '';
-      b.disabled = !canEditCurrent();
+      // v338:不在 build 時 disable(那時 _curUser 還沒設,canEditCurrent() 一定 false)
+      //       toolbar 本來就只在編輯模式顯示,能進編輯模式就代表 canEditCurrent() 成立
       b.onclick = () => {
-        if (!canEditCurrent()) return;
+        if (!canEditCurrent() || !_editor) return;
         if (t.custom === 'pickImage') { pickImageFile(); return; }
         const chain = _editor.chain().focus();
         const cmdName = Array.isArray(t.cmd) ? t.cmd[0] : t.cmd;

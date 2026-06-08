@@ -63,8 +63,9 @@ body {
 .chapter-list { background: white; border: 1px solid var(--border); border-radius: 12px; padding: .55rem; box-shadow: var(--shadow); max-height: 80vh; overflow-y: auto; }
 .chapter-list .ch-head { display: flex; align-items: center; gap: .4rem; padding: .35rem .45rem .55rem; }
 .chapter-list .ch-head strong { font-size: .82rem; color: var(--text-sub); flex: 1; }
-.chapter-list .ch-head button { background: #16a34a; color: white; border: none; padding: .3rem .65rem; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: .78rem; }
-.chapter-list .ch-head button:disabled { background: #9ca3af; cursor: not-allowed; }
+.chapter-list .ch-add { background: #16a34a; color: white; border: none; padding: .35rem .75rem; border-radius: 7px; cursor: pointer; font-weight: 800; font-size: .8rem; box-shadow: 0 2px 6px rgba(22,163,74,.3); }
+.chapter-list .ch-add:hover { background: #15803d; }
+.chapter-list .ch-add:disabled, .chapter-list .ch-add.hidden { display: none; }
 .chapter-list .ch-item { padding: .55rem .65rem; border-radius: 8px; cursor: pointer; font-size: .87rem; color: var(--text); margin-bottom: .15rem; display: flex; align-items: center; gap: .4rem; transition: background .12s; }
 .chapter-list .ch-item:hover { background: #f9fafb; }
 .chapter-list .ch-item.active { background: #fef3c7; font-weight: 700; }
@@ -131,7 +132,6 @@ body {
 <div class="topbar">
   <a href="index.html" class="back">← 返回</a>
   <h1>🧠 口訣複習區</h1>
-  <button id="topbar-add" class="topbar-add" onclick="addChapter()" title="新增章節">+ 新增</button>
   <span class="user-tag" id="user-tag">--</span>
 </div>
 
@@ -152,6 +152,7 @@ body {
   <div class="chapter-list">
     <div class="ch-head">
       <strong id="ch-head-label">章節</strong>
+      <button id="btn-add-ch" class="ch-add" onclick="addChapter()" title="新增章節">+ 新增</button>
     </div>
     <div id="ch-items"></div>
   </div>
@@ -161,7 +162,7 @@ body {
       <span id="draft-tag" class="draft-tag" style="display:none">未存草稿</span>
       <span class="meta" id="meta-text"></span>
       <button class="history-btn" onclick="openVersionModal()" title="看編輯歷史">📜 歷史</button>
-      <button class="refresh-btn" onclick="refreshFromCloud()" title="拉雲端最新版">🔄</button>
+      <button class="refresh-btn" onclick="refreshFromCloud()" title="如果別人剛改過這章,按這個拉他改的版本(會蓋掉你目前看的)">🔄</button>
       <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>
       <button class="save-btn" id="save-btn" onclick="saveToCloud()" style="display:none">💾 推到雲端</button>
     </div>
@@ -192,8 +193,8 @@ const VERSIONS_PATH = (u, s) => `mnemonics/${encodeURIComponent(u)}/${s}-version
 const IDB_DB = 'dental_mnemonics_v1';
 const IDB_STORE = 'mnemonics';
 
-const ALLOWED_EDITORS = ['HUA', 'Shirley']; // ← 白名單(編輯任何人區域 + 新增使用者)
-const DEFAULT_USERS = ['HUA', 'Shirley'];   // 第一次載入時的預設使用者
+const ALLOWED_EDITORS = ['HUA', '腦動大開']; // ← 白名單(編輯任何人區域 + 新增使用者)
+const DEFAULT_USERS = ['HUA', '腦動大開'];   // 第一次載入時的預設使用者
 const VERSION_KEEP_REMOTE = 50;
 const VERSION_KEEP_LOCAL = 20;
 
@@ -451,7 +452,7 @@ function renderChapterList() {
   const head = document.getElementById('ch-head-label');
   head.textContent = `${_curUser} · ${SUBJECT_LABEL[_curSubject]} · ${subj.chapters.length} 章`;
   if (subj.chapters.length === 0) {
-    const tip = CAN_EDIT ? '按右上「+ 新增」開始' : `${_curUser} 還沒寫東西`;
+    const tip = CAN_EDIT ? '按上方「+ 新增」開始' : `${_curUser} 還沒寫東西`;
     container.innerHTML = `<div class="empty">還沒有章節<br>${tip}</div>`;
     return;
   }
@@ -529,18 +530,30 @@ async function addUser() {
   switchUser(clean);
 }
 
+function _migrateUsers(arr) {
+  // 一次性遷移:Shirley → 腦動大開
+  const i = arr.indexOf('Shirley');
+  if (i >= 0) {
+    arr.splice(i, 1);
+    if (!arr.includes('腦動大開')) arr.push('腦動大開');
+  }
+  return arr;
+}
+
 async function loadUsersList() {
   // 1. 本機 IDB
   const cache = await idbGet(k.usersList);
-  if (cache && Array.isArray(cache) && cache.length) _users = cache.slice();
+  if (cache && Array.isArray(cache) && cache.length) _users = _migrateUsers(cache.slice());
   else _users = DEFAULT_USERS.slice();
+  // 本機遷移後存回
+  await idbSet(k.usersList, _users);
   // 2. 背景拉雲端
   fetchFromCdn(USERS_PATH).then(async (remote) => {
     if (!remote || !Array.isArray(remote.users)) return;
-    // 合併:聯集 + 保持本機現有順序在前
+    const cleaned = _migrateUsers(remote.users.slice());
     const set = new Set(_users);
     let added = false;
-    remote.users.forEach(u => { if (!set.has(u)) { _users.push(u); set.add(u); added = true; } });
+    cleaned.forEach(u => { if (!set.has(u)) { _users.push(u); set.add(u); added = true; } });
     if (added) {
       await idbSet(k.usersList, _users);
       renderUserTabs();
@@ -652,9 +665,9 @@ function refreshStatusUI() {
   titleInput.style.background = _editMode && CAN_EDIT ? 'rgba(251,191,36,.08)' : 'transparent';
   // editor editable
   if (_editor) _editor.setEditable(_editMode && CAN_EDIT);
-  // 右上角 + 新增按鈕(沒權限就藏)
-  const topbarAdd = document.getElementById('topbar-add');
-  if (topbarAdd) topbarAdd.classList.toggle('hidden', !CAN_EDIT);
+  // 章節列 + 新增按鈕(沒權限就藏)
+  const chAdd = document.getElementById('btn-add-ch');
+  if (chAdd) chAdd.classList.toggle('hidden', !CAN_EDIT);
 }
 
 function toggleEditMode() {

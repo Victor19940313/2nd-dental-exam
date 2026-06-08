@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v291-mnemonics-shared-theme';
+const CACHE_NAME = 'dental-all-v292-mnemonics-rename-shirley-move-add';
 const PRECACHE = [
   './',
   './index.html',

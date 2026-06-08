@@ -8,8 +8,14 @@
 <meta name="theme-color" content="#f8f7f0">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://esm.sh" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="themes.css">
+<!-- 🚀 提前告知瀏覽器要載 TipTap 模組(可在 HTML parse 階段就開始抓) -->
+<link rel="modulepreload" href="https://esm.sh/@tiptap/core@2">
+<link rel="modulepreload" href="https://esm.sh/@tiptap/starter-kit@2">
+<link rel="modulepreload" href="https://esm.sh/@tiptap/extension-image@2">
+<link rel="modulepreload" href="https://esm.sh/@tiptap/extension-table@2">
 <style>
 :root {
   --bg: #f8f7f0;
@@ -35,13 +41,10 @@ body {
 }
 .topbar { display: flex; align-items: center; gap: .7rem; padding: .8rem 1rem; background: white; border-radius: 12px; box-shadow: var(--shadow); margin-bottom: .55rem; flex-wrap: wrap; }
 .nav-row { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
-.nav-link { padding: .42rem .85rem; border-radius: 10px; font-size: .82rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all .12s; }
-.nav-link:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.12); }
-.nav-link.nav-exam { background: #fef3c7; color: #92400e; border: 1.5px solid #f59e0b; }
-.nav-link.nav-ya3 { background: white; border: 1.5px solid var(--ya3); color: var(--ya3); }
-.nav-link.nav-ya4 { background: white; border: 1.5px solid var(--ya4); color: var(--ya4); }
-.nav-link.nav-ya5 { background: white; border: 1.5px solid var(--ya5); color: var(--ya5); }
-.nav-link.nav-ya6 { background: white; border: 1.5px solid var(--ya6); color: var(--ya6); }
+.nav-link { padding: .42rem 1rem; border-radius: 999px; font-size: .85rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all .12s; background: #f3f4f6; color: var(--text); border: 1.5px solid var(--border); }
+.nav-link:hover { background: #e5e7eb; transform: translateY(-1px); }
+.nav-link.nav-notebook { background: #3730a3; color: white; border-color: #3730a3; }
+.nav-link.nav-notebook:hover { background: #312e81; }
 .topbar h1 { font-size: 1.15rem; font-weight: 800; flex: 1; }
 .topbar .back { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .45rem .85rem; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; font-size: .85rem; }
 .topbar-add { background: #16a34a; color: white; border: none; padding: .5rem 1rem; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: .9rem; box-shadow: 0 2px 6px rgba(22,163,74,.3); }
@@ -154,11 +157,11 @@ body {
   <span class="user-tag" id="user-tag">--</span>
 </div>
 <div class="nav-row">
-  <a href="exam/index.html" class="nav-link nav-exam">📝 考試 App</a>
-  <a href="ya3/index.html" class="nav-link nav-ya3">🦷 牙三</a>
-  <a href="ya4/index.html" class="nav-link nav-ya4">🩺 牙四</a>
-  <a href="ya5/index.html" class="nav-link nav-ya5">🦴 牙五</a>
-  <a href="ya6/index.html" class="nav-link nav-ya6">👶 牙六</a>
+  <a href="index.html" class="nav-link nav-pill">回到選單</a>
+  <a href="exam/index.html" class="nav-link nav-pill">考試首頁</a>
+  <a href="exam/index.html#resume" class="nav-link nav-pill">↩ 回到考題</a>
+  <a href="exam/index.html#wrongbook" class="nav-link nav-pill">錯題本</a>
+  <a href="exam/index.html#notebook" class="nav-link nav-pill nav-notebook">📒 筆記本</a>
 </div>
 
 <div id="info-banner-slot"></div>
@@ -378,10 +381,16 @@ function utf8ToBase64(s) {
 
 async function fetchFromCdn(path) {
   const repo = getGithubRepo();
-  const url = `https://cdn.jsdelivr.net/gh/${repo}@main/${path}?_=${Date.now()}`;
+  // 🔄 用 raw.githubusercontent.com 取得即時最新版(jsdelivr CDN 有 1-5 分鐘 cache 會延遲跨裝置同步)
+  const url = `https://raw.githubusercontent.com/${repo}/main/${path}?_=${Date.now()}`;
   try {
-    const r = await fetch(url);
-    if (!r.ok) return null;
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) {
+      // fallback to jsdelivr (萬一 raw 被 rate limit)
+      const r2 = await fetch(`https://cdn.jsdelivr.net/gh/${repo}@main/${path}?_=${Date.now()}`);
+      if (!r2.ok) return null;
+      return await r2.json();
+    }
     return await r.json();
   } catch(e) { return null; }
 }
@@ -1146,16 +1155,28 @@ function startDraftAutoSave() {
 let _coreModules = null;
 async function loadTipTapModules() {
   if (_coreModules) return _coreModules;
-  const core = await import('https://esm.sh/@tiptap/core@2');
-  const StarterKit = (await import('https://esm.sh/@tiptap/starter-kit@2')).default;
-  const Underline = (await import('https://esm.sh/@tiptap/extension-underline@2')).default;
-  const Highlight = (await import('https://esm.sh/@tiptap/extension-highlight@2')).default;
-  const Table = (await import('https://esm.sh/@tiptap/extension-table@2')).default;
-  const TableRow = (await import('https://esm.sh/@tiptap/extension-table-row@2')).default;
-  const TableHeader = (await import('https://esm.sh/@tiptap/extension-table-header@2')).default;
-  const TableCell = (await import('https://esm.sh/@tiptap/extension-table-cell@2')).default;
-  const TextAlign = (await import('https://esm.sh/@tiptap/extension-text-align@2')).default;
-  const Image = (await import('https://esm.sh/@tiptap/extension-image@2')).default;
+  // 🚀 並行載入(原本是 await 一個等一個,慢 5-10 倍)
+  const [core, StarterKitMod, UnderlineMod, HighlightMod, TableMod, TableRowMod, TableHeaderMod, TableCellMod, TextAlignMod, ImageMod] = await Promise.all([
+    import('https://esm.sh/@tiptap/core@2'),
+    import('https://esm.sh/@tiptap/starter-kit@2'),
+    import('https://esm.sh/@tiptap/extension-underline@2'),
+    import('https://esm.sh/@tiptap/extension-highlight@2'),
+    import('https://esm.sh/@tiptap/extension-table@2'),
+    import('https://esm.sh/@tiptap/extension-table-row@2'),
+    import('https://esm.sh/@tiptap/extension-table-header@2'),
+    import('https://esm.sh/@tiptap/extension-table-cell@2'),
+    import('https://esm.sh/@tiptap/extension-text-align@2'),
+    import('https://esm.sh/@tiptap/extension-image@2'),
+  ]);
+  const StarterKit = StarterKitMod.default;
+  const Underline = UnderlineMod.default;
+  const Highlight = HighlightMod.default;
+  const Table = TableMod.default;
+  const TableRow = TableRowMod.default;
+  const TableHeader = TableHeaderMod.default;
+  const TableCell = TableCellMod.default;
+  const TextAlign = TextAlignMod.default;
+  const Image = ImageMod.default;
   // 🖼 ResizableImage:把 width 當 attribute,渲染成 style:width:XX% — 跟筆記本一樣
   const ResizableImage = Image.extend({
     addAttributes(){

@@ -15423,18 +15423,19 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         try { fetchPatchesFromGithub(); } catch(e){}
       }, 2000); // 延遲 2 秒,避免影響 page load 速度
 
-      // 支援從首頁直接跳到筆記本(URL hash #notebook)
-      function _maybeOpenNotebookFromHash(){
-        if (location.hash === '#notebook' && typeof showNotebook === 'function') {
-          showNotebook();
-        }
+      // 支援從首頁直接跳到 筆記本 / 錯題本 / 回到考題
+      function _maybeOpenFromHash(){
+        const h = location.hash;
+        if (h === '#notebook' && typeof showNotebook === 'function') showNotebook();
+        else if (h === '#wrongbook' && typeof showWrongbook === 'function') showWrongbook();
+        else if (h === '#resume' && typeof resumePractice === 'function') resumePractice();
       }
       if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(_maybeOpenNotebookFromHash, 0);
+        setTimeout(_maybeOpenFromHash, 0);
       } else {
-        document.addEventListener('DOMContentLoaded', _maybeOpenNotebookFromHash);
+        document.addEventListener('DOMContentLoaded', _maybeOpenFromHash);
       }
-      window.addEventListener('hashchange', _maybeOpenNotebookFromHash);
+      window.addEventListener('hashchange', _maybeOpenFromHash);
 
       // ════════════════════════════════════════════
       //  Reset All Marks

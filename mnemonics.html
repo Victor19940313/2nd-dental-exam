@@ -873,17 +873,8 @@ async function deleteChapter(chId) {
   if (!subj) return;
   const ch = subj.chapters.find(c => c.id === chId);
   if (!ch) return;
-  if (!confirm(`刪除「${ch.title}」(${_curUser})?\n\n刪掉後可以從「📜 歷史」還原。`)) return;
-  // 1. 留版本快照(刪除前)
-  await appendVersion(_curUser, _curSubject, {
-    ts: Date.now(),
-    updatedBy: CUR_USER.name || 'Guest',
-    action: 'delete_chapter',
-    chapterId: ch.id,
-    chapterTitleBefore: ch.title,
-    snapshotBefore: { title: ch.title, content: ch.content }
-  });
-  // 2. 本機刪除
+  if (!confirm(`刪除「${ch.title}」(${_curUser})?\n\n刪掉後可從「📜 歷史」找回上一次 commit 的版本。`)) return;
+  // 本機刪除(GitHub commit 自然會記錄這次刪除)
   subj.chapters = subj.chapters.filter(c => c.id !== chId);
   subj.ts = Date.now();
   subj.updatedBy = CUR_USER.name || 'Guest';
@@ -903,7 +894,6 @@ async function deleteChapter(chId) {
     const { sha } = await fetchFromGithub(CONTENT_PATH(_curUser, _curSubject));
     await pushToGithub(CONTENT_PATH(_curUser, _curSubject), subj, sha,
       `[mnemonics] delete ${_curUser} ${SUBJECT_LABEL[_curSubject]} "${ch.title}" by ${CUR_USER.name}`);
-    try { await pushVersionsFile(_curUser, _curSubject); } catch(e){}
     showToast('🗑 已刪除(雲端同步完成)');
   } catch(e) {
     console.error('[delete push] fail', e);
@@ -951,20 +941,11 @@ async function saveToCloud() {
   if (_curChapterId) {
     const ch = subj.chapters.find(c => c.id === _curChapterId);
     if (ch && _editor) {
-      const oldSnapshot = {
-        ts: Date.now(),
-        updatedBy: CUR_USER.name || 'Guest',
-        action: 'edit_chapter',
-        chapterId: ch.id,
-        chapterTitleBefore: ch.title,
-        snapshotBefore: { title: ch.title, content: ch.content }
-      };
       const newTitle = document.getElementById('title-input').value.trim() || ch.title;
       ch.title = newTitle;
       ch.content = _editor.getHTML();
       ch.ts = Date.now();
       ch.updatedBy = CUR_USER.name || 'Guest';
-      await appendVersion(_curUser, _curSubject, oldSnapshot);
     }
   }
   subj.ts = Date.now();
@@ -973,33 +954,21 @@ async function saveToCloud() {
   const btn = document.getElementById('save-btn');
   btn.disabled = true;
   btn.textContent = '⏳ 推送中…';
-  let step = 'init';
   try {
-    step = 'JSON.stringify(subj)';
-    const json = JSON.stringify(subj, null, 2);
-    console.log('[saveToCloud] payload size:', json.length, 'chars');
-    step = 'fetchFromGithub(content)';
     const { sha: contentSha } = await fetchFromGithub(CONTENT_PATH(_curUser, _curSubject));
-    console.log('[saveToCloud] got sha:', contentSha);
-    step = 'pushToGithub(content)';
+    // 🛡 每次 commit 訊息加上章節 + 時間 + 使用者,GitHub commit 歷史就是版本歷史
+    const chMsg = _curChapterId ? subj.chapters.find(c => c.id === _curChapterId)?.title || '' : '';
     await pushToGithub(CONTENT_PATH(_curUser, _curSubject), subj, contentSha,
-      `[mnemonics] ${_curUser} ${SUBJECT_LABEL[_curSubject]} by ${CUR_USER.name}`);
-    step = 'idbSet(cloud)';
+      `[mnemonics] ${_curUser} ${SUBJECT_LABEL[_curSubject]} "${chMsg}" by ${CUR_USER.name}`);
     await idbSet(k.cloud(_curUser, _curSubject), subj);
-    if (_curChapterId) {
-      step = 'idbDel(draft)';
-      await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
-    }
-    step = 'pushVersionsFile';
-    try { await pushVersionsFile(_curUser, _curSubject); }
-    catch(verr) { console.warn('[saveToCloud] versions push failed', verr); }
+    if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
     _dirty = false;
     refreshStatusUI();
     renderChapterList();
-    showToast('✅ 已推到雲端 + 版本快照');
+    showToast('✅ 已推到雲端');
   } catch(e) {
-    console.error('[saveToCloud] failed at step "' + step + '"', e, e && e.stack);
-    alert('儲存失敗 (step=' + step + '):\n' + (e.message || e) + '\n\n本機草稿還在 IDB,不會掉。\n\n👉 開 F12 → Console 看詳細 stack trace');
+    console.error('[saveToCloud] failed', e);
+    alert('儲存失敗:' + (e.message || e) + '\n\n本機草稿還在 IDB,不會掉。');
     btn.disabled = false;
     btn.textContent = '💾 重試';
   }
@@ -1030,37 +999,116 @@ async function pushVersionsFile(user, subject) {
 // ──────────────────────────────────────────────────────────
 // 版本歷史 modal
 // ──────────────────────────────────────────────────────────
+// 🛡 改用 GitHub commit 歷史(無上限,GitHub 自己存)
 async function openVersionModal() {
-  const [local, remote] = await Promise.all([
-    idbGet(k.versions(_curUser, _curSubject)),
-    fetchFromCdn(VERSIONS_PATH(_curUser, _curSubject))
-  ]);
-  let merged = (Array.isArray(remote) ? remote : []).slice();
-  (local || []).forEach(v => {
-    if (!merged.find(m => m.ts === v.ts)) merged.push(v);
-  });
-  merged.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-  if (merged.length === 0) {
-    showVersionModalContent('<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有版本歷史</div>');
-    return;
+  showVersionModalContent('<div style="text-align:center;padding:2rem;color:#9ca3af">⏳ 從 GitHub 拉歷史…</div>');
+  const token = getGithubToken();
+  const repo = getGithubRepo();
+  const path = CONTENT_PATH(_curUser, _curSubject);
+  try {
+    const url = `https://api.github.com/repos/${repo}/commits?path=${encodeURIComponent(path)}&per_page=30`;
+    const r = await fetch(url, {
+      headers: token ? { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } : { 'Accept': 'application/vnd.github+json' },
+      cache: 'no-store'
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      showVersionModalContent('<div style="color:#dc2626;padding:1rem">❌ 拉不到歷史: ' + r.status + ' ' + txt.slice(0,200) + '</div>');
+      return;
+    }
+    const commits = await r.json();
+    if (!commits.length) {
+      showVersionModalContent('<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有任何儲存紀錄</div>');
+      return;
+    }
+    window._commitList = commits;
+    const rows = commits.map((c, i) => {
+      const msg = c.commit && c.commit.message || '(無訊息)';
+      const author = c.commit && c.commit.author && c.commit.author.name || '?';
+      const dt = c.commit && c.commit.author && c.commit.author.date ? new Date(c.commit.author.date).toLocaleString('zh-TW') : '';
+      // 從 commit message 抽出章節標題(我們存的格式: [mnemonics] HUA 牙三 "標題" by HUA)
+      const m = msg.match(/"([^"]+)"/);
+      const chTitle = m ? m[1] : '';
+      return `<div class="version-row">
+        <div class="v-info">
+          <div class="v-title">${chTitle ? '「' + escapeHtml(chTitle) + '」' : ''} ${escapeHtml(msg.split('\n')[0].replace(/\[mnemonics\]\s*/, ''))}</div>
+          <div class="v-meta">${escapeHtml(author)} · ${dt}</div>
+        </div>
+        <div class="v-action">
+          <button onclick="previewCommit(${i})">👁 預覽</button>
+          ${CAN_EDIT ? `<button class="restore" onclick="restoreFromCommit(${i})">↶ 還原</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    showVersionModalContent('<div style="font-size:.85rem;color:#6b7280">共 ' + commits.length + ' 個 GitHub commit(無上限,顯示最近 30)</div><br>' + rows);
+  } catch(e) {
+    showVersionModalContent('<div style="color:#dc2626;padding:1rem">❌ 拉歷史失敗: ' + e.message + '</div>');
   }
-  const rows = merged.map((v, i) => {
-    const dt = new Date(v.ts).toLocaleString('zh-TW');
-    const chTitle = v.chapterTitleBefore || '(該章節)';
-    const action = v.action === 'edit_chapter' ? '編輯' : (v.action || '改動');
-    return `<div class="version-row">
-      <div class="v-info">
-        <div class="v-title">「${escapeHtml(chTitle)}」 - ${action}</div>
-        <div class="v-meta">${escapeHtml(v.updatedBy || '(未知)')} · ${dt}</div>
-      </div>
-      <div class="v-action">
-        <button onclick="previewVersion(${i})">👁 預覽</button>
-        ${CAN_EDIT ? `<button class="restore" onclick="restoreVersion(${i})">↶ 還原</button>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-  window._versionList = merged;
-  showVersionModalContent('<div>共 ' + merged.length + ' 個版本(只留最近 ' + VERSION_KEEP_REMOTE + ' 個)</div><br>' + rows);
+}
+
+// 從某個 commit 拉該 path 的內容
+async function _fetchFileAtCommit(sha) {
+  const token = getGithubToken();
+  const repo = getGithubRepo();
+  const path = CONTENT_PATH(_curUser, _curSubject);
+  const r = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?ref=${sha}`, {
+    headers: token ? { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' } : { 'Accept': 'application/vnd.github+json' },
+    cache: 'no-store'
+  });
+  if (!r.ok) throw new Error('拉取 commit 內容失敗 ' + r.status);
+  const d = await r.json();
+  return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g, '')))));
+}
+
+async function previewCommit(idx) {
+  const c = window._commitList[idx];
+  if (!c) return;
+  showVersionModalContent('<div style="text-align:center;padding:2rem;color:#9ca3af">⏳ 載入 commit 內容…</div>');
+  try {
+    const data = await _fetchFileAtCommit(c.sha);
+    const ch = _curChapterId ? (data.chapters || []).find(x => x.id === _curChapterId) : (data.chapters || [])[0];
+    if (!ch) {
+      showVersionModalContent('<div style="color:#dc2626;padding:1rem">這版裡找不到目前章節(可能那時還沒建)</div><div style="margin-top:1rem"><button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button></div>');
+      return;
+    }
+    const html = '<h3 style="margin-bottom:.5rem">' + escapeHtml(ch.title || '(無標題)') + '</h3>'
+      + '<div class="version-preview">' + (ch.content || '<p>(空)</p>') + '</div>'
+      + '<div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">'
+      + '<button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button>'
+      + (CAN_EDIT ? '<button onclick="restoreFromCommit(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
+      + '</div>';
+    showVersionModalContent(html);
+  } catch(e) {
+    showVersionModalContent('<div style="color:#dc2626;padding:1rem">❌ ' + e.message + '</div>');
+  }
+}
+
+async function restoreFromCommit(idx) {
+  if (!CAN_EDIT) return;
+  const c = window._commitList[idx];
+  if (!c) return;
+  if (!confirm('還原到「' + new Date(c.commit.author.date).toLocaleString('zh-TW') + '」的版本?\n\n會覆蓋當前章節內容,但這次還原本身也是新 commit,可以再從歷史救回現在的版本。')) return;
+  try {
+    const data = await _fetchFileAtCommit(c.sha);
+    const ch = (data.chapters || []).find(x => x.id === _curChapterId);
+    if (!ch) { alert('這版找不到目前章節'); return; }
+    const subj = curState();
+    const curCh = subj.chapters.find(x => x.id === _curChapterId);
+    _undoMap[_curChapterId] = { title: curCh.title, content: curCh.content };
+    curCh.title = ch.title;
+    curCh.content = ch.content;
+    curCh.ts = Date.now();
+    curCh.updatedBy = CUR_USER.name || 'Guest';
+    _dirty = true;
+    if (_editor) _editor.commands.setContent(ch.content || '<p></p>');
+    document.getElementById('title-input').value = ch.title || '';
+    closeVersionModal();
+    await saveToCloud();
+    refreshStatusUI();
+    showToast('✅ 已還原');
+  } catch(e) {
+    alert('還原失敗:' + e.message);
+  }
 }
 
 function showVersionModalContent(html) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v306-mnemonics-mobile-fix';
+const CACHE_NAME = 'dental-all-v307-mnemonics-github-commits-history';
 const PRECACHE = [
   './',
   './index.html',

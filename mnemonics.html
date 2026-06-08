@@ -73,8 +73,30 @@ body {
 .info-banner.readonly { background: #fef3c7; border: 1px solid #fbbf24; color: #92400e; font-weight: 600; }
 .info-banner .banner-close { position: absolute; top: 50%; right: .55rem; transform: translateY(-50%); background: transparent; border: 1.5px solid currentColor; color: inherit; opacity: .6; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: .75rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .info-banner .banner-close:hover { opacity: 1; background: rgba(0,0,0,.05); }
-.workspace { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; }
+.workspace { display: grid; grid-template-columns: 240px 1fr 300px; gap: 1rem; }
+@media (max-width: 1100px) { .workspace { grid-template-columns: 220px 1fr; } .comment-pane { grid-column: 1 / -1; } }
 @media (max-width: 720px) { .workspace { grid-template-columns: 1fr; } }
+/* v323:留言區 */
+.comment-pane { background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; max-height: 80vh; min-height: 320px; overflow: hidden; }
+.comment-head { padding: .65rem .9rem; background: #fafaf5; border-bottom: 1px solid var(--border); font-weight: 800; font-size: .9rem; color: var(--text); display: flex; align-items: center; gap: .4rem; }
+.comment-head .count { background: var(--ya4); color: white; font-size: .68rem; padding: .1rem .5rem; border-radius: 10px; }
+.comment-list { flex: 1; overflow-y: auto; padding: .7rem .8rem; display: flex; flex-direction: column; gap: .6rem; }
+.comment-empty { color: var(--text-sub); text-align: center; padding: 2rem .5rem; font-size: .82rem; font-style: italic; }
+.comment-item { background: #f9fafb; border: 1px solid #f0ece0; border-radius: 8px; padding: .5rem .65rem; font-size: .85rem; line-height: 1.5; position: relative; }
+.comment-item .meta { font-size: .7rem; color: var(--text-sub); margin-bottom: .2rem; display: flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
+.comment-item .who { font-weight: 700; color: var(--ya5); }
+.comment-item .text { white-space: pre-wrap; word-break: break-word; }
+.comment-item .del-c { position: absolute; top: .3rem; right: .35rem; background: transparent; border: none; color: #d1d5db; cursor: pointer; font-size: .8rem; padding: 0 .25rem; }
+.comment-item:hover .del-c { color: #ef4444; }
+.comment-input-row { padding: .55rem .8rem; border-top: 1px solid var(--border); background: #fafaf5; display: flex; gap: .4rem; }
+.comment-input { flex: 1; border: 1.5px solid var(--border); border-radius: 7px; padding: .4rem .55rem; font-family: inherit; font-size: .85rem; resize: none; min-height: 38px; max-height: 100px; outline: none; }
+.comment-input:focus { border-color: var(--ya5); }
+.comment-send { background: var(--ya5); color: white; border: none; border-radius: 7px; padding: 0 .85rem; font-weight: 700; cursor: pointer; font-size: .85rem; white-space: nowrap; }
+.comment-send:disabled { background: #cbd5e1; cursor: not-allowed; }
+.comment-readonly { padding: .5rem .8rem; border-top: 1px solid var(--border); font-size: .78rem; color: var(--text-sub); background: #fafaf5; text-align: center; }
+.comment-pane.no-chapter .comment-list { display: none; }
+.comment-pane.no-chapter .comment-input-row, .comment-pane.no-chapter .comment-readonly { display: none; }
+.comment-pane.no-chapter::after { content: '⬅ 先選一章再留言'; display: flex; flex: 1; align-items: center; justify-content: center; color: var(--text-sub); font-size: .82rem; font-style: italic; padding: 1rem; }
 .chapter-list { background: white; border: 1px solid var(--border); border-radius: 12px; padding: .55rem; box-shadow: var(--shadow); max-height: 80vh; overflow-y: auto; }
 .chapter-list .ch-head { display: flex; align-items: center; gap: .4rem; padding: .35rem .45rem .55rem; }
 .chapter-list .ch-head strong { font-size: .82rem; color: var(--text-sub); flex: 1; }
@@ -224,6 +246,16 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
       </div>
     </div>
   </div>
+  <!-- v323:每章節留言區 -->
+  <div class="comment-pane no-chapter" id="comment-pane">
+    <div class="comment-head">💬 章節留言 <span class="count" id="comment-count">0</span></div>
+    <div class="comment-list" id="comment-list"></div>
+    <div class="comment-input-row" id="comment-input-row">
+      <textarea class="comment-input" id="comment-input" placeholder="留個言給共筆者…(Enter 送出, Shift+Enter 換行)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendComment()}"></textarea>
+      <button class="comment-send" id="comment-send" onclick="sendComment()">送出</button>
+    </div>
+    <div class="comment-readonly" id="comment-readonly" style="display:none">🔒 唯讀模式,看得到留言但不能發</div>
+  </div>
 </div>
 
 <script>
@@ -246,6 +278,7 @@ const FB_BASE      = 'users/__mnemonics';                  // Firebase RTDB 共�
 const FB_CONTENT   = (u, s) => `${FB_BASE}/content/${u}/${s}`;
 const FB_VERSIONS  = (u, s) => `${FB_BASE}/versions/${u}/${s}`;
 const FB_USERS     = `${FB_BASE}/users`;
+const FB_COMMENTS  = (u, s, chId) => `${FB_BASE}/comments/${u}/${s}/${chId}`;
 const FB_VERSION_KEEP = 30;                                // 每章節最多保留 30 個歷史版本
 
 const FIREBASE_CONFIG = {
@@ -671,6 +704,101 @@ function setLoadStatus(msg) {
   }
 }
 
+// ──────────────────────────────────────────────────────────
+// v323:章節留言區(per-chapter Firebase realtime)
+// ──────────────────────────────────────────────────────────
+let _commentRef = null; // 目前掛載的 Firebase ref(切章節要 detach)
+function detachComments() {
+  if (_commentRef) {
+    try { _commentRef.off('value'); } catch(e){}
+    _commentRef = null;
+  }
+  const pane = document.getElementById('comment-pane');
+  if (pane) pane.classList.add('no-chapter');
+  const list = document.getElementById('comment-list');
+  if (list) list.innerHTML = '';
+  const count = document.getElementById('comment-count');
+  if (count) count.textContent = '0';
+}
+function loadComments(chId) {
+  detachComments();
+  if (!chId) return;
+  const pane = document.getElementById('comment-pane');
+  pane.classList.remove('no-chapter');
+  // 唯讀模式顯示提示
+  document.getElementById('comment-input-row').style.display = CAN_EDIT ? '' : 'none';
+  document.getElementById('comment-readonly').style.display = CAN_EDIT ? 'none' : '';
+  try {
+    _commentRef = _initFb().ref(FB_COMMENTS(_curUser, _curSubject, chId));
+    _commentRef.on('value', (snap) => {
+      const data = snap.val() || {};
+      // data 是 push() 產生的 key:value map → 轉成 array 並按 ts 排序
+      const arr = Object.entries(data).map(([key, v]) => ({ key, ...v }))
+                  .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      renderCommentList(arr);
+    }, (err) => {
+      document.getElementById('comment-list').innerHTML = `<div class="comment-empty">❌ 載入留言失敗:${(err.message||'').slice(0,80)}</div>`;
+    });
+  } catch(e) {
+    document.getElementById('comment-list').innerHTML = `<div class="comment-empty">❌ ${(e.message||'').slice(0,80)}</div>`;
+  }
+}
+function renderCommentList(arr) {
+  const list = document.getElementById('comment-list');
+  const count = document.getElementById('comment-count');
+  if (!list) return;
+  count.textContent = String(arr.length);
+  if (!arr.length) {
+    list.innerHTML = '<div class="comment-empty">還沒有留言 ✏️</div>';
+    return;
+  }
+  const me = (CUR_USER.name || '').trim().toLowerCase();
+  list.innerHTML = arr.map(c => {
+    const isMine = (c.by || '').trim().toLowerCase() === me;
+    const dt = c.ts ? new Date(c.ts).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const delBtn = (CAN_EDIT && isMine) ? `<button class="del-c" onclick="deleteComment('${c.key}')" title="刪除這則留言">✕</button>` : '';
+    return `<div class="comment-item">
+      ${delBtn}
+      <div class="meta"><span class="who">${escapeHtml(c.by || '?')}</span> · ${dt}</div>
+      <div class="text">${escapeHtml(c.text || '')}</div>
+    </div>`;
+  }).join('');
+  // 自動捲到最底
+  list.scrollTop = list.scrollHeight;
+}
+async function sendComment() {
+  if (!CAN_EDIT) { showToast('沒有編輯權限'); return; }
+  if (!_curChapterId) { showToast('請先選一章'); return; }
+  const inp = document.getElementById('comment-input');
+  const text = (inp.value || '').trim();
+  if (!text) return;
+  if (text.length > 2000) { showToast('留言太長(限 2000 字)'); return; }
+  const btn = document.getElementById('comment-send');
+  btn.disabled = true;
+  try {
+    await fbPush(FB_COMMENTS(_curUser, _curSubject, _curChapterId), {
+      by: CUR_USER.name || 'Guest',
+      ts: Date.now(),
+      text,
+    });
+    inp.value = '';
+  } catch(e) {
+    showToast('送出失敗:' + (e.message||'').slice(0,60));
+  } finally {
+    btn.disabled = false;
+    inp.focus();
+  }
+}
+async function deleteComment(key) {
+  if (!CAN_EDIT) return;
+  if (!confirm('刪掉這則留言?')) return;
+  try {
+    await _initFb().ref(`${FB_COMMENTS(_curUser, _curSubject, _curChapterId)}/${key}`).remove();
+  } catch(e) {
+    showToast('刪除失敗:' + (e.message||'').slice(0,60));
+  }
+}
+
 // 強制重抓目前 namespace × subject 的雲端最新版
 async function forceRefreshCurrent() {
   if (!_curUser || !_curSubject) return;
@@ -855,6 +983,8 @@ async function pickChapter(chId) {
   _dirty = false;
   refreshStatusUI();
   renderChapterList();
+  // v323:載入該章節的留言
+  loadComments(chId);
 }
 
 function showEmptyEditor() {
@@ -868,6 +998,8 @@ function showEmptyEditor() {
   if (ti) { ti.value = ''; ti.placeholder = '章節標題...'; }
   _dirty = false; _editMode = false;
   refreshStatusUI();
+  // v323:沒選章節時關掉留言區
+  detachComments();
 }
 
 function refreshStatusUI() {

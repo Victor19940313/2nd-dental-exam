@@ -161,8 +161,7 @@ body {
   <div class="editor-card">
     <div class="editor-status">
       <input type="text" id="title-input" class="title-input" placeholder="章節標題..." oninput="onTitleChange()" />
-      <span class="meta" id="meta-text"></span>
-      <button class="history-btn" onclick="openVersionModal()" title="看完整版本歷史">📜 歷史</button>
+      <span class="meta" id="meta-text" style="display:none"></span>
       <button class="undo-btn" id="undo-btn" onclick="undoLastSave()" title="回復到上次儲存前的版本" style="display:none">↶ 回復</button>
       <button class="redo-btn" id="redo-btn" onclick="redoLastUndo()" title="取消剛剛的回復" style="display:none">↷ 取消回復</button>
       <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>

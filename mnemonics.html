@@ -107,7 +107,9 @@ body.comments-collapsed .comments-open-btn { display: inline-block; }
 .comment-pane.no-chapter .comment-input-row, .comment-pane.no-chapter .comment-readonly { display: none; }
 .comment-pane.no-chapter::after { content: '⬅ 先選一章再留言'; display: flex; flex: 1; align-items: center; justify-content: center; color: var(--text-sub); font-size: .82rem; font-style: italic; padding: 1rem; }
 .chapter-list { background: white; border: 1px solid var(--border); border-radius: 12px; padding: .55rem; box-shadow: var(--shadow); max-height: 80vh; overflow-y: auto; }
-.chapter-list .ch-head { display: flex; align-items: center; gap: .4rem; padding: .35rem .45rem .55rem; }
+.chapter-list .ch-head { display: flex; align-items: center; gap: .4rem; padding: .35rem .45rem .35rem; }
+.chapter-list .ch-search { width: calc(100% - .9rem); margin: .15rem .45rem .5rem; padding: .35rem .55rem; border: 1.5px solid var(--border); border-radius: 7px; font-size: .8rem; font-family: inherit; outline: none; background: #fafaf5; box-sizing: border-box; }
+.chapter-list .ch-search:focus { border-color: var(--ya5); background: white; }
 .chapter-list .ch-head strong { font-size: .82rem; color: var(--text-sub); flex: 1; }
 .chapter-list .ch-add { background: #16a34a; color: white; border: none; padding: .35rem .75rem; border-radius: 7px; cursor: pointer; font-weight: 800; font-size: .8rem; box-shadow: 0 2px 6px rgba(22,163,74,.3); }
 .chapter-list .ch-add:hover { background: #15803d; }
@@ -129,7 +131,8 @@ body.comments-collapsed .comments-open-btn { display: inline-block; }
 .editor-status button { border: none; border-radius: 7px; cursor: pointer; font-weight: 700; }
 .editor-status .save-btn { background: #16a34a; color: white; padding: .4rem .85rem; font-size: .82rem; }
 .editor-status .save-btn:disabled { background: #9ca3af; cursor: not-allowed; }
-.editor-status .refresh-btn, .editor-status .history-btn { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .35rem .65rem; font-size: .78rem; font-weight: 600; }
+.editor-status .refresh-btn, .editor-status .history-btn, .editor-status .link-btn { background: #f3f4f6; border: 1px solid var(--border); color: var(--text-sub); padding: .35rem .65rem; font-size: .78rem; font-weight: 600; }
+.editor-status .link-btn:hover { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
 .editor-status .edit-btn { background: #7c3aed; color: white; padding: .4rem .85rem; font-size: .82rem; }
 .editor-status .abandon-btn { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fecaca; padding: .4rem .85rem; font-size: .82rem; }
 .editor-status .abandon-btn:hover { background: #fecaca; }
@@ -225,12 +228,14 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
       <strong id="ch-head-label">章節</strong>
       <button id="btn-add-ch" class="ch-add" onclick="addChapter()" title="新增章節">+ 新增</button>
     </div>
+    <input type="search" id="ch-search" class="ch-search" placeholder="🔍 跨四科搜尋…" oninput="onChSearch()" />
     <div id="ch-items"></div>
   </div>
   <div class="editor-card nb-chapter-content">
     <div class="editor-status">
       <input type="text" id="title-input" class="title-input" placeholder="章節標題..." oninput="onTitleChange()" />
       <button class="history-btn" id="history-btn" onclick="openVersionModal()" title="看完整版本歷史" style="display:none">📜 歷史</button>
+      <button class="link-btn" id="link-btn" onclick="copyChapterLink()" title="複製此章節連結,貼到留言可以一鍵跳過去" style="display:none">🔗 複製連結</button>
       <button class="undo-btn" id="undo-btn" onclick="undoLastSave()" title="回復到上次儲存前的版本" style="display:none">↶ 回復</button>
       <button class="redo-btn" id="redo-btn" onclick="redoLastUndo()" title="取消剛剛的回復" style="display:none">↷ 取消回復</button>
       <button class="edit-btn" id="edit-btn" onclick="toggleEditMode()">✏ 編輯</button>
@@ -308,12 +313,15 @@ const FIREBASE_CONFIG = {
 const IDB_DB = 'dental_mnemonics_v1';
 const IDB_STORE = 'mnemonics';
 
-// v315:白名單比對改成大小寫不敏感 + 接受 namespace 別名
-//       (Shirley / shirley / 腦動大開 都算 Shirley;HUA / hua / Hua 都算 HUA)
-const ALLOWED_EDITORS = ['hua', 'shirley', '腦動大開'];
-const DEFAULT_USERS = ['HUA', '腦動大開'];   // 雲端 namespace 預設清單(顯示名稱)
-// 登入名稱(小寫) → 該使用者預設看到的 namespace(編輯區名稱)
-const NAME_TO_NAMESPACE = { 'hua': 'HUA', 'shirley': '腦動大開', '腦動大開': '腦動大開' };
+// v329:白名單(用於「能不能留言」+「進來看到的是 editor banner 還是唯讀」)
+//       大小寫不敏感,'腦洞大開' 別名也算 Shirley
+const ALLOWED_EDITORS = ['hua', 'shirley', '腦洞大開'];
+const DEFAULT_USERS = ['HUA', '腦洞大開'];
+const NAME_TO_NAMESPACE = { 'hua': 'HUA', 'shirley': '腦洞大開', '腦洞大開': '腦洞大開' };
+// v329:每個 namespace 只有對應的人能編輯內容
+//       (HUA 區只有 hua 能編;腦洞大開區只有 shirley 能編。
+//        其他人/對方都能看 + 能留言)
+const NS_OWNER = { 'HUA': 'hua', '腦洞大開': 'shirley' };
 
 const SUBJECT_NAME = { ya3: '🦷 牙三', ya4: '🩺 牙四', ya5: '🦴 牙五', ya6: '👶 牙六' };
 const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
@@ -332,7 +340,15 @@ function getCurrentUser() {
 }
 const CUR_USER = getCurrentUser();
 // v315:用小寫比對,大小寫差異不再卡她朋友
-const CAN_EDIT = ALLOWED_EDITORS.includes((CUR_USER.name || '').trim().toLowerCase());
+// CAN_EDIT 變成「能不能留言」的判斷(白名單) — 不再控制章節編輯
+const CAN_COMMENT = ALLOWED_EDITORS.includes((CUR_USER.name || '').trim().toLowerCase());
+const CAN_EDIT = CAN_COMMENT; // 暫留舊變數做最小破壞性改動,真正控制「能否改章節」改用 canEditCurrent()
+// 是否能編輯目前 namespace 的內容(章節)— 只有 namespace owner 可以
+function canEditCurrent() {
+  const owner = NS_OWNER[_curUser];
+  if (!owner) return false; // 未知 namespace 一律唯讀
+  return (CUR_USER.name || '').trim().toLowerCase() === owner;
+}
 
 // 🎨 套用使用者的筆記本背景設定(每個使用者各自獨立)
 function _uKey(k) { return CUR_USER.id + '_' + k; }
@@ -378,9 +394,13 @@ window.addEventListener('storage', (e) => {
     slot.style.display = 'none';
   } else if (CAN_EDIT) {
     // v322:文字內容走 Firebase 不需 token。只有貼圖功能需要 GitHub token,沒設就只是貼圖會關掉
+    // v329:每個人只能編輯自己的 namespace,別人的可看可留言不能改
     const hasToken = !!(localStorage.getItem(CUR_USER.id + '_github_token') || localStorage.getItem('github_token'));
-    const imgNote = hasToken ? '' : '<br><span style="font-size:.78rem;color:#92400e">(目前沒設 GitHub token → 只能打字,貼圖功能停用。要開圖片功能去「考試 App → ⚙️ 設定 → GitHub」貼 token)</span>';
-    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>,有編輯權限。文字共筆即時同步,版本歷史在「📜 歷史」。${imgNote}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
+    const imgNote = hasToken ? '' : '<br><span style="font-size:.78rem;color:#92400e">(沒設 GitHub token → 不能貼圖,文字共筆照常)</span>';
+    const lowerName = (CUR_USER.name || '').trim().toLowerCase();
+    const ownNs = lowerName === 'hua' ? 'HUA' : (lowerName === 'shirley' ? '腦洞大開' : '');
+    const rule = ownNs ? `你只能改「${ownNs}」的章節,其他人的可看可留言不能改。` : '';
+    slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>。${rule}文字即時同步,版本歷史在「📜 歷史」。${imgNote}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
   } else {
     slot.innerHTML = `<div class="info-banner readonly">
       🔒 唯讀模式 — 你的登入名稱是「<strong>${escapeHtml(CUR_USER.name || 'Guest')}</strong>」,只有 HUA / Shirley 能編輯。
@@ -693,7 +713,7 @@ async function loadUserSubject(user, subject, opts) {
       if (firstFire) {
         firstFire = false;
         const localTs = (cache && cache.ts) ? cache.ts : 0;
-        if (CAN_EDIT && cache && cache.chapters && cache.chapters.length > 0 && localTs > remoteTs) {
+        if (canEditCurrent() && cache && cache.chapters && cache.chapters.length > 0 && localTs > remoteTs) {
           try {
             await fbSet(FB_CONTENT(user, subject), cache);
             setLoadStatus(`⬆️ 本地較新,已自動上傳 · ${cache.chapters.length} 章`);
@@ -878,13 +898,156 @@ function curState() {
   return _state[stateKey(_curUser, _curSubject)];
 }
 
+// ──────────────────────────────────────────────────────────
+// v329:複製章節連結 + 解析 URL hash 深連結
+//      hash 格式:#ns=HUA&subj=ya5&ch=ch_xxx
+// ──────────────────────────────────────────────────────────
+function copyChapterLink() {
+  if (!_curChapterId) { showToast('請先選一章再複製'); return; }
+  const hash = `#ns=${encodeURIComponent(_curUser)}&subj=${_curSubject}&ch=${encodeURIComponent(_curChapterId)}`;
+  const url = location.origin + location.pathname + hash;
+  const subj = curState();
+  const ch = subj && subj.chapters.find(c => c.id === _curChapterId);
+  const title = ch ? ch.title : '章節';
+  // 嘗試現代 Clipboard API
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast(`🔗 已複製「${title}」的連結`); }
+    catch(e) { showToast('複製失敗,請手動複製:' + url); }
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(
+      () => showToast(`🔗 已複製「${title}」的連結`),
+      () => fallback()
+    );
+  } else {
+    fallback();
+  }
+}
+
+// 解析 URL hash,跳到指定 (ns, subj, ch)
+async function _applyDeepLinkFromHash() {
+  const h = location.hash || '';
+  if (!h.startsWith('#')) return false;
+  const params = {};
+  h.slice(1).split('&').forEach(kv => {
+    const [k, v] = kv.split('=');
+    if (k) params[k] = decodeURIComponent(v || '');
+  });
+  if (!params.ns && !params.subj && !params.ch) return false;
+  // 切到指定 namespace + subject
+  if (params.ns && _users.includes(params.ns)) {
+    _curUser = params.ns;
+    const sel = document.getElementById('user-select');
+    if (sel) sel.value = params.ns;
+    renderUserTabs();
+  }
+  if (params.subj && ['ya3','ya4','ya5','ya6'].includes(params.subj)) {
+    await switchSubject(params.subj);
+  }
+  // 等資料載到再選章節 — 一秒內輪詢
+  if (params.ch) {
+    let tries = 30;
+    const tryPick = () => {
+      const sj = curState();
+      if (sj && sj.chapters && sj.chapters.find(c => c.id === params.ch)) {
+        pickChapter(params.ch);
+        return;
+      }
+      if (--tries > 0) setTimeout(tryPick, 100);
+    };
+    tryPick();
+  }
+  return true;
+}
+// 監聽 hash 改變(留言裡點連結,網址只是 hash 換,不會 reload)
+window.addEventListener('hashchange', () => { _applyDeepLinkFromHash(); });
+
+// ──────────────────────────────────────────────────────────
+// v329:章節搜尋(目前 namespace 跨四科)
+// ──────────────────────────────────────────────────────────
+let _searchTimer = null;
+async function onChSearch() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => doSearch(), 200);
+}
+async function doSearch() {
+  const inp = document.getElementById('ch-search');
+  const q = (inp ? inp.value : '').trim().toLowerCase();
+  if (!q) {
+    // 清空 → 還原章節列為當前科目
+    renderChapterList();
+    return;
+  }
+  // 確保四科資料都載過(背景拉)
+  const SUBJECTS = ['ya3','ya4','ya5','ya6'];
+  const promises = SUBJECTS.map(async (s) => {
+    const sk = stateKey(_curUser, s);
+    if (_state[sk] && _state[sk].chapters) return;
+    const cache = await idbGet(k.cloud(_curUser, s));
+    if (cache && cache.chapters) _state[sk] = cache;
+  });
+  await Promise.all(promises);
+  // 跨四科搜尋
+  const hits = [];
+  for (const s of SUBJECTS) {
+    const sj = _state[stateKey(_curUser, s)];
+    if (!sj || !sj.chapters) continue;
+    sj.chapters.forEach(ch => {
+      const title = (ch.title || '').toLowerCase();
+      const plain = (ch.content || '').replace(/<[^>]+>/g, ' ').toLowerCase();
+      if (title.includes(q) || plain.includes(q)) {
+        // 抽 snippet
+        let snippet = '';
+        const idx = plain.indexOf(q);
+        if (idx >= 0) {
+          const start = Math.max(0, idx - 20);
+          snippet = (start > 0 ? '…' : '') + plain.slice(start, idx + q.length + 30).trim();
+        }
+        hits.push({ subj: s, ch, snippet });
+      }
+    });
+  }
+  renderSearchResults(hits, q);
+}
+function renderSearchResults(hits, q) {
+  const container = document.getElementById('ch-items');
+  if (!container) return;
+  if (!hits.length) {
+    container.innerHTML = `<div style="padding:1rem .5rem;color:var(--text-sub);text-align:center;font-size:.85rem">找不到「${escapeHtml(q)}」</div>`;
+    return;
+  }
+  container.innerHTML = `<div style="font-size:.74rem;color:var(--text-sub);padding:.3rem .35rem .55rem">🔍 ${hits.length} 個結果</div>` + hits.map(h => {
+    const subjLbl = SUBJECT_LABEL[h.subj] || h.subj;
+    return `<div class="ch-item" style="border-left:3px solid var(--ya5);padding-left:.5rem" onclick="gotoSearchHit('${h.subj}','${h.ch.id}')">
+      <div style="display:flex;flex-direction:column;gap:.15rem;width:100%">
+        <div style="display:flex;gap:.3rem;align-items:center">
+          <span style="background:var(--ya5);color:white;font-size:.65rem;padding:.05rem .35rem;border-radius:8px;font-weight:700">${subjLbl}</span>
+          <span class="ch-title" style="font-weight:700">${escapeHtml(h.ch.title || '(無標題)')}</span>
+        </div>
+        ${h.snippet ? `<div style="font-size:.74rem;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(h.snippet)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+async function gotoSearchHit(subj, chId) {
+  // 清掉搜尋輸入,切到該科目再跳章節
+  const inp = document.getElementById('ch-search');
+  if (inp) inp.value = '';
+  if (_curSubject !== subj) await switchSubject(subj);
+  setTimeout(() => pickChapter(chId), 50);
+}
+
 function renderChapterList() {
   const subj = curState() || { chapters: [] };
   const container = document.getElementById('ch-items');
   const head = document.getElementById('ch-head-label');
   head.textContent = `${_curUser} · ${SUBJECT_LABEL[_curSubject]} · ${subj.chapters.length} 章`;
   if (subj.chapters.length === 0) {
-    const tip = CAN_EDIT ? '按上方「+ 新增」開始' : `${_curUser} 還沒寫東西`;
+    const tip = canEditCurrent() ? '按上方「+ 新增」開始' : `${_curUser} 還沒寫東西`;
     container.innerHTML = `<div class="empty">還沒有章節<br>${tip}</div>`;
     return;
   }
@@ -892,7 +1055,7 @@ function renderChapterList() {
     const active = ch.id === _curChapterId;
     return `<div class="ch-item ${active ? 'active' : ''}" onclick="pickChapter('${ch.id}')">
       <span class="ch-title">${escapeHtml(ch.title || '(無標題)')}</span>
-      ${CAN_EDIT ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ''}
+      ${canEditCurrent() ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ''}
     </div>`;
   }).join('');
 }
@@ -905,7 +1068,7 @@ function renderUserTabs() {
     const tag = name === (CUR_USER.name || '') ? '(自己)' : '';
     return `<option value="${escapeHtml(name)}"${selected}>${escapeHtml(name)} ${tag}</option>`;
   });
-  if (CAN_EDIT) opts.push('<option value="__add__">+ 新增…</option>');
+  if (canEditCurrent()) opts.push('<option value="__add__">+ 新增…</option>');
   sel.innerHTML = opts.join('');
 }
 
@@ -941,7 +1104,7 @@ async function switchUser(name) {
 }
 
 async function addUser() {
-  if (!CAN_EDIT) { showToast('沒有新增權限'); return; }
+  if (!canEditCurrent()) { showToast('沒有新增權限'); return; }
   const name = prompt('新使用者名稱:', '');
   if (!name || !name.trim()) return;
   const clean = name.trim();
@@ -961,14 +1124,34 @@ async function addUser() {
 }
 
 function _migrateUsers(arr) {
-  // 一次性遷移:Shirley → 腦動大開
+  // 一次性遷移:
+  // (1) 舊 'Shirley' → '腦洞大開'
+  // (2) v329 typo 修正:'腦動大開' → '腦洞大開'
   const i = arr.indexOf('Shirley');
-  if (i >= 0) {
-    arr.splice(i, 1);
-    if (!arr.includes('腦動大開')) arr.push('腦動大開');
-  }
+  if (i >= 0) arr.splice(i, 1);
+  const j = arr.indexOf('腦動大開');
+  if (j >= 0) arr.splice(j, 1);
+  if (!arr.includes('腦洞大開')) arr.push('腦洞大開');
   return arr;
 }
+
+// v329:把本機 IDB 裡 cloud_腦動大開_* / draft_腦動大開_* 自動搬到 腦洞大開,避免 Shirley 在 Mac 寫的「咬合修磨」丟失
+async function _migrateLocalChineseTypo() {
+  const flag = 'mn_migrated_typo_v329';
+  if (localStorage.getItem(flag)) return;
+  const SUBJECTS = ['ya3', 'ya4', 'ya5', 'ya6'];
+  for (const s of SUBJECTS) {
+    const oldCloud = `cloud_腦動大開_${s}`;
+    const newCloud = `cloud_腦洞大開_${s}`;
+    const old = await idbGet(oldCloud);
+    if (old && !(await idbGet(newCloud))) {
+      await idbSet(newCloud, old);
+    }
+    if (old) await idbDel(oldCloud);
+  }
+  try { localStorage.setItem(flag, '1'); } catch(e){}
+}
+_migrateLocalChineseTypo();
 
 async function loadUsersList() {
   // 1. 本機 IDB
@@ -1053,7 +1236,7 @@ function showEmptyEditor() {
     try { _editor.destroy(); } catch(e) {}
     _editor = null;
   }
-  body.innerHTML = '<div class="empty-pick"><div class="em">📒</div><div>從左邊選一章開始' + (CAN_EDIT ? ',或按「+ 新增」' : '') + '</div></div>';
+  body.innerHTML = '<div class="empty-pick"><div class="em">📒</div><div>從左邊選一章開始' + (canEditCurrent() ? ',或按「+ 新增」' : '') + '</div></div>';
   const ti = document.getElementById('title-input');
   if (ti) { ti.value = ''; ti.placeholder = '章節標題...'; }
   _dirty = false; _editMode = false;
@@ -1078,11 +1261,12 @@ function refreshStatusUI() {
     editBtn.style.display = 'none'; saveBtn.style.display = 'none'; abandonBtn.style.display = 'none';
     undoBtn.style.display = 'none'; redoBtn.style.display = 'none'; histBtn.style.display = 'none';
     tb.style.display = 'none'; titleInput.disabled = true;
-  } else if (!CAN_EDIT) {
-    // 非白名單也是閱覽,可以看歷史
+  } else if (!canEditCurrent()) {
+    // v329:不是這個 namespace 的擁有者 → 唯讀,但歷史/複製連結可以看可以用
     editBtn.style.display = 'none'; saveBtn.style.display = 'none'; abandonBtn.style.display = 'none';
     undoBtn.style.display = 'none'; redoBtn.style.display = 'none';
     histBtn.style.display = '';
+    const linkBtn = document.getElementById('link-btn'); if (linkBtn) linkBtn.style.display = '';
     tb.style.display = 'none'; titleInput.disabled = true;
   } else if (_editMode) {
     // 編輯模式:只給 儲存 + 放棄儲存
@@ -1094,23 +1278,27 @@ function refreshStatusUI() {
     undoBtn.style.display = 'none';
     redoBtn.style.display = 'none';
     histBtn.style.display = 'none';
+    const linkBtn2 = document.getElementById('link-btn'); if (linkBtn2) linkBtn2.style.display = 'none';
     tb.style.display = 'flex';
     titleInput.disabled = false;
   } else {
-    // 閱覽模式:歷史 + 編輯 + 回復 + 取消回復
+    // 閱覽模式:歷史 + 編輯 + 回復 + 取消回復 + 複製連結
     editBtn.style.display = '';
     editBtn.textContent = '✏ 編輯';
     saveBtn.style.display = 'none';
     abandonBtn.style.display = 'none';
     histBtn.style.display = '';
+    const linkBtn3 = document.getElementById('link-btn'); if (linkBtn3) linkBtn3.style.display = '';
     undoBtn.style.display = _undoMap[_curChapterId] ? '' : 'none';
     redoBtn.style.display = _redoMap[_curChapterId] ? '' : 'none';
     tb.style.display = 'none';
     titleInput.disabled = true;
   }
+  // 沒選章節 → 連結按鈕也隱藏
+  if (!_curChapterId) { const lb = document.getElementById('link-btn'); if (lb) lb.style.display = 'none'; }
   // 章節列 + 新增按鈕(沒權限就藏)
   const chAdd = document.getElementById('btn-add-ch');
-  if (chAdd) chAdd.classList.toggle('hidden', !CAN_EDIT);
+  if (chAdd) chAdd.classList.toggle('hidden', !canEditCurrent());
   // v325:不在編輯模式時強制收掉圖片寬度工具列(之前儲存後它會殘留)
   const imgTbar = document.getElementById('img-toolbar');
   if (imgTbar && !_editMode) imgTbar.classList.remove('visible');
@@ -1154,7 +1342,7 @@ document.addEventListener('keydown', (e) => {
 
 // 切換閱覽 / 編輯(編輯模式才 lazy load TipTap)
 async function toggleEditMode() {
-  if (!CAN_EDIT) { showToast('🔒 沒有編輯權限'); return; }
+  if (!canEditCurrent()) { showToast('🔒 沒有編輯權限'); return; }
   if (!_curChapterId) { showToast('請先從左邊選一章,或按「+ 新增」'); return; }
   if (!_editMode) {
     // 進入編輯:lazy load TipTap(只第一次需要載)
@@ -1221,7 +1409,7 @@ async function saveAndExit() {
 
 // 放棄儲存:回到上次儲存的內容,退出編輯
 async function discardChanges() {
-  if (!CAN_EDIT || !_curChapterId) return;
+  if (!canEditCurrent() || !_curChapterId) return;
   if (_dirty && !confirm('放棄目前所有修改,回到上次儲存的版本?')) return;
   await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
   const subj = curState();
@@ -1238,7 +1426,7 @@ async function discardChanges() {
 
 // 回復:把章節內容換回上次儲存前的版本(同時排入 redo)
 async function undoLastSave() {
-  if (!CAN_EDIT || !_curChapterId) return;
+  if (!canEditCurrent() || !_curChapterId) return;
   const prev = _undoMap[_curChapterId];
   if (!prev) { showToast('沒有可回復的版本'); return; }
   if (!confirm('回復到上次儲存前的版本?\n\n(目前內容會放進「取消回復」可以救回來)')) return;
@@ -1260,7 +1448,7 @@ async function undoLastSave() {
 }
 
 async function redoLastUndo() {
-  if (!CAN_EDIT || !_curChapterId) return;
+  if (!canEditCurrent() || !_curChapterId) return;
   const r = _redoMap[_curChapterId];
   if (!r) { showToast('沒有可取消的回復'); return; }
   const subj = curState();
@@ -1281,7 +1469,7 @@ async function redoLastUndo() {
 }
 
 function onTitleChange() {
-  if (!_curChapterId || !CAN_EDIT) return;
+  if (!_curChapterId || !canEditCurrent()) return;
   _dirty = true;
   refreshStatusUI();
 }
@@ -1290,7 +1478,7 @@ function onTitleChange() {
 // 章節操作
 // ──────────────────────────────────────────────────────────
 async function addChapter() {
-  if (!CAN_EDIT) { showToast('你沒有編輯權限'); return; }
+  if (!canEditCurrent()) { showToast('你沒有編輯權限'); return; }
   const title = prompt(`在「${_curUser}・${SUBJECT_LABEL[_curSubject]}」新增章節,標題:`, '新章節');
   if (!title || !title.trim()) return;
   let subj = curState();
@@ -1321,7 +1509,7 @@ async function addChapter() {
 }
 
 async function deleteChapter(chId) {
-  if (!CAN_EDIT) return;
+  if (!canEditCurrent()) return;
   const subj = curState();
   if (!subj) return;
   const ch = subj.chapters.find(c => c.id === chId);
@@ -1385,7 +1573,7 @@ async function refreshFromCloud() {
 }
 
 async function saveToCloud() {
-  if (!CAN_EDIT) return;
+  if (!canEditCurrent()) return;
   // v322:文字內容存 Firebase,不再需要 GitHub token
   const subj = curState();
   if (!subj) { showToast('沒有內容'); return; }
@@ -1454,7 +1642,7 @@ async function openVersionModal() {
         </div>
         <div class="v-action">
           <button onclick="previewVersion(${i})">👁 預覽</button>
-          ${CAN_EDIT ? `<button class="restore" onclick="restoreFromVersion(${i})">↶ 還原</button>` : ''}
+          ${canEditCurrent() ? `<button class="restore" onclick="restoreFromVersion(${i})">↶ 還原</button>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -1477,13 +1665,13 @@ async function previewVersion(idx) {
     + '<div class="version-preview">' + (ch.content || '<p>(空)</p>') + '</div>'
     + '<div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">'
     + '<button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button>'
-    + (CAN_EDIT ? '<button onclick="restoreFromVersion(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
+    + (canEditCurrent() ? '<button onclick="restoreFromVersion(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
     + '</div>';
   showVersionModalContent(html);
 }
 
 async function restoreFromVersion(idx) {
-  if (!CAN_EDIT) return;
+  if (!canEditCurrent()) return;
   const v = window._versionList && window._versionList[idx];
   if (!v || !v.snapshot) return;
   if (!confirm('還原到「' + new Date(v.ts || 0).toLocaleString('zh-TW') + '」的版本?\n\n會覆蓋當前章節內容,這次還原本身也會留新版本,之後可以再從歷史救回。')) return;
@@ -1537,13 +1725,13 @@ function previewVersion(idx) {
     + '<div class="version-preview">' + (v.snapshotBefore.content || '<p>(空)</p>') + '</div>'
     + '<div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:flex-end">'
     + '<button onclick="openVersionModal()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:600">← 回列表</button>'
-    + (CAN_EDIT ? '<button onclick="restoreVersion(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
+    + (canEditCurrent() ? '<button onclick="restoreVersion(' + idx + ')" style="background:#16a34a;color:white;border:none;padding:.45rem .9rem;border-radius:7px;cursor:pointer;font-weight:700">↶ 還原到這版</button>' : '')
     + '</div>';
   showVersionModalContent(html);
 }
 
 async function restoreVersion(idx) {
-  if (!CAN_EDIT) return;
+  if (!canEditCurrent()) return;
   const v = window._versionList[idx];
   if (!v || !v.snapshotBefore) return;
   if (!confirm('確定還原「' + (v.snapshotBefore.title || '該章節') + '」到 ' + new Date(v.ts).toLocaleString('zh-TW') + ' 的版本?\n\n會覆蓋當前內容,但會另外留新版本快照,可以再還原回現在。')) return;
@@ -1659,7 +1847,7 @@ async function loadTipTapModules() {
 
 // 🖼 設定/縮放圖片寬度(只對目前選取的圖片生效)
 function imgWidth(w){
-  if (!_editor || !CAN_EDIT) return;
+  if (!_editor || !canEditCurrent()) return;
   const sel = _editor.state.selection;
   if (!sel) return;
   const node = _editor.state.doc.nodeAt(sel.from);
@@ -1670,7 +1858,7 @@ function imgWidth(w){
   }
 }
 function imgStep(delta){
-  if (!_editor || !CAN_EDIT) return;
+  if (!_editor || !canEditCurrent()) return;
   const sel = _editor.state.selection;
   if (!sel) return;
   const node = _editor.state.doc.nodeAt(sel.from);
@@ -1723,7 +1911,7 @@ async function uploadImageToGithub(blob) {
 }
 
 async function tryUploadAndInsert(blob) {
-  if (!CAN_EDIT) { showToast('你沒有編輯權限'); return; }
+  if (!canEditCurrent()) { showToast('你沒有編輯權限'); return; }
   if (!_editor) return;
   // v322:沒 token 早期擋下,顯示具體解法
   if (!getGithubToken()) {
@@ -1743,7 +1931,7 @@ async function tryUploadAndInsert(blob) {
 
 // 📷 工具列觸發檔案選擇
 function pickImageFile() {
-  if (!CAN_EDIT) return;
+  if (!canEditCurrent()) return;
   // 沒 token 就直接走 tryUploadAndInsert 的 alert 路徑,讓使用者知道為什麼不能貼
   if (!getGithubToken()) {
     tryUploadAndInsert(null);
@@ -1779,7 +1967,7 @@ async function initEditorOnce() {
     editable: false, // 預設閱覽模式,按「✏ 編輯」才轉成 true
     editorProps: {
       handlePaste(view, event) {
-        if (!CAN_EDIT) return false;
+        if (!canEditCurrent()) return false;
         const cd = event.clipboardData;
         if (!cd) return false;
         for (const item of cd.items || []) {
@@ -1793,7 +1981,7 @@ async function initEditorOnce() {
         return false;
       },
       handleDrop(view, event) {
-        if (!CAN_EDIT) return false;
+        if (!canEditCurrent()) return false;
         const files = event.dataTransfer && event.dataTransfer.files;
         if (!files || !files.length) return false;
         for (const file of files) {
@@ -1816,7 +2004,7 @@ async function initEditorOnce() {
       if (!tbar) return;
       const sel = editor.state.selection;
       const node = sel ? editor.state.doc.nodeAt(sel.from) : null;
-      const isImg = node && node.type.name === 'image' && _editMode && CAN_EDIT;
+      const isImg = node && node.type.name === 'image' && _editMode && canEditCurrent();
       tbar.classList.toggle('visible', !!isImg);
       const statusEl = tbar.querySelector('.img-status');
       if (statusEl && isImg) {
@@ -1859,9 +2047,9 @@ async function init() {
       const b = document.createElement('button');
       b.textContent = t.label;
       b.title = t.title || '';
-      b.disabled = !CAN_EDIT;
+      b.disabled = !canEditCurrent();
       b.onclick = () => {
-        if (!CAN_EDIT) return;
+        if (!canEditCurrent()) return;
         if (t.custom === 'pickImage') { pickImageFile(); return; }
         const chain = _editor.chain().focus();
         const cmdName = Array.isArray(t.cmd) ? t.cmd[0] : t.cmd;
@@ -1878,6 +2066,8 @@ async function init() {
     renderUserTabs();
     await switchSubject('ya3');
     startDraftAutoSave();
+    // v329:啟動時若 URL 帶 #ns=&subj=&ch= → 跳到指定位置
+    _applyDeepLinkFromHash();
   } catch (err) {
     document.getElementById('editor-body').innerHTML =
       '<div style="padding:1.5rem;color:#dc2626;text-align:center">❌ 載入失敗:' + err.message + '<br><br>網路問題,刷新重試</div>';

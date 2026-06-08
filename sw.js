@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-lightbox-click-out';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-rename-perms-link-search';
 const PRECACHE = [
   './',
   './index.html',

@@ -778,27 +778,29 @@ function setLoadStatus(msg) {
 // v324:留言區可收合,狀態存 localStorage
 // ──────────────────────────────────────────────────────────
 const COMMENT_COLLAPSE_KEY = 'mnemonics_comments_collapsed';
+// v331:預設留言區「收起」。使用者按 💬 展開後存 '0',下次記得展開
 function toggleCommentPane(open) {
   const ws = document.querySelector('.workspace');
   if (!ws) return;
   if (open) {
     ws.classList.remove('comments-collapsed');
     document.body.classList.remove('comments-collapsed');
-    try { localStorage.removeItem(COMMENT_COLLAPSE_KEY); } catch(e){}
+    try { localStorage.setItem(COMMENT_COLLAPSE_KEY, '0'); } catch(e){}
   } else {
     ws.classList.add('comments-collapsed');
     document.body.classList.add('comments-collapsed');
     try { localStorage.setItem(COMMENT_COLLAPSE_KEY, '1'); } catch(e){}
   }
 }
-// 啟動時套用上次狀態
+// 啟動時套用:沒設定 → 預設收起;'0' → 展開;'1' → 收起
 (function applySavedCollapse(){
   try {
-    if (localStorage.getItem(COMMENT_COLLAPSE_KEY) === '1') {
-      document.addEventListener('DOMContentLoaded', () => toggleCommentPane(false));
-      // 也立刻套(避免 flash)
+    const saved = localStorage.getItem(COMMENT_COLLAPSE_KEY);
+    const shouldCollapse = saved !== '0'; // 預設收起
+    if (shouldCollapse) {
       const tryNow = () => { if (document.querySelector('.workspace')) toggleCommentPane(false); else setTimeout(tryNow, 16); };
       tryNow();
+      document.addEventListener('DOMContentLoaded', () => toggleCommentPane(false));
     }
   } catch(e){}
 })();

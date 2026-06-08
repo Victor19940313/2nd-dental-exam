@@ -27,7 +27,8 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
+  /* v313:沒主題時用 --bg(預設米),有主題時用主題的 --purple-light,跟筆記區一致 */
+  background: var(--purple-light, var(--bg));
   color: var(--text);
   min-height: 100vh;
   padding: 1rem;
@@ -140,6 +141,15 @@ body {
 .version-preview { background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; max-height: 50vh; overflow-y: auto; font-size: .92rem; line-height: 1.7; }
 
 .toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: .65rem 1.2rem; border-radius: 8px; font-size: .88rem; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+
+/* v313:深色主題的可讀性補丁 — 文字 / 輸入框 / 章節列依 body 主題色 */
+body.theme-dark .editor-status,
+body.theme-dark input.title-input,
+body.theme-dark .chapter-list .ch-head strong,
+body.theme-dark .chapter-list .ch-item,
+body.theme-dark .chapter-list .ch-item:hover { color: #ebe5f0; background: transparent; }
+body.theme-dark .chapter-list .ch-item.active { background: #534570; color: #fff; }
+body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a4c; }
 </style>
 </head>
 <body>
@@ -169,14 +179,14 @@ body {
 </div>
 
 <div class="workspace">
-  <div class="chapter-list">
+  <div class="chapter-list nb-toc-pane">
     <div class="ch-head">
       <strong id="ch-head-label">章節</strong>
       <button id="btn-add-ch" class="ch-add" onclick="addChapter()" title="新增章節">+ 新增</button>
     </div>
     <div id="ch-items"></div>
   </div>
-  <div class="editor-card">
+  <div class="editor-card nb-chapter-content">
     <div class="editor-status">
       <input type="text" id="title-input" class="title-input" placeholder="章節標題..." oninput="onTitleChange()" />
       <button class="history-btn" id="history-btn" onclick="openVersionModal()" title="看完整版本歷史" style="display:none">📜 歷史</button>
@@ -197,7 +207,7 @@ body {
       <button onclick="imgStep(10)">+10%</button>
       <span class="img-status">點圖片才會出現</span>
     </div>
-    <div class="editor-body" id="editor-body">
+    <div class="editor-body nb-editor-tiptap" id="editor-body">
       <div class="empty-pick">
         <div class="em">📒</div>
         <div>從左邊選一章開始,或按「+ 新增」</div>

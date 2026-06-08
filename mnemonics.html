@@ -431,18 +431,30 @@ function utf8ToBase64(s) {
 
 async function fetchFromCdn(path) {
   const repo = getGithubRepo();
-  // 🔄 用 raw.githubusercontent.com 取得即時最新版(jsdelivr CDN 有 1-5 分鐘 cache 會延遲跨裝置同步)
-  const url = `https://raw.githubusercontent.com/${repo}/main/${path}?_=${Date.now()}`;
-  try {
-    const r = await fetch(url, { cache: 'no-store' });
-    if (!r.ok) {
-      // fallback to jsdelivr (萬一 raw 被 rate limit)
-      const r2 = await fetch(`https://cdn.jsdelivr.net/gh/${repo}@main/${path}?_=${Date.now()}`);
-      if (!r2.ok) return null;
-      return await r2.json();
+  // v318:三條 fallback 路徑,任何一條成功就回。每條都記 log 方便診斷
+  const sources = [
+    `https://raw.githubusercontent.com/${repo}/main/${path}`,
+    `https://cdn.jsdelivr.net/gh/${repo}@main/${path}`,
+    `https://gcore.jsdelivr.net/gh/${repo}@main/${path}`,
+  ];
+  for (let i = 0; i < sources.length; i++) {
+    const url = sources[i] + `?_=${Date.now()}`;
+    try {
+      const r = await fetch(url, { cache: 'no-store', mode: 'cors' });
+      if (r.ok) {
+        return await r.json();
+      }
+      if (r.status === 404) {
+        // 真的 404 就直接回 null,不用試其他鏡像
+        console.warn('[fetchFromCdn] 404', url);
+        return null;
+      }
+      console.warn('[fetchFromCdn] non-ok', r.status, url);
+    } catch(e) {
+      console.warn('[fetchFromCdn] err', sources[i], e.message);
     }
-    return await r.json();
-  } catch(e) { return null; }
+  }
+  return null;
 }
 
 // 🚀 v310:有 token 走 API(api.github.com,無 CDN cache,跨裝置同步幾秒內就到)

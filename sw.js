@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v317-force-refresh';
+const CACHE_NAME = 'dental-all-v318-sw-skip-github';
 const PRECACHE = [
   './',
   './index.html',
@@ -87,6 +87,9 @@ self.addEventListener('fetch', e => {
       e.request.url.includes('unpkg.com') ||
       e.request.url.includes('cdn.jsdelivr.net') ||
       e.request.url.includes('gstatic.com')) return;
+  // v318:口訣區從 GitHub 拉資料,SW 不要攔(避免快取出髒資料,Safari Tahoe ITP 也可能讓快取錯亂)
+  if (e.request.url.includes('raw.githubusercontent.com') ||
+      e.request.url.includes('api.github.com')) return;
 
   if (isDataFile(e.request.url)) {
     // Network first for data files (題庫、各科 data 要拿最新)

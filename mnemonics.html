@@ -45,11 +45,13 @@ body {
 .nav-row .ns-inline { font-size: .92rem; font-weight: 800; display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .65rem; background: white; border: 1.5px solid var(--border); border-radius: 999px; box-shadow: var(--shadow); }
 .nav-row .ns-inline .user-select { background: #f3f4f6; border: 1.5px solid var(--border); color: var(--text); padding: .15rem .55rem; border-radius: 6px; font-weight: 800; font-size: .88rem; cursor: pointer; font-family: inherit; }
 .nav-row .ns-inline .user-select:hover { background: #e5e7eb; }
-.nav-row .ch-search-top { flex: 1; min-width: 180px; padding: .4rem .65rem; border: 1.5px solid var(--border); border-radius: 999px; font-family: inherit; font-size: .85rem; outline: none; background: white; box-shadow: var(--shadow); }
-.nav-row .ch-search-top:focus { border-color: var(--ya5); }
+/* 搜尋改放下一排 */
+.search-row { margin-bottom: 1rem; }
+.search-row .ch-search-top { width: 100%; padding: .55rem .85rem; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: .9rem; outline: none; background: white; box-shadow: var(--shadow); box-sizing: border-box; }
+.search-row .ch-search-top:focus { border-color: var(--ya5); }
 .nav-row .user-tag { font-size: .78rem; color: var(--text-sub); background: #f3f4f6; padding: .35rem .7rem; border-radius: 999px; font-weight: 600; }
 .nav-row .user-tag.readonly { background: #fef3c7; color: #92400e; }
-@media (max-width: 720px) { .nav-row .ch-search-top { width: 100%; flex-basis: 100%; min-width: 0; } .nav-row .ns-inline { flex-basis: 100%; justify-content: center; } }
+@media (max-width: 720px) { .nav-row .ns-inline { flex-basis: 100%; justify-content: center; } }
 .nav-link { padding: .42rem 1rem; border-radius: 999px; font-size: .85rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all .12s; background: #f3f4f6; color: var(--text); border: 1.5px solid var(--border); }
 .nav-link:hover { background: #e5e7eb; transform: translateY(-1px); }
 .nav-link.nav-notebook { background: #3730a3; color: white; border-color: #3730a3; }
@@ -219,8 +221,11 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
     <select id="user-select" class="user-select" onchange="onUserSelectChange(this.value)"></select>
     的口訣區
   </span>
-  <input type="search" id="ch-search" class="ch-search-top" placeholder="🔍 跨區跨四科搜尋…" oninput="onChSearch()" />
   <span class="user-tag" id="user-tag">--</span>
+</div>
+<!-- v335:搜尋改放在下一排,獨佔一列 -->
+<div class="search-row">
+  <input type="search" id="ch-search" class="ch-search-top" placeholder="🔍 跨區跨四科搜尋…" oninput="onChSearch()" />
 </div>
 
 <div id="info-banner-slot"></div>

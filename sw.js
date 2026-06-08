@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-ns-and-search-on-top';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-search-own-row';
 const PRECACHE = [
   './',
   './index.html',

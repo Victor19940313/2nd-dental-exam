@@ -418,10 +418,13 @@
           : containerSelector;
       if (!container) return;
       var status = this.getStatus();
+      var ver = (typeof window !== 'undefined' && window.APP_VERSION)
+        ? ('<span class="sync-btn" style="color:#7c3aed;border-color:#ddd6fe;background:#faf5ff" title="目前版本">' + window.APP_VERSION + '</span>')
+        : '';
       if (status.connected) {
-        container.innerHTML = '<span class="sync-btn" style="color:#16a34a;border-color:#bbf7d0">🟢 同步中</span>';
+        container.innerHTML = '<span class="sync-btn" style="color:#16a34a;border-color:#bbf7d0">🟢 同步中</span>' + ver;
       } else {
-        container.innerHTML = '';
+        container.innerHTML = ver;
       }
     },
   };

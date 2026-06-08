@@ -1,9 +1,11 @@
-const CACHE_NAME = 'dental-all-v319-repo-format-guard';
+importScripts('./version.js');
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-shirley-repo-fallback';
 const PRECACHE = [
   './',
   './index.html',
   './mnemonics.html',
   './themes.css',
+  './version.js',
   './ya3/index.html',
   './ya3/ya3-data.js',
   './ya4/index.html',

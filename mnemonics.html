@@ -1975,12 +1975,15 @@ function imgStep(delta){
 // 🖼 圖片上傳(v322:固定走 dental-mnemonics-shared,不讀使用者 settings 的 repo)
 //    這樣 HUA 跟 Shirley 兩個人圖片放同一個地方,兩人都看得到。
 //    使用者設定的 github_repo 只給筆記本貼圖用。
-const IMAGE_REPO = 'Victor19940313/dental-mnemonics-shared';
-const IMAGE_DIR_NEW = 'images';
+// v336:圖片上傳目標改回讀使用者 settings 的 repo,每個人傳到自己有寫入權的 repo
+//       兩邊圖片放不同 repo,但 raw.github URL 是公開的,互看沒問題
+//       (HUA → Victor19940313/2nd-dental-exam · Shirley → Victor19940313/dental-mnemonics-shared)
+const IMAGE_DIR_NEW = 'mnemonics-images';
 
 async function uploadImageToGithub(blob) {
   const token = getGithubToken();
   if (!token) throw new Error('沒設定 GitHub token');
+  const repo = getGithubRepo(); // 讀使用者設定,沒設 / 格式錯會 fallback 到 REPO_DEFAULT
   // base64
   const b64 = await new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -1994,7 +1997,7 @@ async function uploadImageToGithub(blob) {
   const rand = Math.random().toString(36).slice(2,6);
   const ext = ((blob.type || 'image/png').split('/')[1] || 'png').replace('jpeg','jpg');
   const path = `${IMAGE_DIR_NEW}/${stamp}-${rand}.${ext}`;
-  const apiUrl = `https://api.github.com/repos/${IMAGE_REPO}/contents/${path}`;
+  const apiUrl = `https://api.github.com/repos/${repo}/contents/${path}`;
   const res = await fetch(apiUrl, {
     method: 'PUT',
     headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' },
@@ -2003,12 +2006,15 @@ async function uploadImageToGithub(blob) {
   if (!res.ok) {
     const errTxt = await res.text();
     if (res.status === 403 && /not accessible/i.test(errTxt)) {
-      throw new Error('你的 token 還沒拿到圖片 repo 的寫入權。請 HUA 把你加成 dental-mnemonics-shared 的 collaborator');
+      throw new Error(`你的 token 沒有「${repo}」的寫入權。去「考試 App → ⚙️ 設定 → GitHub」確認 repo 跟 token 是配對的`);
+    }
+    if (res.status === 404) {
+      throw new Error(`repo「${repo}」找不到。設定頁裡的 repo 名稱拼錯,或 token 沒給該 repo 的 Contents 權限`);
     }
     throw new Error('GitHub ' + res.status + ': ' + errTxt.slice(0, 200));
   }
-  // raw.github 用來顯示(無需 token,任何人讀)
-  return `https://raw.githubusercontent.com/${IMAGE_REPO}/main/${path}`;
+  // raw.github 用來顯示(任何人讀,不需 token)
+  return `https://raw.githubusercontent.com/${repo}/main/${path}`;
 }
 
 async function tryUploadAndInsert(blob) {

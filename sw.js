@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-search-own-row';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-img-use-user-repo';
 const PRECACHE = [
   './',
   './index.html',

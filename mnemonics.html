@@ -675,8 +675,8 @@ function showEmptyEditor() {
   body.innerHTML = '<div class="empty-pick"><div class="em">📒</div><div>從左邊選一章開始' + (CAN_EDIT ? ',或按「+ 新增」' : '') + '</div></div>';
   const ti = document.getElementById('title-input');
   if (ti) { ti.value = ''; ti.placeholder = '章節標題...'; }
+  _dirty = false; _editMode = false;
   refreshStatusUI();
-  // 🚀 v308:不再 pre-init 編輯器,改 lazy load(由 toggleEditMode 觸發)
 }
 
 function refreshStatusUI() {
@@ -1495,7 +1495,11 @@ async function init() {
 init();
 
 window.addEventListener('beforeunload', (e) => {
-  if (_dirty) { e.preventDefault(); e.returnValue = '有未儲存草稿,確定離開?'; }
+  // 🛡 v309:只在「真的在編輯模式 + 有改動 + 有選章節」才擋,避免閒置時也跳
+  if (_dirty && _editMode && _curChapterId) {
+    e.preventDefault();
+    e.returnValue = '有未儲存草稿,確定離開?';
+  }
 });
 
 // 🛡 v308:SW 通知有新版時提示使用者

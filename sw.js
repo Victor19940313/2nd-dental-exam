@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dental-all-v308-swr-cache-and-lazy-tiptap';
+const CACHE_NAME = 'dental-all-v309-fix-spurious-leave-prompt';
 const PRECACHE = [
   './',
   './index.html',

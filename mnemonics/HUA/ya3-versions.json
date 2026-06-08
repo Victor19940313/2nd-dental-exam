@@ -1,5 +1,16 @@
 [
   {
+    "ts": 1780889408396,
+    "updatedBy": "HUA",
+    "action": "edit_chapter",
+    "chapterId": "ch_1780888325821_tgct",
+    "chapterTitleBefore": "???",
+    "snapshotBefore": {
+      "title": "???",
+      "content": "<p>123123</p>"
+    }
+  },
+  {
     "ts": 1780888690276,
     "updatedBy": "HUA",
     "action": "edit_chapter",

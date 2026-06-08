@@ -95,6 +95,9 @@ body.comments-collapsed .comments-open-btn { display: inline-block; }
 .comment-item .meta { font-size: .7rem; color: var(--text-sub); margin-bottom: .2rem; display: flex; gap: .35rem; align-items: center; flex-wrap: wrap; }
 .comment-item .who { font-weight: 700; color: var(--ya5); }
 .comment-item .text { white-space: pre-wrap; word-break: break-word; }
+.comment-item .text a { color: var(--ya5); text-decoration: underline; word-break: break-all; }
+.comment-item .text a.ch-link-pill { display: inline-block; background: linear-gradient(135deg,#ede9fe,#ddd6fe); color: #5b21b6; padding: .2rem .55rem; border-radius: 12px; font-weight: 700; font-size: .8rem; text-decoration: none; border: 1px solid #c4b5fd; word-break: normal; margin: .1rem 0; }
+.comment-item .text a.ch-link-pill:hover { background: linear-gradient(135deg,#ddd6fe,#c4b5fd); }
 .comment-item .del-c { position: absolute; top: .3rem; right: .35rem; background: transparent; border: none; color: #d1d5db; cursor: pointer; font-size: .8rem; padding: 0 .25rem; }
 .comment-item:hover .del-c { color: #ef4444; }
 .comment-input-row { padding: .55rem .8rem; border-top: 1px solid var(--border); background: #fafaf5; display: flex; gap: .4rem; }
@@ -836,6 +839,49 @@ function loadComments(chId) {
     document.getElementById('comment-list').innerHTML = `<div class="comment-empty">❌ ${(e.message||'').slice(0,80)}</div>`;
   }
 }
+// v330:把留言裡的 URL 變成可點。mnemonics deep link 變漂亮的章節 pill
+function linkifyCommentText(text) {
+  if (!text) return '';
+  const urlRe = /https?:\/\/[^\s]+/g;
+  let out = '';
+  let last = 0;
+  let m;
+  while ((m = urlRe.exec(text)) !== null) {
+    out += escapeHtml(text.slice(last, m.index));
+    out += _renderLinkInComment(m[0]);
+    last = m.index + m[0].length;
+  }
+  out += escapeHtml(text.slice(last));
+  return out;
+}
+function _renderLinkInComment(url) {
+  // 是 mnemonics deep link → 渲染成 pill,點下去跳章節
+  const hashIdx = url.indexOf('mnemonics.html#');
+  if (hashIdx >= 0) {
+    const hash = url.slice(hashIdx + 'mnemonics.html#'.length);
+    const params = {};
+    hash.split('&').forEach(kv => {
+      const [k, v] = kv.split('=');
+      if (k) params[k] = decodeURIComponent(v || '');
+    });
+    const ns = params.n || params.ns || '';
+    const subj = params.s || params.subj || '';
+    const ch = params.c || params.ch || '';
+    let label = '章節連結';
+    const sj = _state[stateKey(ns, subj)];
+    if (sj && sj.chapters) {
+      const found = sj.chapters.find(c => c.id === ch);
+      if (found && found.title) label = found.title;
+    }
+    const subjLbl = SUBJECT_LABEL[subj] || subj;
+    const safeNs = ns.replace(/['"\\]/g,'');
+    const safeSubj = subj.replace(/['"\\]/g,'');
+    const safeCh = ch.replace(/['"\\]/g,'');
+    return `<a href="${escapeHtml(url)}" class="ch-link-pill" onclick="return jumpToChapterLink(event,'${safeNs}','${safeSubj}','${safeCh}')">📖 ${escapeHtml(subjLbl)} · ${escapeHtml(label)}</a>`;
+  }
+  // 一般網址 → 開新分頁
+  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a>`;
+}
 function renderCommentList(arr) {
   const list = document.getElementById('comment-list');
   const count = document.getElementById('comment-count');
@@ -855,7 +901,7 @@ function renderCommentList(arr) {
     return `<div class="comment-item">
       ${delBtn}
       <div class="meta"><span class="who">${escapeHtml(c.by || '?')}</span> · ${dt}</div>
-      <div class="text">${escapeHtml(c.text || '')}</div>
+      <div class="text">${linkifyCommentText(c.text || '')}</div>
     </div>`;
   }).join('');
   // 自動捲到最底
@@ -904,7 +950,8 @@ function curState() {
 // ──────────────────────────────────────────────────────────
 function copyChapterLink() {
   if (!_curChapterId) { showToast('請先選一章再複製'); return; }
-  const hash = `#ns=${encodeURIComponent(_curUser)}&subj=${_curSubject}&ch=${encodeURIComponent(_curChapterId)}`;
+  // v330:縮短參數名 ns→n, subj→s, ch→c
+  const hash = `#n=${encodeURIComponent(_curUser)}&s=${_curSubject}&c=${encodeURIComponent(_curChapterId)}`;
   const url = location.origin + location.pathname + hash;
   const subj = curState();
   const ch = subj && subj.chapters.find(c => c.id === _curChapterId);
@@ -928,7 +975,7 @@ function copyChapterLink() {
   }
 }
 
-// 解析 URL hash,跳到指定 (ns, subj, ch)
+// 解析 URL hash,跳到指定 (ns, subj, ch)。同時接受 n/s/c(短)和 ns/subj/ch(舊版)
 async function _applyDeepLinkFromHash() {
   const h = location.hash || '';
   if (!h.startsWith('#')) return false;
@@ -937,24 +984,25 @@ async function _applyDeepLinkFromHash() {
     const [k, v] = kv.split('=');
     if (k) params[k] = decodeURIComponent(v || '');
   });
-  if (!params.ns && !params.subj && !params.ch) return false;
-  // 切到指定 namespace + subject
-  if (params.ns && _users.includes(params.ns)) {
-    _curUser = params.ns;
+  const ns = params.n || params.ns;
+  const subj = params.s || params.subj;
+  const ch = params.c || params.ch;
+  if (!ns && !subj && !ch) return false;
+  if (ns && _users.includes(ns)) {
+    _curUser = ns;
     const sel = document.getElementById('user-select');
-    if (sel) sel.value = params.ns;
+    if (sel) sel.value = ns;
     renderUserTabs();
   }
-  if (params.subj && ['ya3','ya4','ya5','ya6'].includes(params.subj)) {
-    await switchSubject(params.subj);
+  if (subj && ['ya3','ya4','ya5','ya6'].includes(subj)) {
+    await switchSubject(subj);
   }
-  // 等資料載到再選章節 — 一秒內輪詢
-  if (params.ch) {
+  if (ch) {
     let tries = 30;
     const tryPick = () => {
       const sj = curState();
-      if (sj && sj.chapters && sj.chapters.find(c => c.id === params.ch)) {
-        pickChapter(params.ch);
+      if (sj && sj.chapters && sj.chapters.find(c => c.id === ch)) {
+        pickChapter(ch);
         return;
       }
       if (--tries > 0) setTimeout(tryPick, 100);
@@ -962,6 +1010,19 @@ async function _applyDeepLinkFromHash() {
     tryPick();
   }
   return true;
+}
+
+// v330:供留言裡的章節 pill 點擊用 — 改 hash → hashchange listener 接手
+function jumpToChapterLink(ev, ns, subj, ch) {
+  if (ev) ev.preventDefault();
+  const newHash = `#n=${encodeURIComponent(ns)}&s=${encodeURIComponent(subj)}&c=${encodeURIComponent(ch)}`;
+  if (location.hash === newHash) {
+    // 同樣 hash 不觸發 hashchange,直接 call
+    _applyDeepLinkFromHash();
+  } else {
+    location.hash = newHash;
+  }
+  return false;
 }
 // 監聽 hash 改變(留言裡點連結,網址只是 hash 換,不會 reload)
 window.addEventListener('hashchange', () => { _applyDeepLinkFromHash(); });

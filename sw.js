@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-rename-perms-link-search';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-comment-pill';
 const PRECACHE = [
   './',
   './index.html',

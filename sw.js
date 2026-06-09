@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-perf-console-only';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-clean-perf-instrumentation';
 const PRECACHE = [
   './',
   './index.html',

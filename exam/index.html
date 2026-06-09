@@ -9960,30 +9960,14 @@ ${dec.reasoning || ''}
           });
       }
 
-      // v345→v346:純 console.log 計時,沒 UI(F12 → Console 就能看)。等找完原因連這段也會刪掉。
-      function _recordNbAddTiming(timing){
-        try { console.log('[加入筆記計時]', timing); } catch(e) {}
-      }
-
       async function addQToNotebook(q, opts){
         opts = opts || {};
-        // v345:效能診斷 — 計時每階段,寫到 console + 暫存最近 10 次
-        const _t0 = performance.now();
-        const _timing = { qid: q.id, qmeta: q.meta, startedAt: new Date().toLocaleTimeString('zh-TW') };
-        const _stamp = (label) => { _timing[label] = Math.round(performance.now() - _t0); };
         try {
           loadNotebook();
-          _stamp('load');
           const prompt = buildAIPrompt(q, notebook.chapters);
-          _timing.promptLen = prompt.length;
-          _timing.chapterCount = (notebook.chapters||[]).length;
-          _stamp('buildPrompt');
           // 帶 schema 強制 Gemini 回符合結構的 JSON
           const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
-          _timing.respLen = (raw||'').length;
-          _stamp('aiCall1');
           const dec = extractJSON(raw);
-          _stamp('parse1');
           // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
           // 智慧判斷：
           //   - 短章節 (<800 字)：第 1 階段已看到接近全文摘要，跳過第 2 階段省 API 額度
@@ -9997,12 +9981,8 @@ ${dec.reasoning || ''}
               // 長章節:跑第 2 階段合併,token 上限拉高避免長章節被截斷
               try {
                 const mergePrompt = buildMergePrompt(q, oldCh, dec);
-                _timing.mergePromptLen = mergePrompt.length;
-                _stamp('buildMerge');
                 const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA, { maxOutputTokens: 32768 });
-                _stamp('aiCall2');
                 const mergeDec = extractJSON(mergeRaw);
-                _stamp('parse2');
                 if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= oldLen * 0.7) {
                   dec.content = _preserveImagesIn(oldContent, mergeDec.content);
                 } else {
@@ -10028,11 +10008,8 @@ ${dec.reasoning || ''}
             }
           }
           applyAIDecision(dec, q);
-          _stamp('apply');
           // 整理成功 → 從待整理佇列移除（如果在裡面）
           removeFromPendingQueue(q.id);
-          _stamp('total');
-          _recordNbAddTiming(_timing);
           return true;
         } catch(err) {
           if (err.message === 'no_key') return false;

@@ -5833,21 +5833,23 @@ ${(q.options || []).join('\n')}
           'history-overlay','pending-modal','bg-regen-modal','print-modal','version-modal',
           'modal-overlay','ask-expl-overlay','exam-hist-modal','fixexam-modal',
         ];
-        // v356 BUG FIX:之前用 inline style.display='none' 關 modal,但 inline 樣式優先級高於 class,
-        //              導致 openAISettings 加 .open class 後 CSS .overlay.open{display:flex} 被 inline 壓著無效 → 設定永遠打不開
-        //              改成只移除 .open class,並清掉任何 inline display(讓 CSS 規則生效)
+        // v357 修 v356 又埋的雷:大部分 modal(sync-panel、onboarding-overlay、exam-review-modal 等)
+        //   靠 inline style="display:none" 預設隱藏;v356 一律 removeProperty('display') 把它們全打開了
+        //   改成兩段:有 .overlay/.modal-overlay class 的(靠 CSS 規則)→ 清 inline 讓 CSS 接管
+        //          沒 class 控制的(靠 inline)→ 設 display:none 強制隱藏
+        const _hideEl = (el) => {
+          try { el.classList.remove('open'); } catch(e){}
+          const isClsCtrl = el.classList && (el.classList.contains('overlay') || el.classList.contains('modal-overlay'));
+          try {
+            if (isClsCtrl) el.style.removeProperty('display');
+            else el.style.display = 'none';
+          } catch(e){}
+        };
         ids.forEach(id => {
           const el = document.getElementById(id);
-          if (el) {
-            try { el.classList.remove('open'); } catch(e){}
-            try { el.style.removeProperty('display'); } catch(e){}
-          }
+          if (el) _hideEl(el);
         });
-        // 任何 .modal-overlay / .overlay class 元素也用同樣方式處理
-        document.querySelectorAll('.modal-overlay, .overlay').forEach(el => {
-          try { el.classList.remove('open'); } catch(e){}
-          try { el.style.removeProperty('display'); } catch(e){}
-        });
+        document.querySelectorAll('.modal-overlay, .overlay').forEach(_hideEl);
         // 螢光小工具列
         const hl = document.getElementById('hl-popover');
         if (hl) hl.classList.remove('on');

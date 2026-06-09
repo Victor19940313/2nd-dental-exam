@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-close-overlay-smart';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-close-overlay-auto-scan';
 const PRECACHE = [
   './',
   './index.html',

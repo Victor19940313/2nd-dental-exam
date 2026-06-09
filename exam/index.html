@@ -5827,16 +5827,9 @@ ${(q.options || []).join('\n')}
       // ════════════════════════════════════════════
       // v342→v344:統一關掉殘留的 modal 才切螢幕,避免 modal 蓋住 home/practice/wrongbook 看起來像「按了沒反應」
       function closeAllOverlays(){
-        const ids = [
-          'sync-panel','onboarding-overlay','img-lightbox','exam-review-modal',
-          'merge-ch-overlay','ai-settings-overlay','nb-backup-modal','history-modal',
-          'history-overlay','pending-modal','bg-regen-modal','print-modal','version-modal',
-          'modal-overlay','ask-expl-overlay','exam-hist-modal','fixexam-modal',
-        ];
-        // v357 修 v356 又埋的雷:大部分 modal(sync-panel、onboarding-overlay、exam-review-modal 等)
-        //   靠 inline style="display:none" 預設隱藏;v356 一律 removeProperty('display') 把它們全打開了
-        //   改成兩段:有 .overlay/.modal-overlay class 的(靠 CSS 規則)→ 清 inline 讓 CSS 接管
-        //          沒 class 控制的(靠 inline)→ 設 display:none 強制隱藏
+        // v359:之前寫死名單常常打錯字 / 漏掉動態建立的 modal(nb-timings-overlay、bgregen-overlay 等)
+        //      → 從筆記跳考試首頁有時候 modal 沒被關住覆蓋整個畫面看起來空白
+        //      改成自動掃所有 id 結尾是 -overlay/-modal/-panel 的元素,排除明顯是 inner 的
         const _hideEl = (el) => {
           try { el.classList.remove('open'); } catch(e){}
           const isClsCtrl = el.classList && (el.classList.contains('overlay') || el.classList.contains('modal-overlay'));
@@ -5845,11 +5838,18 @@ ${(q.options || []).join('\n')}
             else el.style.display = 'none';
           } catch(e){}
         };
-        ids.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) _hideEl(el);
+        // 1. 自動找:結尾 -overlay / -modal / -panel 的 top-level 元素
+        document.querySelectorAll('[id$="-overlay"], [id$="-modal"], [id$="-panel"]').forEach(el => {
+          const id = el.id || '';
+          // 排除明顯是內層 element 的(-body / -list / -img / -text / -content / -inner / -wrap / -close)
+          if (/-(body|list|img|text|content|inner|wrap|close|header)$/i.test(id)) return;
+          _hideEl(el);
         });
+        // 2. class-based 兜底(.overlay / .modal-overlay)
         document.querySelectorAll('.modal-overlay, .overlay').forEach(_hideEl);
+        // 3. img-lightbox(id 不符合上面 pattern)
+        const lb = document.getElementById('img-lightbox');
+        if (lb) _hideEl(lb);
         // 螢光小工具列
         const hl = document.getElementById('hl-popover');
         if (hl) hl.classList.remove('on');

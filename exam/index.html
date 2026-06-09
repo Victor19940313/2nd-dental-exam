@@ -5934,18 +5934,7 @@ ${(q.options || []).join('\n')}
         if (nbBtn) nbBtn.classList.remove("active");
       }
 
-      // 從筆記本 / 錯題本 / 資料庫 等畫面跳回剛剛在練習的題目
-      function resumePractice(){
-        if (!practiceList || practiceList.length === 0) {
-          showToast('還沒開始練習，請先到考試首頁挑一個模式開始');
-          return;
-        }
-        if (practiceIdx >= practiceList.length) practiceIdx = practiceList.length - 1;
-        if (practiceIdx < 0) practiceIdx = 0;
-        showPractice();
-        loadPracticeQ();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      // v352:這個版本之前被下面 line 6058 那個同名函式覆寫了 → 刪掉,改用統一版(見下方 resumePractice)
 
       // ════════════════════════════════════════════
       //  Home chips
@@ -6055,10 +6044,30 @@ ${(q.options || []).join('\n')}
         } catch (e) {}
       }
 
+      // v352:統一版 resumePractice — 之前同檔有兩個同名函式,JS 後者勝,
+      //       第二個版本只讀 localStorage,讀不到就 silent return → 「回到考題」變空白畫面
+      //       這版改成:先用記憶體 practiceList(現場最常見),不行才退回 localStorage,
+      //       全空就明確 toast,任何 throw 不再被吞掉
       function resumePractice() {
         try {
+          // (1) 記憶體有 practiceList → 直接用(從筆記本/錯題本切回的常見情境)
+          if (practiceList && practiceList.length > 0) {
+            if (practiceIdx >= practiceList.length) practiceIdx = practiceList.length - 1;
+            if (practiceIdx < 0) practiceIdx = 0;
+            showPractice();
+            const submitBtn = document.getElementById("btn-submit-exam");
+            if (submitBtn) submitBtn.style.display = "";
+            if (!examMode) updatePracticeScoreUI();
+            loadPracticeQ();
+            try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
+            return;
+          }
+          // (2) 記憶體沒有 → 試 localStorage(重新整理頁面後從首頁點「回到考題」)
           const raw = localStorage.getItem(LASTPOS_KEY);
-          if (!raw) return;
+          if (!raw) {
+            showToast('沒有上次的進度,請從「考試首頁」開始');
+            return;
+          }
           const pos = JSON.parse(raw);
           const idSet = new Set(pos.ids);
           const idOrder = Object.fromEntries(pos.ids.map((id, i) => [id, i]));
@@ -6070,7 +6079,6 @@ ${(q.options || []).join('\n')}
             showToast("找不到上次的題目");
             return;
           }
-          // 還原當時的模式 + 答案資料
           examMode = !!pos.examMode;
           examAnswers = pos.examAnswers || {};
           practiceAnswers = pos.practiceAnswers || {};
@@ -6079,13 +6087,13 @@ ${(q.options || []).join('\n')}
           practiceList = list;
           practiceIdx = Math.min(pos.idx, list.length - 1);
           showPractice();
-          // 🛡 v287:練習模式也顯示交卷按鈕(讓使用者可以中途交卷,做的部分進歷史)
           const submitBtn = document.getElementById("btn-submit-exam");
           if (submitBtn) submitBtn.style.display = "";
           if (!examMode) updatePracticeScoreUI();
           loadPracticeQ();
         } catch (e) {
-          clearLastPos();
+          console.error('[resumePractice] failed:', e);
+          showToast('回到考題失敗:' + ((e && e.message) || e));
         }
       }
 

@@ -9710,6 +9710,11 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 \`\`\`
 | SCTG | - cell2 | - cell3 | - cell4 |
 \`\`\`
+- **嚴禁混用 HTML <table> 跟 markdown 表格語法**(v350 加):同一張對照表只能選一種寫法
+  * ❌ 表頭跟前兩列用 \`<table><tr><td>...</td></tr></table>\`,然後又補一列 \`| Tanaka | ... |\` markdown(後者會被當成原文秀出來,連 \`<br>\` 都會跑出來)
+  * ✅ **整張表全部用 markdown**(header + \`|---|---|\` 分隔 + 所有 data rows 連續寫),這是預設首選
+  * ✅ 或整張表全部用 HTML \`<table>\`(所有 \`<tr>\` 都寫進來,不要中途切換)
+  * 絕對不要寫「孤兒列」:沒有 header 跟分隔線在上面、只有單列 \`| ... | ... |\` 的 row(渲染器不認得→秀原文)
 - **表格不要塞「廢列」**：header 後的 \`|---|---|\` 分隔符只能有一條；後面**直接接資料列**，不要再插一條「全是 \`---\` 或空白」的占位列
   * ❌
   \`\`\`
@@ -13748,6 +13753,20 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         });
         // 把 ROWBREAK 標記換成「看不見但存在的 div」(不能直接刪掉，否則 DOM 兜底會誤把兩圖併排)
         s = s.replace(/<p>\s*&lt;!--ROWBREAK--&gt;\s*<\/p>\s*/g, '<div class="nb-rowbreak" hidden></div>');
+        // v350:AI 偶爾把章節表格寫成「主表 + 後面孤兒 markdown row」混用,孤兒列被當成 <p>|...|</p> 文字
+        //      把它接到上面 table 當新 <tr>,避免「| Tanaka-Johnston | ... | ... | - xxx<br>... |」直接秀原文
+        s = s.replace(
+          /(<\/table>)((?:\s*<p>\|[^<\n]+\|<\/p>)+)/g,
+          (m, closeTag, orphans) => {
+            const rows = [];
+            orphans.replace(/<p>\|([^<\n]+)\|<\/p>/g, (_, body) => {
+              const cells = body.split('|').map(c => c.trim());
+              const tds = cells.map(c => '<td>' + _renderCellInline(c) + '</td>').join('');
+              rows.push('<tr>' + tds + '</tr>');
+            });
+            return rows.length ? rows.join('') + closeTag : m;
+          }
+        );
         return s;
       }
       function _renderCellInline(c){

@@ -5823,19 +5823,35 @@ ${(q.options || []).join('\n')}
       // ════════════════════════════════════════════
       //  Screen switching
       // ════════════════════════════════════════════
-      // v342:統一關掉殘留的 modal 才切螢幕,避免 modal 蓋住 home/practice/wrongbook 看起來像「按了沒反應」
+      // v342→v344:統一關掉殘留的 modal 才切螢幕,避免 modal 蓋住 home/practice/wrongbook 看起來像「按了沒反應」
       function closeAllOverlays(){
-        const ids = ['sync-panel','onboarding-overlay','img-lightbox','exam-review-modal','merge-ch-overlay','ai-settings-overlay','nb-backup-modal','history-modal','pending-modal','bg-regen-modal','print-modal','version-modal'];
+        const ids = [
+          'sync-panel','onboarding-overlay','img-lightbox','exam-review-modal',
+          'merge-ch-overlay','ai-settings-overlay','nb-backup-modal','history-modal',
+          'history-overlay','pending-modal','bg-regen-modal','print-modal','version-modal',
+          'modal-overlay','ask-expl-overlay','exam-hist-modal','fixexam-modal',
+        ];
         ids.forEach(id => {
           const el = document.getElementById(id);
-          if (el && el.style.display !== 'none') el.style.display = 'none';
+          if (el) {
+            try { el.style.display = 'none'; } catch(e){}
+            try { el.classList.remove('open'); } catch(e){}
+          }
         });
-        // 動態建立、沒固定 id 的 overlay 也清掉
+        // 任何 .modal-overlay / .overlay class 元素一起關
         document.querySelectorAll('.modal-overlay, .overlay').forEach(el => {
-          // .overlay 是 ai-settings-overlay 的 class,要先排除確認狀態
-          if (el.classList && el.classList.contains('open')) el.classList.remove('open');
-          if (el.style && el.style.display && el.style.display !== 'none') el.style.display = 'none';
+          try { el.classList.remove('open'); } catch(e){}
+          if (el.style && el.style.display && el.style.display !== 'none') {
+            try { el.style.display = 'none'; } catch(e){}
+          }
         });
+        // 螢光小工具列
+        const hl = document.getElementById('hl-popover');
+        if (hl) hl.classList.remove('on');
+        // 失去焦點(避免 input 鎖住事件)
+        try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch(e){}
+        // 捲到頂(避免切過去後使用者看不到上方內容)
+        try { window.scrollTo(0, 0); } catch(e){}
       }
       function showHome() {
         closeAllOverlays();
@@ -7186,11 +7202,26 @@ ${(q.options || []).join('\n')}
         if (m) renderExamHistory('exam-hist-modal-list');
       }
 
-      function openExamHistModal() {
+      async function openExamHistModal() {
         const m = document.getElementById('exam-hist-modal');
         if (!m) return;
         renderExamHistory('exam-hist-modal-list');
         m.style.display = 'flex';
+        // v344:每次開啟都主動拉雲端最新(處理 Mac 沒同步到桌電上加的紀錄這種情況)
+        try {
+          if (typeof DentalSync !== 'undefined' && DentalSync.getStatus && DentalSync.getStatus().connected) {
+            const list = document.getElementById('exam-hist-modal-list');
+            const hint = document.createElement('div');
+            hint.id = 'exam-hist-sync-hint';
+            hint.style.cssText = 'background:#dbeafe;color:#1e40af;padding:.4rem .8rem;border-radius:6px;font-size:.78rem;margin-bottom:.6rem;text-align:center';
+            hint.textContent = '☁️ 同步中…';
+            if (list) list.insertBefore(hint, list.firstChild);
+            await DentalSync.forcePull();
+            renderExamHistory('exam-hist-modal-list');
+            const h2 = document.getElementById('exam-hist-sync-hint');
+            if (h2) h2.remove();
+          }
+        } catch(e) { console.warn('[exam-hist sync]', e); }
       }
 
       function closeExamHistModal() {

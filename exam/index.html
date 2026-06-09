@@ -14902,6 +14902,18 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
           saveExplPatches(local);
           applyExplPatchesToQS();
           console.log('[patches] fetched ' + merged + ' from GitHub');
+          // v362:fetch 完成後重新渲染當前練習題目 — 避免 UI 已在 2s 前用 stale QS 渲染好的情況
+          //      牙六有 471 題原版 explanation 完全空,完全靠 patches 顯示,沒這 refresh 就是 Shirley 看到的「永遠空白」
+          try {
+            const ps = document.getElementById('screen-practice');
+            if (ps && ps.style.display !== 'none'
+                && typeof practiceList !== 'undefined' && practiceList && practiceList.length
+                && typeof practiceIdx !== 'undefined' && practiceIdx >= 0 && practiceIdx < practiceList.length
+                && typeof loadPracticeQ === 'function') {
+              loadPracticeQ();
+              console.log('[patches] 重渲染當前練習題目');
+            }
+          } catch(e) { console.warn('post-fetch UI refresh failed', e); }
           return merged;
         } catch(e) { console.warn('fetch patches failed', e); return 0; }
       }

@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-defensive-apply-patches-actually-applied';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-post-fetch-ui-refresh';
 const PRECACHE = [
   './',
   './index.html',

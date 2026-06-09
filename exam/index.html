@@ -14810,23 +14810,36 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       // 🤖 背景重生詳解 + GitHub Patches 同步(全使用者共用)
       // ══════════════════════════════════════════
       const EXPL_PATCHES_LS = 'expl_patches_global'; // 跨 user(因為要同步給所有人)
-      function loadExplPatches(){ try { return JSON.parse(localStorage.getItem(EXPL_PATCHES_LS) || '{}'); } catch(e) { return {}; } }
-      // 🛡 v286:背景 hydrate expl-patches 從 IDB(LS 可能 stale,IDB 才是真相)
-      (async () => {
+      // v356.1 BUG FIX:patches 超過 localStorage 5MB 上限後,saveExplPatches 的 LS setItem 被 quota 擋住 silently fail
+      //                 → loadExplPatches 只讀 LS 永遠回傳舊快照(HUA 看到的「卡在 4752」就是這個)
+      //                 → pushPatchesToGithub 也讀錯資料,推上去的是 stale 4752 那坨,新跑的全沒同步到 GitHub
+      // 改成記憶體 cache(主要真相)+ IDB(持久化主要真相)+ LS(best-effort backup)
+      let _explPatchesCache = null;
+      // 啟動時 hydrate cache from IDB(LS 可能 quota fail 過,IDB 才是真相)
+      const _explPatchesReady = (async () => {
         if (typeof _idbGet !== 'function') return;
         try {
           const idbRaw = await _idbGet(EXPL_PATCHES_LS);
           if (!idbRaw) return;
-          try { localStorage.setItem(EXPL_PATCHES_LS, idbRaw); } catch(e) {}
-        } catch(e) {}
+          try { _explPatchesCache = JSON.parse(idbRaw); } catch(e) { _explPatchesCache = null; }
+          try { localStorage.setItem(EXPL_PATCHES_LS, idbRaw); } catch(e) { /* LS 滿了沒關係,cache 才是真相 */ }
+          console.log('[expl-patches] hydrated from IDB:', _explPatchesCache ? Object.keys(_explPatchesCache).length : 0, '題');
+        } catch(e) { console.warn('[expl-patches] IDB hydrate fail', e); }
       })();
+      function loadExplPatches(){
+        // 優先用 cache(永遠最新),沒有才退回 LS
+        if (_explPatchesCache) return _explPatchesCache;
+        try { return JSON.parse(localStorage.getItem(EXPL_PATCHES_LS) || '{}'); } catch(e) { return {}; }
+      }
       function saveExplPatches(p){
-        // 🛡 v286:expl-patches 可能會很大(全部使用者修正過的詳解),撞 quota 不能擋使用者操作
+        // 永遠更新 cache(主要真相,讀寫一致)
+        _explPatchesCache = p;
         const payload = JSON.stringify(p);
         if (typeof _idbSet === 'function') {
           _idbSet(EXPL_PATCHES_LS, payload).catch(e => console.warn('[expl-patches] IDB fail', e));
         }
-        try { localStorage.setItem(EXPL_PATCHES_LS, payload); } catch(e) {}
+        try { localStorage.setItem(EXPL_PATCHES_LS, payload); }
+        catch(e) { /* LS quota exceeded,沒關係 — cache + IDB 才是真相 */ }
       }
       function applyExplPatchesToQS(){
         const patches = loadExplPatches();
@@ -15078,6 +15091,11 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       COST_PER_Q_USD = MODEL_COST_PER_Q[getBgRegenModel()] || MODEL_COST_PER_Q['gemini-2.5-flash-lite'];
 
       function openBgRegenModal(){
+        // v356.1:等 IDB hydrate 完成,避免剛開頁面馬上點 → cache 還沒準備好顯示 LS 舊數字
+        if (typeof _explPatchesReady !== 'undefined' && _explPatchesReady && _explPatchesReady.then && !window._explPatchesHydrated) {
+          _explPatchesReady.then(() => { window._explPatchesHydrated = true; openBgRegenModal(); });
+          // 先顯示「載入中」骨架,避免使用者以為沒反應
+        }
         // 非同步 fetch 最新 locks,但只在第一次打開時 fetch,避免無限循環
         if (!_bgRegen.running && !window._bgRegenLocksFetched) {
           window._bgRegenLocksFetched = true;

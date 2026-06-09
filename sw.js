@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-settings-cant-open-fix';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-patches-stuck-fix';
 const PRECACHE = [
   './',
   './index.html',

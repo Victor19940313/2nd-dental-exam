@@ -11250,11 +11250,15 @@ ${JSON.stringify(lite, null, 2)}
           const otherIds = new Set(oldChs.slice(1).map(c => c.id).filter(id => id !== keepCh.id));
           const allQids = Array.from(new Set(oldChs.flatMap(c => c.qids || [])));
           const allConcepts = Array.from(new Set(oldChs.flatMap(c => c.concepts || [])));
+          // v348:任何一章是 ⭐ 重點 → 合併結果也保留 ⭐
+          //       (原本只看 keepCh.important,如果重點章節不是第一個會被吃掉)
+          const anyImportant = oldChs.some(c => c.important);
           keepCh.name = g.new_name || keepCh.name;
           keepCh.subtopic = g.new_subtopic || keepCh.subtopic;
           keepCh.content = newContent;
           keepCh.qids = allQids;
           keepCh.concepts = allConcepts;
+          if (anyImportant) keepCh.important = true;
           keepCh.updatedAt = Date.now();
           notebook.chapters = (notebook.chapters||[]).filter(c => !otherIds.has(c.id));
           saveNotebook();

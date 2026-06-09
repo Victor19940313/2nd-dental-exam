@@ -10072,7 +10072,10 @@ ${dec.reasoning || ''}
           let time = '';
           try { time = new Date(t.startedAt).toLocaleTimeString('zh-TW'); } catch(e){}
           let s = '[' + (i+1) + '] ' + t.qid + ' (' + time + ') — 總 ' + _nbTimingSec(t.totalMs) + (t.error?' ❌':'');
-          s += '\n  章節數: ' + t.chaptersBefore + ' 章, prompt ' + (t.promptLen||0).toLocaleString() + ' 字';
+          // 新版用 chaptersSubject + chaptersTotal,舊版用 chaptersBefore(顯示總數)
+          const chSub = (t.chaptersSubject != null) ? t.chaptersSubject : t.chaptersBefore;
+          const chTot = (t.chaptersTotal != null) ? t.chaptersTotal : t.chaptersBefore;
+          s += '\n  章節數: 本科 ' + chSub + ' 章 / 總 ' + chTot + ' 章, prompt ' + (t.promptLen||0).toLocaleString() + ' 字';
           s += '\n  AI 整理: ' + _nbTimingFmtAI(t.ai1) + (t.decision?' decision='+t.decision:'');
           s += '\n  AI 合併: ' + (t.ai2 ? _nbTimingFmtAI(t.ai2) : '跳過');
           s += '\n  Firebase 同步: ' + _nbTimingSec(t.syncMs);
@@ -10100,7 +10103,7 @@ ${dec.reasoning || ''}
             const border = t.error ? '#fca5a5' : (slow ? '#fbbf24' : '#d4d4d8');
             return '<div style="border:1.5px solid ' + border + ';border-radius:8px;padding:.7rem .9rem;margin-bottom:.6rem;background:' + bg + ';font-family:Menlo,Consolas,monospace;font-size:.78rem;line-height:1.7;color:#1f2937">'
               + '<div style="font-weight:700;font-size:.88rem;color:#111827">[' + (i+1) + '] ' + t.qid + ' <span style="color:#6b7280;font-weight:400">(' + time + ')</span> — 總 <span style="color:' + (slow?'#b45309':(t.error?'#b91c1c':'#059669')) + '">' + totalSec + '</span>' + (t.error?' ❌':'') + '</div>'
-              + '<div>章節數: <strong>' + t.chaptersBefore + '</strong> 章, prompt <strong>' + (t.promptLen||0).toLocaleString() + '</strong> 字</div>'
+              + '<div>章節數: 本科 <strong>' + ((t.chaptersSubject != null) ? t.chaptersSubject : t.chaptersBefore) + '</strong> 章 / 總 <strong>' + ((t.chaptersTotal != null) ? t.chaptersTotal : t.chaptersBefore) + '</strong> 章, prompt <strong>' + (t.promptLen||0).toLocaleString() + '</strong> 字</div>'
               + '<div>AI 整理: ' + ai1 + (t.decision?' <span style="color:#6366f1">decision='+t.decision+'</span>':'') + '</div>'
               + '<div>AI 合併: ' + ai2 + '</div>'
               + '<div>Firebase 同步: ' + _nbTimingSec(t.syncMs) + '</div>'
@@ -10159,8 +10162,10 @@ ${dec.reasoning || ''}
         const _timing = {
           qid: q.id,
           qmeta: q.meta || q.id,
+          subject: q.subject || '',
           startedAt: new Date().toISOString(),
-          chaptersBefore: 0,
+          chaptersTotal: 0,
+          chaptersSubject: 0,
           promptLen: 0,
           ai1: null,
           ai2: null,
@@ -10171,7 +10176,13 @@ ${dec.reasoning || ''}
         };
         try {
           loadNotebook();
-          _timing.chaptersBefore = (notebook && notebook.chapters) ? notebook.chapters.length : 0;
+          _timing.chaptersTotal = (notebook && notebook.chapters) ? notebook.chapters.length : 0;
+          // v354.1:也記錄「本科過濾後的章節數」(AI 真正會看到的數量),避免使用者誤會
+          try {
+            _timing.chaptersSubject = (notebook && notebook.chapters)
+              ? notebook.chapters.filter(c => chapterMatchesSubject(c, q.subject)).length
+              : 0;
+          } catch(e) { _timing.chaptersSubject = -1; }
           const prompt = buildAIPrompt(q, notebook.chapters);
           _timing.promptLen = (prompt || '').length;
           // 帶 schema 強制 Gemini 回符合結構的 JSON

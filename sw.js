@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-fetch-timeout-90s';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-timing-show-subj-count';
 const PRECACHE = [
   './',
   './index.html',

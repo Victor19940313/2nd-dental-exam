@@ -14891,24 +14891,17 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         p[qid] = { expl: expl, model: model || getBgRegenModel(), ts: Date.now() };
         saveExplPatches(p);
       }
-      // 啟動時從 GitHub fetch patches.json (走 jsdelivr CDN,免 token)
+      // 啟動時從 GitHub fetch patches.json
       async function fetchPatchesFromGithub(){
         try {
-          let repo = (typeof getGithubRepo === 'function') ? getGithubRepo() : '';
-          // v363:沒設 repo 就從 location 自動猜(victor19940313.github.io/2nd-dental-exam → victor19940313/2nd-dental-exam)
-          //      Shirley 沒設 GitHub repo → 之前直接 return 0 完全不拉 patches → 永遠看不到 HUA 推的詳解(真兇)
-          if (!repo) {
-            try {
-              const h = (typeof location !== 'undefined' ? (location.hostname || '') : '').match(/^([^.]+)\.github\.io$/);
-              const p = (typeof location !== 'undefined' ? (location.pathname || '') : '').match(/^\/([^\/]+)/);
-              if (h && p) {
-                repo = h[1] + '/' + p[1];
-                console.log('[patches] 沒設 GitHub repo,從 location 自動推:' + repo);
-              }
-            } catch(e) {}
-          }
-          if (!repo) return 0;
-          const url = `https://cdn.jsdelivr.net/gh/${repo}@main/exam/expl-patches.json?_=${Date.now()}`;
+          // v364:改成跟 questions-data.js / NotebookLM 詳解一樣的機制 — 同網址直接抓
+          //      之前走 jsdelivr CDN + 要設 GitHub repo 太多步驟容易壞:
+          //         · Shirley 沒設 repo → 直接 return 0 (v363 加了自動推但邏輯仍複雜)
+          //         · jsdelivr 12 小時 CDN 快取 → 推完看不到新版
+          //         · 跨域 + 多層 fallback
+          //      改成 './expl-patches.json'(GitHub Pages 已 serve 同一個 repo,直接吃)
+          //      → 跟 NotebookLM 詳解一樣,誰開都看得到,沒有額外設定
+          const url = './expl-patches.json?_=' + Date.now();
           const r = await fetch(url);
           if (!r.ok) return 0;
           const remote = await r.json();

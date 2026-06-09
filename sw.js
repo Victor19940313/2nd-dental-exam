@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-auto-infer-repo-from-host';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-patches-same-origin';
 const PRECACHE = [
   './',
   './index.html',

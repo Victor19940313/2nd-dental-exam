@@ -4106,6 +4106,7 @@
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題分組（章節內文不會改）">🗂 子主題分組</button>
           <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出講同件事卻被切太細的章節 → 合併成一章（圖片絕對保留）" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 合併重複章節</button>
           <button class="nb-tb-btn" onclick="openNotebookBackupModal()" title="合併/AI 整理之前的筆記快照,出事可一鍵還原" style="background:#fee2e2;border-color:#ef4444;color:#991b1b">🛟 還原備份</button>
+          <button class="nb-tb-btn" onclick="openNbTimingsModal()" title="看最近 20 次「加入筆記」花了多久 — 可以一鍵複製傳給 Claude 看" style="background:#e0e7ff;border-color:#6366f1;color:#3730a3">⏱ 計時</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
@@ -9274,26 +9275,42 @@ ${(q.options || []).join('\n')}
         const sleep = (ms) => new Promise(r => setTimeout(r, ms));
         // v351:策略改成「兩輪」— 第一輪每把 key 試一次(全部失敗才整批等 5 秒做第二輪)
         //       原本「per-key 等 15 秒 × 2 + 7 把 key」最壞要 3.5 分鐘,現在最壞 ~20 秒
+        // v353:追蹤 cumulative stats + 在 success/failure 時暴露到 window._lastGeminiCallStats(計時器用)
+        const _gCallStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
         let lastErr = null;
         const invalidKeys = new Set();
         let finalTried = [];
-        let finalStats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0 };
+        const cumStats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0, keySwitches: 0 };
+        let finalRound = 1;
+        let finalKeyMask = '';
         for (let round = 0; round < 2; round++) {
+          finalRound = round + 1;
           const tried = [];
-          const stats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0 };
           const roundTag = round === 0 ? '' : ' (第2輪)';
+          let roundQ503 = 0;
           for (let attempt = 0; attempt < keys.length; attempt++) {
             const key = _pickHealthyKey(keys);
             if (!key) break;
             if (invalidKeys.has(key)) continue;
             const kMask = key.slice(0,8) + '…' + key.slice(-4);
+            finalKeyMask = kMask;
             console.log('[Gemini try]' + roundTag, (attempt+1) + '/' + keys.length, kMask);
             try {
               const result = await _callGeminiWithKey(promptText, schema, key, model, opts);
               _resetKey429(key);
-              stats.ok++;
+              cumStats.ok++;
               tried.push(kMask + ':✅');
               console.log('[Gemini try]' + roundTag, kMask, '✅ 成功');
+              window._lastGeminiCallStats = {
+                ms: Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - _gCallStart),
+                round: finalRound,
+                keyMask: kMask,
+                status: 200,
+                succeeded: true,
+                q503Count: cumStats.q503,
+                q429Count: cumStats.q429,
+                keySwitches: cumStats.keySwitches,
+              };
               return result;
             } catch (err) {
               lastErr = err;
@@ -9301,34 +9318,48 @@ ${(q.options || []).join('\n')}
               if (_isKeyInvalidError(msg)) {
                 invalidKeys.add(key);
                 _markKeyCooldown(key, 24 * 60 * 60 * 1000);
-                stats.invalid++;
+                cumStats.invalid++;
+                cumStats.keySwitches++;
                 tried.push(kMask + ':🔴失效');
                 console.warn('[Gemini key 失效]', kMask, msg.slice(0, 200));
                 continue;
               }
               if (/429|quota|exceed|rate.*limit/i.test(msg)) {
                 _mark429(key);
-                stats.q429++;
+                cumStats.q429++;
+                cumStats.keySwitches++;
                 tried.push(kMask + ':🟠429');
                 console.warn('[Gemini key 撞額度]', kMask, msg.slice(0, 120));
                 continue;
               }
               if (/503|UNAVAILABLE|high demand|overloaded/i.test(msg)) {
-                stats.q503++;
+                cumStats.q503++;
+                cumStats.keySwitches++;
+                roundQ503++;
                 tried.push(kMask + ':🟡503');
                 console.warn('[Gemini 503]', kMask, msg.slice(0, 120));
                 continue;
               }
-              stats.other++;
+              cumStats.other++;
               tried.push(kMask + ':❌' + msg.slice(0,40));
+              window._lastGeminiCallStats = {
+                ms: Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - _gCallStart),
+                round: finalRound,
+                keyMask: kMask,
+                status: 0,
+                succeeded: false,
+                q503Count: cumStats.q503,
+                q429Count: cumStats.q429,
+                keySwitches: cumStats.keySwitches,
+                error: msg.slice(0, 120),
+              };
               throw err;
             }
           }
           finalTried = tried;
-          finalStats = stats;
           // 第一輪整輪都失敗 + 主因是 503(忙線)→ 等 5 秒做第二輪
-          if (round === 0 && stats.q503 > 0 && invalidKeys.size < keys.length) {
-            console.warn('[Gemini] 第一輪全部 ' + stats.q503 + ' 把 503,5 秒後做第二輪…');
+          if (round === 0 && roundQ503 > 0 && invalidKeys.size < keys.length) {
+            console.warn('[Gemini] 第一輪 ' + roundQ503 + ' 把撞 503,5 秒後做第二輪…');
             if (typeof showToast === 'function') {
               showToast('⏳ Gemini 全面忙線,5 秒後再試一輪…');
             }
@@ -9338,8 +9369,19 @@ ${(q.options || []).join('\n')}
           break; // 不是 503 主因 / 全部 key 失效 → 不重試
         }
         // 兩輪都失敗
-        const summary = `試了 ${keys.length} 把key:${finalStats.q429}撞額度/${finalStats.q503}忙線/${finalStats.invalid}失效/${finalStats.other}其他`;
+        const summary = `試了 ${keys.length} 把key:${cumStats.q429}撞額度/${cumStats.q503}忙線/${cumStats.invalid}失效/${cumStats.other}其他`;
         console.warn('[Gemini 全部失敗]', summary, finalTried);
+        window._lastGeminiCallStats = {
+          ms: Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - _gCallStart),
+          round: finalRound,
+          keyMask: finalKeyMask,
+          status: 0,
+          succeeded: false,
+          q503Count: cumStats.q503,
+          q429Count: cumStats.q429,
+          keySwitches: cumStats.keySwitches,
+          error: summary,
+        };
         if (invalidKeys.size === keys.length) {
           _alertKeyInvalid(lastErr && lastErr.message);
           throw new Error('Gemini API key 全部失效 (' + summary + ')');
@@ -9981,14 +10023,134 @@ ${dec.reasoning || ''}
           });
       }
 
+      // v353:每次加入筆記計時 — 寫進 window._nbAddTimings,UI 用「⏱ 計時」按鈕看
+      const _now = () => (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      function _nbTimingSec(ms){ return (ms == null) ? '—' : (ms/1000).toFixed(2) + 's'; }
+      function _nbTimingFmtAI(s){
+        if (!s) return '—';
+        return _nbTimingSec(s.ms) + ' [key ' + (s.keyMask||'?') + ', 第' + (s.round||1) + '輪, ' + (s.succeeded?'HTTP 200':'失敗') + ', 503×' + (s.q503Count||0) + ', 切key×' + (s.keySwitches||0) + (s.error?(', err='+String(s.error).slice(0,60)):'') + ']';
+      }
+      function _logNbAddTiming(t){
+        window._nbAddTimings = window._nbAddTimings || [];
+        window._nbAddTimings.unshift(t);
+        if (window._nbAddTimings.length > 20) window._nbAddTimings.length = 20;
+      }
+      function _nbTimingsToText(){
+        const arr = window._nbAddTimings || [];
+        if (!arr.length) return '(還沒有紀錄)';
+        return arr.map((t, i) => {
+          let time = '';
+          try { time = new Date(t.startedAt).toLocaleTimeString('zh-TW'); } catch(e){}
+          let s = '[' + (i+1) + '] ' + t.qid + ' (' + time + ') — 總 ' + _nbTimingSec(t.totalMs) + (t.error?' ❌':'');
+          s += '\n  章節數: ' + t.chaptersBefore + ' 章, prompt ' + (t.promptLen||0).toLocaleString() + ' 字';
+          s += '\n  AI 整理: ' + _nbTimingFmtAI(t.ai1) + (t.decision?' decision='+t.decision:'');
+          s += '\n  AI 合併: ' + (t.ai2 ? _nbTimingFmtAI(t.ai2) : '跳過');
+          s += '\n  Firebase 同步: ' + _nbTimingSec(t.syncMs);
+          if (t.error) s += '\n  錯誤: ' + t.error;
+          return s;
+        }).join('\n\n');
+      }
+      function openNbTimingsModal(){
+        if (typeof closeAllOverlays === 'function') closeAllOverlays();
+        const existing = document.getElementById('nb-timings-overlay');
+        if (existing) existing.remove();
+        const arr = window._nbAddTimings || [];
+        let listHtml;
+        if (!arr.length) {
+          listHtml = '<div style="padding:2rem;text-align:center;color:#6b7280">還沒有任何紀錄。按一題「✨ 加入筆記」之後再回來看。</div>';
+        } else {
+          listHtml = arr.map((t, i) => {
+            let time = '';
+            try { time = new Date(t.startedAt).toLocaleTimeString('zh-TW'); } catch(e){}
+            const ai1 = _nbTimingFmtAI(t.ai1);
+            const ai2 = t.ai2 ? _nbTimingFmtAI(t.ai2) : '跳過 (短章節 / 非 append)';
+            const totalSec = _nbTimingSec(t.totalMs);
+            const slow = t.totalMs > 30000;
+            const bg = t.error ? '#fef2f2' : (slow ? '#fffbeb' : '#f9fafb');
+            const border = t.error ? '#fca5a5' : (slow ? '#fbbf24' : '#d4d4d8');
+            return '<div style="border:1.5px solid ' + border + ';border-radius:8px;padding:.7rem .9rem;margin-bottom:.6rem;background:' + bg + ';font-family:Menlo,Consolas,monospace;font-size:.78rem;line-height:1.7;color:#1f2937">'
+              + '<div style="font-weight:700;font-size:.88rem;color:#111827">[' + (i+1) + '] ' + t.qid + ' <span style="color:#6b7280;font-weight:400">(' + time + ')</span> — 總 <span style="color:' + (slow?'#b45309':(t.error?'#b91c1c':'#059669')) + '">' + totalSec + '</span>' + (t.error?' ❌':'') + '</div>'
+              + '<div>章節數: <strong>' + t.chaptersBefore + '</strong> 章, prompt <strong>' + (t.promptLen||0).toLocaleString() + '</strong> 字</div>'
+              + '<div>AI 整理: ' + ai1 + (t.decision?' <span style="color:#6366f1">decision='+t.decision+'</span>':'') + '</div>'
+              + '<div>AI 合併: ' + ai2 + '</div>'
+              + '<div>Firebase 同步: ' + _nbTimingSec(t.syncMs) + '</div>'
+              + (t.error ? '<div style="color:#b91c1c">錯誤: ' + t.error + '</div>' : '')
+              + '</div>';
+          }).join('');
+        }
+        const overlay = document.createElement('div');
+        overlay.id = 'nb-timings-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:flex-start;justify-content:center;padding:3rem 1rem;overflow-y:auto';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = '<div style="background:white;border-radius:12px;max-width:820px;width:100%;padding:1.2rem 1.4rem;box-shadow:0 20px 50px rgba(0,0,0,.25)">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">'
+          + '<h3 style="margin:0;font-size:1.1rem">⏱ 加入筆記計時 (最近 ' + arr.length + ' 筆)</h3>'
+          + '<button onclick="document.getElementById(\'nb-timings-overlay\').remove()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#6b7280">✕</button>'
+          + '</div>'
+          + '<div style="margin-bottom:.8rem;display:flex;gap:.5rem;flex-wrap:wrap">'
+          + '<button onclick="_copyNbTimings(this)" style="background:#3b82f6;color:white;border:none;padding:.5rem 1rem;border-radius:6px;cursor:pointer;font-weight:700">📋 複製全部給 Claude</button>'
+          + (arr.length ? '<button onclick="if(confirm(\'清空所有計時紀錄?\')){window._nbAddTimings=[];openNbTimingsModal();}" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:.5rem 1rem;border-radius:6px;cursor:pointer">🗑 清空</button>' : '')
+          + '</div>'
+          + '<div style="font-size:.75rem;color:#6b7280;margin-bottom:.6rem">🟢 < 30s 算正常 · 🟡 > 30s 慢 · 🔴 失敗</div>'
+          + '<div>' + listHtml + '</div>'
+          + '</div>';
+        document.body.appendChild(overlay);
+      }
+      window.openNbTimingsModal = openNbTimingsModal;
+      function _copyNbTimings(btn){
+        const txt = _nbTimingsToText();
+        const done = () => {
+          if (btn) {
+            const orig = btn.textContent;
+            btn.textContent = '✅ 已複製,可以貼了';
+            btn.style.background = '#10b981';
+            setTimeout(() => { btn.textContent = orig; btn.style.background = '#3b82f6'; }, 2500);
+          } else if (typeof showToast === 'function') showToast('✅ 已複製');
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).then(done).catch(() => _fallbackCopyText(txt, done));
+        } else {
+          _fallbackCopyText(txt, done);
+        }
+      }
+      window._copyNbTimings = _copyNbTimings;
+      function _fallbackCopyText(txt, cb){
+        const ta = document.createElement('textarea');
+        ta.value = txt;
+        ta.style.cssText = 'position:absolute;left:-9999px;top:0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); if (cb) cb(); } catch(e) {}
+        document.body.removeChild(ta);
+      }
       async function addQToNotebook(q, opts){
         opts = opts || {};
+        const _t0 = _now();
+        const _timing = {
+          qid: q.id,
+          qmeta: q.meta || q.id,
+          startedAt: new Date().toISOString(),
+          chaptersBefore: 0,
+          promptLen: 0,
+          ai1: null,
+          ai2: null,
+          syncMs: null,
+          decision: null,
+          totalMs: 0,
+          error: null,
+        };
         try {
           loadNotebook();
+          _timing.chaptersBefore = (notebook && notebook.chapters) ? notebook.chapters.length : 0;
           const prompt = buildAIPrompt(q, notebook.chapters);
+          _timing.promptLen = (prompt || '').length;
           // 帶 schema 強制 Gemini 回符合結構的 JSON
+          const _ai1Start = _now();
+          window._lastGeminiCallStats = null;
           const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
+          _timing.ai1 = Object.assign({ ms: Math.round(_now() - _ai1Start) }, window._lastGeminiCallStats || {});
           const dec = extractJSON(raw);
+          _timing.decision = dec && dec.action;
           // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
           // 智慧判斷：
           //   - 短章節 (<800 字)：第 1 階段已看到接近全文摘要，跳過第 2 階段省 API 額度
@@ -10000,9 +10162,12 @@ ${dec.reasoning || ''}
             const oldLen = oldContent.trim().length;
             if (oldCh && oldLen >= 800) {
               // 長章節:跑第 2 階段合併,token 上限拉高避免長章節被截斷
+              const _ai2Start = _now();
               try {
                 const mergePrompt = buildMergePrompt(q, oldCh, dec);
+                window._lastGeminiCallStats = null;
                 const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA, { maxOutputTokens: 32768 });
+                _timing.ai2 = Object.assign({ ms: Math.round(_now() - _ai2Start) }, window._lastGeminiCallStats || {});
                 const mergeDec = extractJSON(mergeRaw);
                 if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= oldLen * 0.7) {
                   dec.content = _preserveImagesIn(oldContent, mergeDec.content);
@@ -10014,6 +10179,7 @@ ${dec.reasoning || ''}
                   showToast('⚠️ 章節太長,新題目暫存到章節末尾「待整合」段落');
                 }
               } catch(mergeErr) {
+                _timing.ai2 = Object.assign({ ms: Math.round(_now() - _ai2Start) }, window._lastGeminiCallStats || {});
                 // 撞額度 → 整題拋出讓 pending queue 重排
                 if (/429|quota|exceed/i.test(mergeErr.message || '')) {
                   throw new Error('合併撞額度: ' + (mergeErr.message || '').slice(0, 80));
@@ -10028,11 +10194,18 @@ ${dec.reasoning || ''}
               dec.content = _preserveImagesIn(oldContent, dec.content || oldContent);
             }
           }
+          const _syncStart = _now();
           applyAIDecision(dec, q);
+          _timing.syncMs = Math.round(_now() - _syncStart);
           // 整理成功 → 從待整理佇列移除（如果在裡面）
           removeFromPendingQueue(q.id);
+          _timing.totalMs = Math.round(_now() - _t0);
+          _logNbAddTiming(_timing);
           return true;
         } catch(err) {
+          _timing.totalMs = Math.round(_now() - _t0);
+          _timing.error = (err && err.message ? err.message : String(err)).slice(0, 200);
+          _logNbAddTiming(_timing);
           if (err.message === 'no_key') return false;
           console.error('addQToNotebook failed', err);
           // 失敗 → 推進待整理佇列

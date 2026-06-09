@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-resume-dup-fix';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-nb-timings-ui';
 const PRECACHE = [
   './',
   './index.html',

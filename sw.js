@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-modal-close-and-escape-fix';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-taiwan-terms';
 const PRECACHE = [
   './',
   './index.html',

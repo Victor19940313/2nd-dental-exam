@@ -4106,6 +4106,7 @@
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題分組（章節內文不會改）">🗂 子主題分組</button>
           <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出講同件事卻被切太細的章節 → 合併成一章（圖片絕對保留）" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 合併重複章節</button>
           <button class="nb-tb-btn" onclick="openNotebookBackupModal()" title="合併/AI 整理之前的筆記快照,出事可一鍵還原" style="background:#fee2e2;border-color:#ef4444;color:#991b1b">🛟 還原備份</button>
+          <button class="nb-tb-btn" onclick="fixTaiwanTerms()" title="把所有章節裡的大陸用語(乳磨牙、第一磨牙、種植牙等)改成台灣用語(乳臼齒、第一大臼齒、植牙)" style="background:#fef9c3;border-color:#eab308;color:#854d0e">🇹🇼 修正用語</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
@@ -9196,8 +9197,29 @@ ${(q.options || []).join('\n')}
           setTimeout(() => { _keyInvalidAlerted = false; }, 30000); // 30 秒後可再跳
         }, 100);
       }
+      // v343:台灣牙醫用語守則 — 注入到所有 AI prompt 開頭,確保 AI 輸出用台灣慣用詞
+      const TW_TERMS_RULE = `【台灣牙醫用語守則(必須遵守)】
+- 一律用繁體中文,絕對不要簡體字
+- 乳磨牙 → **乳臼齒**;乳磨牙列 → 乳臼齒列
+- 磨牙(指牙齒)→ **臼齒**;第一磨牙 → 第一大臼齒;第二磨牙 → 第二大臼齒;第三磨牙 → 第三大臼齒(智齒)
+- 種植牙 / 種植體 → **植牙 / 植體**
+- 補綴學 → 贗復學;補綴科 → 贗復科
+- 牙合 → **咬合**;殆學 → **咬合學**
+- 修复 → **修復**
+- 牙釉質 / 牙本质 等任何簡體 → 一律改繁體
+- 義齒、假牙皆可(這兩個台灣都用)
+若原文是簡體或大陸用語,自動換成上述對應台灣用語。
+`;
+      // 注入用語守則到任何 prompt 開頭
+      function _injectTwTerms(prompt) {
+        if (!prompt || typeof prompt !== 'string') return prompt;
+        if (prompt.includes('【台灣牙醫用語守則')) return prompt; // 已包含就不重複
+        return TW_TERMS_RULE + '\n\n' + prompt;
+      }
       async function callGemini(promptText, schema, opts){
         opts = opts || {};
+        // v343:每個 AI 呼叫自動把台灣用語守則加在 prompt 前面
+        promptText = _injectTwTerms(promptText);
         const keys = getGeminiKeys();
         if (keys.length === 0) {
           showToast('請先設定 Gemini API key');
@@ -10814,6 +10836,76 @@ ${JSON.stringify(list, null, 2)}
           alert('還原失敗:' + (e.message||e));
         }
       }
+      // v343:一鍵把所有章節的大陸用語改成台灣用語
+      const TW_TERM_REPLACEMENTS = [
+        // 注意:長詞優先比對,避免短詞先吃掉(例如「第一磨牙」要先換,免得後面「磨牙」邏輯把已換好的字再動到)
+        [/第三磨牙/g, '第三大臼齒'],
+        [/第二磨牙/g, '第二大臼齒'],
+        [/第一磨牙/g, '第一大臼齒'],
+        [/上頜第([一二三])磨牙/g, '上頜第$1大臼齒'],
+        [/下頜第([一二三])磨牙/g, '下頜第$1大臼齒'],
+        [/乳磨牙/g, '乳臼齒'],
+        [/種植牙/g, '植牙'],
+        [/種植體/g, '植體'],
+        [/補綴學/g, '贗復學'],
+        [/補綴科/g, '贗復科'],
+        [/牙合(?![一二三四五六七八九十])/g, '咬合'],  // 「牙合」改「咬合」,但不要動「牙合」+ 數字之類
+        [/殆學/g, '咬合學'],
+        [/修复/g, '修復'],
+        [/牙釉质/g, '牙釉質'],
+        [/牙本质/g, '牙本質'],
+        [/牙骨质/g, '牙骨質'],
+      ];
+      async function fixTaiwanTerms(){
+        if (!notebook.chapters || !notebook.chapters.length) {
+          showToast('還沒有章節');
+          return;
+        }
+        if (!confirm('掃描所有 ' + notebook.chapters.length + ' 個章節,把大陸用語改成台灣用語?\n\n會改:\n- 乳磨牙 → 乳臼齒\n- 第一/二/三磨牙 → 第一/二/三大臼齒\n- 種植牙 → 植牙、種植體 → 植體\n- 簡體字 → 繁體字(部分)\n\n⚠ 修正前會自動備份,可從「🛟 還原備份」回滾')) return;
+
+        try { await backupNotebookToCloud('修正台灣用語前'); }
+        catch(e) { console.warn('[fix tw terms backup]', e); }
+
+        let chaptersChanged = 0;
+        let totalReplaces = 0;
+        const samples = []; // 收集改動樣本給使用者看
+        notebook.chapters.forEach(ch => {
+          let chReplaceCount = 0;
+          for (const [pattern, replacement] of TW_TERM_REPLACEMENTS) {
+            // name
+            const nameOld = ch.name || '';
+            const nameNew = nameOld.replace(pattern, replacement);
+            if (nameNew !== nameOld) { ch.name = nameNew; chReplaceCount++; }
+            // subtopic
+            const subOld = ch.subtopic || '';
+            const subNew = subOld.replace(pattern, replacement);
+            if (subNew !== subOld) { ch.subtopic = subNew; chReplaceCount++; }
+            // content
+            const contentOld = ch.content || '';
+            const matches = contentOld.match(pattern);
+            if (matches) {
+              ch.content = contentOld.replace(pattern, replacement);
+              chReplaceCount += matches.length;
+            }
+          }
+          if (chReplaceCount > 0) {
+            ch.updatedAt = Date.now();
+            chaptersChanged++;
+            totalReplaces += chReplaceCount;
+            if (samples.length < 5) samples.push(ch.name);
+          }
+        });
+
+        if (totalReplaces === 0) {
+          showToast('✓ 沒有需要修正的詞');
+          return;
+        }
+        saveNotebook();
+        renderNotebook();
+        alert(`✓ 修正完成\n\n共修了 ${totalReplaces} 處,影響 ${chaptersChanged} 章\n\n受影響章節舉例:\n` + samples.join('\n') + (chaptersChanged > 5 ? '\n…' : ''));
+      }
+      window.fixTaiwanTerms = fixTaiwanTerms;
+
       async function doManualBackup(){
         const lbl = prompt('幫這次備份取個名(可選):', '手動備份 ' + new Date().toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}));
         if (lbl === null) return;

@@ -4106,7 +4106,6 @@
           <button class="nb-tb-btn" onclick="reorganizeAllSubtopics()" title="讓 AI 幫所有章節重新分配子主題分組（章節內文不會改）">🗂 子主題分組</button>
           <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出講同件事卻被切太細的章節 → 合併成一章（圖片絕對保留）" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 合併重複章節</button>
           <button class="nb-tb-btn" onclick="openNotebookBackupModal()" title="合併/AI 整理之前的筆記快照,出事可一鍵還原" style="background:#fee2e2;border-color:#ef4444;color:#991b1b">🛟 還原備份</button>
-          <button class="nb-tb-btn" onclick="fixTaiwanTerms()" title="把所有章節裡的大陸用語(乳磨牙、第一磨牙、種植牙等)改成台灣用語(乳臼齒、第一大臼齒、植牙)" style="background:#fef9c3;border-color:#eab308;color:#854d0e">🇹🇼 修正用語</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
@@ -5659,6 +5658,8 @@ ${(q.options || []).join('\n')}
       }
       function formatExpl(text) {
         if (!text) return "";
+        // v349:詳解渲染時自動把大陸用語/簡體字換成台灣用語(連 GitHub 上舊詳解也會被修正顯示)
+        text = applyTwTermsToText(text);
         text = _stripLatex(text);
         text = _splitInlineOptions(text);
         // 移除「孤立的 dash / bullet 行」(整行只有 dash/bullet 的清掉)
@@ -9228,18 +9229,21 @@ ${(q.options || []).join('\n')}
           setTimeout(() => { _keyInvalidAlerted = false; }, 30000); // 30 秒後可再跳
         }, 100);
       }
-      // v343:台灣牙醫用語守則 — 注入到所有 AI prompt 開頭,確保 AI 輸出用台灣慣用詞
-      const TW_TERMS_RULE = `【台灣牙醫用語守則(必須遵守)】
+      // v343/v349:台灣牙醫用語守則 — 注入到所有 AI prompt 開頭,確保 AI 輸出用台灣慣用詞
+      const TW_TERMS_RULE = `【台灣牙醫用語守則(必須遵守,生成詳解也要)】
 - 一律用繁體中文,絕對不要簡體字
+- 切牙 → **門齒**;中切牙 → **中門齒**;側切牙 → **側門齒**
+- 雙尖牙 / 前磨牙 → **小臼齒**
 - 乳磨牙 → **乳臼齒**;乳磨牙列 → 乳臼齒列
 - 磨牙(指牙齒)→ **臼齒**;第一磨牙 → 第一大臼齒;第二磨牙 → 第二大臼齒;第三磨牙 → 第三大臼齒(智齒)
 - 種植牙 / 種植體 → **植牙 / 植體**
 - 補綴學 → 贗復學;補綴科 → 贗復科
 - 牙合 → **咬合**;殆學 → **咬合學**
-- 修复 → **修復**
-- 牙釉質 / 牙本质 等任何簡體 → 一律改繁體
+- 牙釉質 → **琺瑯質**;牙本質 → **象牙質**(Taiwan 牙科臨床/教科書習慣)
+- 嚼肌 → **咀嚼肌**
+- 修复 / 牙釉质 / 牙本质 / 牙骨质 / 颊 / 龈 / 龋 / 颌 / 颞 / 关节 / 韧带 等任何簡體 → 一律改繁體
 - 義齒、假牙皆可(這兩個台灣都用)
-若原文是簡體或大陸用語,自動換成上述對應台灣用語。
+若原文是簡體或大陸用語,自動換成上述對應台灣用語,不可保留原詞。
 `;
       // 注入用語守則到任何 prompt 開頭
       function _injectTwTerms(prompt) {
@@ -10867,26 +10871,61 @@ ${JSON.stringify(list, null, 2)}
           alert('還原失敗:' + (e.message||e));
         }
       }
-      // v343:一鍵把所有章節的大陸用語改成台灣用語
+      // v343/v349:大陸用語 → 台灣用語對照(渲染 詳解 時自動套用,也用在 AI 後處理)
+      // 注意順序!長詞優先,避免短詞先吃掉(例如「中切牙」要先換成「中門齒」,免得 /切牙/ 把它變成「中門齒」結果重複)
       const TW_TERM_REPLACEMENTS = [
-        // 注意:長詞優先比對,避免短詞先吃掉(例如「第一磨牙」要先換,免得後面「磨牙」邏輯把已換好的字再動到)
+        // 磨牙 系列
         [/第三磨牙/g, '第三大臼齒'],
         [/第二磨牙/g, '第二大臼齒'],
         [/第一磨牙/g, '第一大臼齒'],
         [/上頜第([一二三])磨牙/g, '上頜第$1大臼齒'],
         [/下頜第([一二三])磨牙/g, '下頜第$1大臼齒'],
         [/乳磨牙/g, '乳臼齒'],
+        // 切牙 → 門齒 系列(中/側 要先換,免得被短詞 /切牙/ 先吃)
+        [/中切牙/g, '中門齒'],
+        [/側切牙/g, '側門齒'],
+        [/侧切牙/g, '側門齒'],
+        [/切牙/g, '門齒'],
+        // 雙尖牙/前磨牙 → 小臼齒
+        [/雙尖牙/g, '小臼齒'],
+        [/双尖牙/g, '小臼齒'],
+        [/前磨牙/g, '小臼齒'],
+        // 牙釉/本/骨 質 → 琺瑯/象牙/牙堊質(台灣臨床慣用)
+        [/牙釉質/g, '琺瑯質'],
+        [/牙釉质/g, '琺瑯質'],
+        [/牙本質/g, '象牙質'],
+        [/牙本质/g, '象牙質'],
+        [/牙骨质/g, '牙堊質'],
+        // 植牙 / 贗復
         [/種植牙/g, '植牙'],
         [/種植體/g, '植體'],
         [/補綴學/g, '贗復學'],
         [/補綴科/g, '贗復科'],
-        [/牙合(?![一二三四五六七八九十])/g, '咬合'],  // 「牙合」改「咬合」,但不要動「牙合」+ 數字之類
+        // 咬合
+        [/牙合(?![一二三四五六七八九十])/g, '咬合'],
         [/殆學/g, '咬合學'],
+        // 嚼肌 → 咀嚼肌
+        [/嚼肌/g, '咀嚼肌'],
+        // 常見簡體字
         [/修复/g, '修復'],
-        [/牙釉质/g, '牙釉質'],
-        [/牙本质/g, '牙本質'],
-        [/牙骨质/g, '牙骨質'],
+        [/颊/g, '頰'],
+        [/龈/g, '齦'],
+        [/龋/g, '齲'],
+        [/颌/g, '頜'],
+        [/颞/g, '顳'],
+        [/关节/g, '關節'],
+        [/韧带/g, '韌帶'],
       ];
+      // v349:把任意文字裡的大陸用語自動換成台灣用語(詳解渲染、AI 後處理都會用)
+      function applyTwTermsToText(text){
+        if (!text || typeof text !== 'string') return text;
+        let out = text;
+        for (const [pat, rep] of TW_TERM_REPLACEMENTS) {
+          out = out.replace(pat, rep);
+        }
+        return out;
+      }
+      window.applyTwTermsToText = applyTwTermsToText;
       async function fixTaiwanTerms(){
         if (!notebook.chapters || !notebook.chapters.length) {
           showToast('還沒有章節');

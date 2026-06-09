@@ -5822,7 +5822,22 @@ ${(q.options || []).join('\n')}
       // ════════════════════════════════════════════
       //  Screen switching
       // ════════════════════════════════════════════
+      // v342:統一關掉殘留的 modal 才切螢幕,避免 modal 蓋住 home/practice/wrongbook 看起來像「按了沒反應」
+      function closeAllOverlays(){
+        const ids = ['sync-panel','onboarding-overlay','img-lightbox','exam-review-modal','merge-ch-overlay','ai-settings-overlay','nb-backup-modal','history-modal','pending-modal','bg-regen-modal','print-modal','version-modal'];
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.style.display !== 'none') el.style.display = 'none';
+        });
+        // 動態建立、沒固定 id 的 overlay 也清掉
+        document.querySelectorAll('.modal-overlay, .overlay').forEach(el => {
+          // .overlay 是 ai-settings-overlay 的 class,要先排除確認狀態
+          if (el.classList && el.classList.contains('open')) el.classList.remove('open');
+          if (el.style && el.style.display && el.style.display !== 'none') el.style.display = 'none';
+        });
+      }
       function showHome() {
+        closeAllOverlays();
         document.getElementById("screen-home").style.display = "block";
         document.getElementById("screen-practice").style.display = "none";
         document.getElementById("screen-browse").style.display = "none";
@@ -5847,6 +5862,7 @@ ${(q.options || []).join('\n')}
       }
 
       function showBrowse() {
+        closeAllOverlays();
         document.getElementById("screen-home").style.display = "none";
         document.getElementById("screen-practice").style.display = "none";
         document.getElementById("screen-scroll-exam").style.display = "none";
@@ -5880,6 +5896,7 @@ ${(q.options || []).join('\n')}
       }
 
       function showPractice() {
+        closeAllOverlays();
         document.getElementById("screen-home").style.display = "none";
         document.getElementById("screen-practice").style.display = "block";
         document.getElementById("screen-browse").style.display = "none";
@@ -10352,6 +10369,7 @@ ${dec.reasoning || ''}
 
       // ── Notebook screen render ──
       function showNotebook(){
+        closeAllOverlays();
         loadNotebook();
         // 若 peek 是從重看試卷叫的 → 保存返回狀態 + 隱藏試卷 modal
         if (window._reviewPeekActive && _reviewEntry) {
@@ -15817,6 +15835,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       }
 
       function showDB() {
+        closeAllOverlays();
         document.getElementById("screen-home").style.display = "none";
         document.getElementById("screen-practice").style.display = "none";
         document.getElementById("screen-browse").style.display = "none";
@@ -16007,6 +16026,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       }
 
       function showWrongbook(){
+        closeAllOverlays();
         document.getElementById('screen-home').style.display='none';
         document.getElementById('screen-practice').style.display='none';
         document.getElementById('screen-db').style.display='none';

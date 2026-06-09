@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-merge-dual-mode-and-reorg-backup';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-modal-close-and-escape-fix';
 const PRECACHE = [
   './',
   './index.html',

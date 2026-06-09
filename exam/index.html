@@ -10094,14 +10094,20 @@ ${dec.reasoning || ''}
         return arr.map((t, i) => {
           let time = '';
           try { time = new Date(t.startedAt).toLocaleTimeString('zh-TW'); } catch(e){}
-          let s = '[' + (i+1) + '] ' + t.qid + ' (' + time + ') — 總 ' + _nbTimingSec(t.totalMs) + (t.error?' ❌':'');
-          // 新版用 chaptersSubject + chaptersTotal,舊版用 chaptersBefore(顯示總數)
-          const chSub = (t.chaptersSubject != null) ? t.chaptersSubject : t.chaptersBefore;
-          const chTot = (t.chaptersTotal != null) ? t.chaptersTotal : t.chaptersBefore;
-          s += '\n  章節數: 本科 ' + chSub + ' 章 / 總 ' + chTot + ' 章, prompt ' + (t.promptLen||0).toLocaleString() + ' 字';
-          s += '\n  AI 整理: ' + _nbTimingFmtAI(t.ai1) + (t.decision?' decision='+t.decision:'');
-          s += '\n  AI 合併: ' + (t.ai2 ? _nbTimingFmtAI(t.ai2) : '跳過');
-          s += '\n  Firebase 同步: ' + _nbTimingSec(t.syncMs);
+          // v365:加 kind 區分「加入筆記 / 跑詳解」(bg-regen 也記計時)
+          const kindLabel = t.kind === 'bg-regen' ? '[跑詳解]' : '[加入筆記]';
+          let s = '[' + (i+1) + '] ' + kindLabel + ' ' + t.qid + ' (' + time + ') — 總 ' + _nbTimingSec(t.totalMs) + (t.error?' ❌':'');
+          if (t.kind === 'bg-regen') {
+            // 跑詳解格式較簡單(沒章節 / 沒合併 / 沒 sync)
+            s += '\n  AI 重生: ' + _nbTimingFmtAI(t.ai1);
+          } else {
+            const chSub = (t.chaptersSubject != null) ? t.chaptersSubject : t.chaptersBefore;
+            const chTot = (t.chaptersTotal != null) ? t.chaptersTotal : t.chaptersBefore;
+            s += '\n  章節數: 本科 ' + chSub + ' 章 / 總 ' + chTot + ' 章, prompt ' + (t.promptLen||0).toLocaleString() + ' 字';
+            s += '\n  AI 整理: ' + _nbTimingFmtAI(t.ai1) + (t.decision?' decision='+t.decision:'');
+            s += '\n  AI 合併: ' + (t.ai2 ? _nbTimingFmtAI(t.ai2) : '跳過');
+            s += '\n  Firebase 同步: ' + _nbTimingSec(t.syncMs);
+          }
           if (t.error) s += '\n  錯誤: ' + t.error;
           return s;
         }).join('\n\n');
@@ -10124,12 +10130,20 @@ ${dec.reasoning || ''}
             const slow = t.totalMs > 30000;
             const bg = t.error ? '#fef2f2' : (slow ? '#fffbeb' : '#f9fafb');
             const border = t.error ? '#fca5a5' : (slow ? '#fbbf24' : '#d4d4d8');
+            // v365:加 kind 區分「加入筆記 / 跑詳解」+ bg-regen 顯示簡化(沒章節 / 沒合併)
+            const isRegen = t.kind === 'bg-regen';
+            const kindBadge = isRegen
+              ? '<span style="background:#ddd6fe;color:#5b21b6;padding:1px 6px;border-radius:4px;font-size:.7rem;margin-right:.4rem">跑詳解</span>'
+              : '<span style="background:#d1fae5;color:#065f46;padding:1px 6px;border-radius:4px;font-size:.7rem;margin-right:.4rem">加入筆記</span>';
+            const mainBody = isRegen
+              ? '<div>AI 重生: ' + ai1 + '</div>'
+              : ('<div>章節數: 本科 <strong>' + ((t.chaptersSubject != null) ? t.chaptersSubject : t.chaptersBefore) + '</strong> 章 / 總 <strong>' + ((t.chaptersTotal != null) ? t.chaptersTotal : t.chaptersBefore) + '</strong> 章, prompt <strong>' + (t.promptLen||0).toLocaleString() + '</strong> 字</div>'
+                 + '<div>AI 整理: ' + ai1 + (t.decision?' <span style="color:#6366f1">decision='+t.decision+'</span>':'') + '</div>'
+                 + '<div>AI 合併: ' + ai2 + '</div>'
+                 + '<div>Firebase 同步: ' + _nbTimingSec(t.syncMs) + '</div>');
             return '<div style="border:1.5px solid ' + border + ';border-radius:8px;padding:.7rem .9rem;margin-bottom:.6rem;background:' + bg + ';font-family:Menlo,Consolas,monospace;font-size:.78rem;line-height:1.7;color:#1f2937">'
-              + '<div style="font-weight:700;font-size:.88rem;color:#111827">[' + (i+1) + '] ' + t.qid + ' <span style="color:#6b7280;font-weight:400">(' + time + ')</span> — 總 <span style="color:' + (slow?'#b45309':(t.error?'#b91c1c':'#059669')) + '">' + totalSec + '</span>' + (t.error?' ❌':'') + '</div>'
-              + '<div>章節數: 本科 <strong>' + ((t.chaptersSubject != null) ? t.chaptersSubject : t.chaptersBefore) + '</strong> 章 / 總 <strong>' + ((t.chaptersTotal != null) ? t.chaptersTotal : t.chaptersBefore) + '</strong> 章, prompt <strong>' + (t.promptLen||0).toLocaleString() + '</strong> 字</div>'
-              + '<div>AI 整理: ' + ai1 + (t.decision?' <span style="color:#6366f1">decision='+t.decision+'</span>':'') + '</div>'
-              + '<div>AI 合併: ' + ai2 + '</div>'
-              + '<div>Firebase 同步: ' + _nbTimingSec(t.syncMs) + '</div>'
+              + '<div style="font-weight:700;font-size:.88rem;color:#111827">' + kindBadge + '[' + (i+1) + '] ' + t.qid + ' <span style="color:#6b7280;font-weight:400">(' + time + ')</span> — 總 <span style="color:' + (slow?'#b45309':(t.error?'#b91c1c':'#059669')) + '">' + totalSec + '</span>' + (t.error?' ❌':'') + '</div>'
+              + mainBody
               + (t.error ? '<div style="color:#b91c1c">錯誤: ' + t.error + '</div>' : '')
               + '</div>';
           }).join('');
@@ -15423,8 +15437,12 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
           }
           const qid = _bgRegen.list[_bgRegen.curIdx];
           _bgRegen.curIdx++;
+          // v365:跑詳解計時 — 每題寫一筆到 _nbAddTimings (kind: 'bg-regen'),HUA 可以開「⏱ 計時」modal 看
+          const _qStart = (typeof _now === 'function') ? _now() : Date.now();
+          window._lastGeminiCallStats = null;
+          let q;
           try {
-            const q = (QS || []).find(x => x.id === qid);
+            q = (QS || []).find(x => x.id === qid);
             if (!q) { _bgRegen.failed++; _updateBgRegenFloating(); continue; }
             // 用 callGemini round-robin 所有 key + 驗證答案字母,不符自動重試
             const cleaned = await _generateExplWithCheck(q, { maxOutputTokens: 4096, model: getBgRegenModel() });
@@ -15436,10 +15454,30 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
             _bgRegen.done++;
             _bgRegen.costUSD += COST_PER_Q_USD;
             consec429 = 0;
+            if (typeof _logNbAddTiming === 'function') {
+              _logNbAddTiming({
+                qid, kind: 'bg-regen',
+                qmeta: (q && q.meta) || qid,
+                startedAt: new Date().toISOString(),
+                totalMs: Math.round(((typeof _now === 'function') ? _now() : Date.now()) - _qStart),
+                ai1: window._lastGeminiCallStats || null,
+                error: null,
+              });
+            }
           } catch(err) {
             const msg = err.message || '';
             console.warn('[bg regen]', qid, msg.slice(0, 120));
             _bgRegen.failed++;
+            if (typeof _logNbAddTiming === 'function') {
+              _logNbAddTiming({
+                qid, kind: 'bg-regen',
+                qmeta: (q && q.meta) || qid,
+                startedAt: new Date().toISOString(),
+                totalMs: Math.round(((typeof _now === 'function') ? _now() : Date.now()) - _qStart),
+                ai1: window._lastGeminiCallStats || null,
+                error: msg.slice(0, 200),
+              });
+            }
             if (/429|quota|exceed|rate.*limit/i.test(msg)) {
               consec429++;
               if (consec429 >= 5) {

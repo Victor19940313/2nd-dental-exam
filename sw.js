@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-patches-same-origin';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-bgregen-timing';
 const PRECACHE = [
   './',
   './index.html',

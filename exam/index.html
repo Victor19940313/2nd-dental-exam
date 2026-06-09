@@ -9263,56 +9263,75 @@ ${(q.options || []).join('\n')}
         }
         // 允許 caller 指定 model(跑詳解時鎖死 3.5-flash);否則用使用者 AI 設定
         const model = opts.model || localStorage.getItem(uKey('gemini_model')) || localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        // v351:策略改成「兩輪」— 第一輪每把 key 試一次(全部失敗才整批等 5 秒做第二輪)
+        //       原本「per-key 等 15 秒 × 2 + 7 把 key」最壞要 3.5 分鐘,現在最壞 ~20 秒
         let lastErr = null;
         const invalidKeys = new Set();
-        const tried = []; // 記錄每把試過的 key 跟結果(給失敗訊息用)
-        const stats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0 };
-        // 最多嘗試 keys.length 次(每把 key 一次)
-        for (let attempt = 0; attempt < keys.length; attempt++) {
-          const key = _pickHealthyKey(keys);
-          if (!key) break; // 不應該發生(v191 有 fallback)
-          if (invalidKeys.has(key)) continue;
-          const kMask = key.slice(0,8) + '…' + key.slice(-4);
-          console.log('[Gemini try]', (attempt+1) + '/' + keys.length, kMask);
-          try {
-            const result = await _callGeminiWithKey(promptText, schema, key, model, opts);
-            _resetKey429(key);
-            stats.ok++;
-            tried.push(kMask + ':✅');
-            console.log('[Gemini try]', kMask, '✅ 成功');
-            return result;
-          } catch (err) {
-            lastErr = err;
-            const msg = err.message || '';
-            if (_isKeyInvalidError(msg)) {
-              invalidKeys.add(key);
-              _markKeyCooldown(key, 24 * 60 * 60 * 1000);
-              stats.invalid++;
-              tried.push(kMask + ':🔴失效');
-              console.warn('[Gemini key 失效]', kMask, msg.slice(0, 200));
-              continue;
+        let finalTried = [];
+        let finalStats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0 };
+        for (let round = 0; round < 2; round++) {
+          const tried = [];
+          const stats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0 };
+          const roundTag = round === 0 ? '' : ' (第2輪)';
+          for (let attempt = 0; attempt < keys.length; attempt++) {
+            const key = _pickHealthyKey(keys);
+            if (!key) break;
+            if (invalidKeys.has(key)) continue;
+            const kMask = key.slice(0,8) + '…' + key.slice(-4);
+            console.log('[Gemini try]' + roundTag, (attempt+1) + '/' + keys.length, kMask);
+            try {
+              const result = await _callGeminiWithKey(promptText, schema, key, model, opts);
+              _resetKey429(key);
+              stats.ok++;
+              tried.push(kMask + ':✅');
+              console.log('[Gemini try]' + roundTag, kMask, '✅ 成功');
+              return result;
+            } catch (err) {
+              lastErr = err;
+              const msg = err.message || '';
+              if (_isKeyInvalidError(msg)) {
+                invalidKeys.add(key);
+                _markKeyCooldown(key, 24 * 60 * 60 * 1000);
+                stats.invalid++;
+                tried.push(kMask + ':🔴失效');
+                console.warn('[Gemini key 失效]', kMask, msg.slice(0, 200));
+                continue;
+              }
+              if (/429|quota|exceed|rate.*limit/i.test(msg)) {
+                _mark429(key);
+                stats.q429++;
+                tried.push(kMask + ':🟠429');
+                console.warn('[Gemini key 撞額度]', kMask, msg.slice(0, 120));
+                continue;
+              }
+              if (/503|UNAVAILABLE|high demand|overloaded/i.test(msg)) {
+                stats.q503++;
+                tried.push(kMask + ':🟡503');
+                console.warn('[Gemini 503]', kMask, msg.slice(0, 120));
+                continue;
+              }
+              stats.other++;
+              tried.push(kMask + ':❌' + msg.slice(0,40));
+              throw err;
             }
-            if (/429|quota|exceed|rate.*limit/i.test(msg)) {
-              _mark429(key);
-              stats.q429++;
-              tried.push(kMask + ':🟠429');
-              console.warn('[Gemini key 撞額度]', kMask, msg.slice(0, 120));
-              continue;
-            }
-            if (/503|UNAVAILABLE|high demand|overloaded/i.test(msg)) {
-              stats.q503++;
-              tried.push(kMask + ':🟡503');
-              console.warn('[Gemini 503]', kMask, msg.slice(0, 120));
-              continue;
-            }
-            stats.other++;
-            tried.push(kMask + ':❌' + msg.slice(0,40));
-            throw err;
           }
+          finalTried = tried;
+          finalStats = stats;
+          // 第一輪整輪都失敗 + 主因是 503(忙線)→ 等 5 秒做第二輪
+          if (round === 0 && stats.q503 > 0 && invalidKeys.size < keys.length) {
+            console.warn('[Gemini] 第一輪全部 ' + stats.q503 + ' 把 503,5 秒後做第二輪…');
+            if (typeof showToast === 'function') {
+              showToast('⏳ Gemini 全面忙線,5 秒後再試一輪…');
+            }
+            await sleep(5000);
+            continue;
+          }
+          break; // 不是 503 主因 / 全部 key 失效 → 不重試
         }
-        // 整輪都失敗 — 組裝詳細訊息
-        const summary = `試了 ${keys.length} 把key:${stats.q429}撞額度/${stats.q503}忙線/${stats.invalid}失效/${stats.other}其他`;
-        console.warn('[Gemini 全部失敗]', summary, tried);
+        // 兩輪都失敗
+        const summary = `試了 ${keys.length} 把key:${finalStats.q429}撞額度/${finalStats.q503}忙線/${finalStats.invalid}失效/${finalStats.other}其他`;
+        console.warn('[Gemini 全部失敗]', summary, finalTried);
         if (invalidKeys.size === keys.length) {
           _alertKeyInvalid(lastErr && lastErr.message);
           throw new Error('Gemini API key 全部失效 (' + summary + ')');
@@ -9333,39 +9352,24 @@ ${(q.options || []).join('\n')}
           contents: [{ parts:[{ text: promptText }] }],
           generationConfig
         });
-        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-        // 503 UNAVAILABLE/忙線 自動重試:等 30 秒重試,最多 2 次
-        let lastErrTxt = '';
-        for (let attempt = 0; attempt < 3; attempt++) {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (!txt) {
-              console.error('Gemini empty response:', JSON.stringify(data).slice(0, 500));
-              throw new Error('Gemini 回了空內容（可能被安全過濾擋住，或 model 不支援）');
-            }
-            return txt;
+        // v351:拿掉本來每把 key 原地等 15 秒 × 2 的 retry(7 把 key 最壞會卡 3.5 分鐘)
+        //       503 直接丟給外層 callGemini,讓它馬上換下一把 key 試;真的全失敗外層再做第二輪
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (!txt) {
+            console.error('Gemini empty response:', JSON.stringify(data).slice(0, 500));
+            throw new Error('Gemini 回了空內容（可能被安全過濾擋住，或 model 不支援）');
           }
-          lastErrTxt = await res.text();
-          // 503 或 UNAVAILABLE → 等 30 秒重試
-          const is503 = res.status === 503 || /UNAVAILABLE|high demand|overloaded/i.test(lastErrTxt);
-          if (is503 && attempt < 2) {
-            console.warn('[Gemini 503] 第 ' + (attempt+1) + ' 次撞忙線,等 15 秒重試…');
-            if (typeof showToast === 'function') {
-              showToast('⏳ Gemini 忙線,15 秒後自動重試(' + (attempt+1) + '/2)');
-            }
-            await sleep(15000);
-            continue;
-          }
-          // 非 503 或重試完仍失敗 → 拋出
-          throw new Error('Gemini ' + res.status + ': ' + lastErrTxt.slice(0, 300));
+          return txt;
         }
-        throw new Error('Gemini 503: 重試 2 次仍忙線,' + lastErrTxt.slice(0, 200));
+        const lastErrTxt = await res.text();
+        throw new Error('Gemini ' + res.status + ': ' + lastErrTxt.slice(0, 300));
       }
 
       // 強制結構 schema：加題決策

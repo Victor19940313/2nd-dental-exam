@@ -14845,10 +14845,14 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       }
       function applyExplPatchesToQS(){
         const patches = loadExplPatches();
-        let n = 0;
+        let n = 0, skipped = 0;
         (typeof QS !== 'undefined' ? QS : []).forEach(q => {
           const v = patches[q.id];
-          if (!v) return;
+          if (v == null) return; // 真的沒這 patch → silent 不動
+          // v361 防禦:空 patch(空字串 / {expl:""} / 純空白) → 跳過,不覆寫 q.explanation
+          //          避免之前 v357 前 LS quota bug 推到 GitHub 的壞資料 蓋掉好原文 → 整塊 Gemini 詳解消失(Shirley 看到的情境)
+          const explStr = (typeof v === 'string') ? v : (v && v.expl) || '';
+          if (!explStr || !String(explStr).trim()) { skipped++; return; }
           // 新格式: {expl, model, ts} / 舊格式: 純 string
           if (typeof v === 'string') {
             q.explanation = v;
@@ -14858,6 +14862,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
           }
           n++;
         });
+        if (skipped > 0) console.warn('[applyExplPatchesToQS] 跳過 ' + skipped + ' 個空 patch(避免覆寫原文)');
         return n;
       }
       // 記錄一筆 patch (新格式: 帶 model 資訊)

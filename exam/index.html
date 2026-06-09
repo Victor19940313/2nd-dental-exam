@@ -9192,7 +9192,27 @@ ${(q.options || []).join('\n')}
               if (res.status === 503 || /UNAVAILABLE|high demand|overloaded/i.test(errTxt)) {
                 diag = '🟡 503 忙線 → Google 端高負載,等幾分鐘再試 / 換 gemini-2.5-flash-lite';
               } else if (res.status === 429 || /quota|exceed|rate.*limit/i.test(errTxt)) {
-                diag = '🟠 429 額度已用完 → 等明天重置 / 換另一把 key';
+                // v363:細分 429 類型(RPM 短時間打太多 / TPM token 太大 / RPD 真的用完一天份)
+                //      Shirley 跟 HUA 之前看「等明天重置」太悲觀 — 多數情況是 RPM/TPM 等 1 分鐘就好
+                let qtype, wait, icon;
+                if (/per[_\s]*day|RequestsPerDay|PerDay|each day|requests.*day/i.test(errTxt)) {
+                  qtype = 'RPD 每天上限'; wait = '台灣 16:00 (PT 半夜) 才重置'; icon = '🟠';
+                } else if (/token|TPM|TokensPerMin/i.test(errTxt)) {
+                  qtype = 'TPM 每分鐘 token 上限'; wait = '等 1-2 分鐘(prompt 太大,或合併重複章節讓章節數變少)'; icon = '🟡';
+                } else if (/per[_\s]*minute|PerMinute|RPM|RequestsPerMin/i.test(errTxt)) {
+                  qtype = 'RPM 每分鐘上限'; wait = '等 1 分鐘(短時間打太多次)'; icon = '🟡';
+                } else if (/per[_\s]*second|PerSecond/i.test(errTxt)) {
+                  qtype = 'RPS 每秒上限'; wait = '等幾秒'; icon = '🟡';
+                } else {
+                  qtype = '429 (其他)'; wait = '等 1-2 分鐘再試'; icon = '🟠';
+                }
+                // 抽 Google 回的 message 顯示細節(讓使用者知道實際撞了什麼)
+                let detail = '';
+                try {
+                  const j = JSON.parse(errTxt);
+                  detail = (j && j.error && j.error.message) ? j.error.message.slice(0, 200) : '';
+                } catch(e) { detail = errTxt.slice(0, 200); }
+                diag = icon + ' 429 — ' + qtype + ' → ' + wait + (detail ? '<div style="font-size:.7rem;color:#9ca3af;margin-top:.2rem;font-family:Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-all">原文: ' + detail.replace(/</g,'&lt;') + '</div>' : '');
               } else if (_isKeyInvalidError(errTxt) || res.status === 400 || res.status === 403) {
                 diag = '🔴 key 失效/無效 → 請去 AI Studio 重新生一把';
               } else if (res.status === 404) {
@@ -14874,7 +14894,19 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       // 啟動時從 GitHub fetch patches.json (走 jsdelivr CDN,免 token)
       async function fetchPatchesFromGithub(){
         try {
-          const repo = (typeof getGithubRepo === 'function') ? getGithubRepo() : '';
+          let repo = (typeof getGithubRepo === 'function') ? getGithubRepo() : '';
+          // v363:沒設 repo 就從 location 自動猜(victor19940313.github.io/2nd-dental-exam → victor19940313/2nd-dental-exam)
+          //      Shirley 沒設 GitHub repo → 之前直接 return 0 完全不拉 patches → 永遠看不到 HUA 推的詳解(真兇)
+          if (!repo) {
+            try {
+              const h = (typeof location !== 'undefined' ? (location.hostname || '') : '').match(/^([^.]+)\.github\.io$/);
+              const p = (typeof location !== 'undefined' ? (location.pathname || '') : '').match(/^\/([^\/]+)/);
+              if (h && p) {
+                repo = h[1] + '/' + p[1];
+                console.log('[patches] 沒設 GitHub repo,從 location 自動推:' + repo);
+              }
+            } catch(e) {}
+          }
           if (!repo) return 0;
           const url = `https://cdn.jsdelivr.net/gh/${repo}@main/exam/expl-patches.json?_=${Date.now()}`;
           const r = await fetch(url);

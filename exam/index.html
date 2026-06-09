@@ -9276,11 +9276,12 @@ ${(q.options || []).join('\n')}
         // v351:策略改成「兩輪」— 第一輪每把 key 試一次(全部失敗才整批等 5 秒做第二輪)
         //       原本「per-key 等 15 秒 × 2 + 7 把 key」最壞要 3.5 分鐘,現在最壞 ~20 秒
         // v353:追蹤 cumulative stats + 在 success/failure 時暴露到 window._lastGeminiCallStats(計時器用)
+        // v354:把 timeout / Failed to fetch 也當「可重試」(換下一把 key),不再直接 throw 放棄
         const _gCallStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
         let lastErr = null;
         const invalidKeys = new Set();
         let finalTried = [];
-        const cumStats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0, keySwitches: 0 };
+        const cumStats = { ok: 0, q429: 0, q503: 0, invalid: 0, other: 0, keySwitches: 0, timeout: 0 };
         let finalRound = 1;
         let finalKeyMask = '';
         for (let round = 0; round < 2; round++) {
@@ -9288,6 +9289,7 @@ ${(q.options || []).join('\n')}
           const tried = [];
           const roundTag = round === 0 ? '' : ' (第2輪)';
           let roundQ503 = 0;
+          let roundTimeout = 0;
           for (let attempt = 0; attempt < keys.length; attempt++) {
             const key = _pickHealthyKey(keys);
             if (!key) break;
@@ -9309,6 +9311,7 @@ ${(q.options || []).join('\n')}
                 succeeded: true,
                 q503Count: cumStats.q503,
                 q429Count: cumStats.q429,
+                timeoutCount: cumStats.timeout,
                 keySwitches: cumStats.keySwitches,
               };
               return result;
@@ -9340,6 +9343,15 @@ ${(q.options || []).join('\n')}
                 console.warn('[Gemini 503]', kMask, msg.slice(0, 120));
                 continue;
               }
+              // v354:timeout / Failed to fetch / network error → 視為可重試,換下一把 key
+              if (/timeout|abort|Failed to fetch|NetworkError|network error|TypeError/i.test(msg)) {
+                cumStats.timeout++;
+                cumStats.keySwitches++;
+                roundTimeout++;
+                tried.push(kMask + ':⏱timeout');
+                console.warn('[Gemini timeout/network]', kMask, msg.slice(0, 120));
+                continue;
+              }
               cumStats.other++;
               tried.push(kMask + ':❌' + msg.slice(0,40));
               window._lastGeminiCallStats = {
@@ -9350,6 +9362,7 @@ ${(q.options || []).join('\n')}
                 succeeded: false,
                 q503Count: cumStats.q503,
                 q429Count: cumStats.q429,
+                timeoutCount: cumStats.timeout,
                 keySwitches: cumStats.keySwitches,
                 error: msg.slice(0, 120),
               };
@@ -9357,19 +9370,20 @@ ${(q.options || []).join('\n')}
             }
           }
           finalTried = tried;
-          // 第一輪整輪都失敗 + 主因是 503(忙線)→ 等 5 秒做第二輪
-          if (round === 0 && roundQ503 > 0 && invalidKeys.size < keys.length) {
-            console.warn('[Gemini] 第一輪 ' + roundQ503 + ' 把撞 503,5 秒後做第二輪…');
+          // 第一輪整輪都失敗 + 是 503(Gemini 忙線) 或 timeout(網路卡)→ 等 5 秒做第二輪
+          if (round === 0 && (roundQ503 > 0 || roundTimeout > 0) && invalidKeys.size < keys.length) {
+            const reason = roundQ503 > 0 ? (roundQ503 + ' 把撞 503') : (roundTimeout + ' 把 timeout');
+            console.warn('[Gemini] 第一輪 ' + reason + ',5 秒後做第二輪…');
             if (typeof showToast === 'function') {
-              showToast('⏳ Gemini 全面忙線,5 秒後再試一輪…');
+              showToast('⏳ ' + (roundQ503 > 0 ? 'Gemini 全面忙線' : '網路不穩') + ',5 秒後再試一輪…');
             }
             await sleep(5000);
             continue;
           }
-          break; // 不是 503 主因 / 全部 key 失效 → 不重試
+          break; // 全部 key 失效 / 其他錯誤 → 不重試
         }
         // 兩輪都失敗
-        const summary = `試了 ${keys.length} 把key:${cumStats.q429}撞額度/${cumStats.q503}忙線/${cumStats.invalid}失效/${cumStats.other}其他`;
+        const summary = `試了 ${keys.length} 把key:${cumStats.q429}撞額度/${cumStats.q503}忙線/${cumStats.timeout}timeout/${cumStats.invalid}失效/${cumStats.other}其他`;
         console.warn('[Gemini 全部失敗]', summary, finalTried);
         window._lastGeminiCallStats = {
           ms: Math.round(((typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now()) - _gCallStart),
@@ -9379,6 +9393,7 @@ ${(q.options || []).join('\n')}
           succeeded: false,
           q503Count: cumStats.q503,
           q429Count: cumStats.q429,
+          timeoutCount: cumStats.timeout,
           keySwitches: cumStats.keySwitches,
           error: summary,
         };
@@ -9404,11 +9419,26 @@ ${(q.options || []).join('\n')}
         });
         // v351:拿掉本來每把 key 原地等 15 秒 × 2 的 retry(7 把 key 最壞會卡 3.5 分鐘)
         //       503 直接丟給外層 callGemini,讓它馬上換下一把 key 試;真的全失敗外層再做第二輪
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body
-        });
+        // v354:加 90 秒 fetch timeout — HUA 計時資料看出單一請求最壞會卡 16 分鐘(server 連線沒切就傻等)
+        const TIMEOUT_MS = (opts && opts.timeoutMs) || 90000;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        let res;
+        try {
+          res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body,
+            signal: controller.signal
+          });
+        } catch(err) {
+          clearTimeout(timeoutId);
+          if (err.name === 'AbortError') {
+            throw new Error('Gemini timeout: ' + (TIMEOUT_MS/1000) + ' 秒沒回應 (網路慢 / Gemini 卡住)');
+          }
+          throw err;
+        }
+        clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -10028,7 +10058,7 @@ ${dec.reasoning || ''}
       function _nbTimingSec(ms){ return (ms == null) ? '—' : (ms/1000).toFixed(2) + 's'; }
       function _nbTimingFmtAI(s){
         if (!s) return '—';
-        return _nbTimingSec(s.ms) + ' [key ' + (s.keyMask||'?') + ', 第' + (s.round||1) + '輪, ' + (s.succeeded?'HTTP 200':'失敗') + ', 503×' + (s.q503Count||0) + ', 切key×' + (s.keySwitches||0) + (s.error?(', err='+String(s.error).slice(0,60)):'') + ']';
+        return _nbTimingSec(s.ms) + ' [key ' + (s.keyMask||'?') + ', 第' + (s.round||1) + '輪, ' + (s.succeeded?'HTTP 200':'失敗') + ', 503×' + (s.q503Count||0) + ', timeout×' + (s.timeoutCount||0) + ', 切key×' + (s.keySwitches||0) + (s.error?(', err='+String(s.error).slice(0,60)):'') + ']';
       }
       function _logNbAddTiming(t){
         window._nbAddTimings = window._nbAddTimings || [];

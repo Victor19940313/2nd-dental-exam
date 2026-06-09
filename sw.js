@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-overlay-and-examhist-sync';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-nb-add-perf-diag';
 const PRECACHE = [
   './',
   './index.html',

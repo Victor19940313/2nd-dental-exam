@@ -4107,6 +4107,7 @@
           <button class="nb-tb-btn" onclick="openMergeChaptersModal()" title="讓 AI 找出講同件事卻被切太細的章節 → 合併成一章（圖片絕對保留）" style="background:#dcfce7;border-color:#22c55e;color:#166534">🧹 合併重複章節</button>
           <button class="nb-tb-btn" onclick="openNotebookBackupModal()" title="合併/AI 整理之前的筆記快照,出事可一鍵還原" style="background:#fee2e2;border-color:#ef4444;color:#991b1b">🛟 還原備份</button>
           <button class="nb-tb-btn" onclick="fixTaiwanTerms()" title="把所有章節裡的大陸用語(乳磨牙、第一磨牙、種植牙等)改成台灣用語(乳臼齒、第一大臼齒、植牙)" style="background:#fef9c3;border-color:#eab308;color:#854d0e">🇹🇼 修正用語</button>
+          <button class="nb-tb-btn" onclick="openNbPerfModal()" title="看最近 10 次加入筆記每一步的時間,找出為什麼變慢" style="background:#dbeafe;border-color:#3b82f6;color:#1e40af">⏱ 效能</button>
           <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">⚙️ 設定</button>
           <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
@@ -9960,14 +9961,95 @@ ${dec.reasoning || ''}
           });
       }
 
+      // v345:效能診斷 — 保留最近 10 次加入筆記的時間細節,可從筆記本工具列「⏱ 效能」查
+      const NB_TIMING_KEY = 'nb_add_timings_v1';
+      function _recordNbAddTiming(timing){
+        try {
+          const arr = JSON.parse(localStorage.getItem(NB_TIMING_KEY) || '[]');
+          arr.unshift(timing);
+          while (arr.length > 10) arr.pop();
+          localStorage.setItem(NB_TIMING_KEY, JSON.stringify(arr));
+          // 也印 console 方便即時看
+          console.log('[加入筆記計時]', timing);
+        } catch(e) { console.warn('[record timing]', e); }
+      }
+      function openNbPerfModal(){
+        const arr = (function(){ try { return JSON.parse(localStorage.getItem(NB_TIMING_KEY) || '[]'); } catch(e) { return []; } })();
+        let modal = document.getElementById('nb-perf-modal');
+        if (!modal) {
+          modal = document.createElement('div');
+          modal.id = 'nb-perf-modal';
+          modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99998;display:flex;align-items:center;justify-content:center;padding:1rem';
+          modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+          document.body.appendChild(modal);
+        }
+        const fmtMs = (ms) => ms == null ? '-' : (ms >= 1000 ? (ms/1000).toFixed(1) + 's' : ms + 'ms');
+        let rowsHtml = '';
+        if (!arr.length) {
+          rowsHtml = '<div style="text-align:center;color:#9ca3af;padding:2rem">還沒有加入筆記的計時資料 — 加幾題再來看</div>';
+        } else {
+          // 算平均
+          const avg = (key) => {
+            const vals = arr.map(t => t[key]).filter(v => typeof v === 'number');
+            if (!vals.length) return null;
+            return Math.round(vals.reduce((a,b)=>a+b,0) / vals.length);
+          };
+          rowsHtml = `<div style="background:#f9fafb;border-radius:8px;padding:.7rem 1rem;margin-bottom:.8rem;font-size:.85rem;line-height:1.7">
+            <strong style="color:#374151">最近 ${arr.length} 次平均:</strong><br>
+            • <strong>總時間</strong>:${fmtMs(avg('total'))} <span style="color:#6b7280">(整題加入流程)</span><br>
+            • AI 第 1 次呼叫(判斷 append/new):${fmtMs(avg('aiCall1'))}<br>
+            • AI 第 2 次呼叫(長章節合併,有時跳過):${fmtMs(avg('aiCall2'))}<br>
+            • 建 prompt:${fmtMs(avg('buildPrompt'))} · 套用 + 存:${fmtMs(avg('apply'))}<br>
+            • 平均 prompt 長度:<strong>${avg('promptLen')||'?'}</strong> 字元 · 章節總數:<strong>${avg('chapterCount')||'?'}</strong>
+          </div>`;
+          rowsHtml += arr.map(t => {
+            const slow = (t.total||0) >= 15000;
+            return `<details style="background:white;border:1px solid #e5e7eb;border-radius:8px;padding:.5rem .8rem;margin-bottom:.4rem">
+              <summary style="cursor:pointer;font-weight:700;color:${slow?'#dc2626':'#374151'};font-size:.88rem">${slow ? '🐌 ' : ''}${t.qmeta || t.qid} — 共 <strong>${fmtMs(t.total)}</strong> ${t.chapterCount?`(章節 ${t.chapterCount})`:''} <span style="color:#9ca3af;font-weight:400;font-size:.78rem">${t.startedAt||''}</span></summary>
+              <div style="font-size:.78rem;color:#6b7280;line-height:1.7;margin-top:.4rem;padding-left:.6rem;border-left:2px solid #e5e7eb">
+                載入 cache: ${fmtMs(t.load)} <br>
+                建 prompt: ${fmtMs(t.buildPrompt)} (${t.promptLen} 字元)<br>
+                AI 呼叫 #1: <strong style="color:${(t.aiCall1||0)-(t.buildPrompt||0)>=10000?'#dc2626':'#374151'}">${fmtMs((t.aiCall1||0)-(t.buildPrompt||0))}</strong><br>
+                解析回應 #1: ${fmtMs((t.parse1||0)-(t.aiCall1||0))}<br>
+                ${t.aiCall2 ? '建 merge prompt: ' + fmtMs((t.buildMerge||0)-(t.parse1||0)) + ' (' + (t.mergePromptLen||'?') + ' 字元)<br>AI 呼叫 #2: <strong style="color:' + ((t.aiCall2||0)-(t.buildMerge||0)>=15000?'#dc2626':'#374151') + '">' + fmtMs((t.aiCall2||0)-(t.buildMerge||0)) + '</strong><br>' : '<em style="color:#9ca3af">略過合併(短章節)</em><br>'}
+                套用 + 存: ${fmtMs((t.apply||0)-(t.aiCall2||t.parse1||0))}
+              </div>
+            </details>`;
+          }).join('');
+        }
+        modal.innerHTML = `<div style="background:white;border-radius:14px;padding:1.3rem;max-width:680px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+            <h2 style="margin:0;font-size:1.1rem">⏱ 加入筆記效能診斷</h2>
+            <button onclick="document.getElementById('nb-perf-modal').remove()" style="background:#f3f4f6;border:1px solid #e5e7eb;padding:.35rem .85rem;border-radius:7px;cursor:pointer;font-weight:700">關閉</button>
+          </div>
+          ${rowsHtml}
+          <div style="font-size:.72rem;color:#9ca3af;margin-top:.8rem;line-height:1.6">
+            🐌 = 總時間 ≥ 15 秒。AI 呼叫慢通常代表 prompt 太長(章節太多)、AI 模型本身慢、或網路慢。<br>
+            減少時間方法:章節數壓低(用「合併重複章節」)、改用較快的 Gemini 模型(設定裡選 flash)、清掉不必要的 outline。
+          </div>
+        </div>`;
+      }
+      window.openNbPerfModal = openNbPerfModal;
+
       async function addQToNotebook(q, opts){
         opts = opts || {};
+        // v345:效能診斷 — 計時每階段,寫到 console + 暫存最近 10 次
+        const _t0 = performance.now();
+        const _timing = { qid: q.id, qmeta: q.meta, startedAt: new Date().toLocaleTimeString('zh-TW') };
+        const _stamp = (label) => { _timing[label] = Math.round(performance.now() - _t0); };
         try {
           loadNotebook();
+          _stamp('load');
           const prompt = buildAIPrompt(q, notebook.chapters);
+          _timing.promptLen = prompt.length;
+          _timing.chapterCount = (notebook.chapters||[]).length;
+          _stamp('buildPrompt');
           // 帶 schema 強制 Gemini 回符合結構的 JSON
           const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
+          _timing.respLen = (raw||'').length;
+          _stamp('aiCall1');
           const dec = extractJSON(raw);
+          _stamp('parse1');
           // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
           // 智慧判斷：
           //   - 短章節 (<800 字)：第 1 階段已看到接近全文摘要，跳過第 2 階段省 API 額度
@@ -9981,8 +10063,12 @@ ${dec.reasoning || ''}
               // 長章節:跑第 2 階段合併,token 上限拉高避免長章節被截斷
               try {
                 const mergePrompt = buildMergePrompt(q, oldCh, dec);
+                _timing.mergePromptLen = mergePrompt.length;
+                _stamp('buildMerge');
                 const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA, { maxOutputTokens: 32768 });
+                _stamp('aiCall2');
                 const mergeDec = extractJSON(mergeRaw);
+                _stamp('parse2');
                 if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= oldLen * 0.7) {
                   dec.content = _preserveImagesIn(oldContent, mergeDec.content);
                 } else {
@@ -10008,8 +10094,11 @@ ${dec.reasoning || ''}
             }
           }
           applyAIDecision(dec, q);
+          _stamp('apply');
           // 整理成功 → 從待整理佇列移除（如果在裡面）
           removeFromPendingQueue(q.id);
+          _stamp('total');
+          _recordNbAddTiming(_timing);
           return true;
         } catch(err) {
           if (err.message === 'no_key') return false;

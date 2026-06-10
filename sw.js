@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-bgregen-timing';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-clear-pending-marker-btn';
 const PRECACHE = [
   './',
   './index.html',

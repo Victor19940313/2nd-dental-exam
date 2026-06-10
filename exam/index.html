@@ -10530,6 +10530,38 @@ ${dec.reasoning || ''}
         openPendingModal();
       }
 
+      // v366:清掉「## 🆕 待整合:xxx」這種 fallback marker(merge 失敗時留下的)
+      //       不跑 AI、不會截斷,純文字 regex 清除 marker 標題列跟前面的 --- 分隔線
+      //       長章節(> 5000 字) AI 整理會截斷,這個功能讓 HUA 能把 marker 清掉而不依賴 AI
+      function _chHasPendingMarker(ch){
+        return !!(ch && ch.content && /##\s*(?:🆕\s*)?待整合/u.test(ch.content));
+      }
+      function clearPendingMarkersInChapter(chId){
+        const ch = notebook.chapters.find(c => c.id === chId);
+        if (!ch) { showToast('找不到章節'); return; }
+        const before = (ch.content || '').length;
+        let out = ch.content || '';
+        out = out.replace(/\n+---\s*\n+##\s*(?:🆕\s*)?待整合[^\n]*\n+/gu, '\n\n');
+        out = out.replace(/^##\s*(?:🆕\s*)?待整合[^\n]*\n+/gmu, '');
+        const removed = before - out.length;
+        if (removed === 0) { showToast('這章沒有「待整合」標記'); return; }
+        // 存編輯前 snapshot 給 ↶ 復原用
+        try {
+          notebook.history = notebook.history || [];
+          notebook.history.unshift({
+            ts: Date.now(), chapterId: chId, qid: '(無)', qmeta: '清「待整合」標記',
+            action: 'clear-pending', note: '清掉 ' + removed + ' 字 marker',
+            snapshot: { name: ch.name, content: ch.content, qids: [...(ch.qids||[])], concepts: [...(ch.concepts||[])] }
+          });
+          trimHistory && trimHistory();
+        } catch(e){}
+        ch.content = out;
+        ch.updatedAt = Date.now();
+        saveNotebook();
+        renderNotebookIfVisible ? renderNotebookIfVisible() : (typeof renderNotebook === 'function' && renderNotebook());
+        showToast('✅ 清掉 ' + removed + ' 字 marker (內容全保留)');
+      }
+      window.clearPendingMarkersInChapter = clearPendingMarkersInChapter;
       function applyAIDecision(dec, q){
         const histEntry = {
           ts: Date.now(),
@@ -12423,6 +12455,7 @@ ${JSON.stringify(candidates, null, 2)}
                      <button onclick="aiChatModifyChapter('${curCh.id}')" title="用自然語言告訴 AI 改什麼">💬</button>
                      <button onclick="aiAutoPlaceImages('${curCh.id}')" title="從 Wilson 圖庫自動配圖到對應段落">🖼 AI 配圖</button>
                      <button onclick="reorganizeChapter('${curCh.id}')" title="叫 AI 重新整理這章">🔄</button>
+                     ${_chHasPendingMarker(curCh) ? `<button onclick="clearPendingMarkersInChapter('${curCh.id}')" title="清掉章節裡所有「🆕 待整合」標題(內容保留,不跑 AI 不會截斷)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🧹 清待整合</button>` : ''}
                      <button onclick="deleteChapter('${curCh.id}')" title="刪除整章">🗑</button>`}
               </div>
             </div>

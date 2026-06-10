@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-fix-escaped-newline-btn';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-fix-orphan-rows';
 const PRECACHE = [
   './',
   './index.html',

@@ -4112,7 +4112,7 @@
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目（牙三/牙四/牙五/牙六）有沒有分錯，一鍵修正">🔧 修正科目</button>
-          <button class="nb-tb-btn" onclick="fixEscapedNewlinesInAllChapters()" title="把所有章節裡字面上的「\n」(沒解析的亂碼) 一次全部換成真換行" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🧹 修\n亂碼</button>
+          <button class="nb-tb-btn" onclick="fixEscapedNewlinesInAllChapters()" title="掃所有章節:(1) 字面「\n」→ 真換行 (2) 表格孤兒列(空行隔開的「| ... |」)→ 接回主表" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🧹 修亂碼</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
         </div>
@@ -10563,39 +10563,75 @@ ${dec.reasoning || ''}
         showToast('✅ 清掉 ' + removed + ' 字 marker (內容全保留)');
       }
       window.clearPendingMarkersInChapter = clearPendingMarkersInChapter;
-      // v367:把所有章節裡字面上的「\n」(沒被解析的亂碼)換成真換行
-      //       用 split+join 不用 regex,避免 JS regex escape 混亂
+      // v367+v368:章節亂碼修復(兩種一次處理):
+      //   (1) 字面「\n」(沒解析的亂碼)→ 真換行(用 split+join 避開 JS regex escape 陷阱)
+      //   (2) 孤兒 markdown 表格列(`| A | B |` 在主表後面隔一個空行)→ 把空行吃掉,讓孤兒接回主表
+      //       (line-by-line 邏輯,看下一列是不是 separator 來分辨「孤兒 vs 新表」,不會誤合兩個獨立表格)
+      function _fixEscapedNewlines(content) {
+        if (!content || typeof content !== 'string') return { content, count: 0 };
+        const BS = String.fromCharCode(92);
+        const target = BS + 'n';
+        if (content.indexOf(target) === -1) return { content, count: 0 };
+        const parts = content.split(target);
+        return { content: parts.join('\n'), count: parts.length - 1 };
+      }
+      function _mergeOrphanTableRows(content) {
+        if (!content || typeof content !== 'string') return { content, count: 0 };
+        const lines = content.split('\n');
+        const out = [];
+        const isPipe = (l) => /^\|[^\n]+\|\s*$/.test(l || '');
+        const isSep = (l) => /^\|[\s\-—–－:|]+\|\s*$/.test(l || '');
+        let count = 0, i = 0;
+        while (i < lines.length) {
+          out.push(lines[i]);
+          if (isPipe(lines[i])) {
+            let j = i + 1;
+            while (j < lines.length && lines[j].trim() === '') j++;
+            if (j > i + 1 && j < lines.length && isPipe(lines[j]) && !isSep(lines[j + 1])) {
+              i = j; count++; continue;
+            }
+          }
+          i++;
+        }
+        return { content: out.join('\n'), count };
+      }
       async function fixEscapedNewlinesInAllChapters(){
         if (!notebook || !notebook.chapters || !notebook.chapters.length) {
           showToast('還沒有章節'); return;
         }
-        const BS = String.fromCharCode(92); // backslash
-        const target = BS + 'n'; // 字面 \n (2 個字元:backslash + n)
-        let totalCount = 0;
+        // dry run 統計
+        let nlCount = 0, orphanCount = 0, affected = new Set();
         notebook.chapters.forEach(ch => {
-          if (ch.content && ch.content.indexOf(target) !== -1) {
-            totalCount += (ch.content.split(target).length - 1);
-          }
+          if (!ch.content) return;
+          const r1 = _fixEscapedNewlines(ch.content);
+          const r2 = _mergeOrphanTableRows(r1.content);
+          if (r1.count) { nlCount += r1.count; affected.add(ch.id); }
+          if (r2.count) { orphanCount += r2.count; affected.add(ch.id); }
         });
-        if (totalCount === 0) {
-          showToast('✓ 所有章節都沒有「\\n」亂碼'); return;
+        if (nlCount === 0 && orphanCount === 0) {
+          showToast('✓ 沒掃到亂碼'); return;
         }
-        if (!confirm('掃到 ' + totalCount + ' 處「\\n」亂碼\n要全部換成真換行嗎?\n\n會自動備份,可從 🛟 還原備份 / ↶ 復原回去')) return;
-        try { if (typeof backupNotebookToCloud === 'function') await backupNotebookToCloud('修\\n亂碼前'); } catch(e){}
+        const msg = '掃到亂碼:\n' +
+          '  · 字面「\\n」: ' + nlCount + ' 處\n' +
+          '  · 表格孤兒列(空行隔開的): ' + orphanCount + ' 處\n' +
+          '影響 ' + affected.size + ' 章\n\n要全部修嗎?(會自動備份,可 🛟 還原 / ↶ 復原)';
+        if (!confirm(msg)) return;
+        try { if (typeof backupNotebookToCloud === 'function') await backupNotebookToCloud('修亂碼前'); } catch(e){}
         let chsFixed = 0;
         const samples = [];
         notebook.chapters.forEach(ch => {
-          if (!ch.content || ch.content.indexOf(target) === -1) return;
-          const parts = ch.content.split(target);
-          if (parts.length <= 1) return;
-          ch.content = parts.join('\n');
+          if (!ch.content) return;
+          const r1 = _fixEscapedNewlines(ch.content);
+          const r2 = _mergeOrphanTableRows(r1.content);
+          if (r1.count === 0 && r2.count === 0) return;
+          ch.content = r2.content;
           ch.updatedAt = Date.now();
           chsFixed++;
           if (samples.length < 5) samples.push(ch.name);
         });
         saveNotebook();
         if (typeof renderNotebook === 'function') renderNotebook();
-        alert('✅ 修了 ' + totalCount + ' 處,影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
+        alert('✅ 修了 \\n 亂碼 ' + nlCount + ' 處 + 孤兒表格列 ' + orphanCount + ' 處\n影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
       }
       window.fixEscapedNewlinesInAllChapters = fixEscapedNewlinesInAllChapters;
       function applyAIDecision(dec, q){

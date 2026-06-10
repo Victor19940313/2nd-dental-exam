@@ -43,11 +43,54 @@
   }
 
   // ══════════════════════════════════════════
+  // v371: stale-device 防呆 — 如果本地章節數遠少於歷史見過的最多,拒絕 push
+  // 起因:HUA 某台 device IDB 只剩 108 章卻 _ts 比 remote 大,startup 時 push 蓋掉 remote 200 章
+  function _countNotebookChapters(nbStr) {
+    if (!nbStr || typeof nbStr !== 'string') return -1;
+    try {
+      var obj = JSON.parse(nbStr);
+      if (typeof obj === 'string') obj = JSON.parse(obj); // 處理雙層 stringify
+      if (obj && Array.isArray(obj.chapters)) return obj.chapters.length;
+      return -1;
+    } catch (e) { return -1; }
+  }
+  function _recordNbMax(nbStr) {
+    if (!_userId) return;
+    var n = _countNotebookChapters(nbStr);
+    if (n < 0) return;
+    try {
+      var key = _userId + '__nb_max_chapters';
+      var seen = parseInt(localStorage.getItem(key) || '0', 10);
+      if (n > seen) localStorage.setItem(key, String(n));
+    } catch(e){}
+  }
+  function _safetyAllowNotebookPush(payloadNotebook) {
+    if (!_userId) return true;
+    var localCount = _countNotebookChapters(payloadNotebook);
+    if (localCount < 0) return true; // 解不開,放行
+    var seen = 0;
+    try { seen = parseInt(localStorage.getItem(_userId + '__nb_max_chapters') || '0', 10); } catch(e){}
+    if (seen <= 0) return true;
+    // 章節數明顯掉超過 30% → 視為 stale device 誤判,擋住 push
+    // (HUA 案例:108/200=54% 還是擋掉; 真的要刪一堆章節請用「強制推送」forcePushToCloud 略過此檢查)
+    if (localCount < seen * 0.7) {
+      console.error('[Sync] 🛡 BLOCKED push: local notebook only has ' + localCount +
+        ' chapters but historical max was ' + seen + ' — refusing to overwrite remote (stale-device guard)');
+      try {
+        // 留一個 marker,方便 debug
+        localStorage.setItem(_userId + '__nb_push_blocked_at', String(Date.now()));
+        localStorage.setItem(_userId + '__nb_push_blocked_info', 'local=' + localCount + ' max=' + seen);
+      } catch(e){}
+      return false;
+    }
+    return true;
+  }
+  // ══════════════════════════════════════════
 
   /** Push to BOTH new path and old data/ path for backward compat */
   /** v283: notebook 改從 IDB 讀(localStorage 撞 quota 後 stale)
    *  v285: examHistory 也改從 IDB 讀(同樣理由,避免跨裝置同步遺失試卷紀錄) */
-  function pushToFirebase() {
+  function pushToFirebase(force) {
     if (!_db || !_userId) return Promise.resolve();
     var payload = { _ts: Date.now() };
     var oldPayload = {};
@@ -117,6 +160,12 @@
     })();
     _syncing = true;
     return Promise.all([notebookPromise, examHistPromise, wrongbookPromise]).then(function(){
+      // v371: stale-device guard — 章節數暴跌就拒絕 push (force=true 略過,給「強制推送」用)
+      if (!force && payload.notebook !== undefined && !_safetyAllowNotebookPush(payload.notebook)) {
+        // 從 payload 移除 notebook,但其他 SYNC_KEYS 還是讓它 sync (避免完全卡死)
+        delete payload.notebook;
+        delete oldPayload.notebook;
+      }
       return Promise.all([
         userRef().update(payload),
         userDataRef().update(oldPayload)
@@ -160,6 +209,7 @@
             if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
               window._notebookIdbBridge.applyRemoteNotebook(remote[sk]);
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
+              _recordNbMax(remote[sk]); // v371 stale-device guard
             } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
               window._examHistoryIdbBridge.applyRemoteExamHistory(remote[sk]);
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
@@ -210,6 +260,7 @@
           if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
             window._notebookIdbBridge.applyRemoteNotebook(source[sk]);
             try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
+            _recordNbMax(source[sk]); // v371 stale-device guard
           } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
             window._examHistoryIdbBridge.applyRemoteExamHistory(source[sk]);
             try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
@@ -251,6 +302,7 @@
             if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
               window._notebookIdbBridge.applyRemoteNotebook(val[sk]);
               try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
+              _recordNbMax(val[sk]); // v371 stale-device guard
             } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
               window._examHistoryIdbBridge.applyRemoteExamHistory(val[sk]);
               try { localStorage.setItem(_userId + "_" + sk, val[sk]); } catch(e) {}
@@ -308,6 +360,7 @@
       SYNC_KEYS.forEach(function(sk) {
         if (remote[sk] !== undefined) {
           localStorage.setItem(_userId + "_" + sk, remote[sk]);
+          if (sk === 'notebook') _recordNbMax(remote[sk]); // v371 stale-device guard
           applied++;
         }
       });
@@ -316,12 +369,12 @@
     }).finally(function() { _syncing = false; });
   }
 
-  /** Force push: overwrite cloud with local data */
+  /** Force push: overwrite cloud with local data (略過 stale-device safety net) */
   function forcePushToCloud() {
     if (!_db || !_userId) return Promise.reject(new Error("尚未連線"));
     var now = Date.now();
     localStorage.setItem(_userId + "__ts", String(now));
-    return pushToFirebase().then(function() { return now; });
+    return pushToFirebase(true).then(function() { return now; });
   }
 
   /** Read remote without applying — for diff display */

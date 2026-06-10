@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-clear-pending-marker-btn';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-fix-escaped-newline-btn';
 const PRECACHE = [
   './',
   './index.html',

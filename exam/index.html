@@ -4112,6 +4112,7 @@
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="openBgRegenModal()" title="背景跑 Gemini 詳解(用付費 key + flash-lite,結果同步到 GitHub 所有使用者看得到)" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🤖 跑詳解</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目（牙三/牙四/牙五/牙六）有沒有分錯，一鍵修正">🔧 修正科目</button>
+          <button class="nb-tb-btn" onclick="fixEscapedNewlinesInAllChapters()" title="把所有章節裡字面上的「\n」(沒解析的亂碼) 一次全部換成真換行" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🧹 修\n亂碼</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
         </div>
@@ -10562,6 +10563,41 @@ ${dec.reasoning || ''}
         showToast('✅ 清掉 ' + removed + ' 字 marker (內容全保留)');
       }
       window.clearPendingMarkersInChapter = clearPendingMarkersInChapter;
+      // v367:把所有章節裡字面上的「\n」(沒被解析的亂碼)換成真換行
+      //       用 split+join 不用 regex,避免 JS regex escape 混亂
+      async function fixEscapedNewlinesInAllChapters(){
+        if (!notebook || !notebook.chapters || !notebook.chapters.length) {
+          showToast('還沒有章節'); return;
+        }
+        const BS = String.fromCharCode(92); // backslash
+        const target = BS + 'n'; // 字面 \n (2 個字元:backslash + n)
+        let totalCount = 0;
+        notebook.chapters.forEach(ch => {
+          if (ch.content && ch.content.indexOf(target) !== -1) {
+            totalCount += (ch.content.split(target).length - 1);
+          }
+        });
+        if (totalCount === 0) {
+          showToast('✓ 所有章節都沒有「\\n」亂碼'); return;
+        }
+        if (!confirm('掃到 ' + totalCount + ' 處「\\n」亂碼\n要全部換成真換行嗎?\n\n會自動備份,可從 🛟 還原備份 / ↶ 復原回去')) return;
+        try { if (typeof backupNotebookToCloud === 'function') await backupNotebookToCloud('修\\n亂碼前'); } catch(e){}
+        let chsFixed = 0;
+        const samples = [];
+        notebook.chapters.forEach(ch => {
+          if (!ch.content || ch.content.indexOf(target) === -1) return;
+          const parts = ch.content.split(target);
+          if (parts.length <= 1) return;
+          ch.content = parts.join('\n');
+          ch.updatedAt = Date.now();
+          chsFixed++;
+          if (samples.length < 5) samples.push(ch.name);
+        });
+        saveNotebook();
+        if (typeof renderNotebook === 'function') renderNotebook();
+        alert('✅ 修了 ' + totalCount + ' 處,影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
+      }
+      window.fixEscapedNewlinesInAllChapters = fixEscapedNewlinesInAllChapters;
       function applyAIDecision(dec, q){
         const histEntry = {
           ts: Date.now(),

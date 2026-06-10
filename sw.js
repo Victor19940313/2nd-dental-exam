@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-html-table-to-markdown';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-remove-bg-regen-button';
 const PRECACHE = [
   './',
   './index.html',

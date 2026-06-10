@@ -10563,9 +10563,11 @@ ${dec.reasoning || ''}
         showToast('✅ 清掉 ' + removed + ' 字 marker (內容全保留)');
       }
       window.clearPendingMarkersInChapter = clearPendingMarkersInChapter;
-      // v367+v368:章節亂碼修復(兩種一次處理):
+      // v367+v368+v369:章節亂碼修復(三種一次處理):
       //   (1) 字面「\n」(沒解析的亂碼)→ 真換行(用 split+join 避開 JS regex escape 陷阱)
-      //   (2) 孤兒 markdown 表格列(`| A | B |` 在主表後面隔一個空行)→ 把空行吃掉,讓孤兒接回主表
+      //   (2) HTML <table> 轉 markdown 表格(處理「HTML 主表 + markdown 孤兒列」混用場景)
+      //       — HUA「混合齒列空間預測法對照」就是 HTML <table> 接 markdown `| Tanaka... |` orphan
+      //   (3) 孤兒 markdown 表格列(`| A | B |` 在主表後面隔一個空行)→ 把空行吃掉,讓孤兒接回主表
       //       (line-by-line 邏輯,看下一列是不是 separator 來分辨「孤兒 vs 新表」,不會誤合兩個獨立表格)
       function _fixEscapedNewlines(content) {
         if (!content || typeof content !== 'string') return { content, count: 0 };
@@ -10574,6 +10576,36 @@ ${dec.reasoning || ''}
         if (content.indexOf(target) === -1) return { content, count: 0 };
         const parts = content.split(target);
         return { content: parts.join('\n'), count: parts.length - 1 };
+      }
+      function _htmlTableToMarkdown(content) {
+        if (!content || typeof content !== 'string') return { content, count: 0 };
+        let count = 0;
+        const out = content.replace(/<table[^>]*>([\s\S]*?)<\/table>/g, (m, tableContent) => {
+          const unspan = (s) => s
+            .replace(/<span\s+class=["']ctag["'][^>]*>([\s\S]*?)<\/span>/g, '[[$1]]')
+            .replace(/<strong[^>]*>([\s\S]*?)<\/strong>/g, '**$1**')
+            .replace(/<em[^>]*>([\s\S]*?)<\/em>/g, '*$1*');
+          const trs = [...tableContent.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)];
+          if (trs.length === 0) return m;
+          let headers = [];
+          const dataRows = [];
+          for (const tr of trs) {
+            const ths = [...tr[1].matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(c => unspan(c[1].trim()));
+            const tds = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(c => unspan(c[1].trim()));
+            if (ths.length > 0 && headers.length === 0) headers = ths;
+            else if (tds.length > 0) dataRows.push(tds);
+          }
+          if (headers.length === 0 && dataRows.length === 0) return m;
+          const lines = [];
+          if (headers.length > 0) {
+            lines.push('| ' + headers.join(' | ') + ' |');
+            lines.push('|' + headers.map(() => '---').join('|') + '|');
+          }
+          for (const row of dataRows) lines.push('| ' + row.join(' | ') + ' |');
+          count++;
+          return lines.join('\n');
+        });
+        return { content: out, count };
       }
       function _mergeOrphanTableRows(content) {
         if (!content || typeof content !== 'string') return { content, count: 0 };
@@ -10600,19 +10632,22 @@ ${dec.reasoning || ''}
           showToast('還沒有章節'); return;
         }
         // dry run 統計
-        let nlCount = 0, orphanCount = 0, affected = new Set();
+        let nlCount = 0, htmlTblCount = 0, orphanCount = 0, affected = new Set();
         notebook.chapters.forEach(ch => {
           if (!ch.content) return;
           const r1 = _fixEscapedNewlines(ch.content);
-          const r2 = _mergeOrphanTableRows(r1.content);
+          const r2 = _htmlTableToMarkdown(r1.content);
+          const r3 = _mergeOrphanTableRows(r2.content);
           if (r1.count) { nlCount += r1.count; affected.add(ch.id); }
-          if (r2.count) { orphanCount += r2.count; affected.add(ch.id); }
+          if (r2.count) { htmlTblCount += r2.count; affected.add(ch.id); }
+          if (r3.count) { orphanCount += r3.count; affected.add(ch.id); }
         });
-        if (nlCount === 0 && orphanCount === 0) {
+        if (nlCount === 0 && htmlTblCount === 0 && orphanCount === 0) {
           showToast('✓ 沒掃到亂碼'); return;
         }
         const msg = '掃到亂碼:\n' +
           '  · 字面「\\n」: ' + nlCount + ' 處\n' +
+          '  · HTML 表格(轉成 markdown 才能接孤兒): ' + htmlTblCount + ' 個\n' +
           '  · 表格孤兒列(空行隔開的): ' + orphanCount + ' 處\n' +
           '影響 ' + affected.size + ' 章\n\n要全部修嗎?(會自動備份,可 🛟 還原 / ↶ 復原)';
         if (!confirm(msg)) return;
@@ -10622,16 +10657,17 @@ ${dec.reasoning || ''}
         notebook.chapters.forEach(ch => {
           if (!ch.content) return;
           const r1 = _fixEscapedNewlines(ch.content);
-          const r2 = _mergeOrphanTableRows(r1.content);
-          if (r1.count === 0 && r2.count === 0) return;
-          ch.content = r2.content;
+          const r2 = _htmlTableToMarkdown(r1.content);
+          const r3 = _mergeOrphanTableRows(r2.content);
+          if (r1.count === 0 && r2.count === 0 && r3.count === 0) return;
+          ch.content = r3.content;
           ch.updatedAt = Date.now();
           chsFixed++;
           if (samples.length < 5) samples.push(ch.name);
         });
         saveNotebook();
         if (typeof renderNotebook === 'function') renderNotebook();
-        alert('✅ 修了 \\n 亂碼 ' + nlCount + ' 處 + 孤兒表格列 ' + orphanCount + ' 處\n影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
+        alert('✅ 修了:\n  \\n 亂碼: ' + nlCount + ' 處\n  HTML→md 表格: ' + htmlTblCount + ' 個\n  孤兒列: ' + orphanCount + ' 處\n影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
       }
       window.fixEscapedNewlinesInAllChapters = fixEscapedNewlinesInAllChapters;
       function applyAIDecision(dec, q){

@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-fix-orphan-rows';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-html-table-to-markdown';
 const PRECACHE = [
   './',
   './index.html',

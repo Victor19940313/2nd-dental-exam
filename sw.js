@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-stale-device-push-guard';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-toc-subject-collapse-default';
 const PRECACHE = [
   './',
   './index.html',

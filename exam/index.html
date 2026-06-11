@@ -12449,7 +12449,8 @@ ${JSON.stringify(candidates, null, 2)}
           const allChs = [].concat(...Object.values(domains).map(d => [].concat(...Object.values(d))));
           if (!allChs.length) return;
 
-          const subjOpen = (s === curSubj) ? ' open' : '';
+          // v372:科目層永遠收合(版面太擠,使用者要看哪科自己點)
+          const subjOpen = '';
           tocHtml +=
             '<details' + subjOpen + ' class="nb-toc-subj">' +
               '<summary style="margin-top:.7rem;padding:.5rem .7rem;background:' + SCOLOR[s] + ';color:white;border-radius:7px;font-size:.95rem;font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.4rem">' +

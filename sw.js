@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-schema-content-required-plus-fallback';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-table-layout-fix';
 const PRECACHE = [
   './',
   './index.html',

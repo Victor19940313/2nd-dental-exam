@@ -18,11 +18,15 @@
 
   var SYNC_KEYS = [
     "wrongbook_state", "daily_log", "wrongbook_lastpos",
-    "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo", "gemini_model",
+    "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo",
     "examHistory", "exam_reviewed",
     "nb_theme", "nb_theme_sat", "nb_theme_opa", "nb_theme_gstr",
     "nb_toc_mono", "nb_bg_style", "nb_font_style"
   ];
+  // v373:gemini_model 拿掉不跨 device sync
+  // 原因:HUA 改 lite 馬上被別台 device IDB 內的 3.5 push 蓋回來,改設定改不掉
+  // 改成本機獨立,每台 device 自己選 model
+  // notebook chapter race:章節數會在多台 device IDB 之間飄,因為 sync 是 last-write-wins 沒章節級 merge
 
   var _db = null;
   var _userId = null;

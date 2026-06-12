@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-toc-subject-collapse-default';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-gemini-model-local-only';
 const PRECACHE = [
   './',
   './index.html',

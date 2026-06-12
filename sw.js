@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-gemini-model-local-only';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-chapter-level-merge-on-push';
 const PRECACHE = [
   './',
   './index.html',

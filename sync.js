@@ -68,6 +68,61 @@
       if (n > seen) localStorage.setItem(key, String(n));
     } catch(e){}
   }
+  // v374:push notebook 前先跟雲端做 chapter-level union merge,杜絕「device 互相覆蓋章節」
+  // 邏輯:
+  //   - 把雲端 chapters 跟本機 chapters 用 chapter.id 合併
+  //   - 兩邊都有 → 取 updatedAt 較新的
+  //   - 雲端有本機沒 → 保留(別台加的章節不會被本機覆蓋掉)
+  //   - 本機有雲端沒 → 加入(本機加的)
+  //   - history 簡單以本機為主(history merge 太複雜暫不做)
+  function _parseNbStr(s){
+    if (!s) return null;
+    var v = s;
+    if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e){ return null; } }
+    if (typeof v === 'string') { try { v = JSON.parse(v); } catch(e){ return null; } }
+    if (typeof v !== 'object' || v === null) return null;
+    return v;
+  }
+  function _mergeNotebookForPush(localNbStr) {
+    if (!localNbStr || typeof localNbStr !== 'string') return Promise.resolve(localNbStr);
+    return userDataRef().child('notebook').once('value').then(function(snap) {
+      var remoteVal = snap.val();
+      if (!remoteVal) return localNbStr;
+      var local = _parseNbStr(localNbStr);
+      var remote = _parseNbStr(remoteVal);
+      if (!local || !Array.isArray(local.chapters)) return localNbStr;
+      if (!remote || !Array.isArray(remote.chapters)) return localNbStr;
+      var byId = {};
+      remote.chapters.forEach(function(c){ if (c && c.id) byId[c.id] = c; });
+      var localOnly = 0, localNewer = 0, sameOrOlder = 0;
+      local.chapters.forEach(function(lc){
+        if (!lc || !lc.id) return;
+        var rc = byId[lc.id];
+        if (!rc) { byId[lc.id] = lc; localOnly++; return; }
+        var lu = lc.updatedAt || 0;
+        var ru = rc.updatedAt || 0;
+        if (lu >= ru) { byId[lc.id] = lc; if (lu > ru) localNewer++; else sameOrOlder++; }
+      });
+      var ids = Object.keys(byId);
+      // 保持 local order 為主 (local 章節順序對使用者有意義), 雲端獨有的接在後面
+      var localIdSet = {}; local.chapters.forEach(function(c){ if(c&&c.id) localIdSet[c.id]=1; });
+      var merged = [];
+      local.chapters.forEach(function(c){ if (c && c.id && byId[c.id]) { merged.push(byId[c.id]); delete byId[c.id]; }});
+      // 剩下的(雲端獨有)
+      Object.keys(byId).forEach(function(id){ merged.push(byId[id]); });
+      var mergedNb = {
+        chapters: merged,
+        history: local.history || remote.history || [],
+      };
+      if (local.byId) mergedNb.byId = local.byId;
+      else if (remote.byId) mergedNb.byId = remote.byId;
+      console.log('[Sync] 🔀 v374 push-merge: local=' + local.chapters.length + ' / remote=' + remote.chapters.length + ' / merged=' + merged.length + '  (+'+localOnly+' 本機獨有, '+localNewer+' 本機較新, '+sameOrOlder+' 同步)');
+      return JSON.stringify(mergedNb);
+    }).catch(function(e){
+      console.warn('[Sync] mergeNotebookForPush failed, push as-is', e && e.message);
+      return localNbStr;
+    });
+  }
   function _safetyAllowNotebookPush(payloadNotebook) {
     if (!_userId) return true;
     var localCount = _countNotebookChapters(payloadNotebook);
@@ -166,9 +221,24 @@
     return Promise.all([notebookPromise, examHistPromise, wrongbookPromise]).then(function(){
       // v371: stale-device guard — 章節數暴跌就拒絕 push (force=true 略過,給「強制推送」用)
       if (!force && payload.notebook !== undefined && !_safetyAllowNotebookPush(payload.notebook)) {
-        // 從 payload 移除 notebook,但其他 SYNC_KEYS 還是讓它 sync (避免完全卡死)
         delete payload.notebook;
         delete oldPayload.notebook;
+        return Promise.all([
+          userRef().update(payload),
+          userDataRef().update(oldPayload)
+        ]);
+      }
+      // v374: notebook 走 chapter-level union merge 後再 push, 避免 device 互相覆蓋章節
+      if (payload.notebook !== undefined) {
+        return _mergeNotebookForPush(payload.notebook).then(function(merged){
+          payload.notebook = merged;
+          oldPayload.notebook = merged;
+          _recordNbMax(merged); // 更新本機歷史最大值
+          return Promise.all([
+            userRef().update(payload),
+            userDataRef().update(oldPayload)
+          ]);
+        });
       }
       return Promise.all([
         userRef().update(payload),

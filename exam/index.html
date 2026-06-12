@@ -2838,11 +2838,16 @@
       .nb-chapter-content .nb-table tr:nth-child(even) td{background:#faf5ff}
       .nb-chapter-content .nb-table tr:hover td{background:#f3e8ff}
 
-      /* v377: 通用筆記表格排版改善 — 解決「Class 1 斷成兩行」「中文擠到斷字」問題 */
+      /* v378: 通用筆記表格排版 — 解決「Class 1 斷行」「中文擠斷字」+ 寬表水平捲軸 */
+      .nb-chapter-content {
+        overflow-x: auto;          /* 寬表可橫向滾動而非硬壓擠 */
+      }
       .nb-chapter-content table {
         table-layout: auto !important;
         border-collapse: collapse;
-        width: 100%;
+        width: auto;                /* 不再硬撐 100%, 自適應內容 */
+        max-width: 100%;
+        min-width: 60%;
         margin: .9rem 0;
         font-size: .9rem;
       }
@@ -2850,16 +2855,20 @@
       .nb-chapter-content table td {
         padding: .5rem .7rem;
         border: 1px solid #d4b8ff;
-        word-break: keep-all;          /* 中文不在字中間斷 */
-        overflow-wrap: break-word;      /* 長英文在合理處斷 */
+        word-break: keep-all;       /* 中文不在字中間斷 */
+        overflow-wrap: break-word;
         vertical-align: top;
+        min-width: 4em;             /* 短標籤 cell 至少 4em 避免「Class 1」斷行 */
       }
-      /* 類別欄(英文短標籤如 Class 1 / ASA II / 數字)不要在空格處斷行 */
-      .nb-chapter-content table th { white-space: nowrap; background: linear-gradient(135deg,#7c3aed,#a855f7); color: white; font-weight: 700; }
+      .nb-chapter-content table th {
+        white-space: nowrap;
+        background: linear-gradient(135deg,#7c3aed,#a855f7);
+        color: white;
+        font-weight: 700;
+      }
       .nb-chapter-content table td:first-child { font-weight: 600; }
-      /* 第一欄(分類維度)留足空間放中文標題 */
       .nb-chapter-content table td:first-child:not(:only-child) {
-        min-width: 6.5em;
+        min-width: 7em;
         background: #f7f3ff;
       }
 

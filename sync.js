@@ -281,8 +281,8 @@
           if (remote[sk] !== undefined) {
             // 🛡 v283/v285:notebook 跟 examHistory 改寫進 IDB(localStorage 可能撞 quota),其他維持
             if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
+              // v375: bridge 自己做 chapter-level merge 並寫 IDB / localStorage,sync.js 不再覆蓋
               window._notebookIdbBridge.applyRemoteNotebook(remote[sk]);
-              try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
               _recordNbMax(remote[sk]); // v371 stale-device guard
             } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
               window._examHistoryIdbBridge.applyRemoteExamHistory(remote[sk]);
@@ -332,8 +332,8 @@
         if (source[sk] !== undefined && source[sk] !== null) {
           // 🛡 v283/v285:notebook 跟 examHistory 走 IDB,其他維持 localStorage
           if (sk === 'notebook' && window._notebookIdbBridge && window._notebookIdbBridge.applyRemoteNotebook) {
+            // v375: bridge 自己做 chapter-level merge 並寫 IDB / localStorage,sync.js 不再覆蓋
             window._notebookIdbBridge.applyRemoteNotebook(source[sk]);
-            try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
             _recordNbMax(source[sk]); // v371 stale-device guard
           } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
             window._examHistoryIdbBridge.applyRemoteExamHistory(source[sk]);

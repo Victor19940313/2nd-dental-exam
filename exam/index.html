@@ -8714,32 +8714,70 @@ ${(q.options || []).join('\n')}
         // 收到雲端(別台裝置)的 notebook 時呼叫:寫進 IDB + 智慧合併到記憶體
         async applyRemoteNotebook(payload){
           if (!payload) return false;
-          try {
-            await _idbSet(NOTEBOOK_KEY, payload);
-          } catch(e) { console.warn('[remote apply] IDB write fail', e); }
-          // 🛡 編輯中 → 不蓋:避免使用者改到一半被遠端蓋掉
-          if (typeof editingChapterId !== 'undefined' && editingChapterId) {
-            console.log('[remote apply] 編輯中,延後合併');
+          let remoteData;
+          try { remoteData = JSON.parse(payload); }
+          catch(e) {
+            try { await _idbSet(NOTEBOOK_KEY, payload); } catch(_){}
             return false;
           }
-          try {
-            const remoteData = JSON.parse(payload);
-            const remoteMax = Math.max(0, ...((remoteData.chapters || []).map(c => c.updatedAt || 0)));
-            const memMax = (typeof notebook !== 'undefined' && notebook && notebook.chapters)
-              ? Math.max(0, ...notebook.chapters.map(c => c.updatedAt || 0)) : 0;
-            if (remoteMax > memMax) {
-              notebook.chapters = remoteData.chapters || [];
-              notebook.history = remoteData.history || [];
-              if (remoteData.byId) notebook.byId = remoteData.byId;
-              console.log('[remote apply] 套用遠端較新版本 (remote=' + remoteMax + ' mem=' + memMax + ')');
-              if (typeof renderNotebook === 'function') {
-                const nbEl = document.getElementById('screen-notebook');
-                if (nbEl && nbEl.style.display !== 'none') renderNotebook();
+          if (!remoteData || !Array.isArray(remoteData.chapters)) {
+            try { await _idbSet(NOTEBOOK_KEY, payload); } catch(_){}
+            return false;
+          }
+
+          // v375: listener apply 也做 chapter-level union merge
+          // 不再無條件用 remote 蓋本機 → 保住本機獨有的章節(別台還沒看到的新章節)
+          let mergedNb = remoteData;
+          const memNb = (typeof notebook !== 'undefined' && notebook) ? notebook : null;
+          if (memNb && Array.isArray(memNb.chapters) && memNb.chapters.length > 0) {
+            const byId = new Map();
+            remoteData.chapters.forEach(c => { if (c && c.id) byId.set(c.id, c); });
+            let localOnly = 0, localNewer = 0;
+            memNb.chapters.forEach(lc => {
+              if (!lc || !lc.id) return;
+              const rc = byId.get(lc.id);
+              if (!rc) { byId.set(lc.id, lc); localOnly++; return; }
+              if ((lc.updatedAt||0) > (rc.updatedAt||0)) { byId.set(lc.id, lc); localNewer++; }
+            });
+            // 保 mem 章節順序為主, 雲端獨有的接最後
+            const merged = [];
+            const used = new Set();
+            memNb.chapters.forEach(lc => {
+              if (lc && lc.id && byId.has(lc.id)) {
+                merged.push(byId.get(lc.id));
+                used.add(lc.id);
               }
-              return true;
-            }
-          } catch(e) { console.warn('[remote apply] parse fail', e); }
-          return false;
+            });
+            byId.forEach((c, id) => { if (!used.has(id)) merged.push(c); });
+            mergedNb = {
+              chapters: merged,
+              history: memNb.history || remoteData.history || [],
+            };
+            if (memNb.byId) mergedNb.byId = memNb.byId;
+            else if (remoteData.byId) mergedNb.byId = remoteData.byId;
+            console.log('[remote apply] 🔀 v375 merge: remote=' + remoteData.chapters.length + ' mem=' + memNb.chapters.length + ' → merged=' + merged.length + ' (+' + localOnly + ' 本機獨有, ' + localNewer + ' 本機較新)');
+          }
+
+          const mergedStr = JSON.stringify(mergedNb);
+          // 寫 IDB merged 版本 (不再無條件用 remote 蓋)
+          try { await _idbSet(NOTEBOOK_KEY, mergedStr); } catch(e) { console.warn('[remote apply] IDB write fail', e); }
+          // 寫 localStorage merged 版本 (覆蓋 sync.js 之後可能寫的 remote 原版)
+          try { localStorage.setItem(NOTEBOOK_KEY, mergedStr); } catch(e) {}
+
+          // 🛡 編輯中 → 不更新 mem,但 IDB/localStorage 已 merge 寫好
+          if (typeof editingChapterId !== 'undefined' && editingChapterId) {
+            console.log('[remote apply] 編輯中,mem 延後合併');
+            return mergedStr;
+          }
+
+          notebook.chapters = mergedNb.chapters;
+          notebook.history = mergedNb.history;
+          if (mergedNb.byId) notebook.byId = mergedNb.byId;
+          if (typeof renderNotebook === 'function') {
+            const nbEl = document.getElementById('screen-notebook');
+            if (nbEl && nbEl.style.display !== 'none') renderNotebook();
+          }
+          return mergedStr;
         }
       };
       // 🛡 v285:給 sync.js 用的 examHistory 橋樑(v283 漏了這條)

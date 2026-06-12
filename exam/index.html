@@ -9514,6 +9514,7 @@ ${(q.options || []).join('\n')}
       }
 
       // 強制結構 schema：加題決策
+      // v376: content 加 required, 強制 AI 不能漏給內容(lite 容易漏)
       const ADD_NOTEBOOK_SCHEMA = {
         type: "OBJECT",
         properties: {
@@ -9523,10 +9524,10 @@ ${(q.options || []).join('\n')}
           action: { type: "STRING", enum: ["new_chapter", "append", "skip"], description: "決策" },
           chapter_id: { type: "STRING", description: "action=append 時必填" },
           chapter_name: { type: "STRING", description: "action=new_chapter 時必填" },
-          content: { type: "STRING", description: "完整 Markdown 內容；action=skip 時可空" },
+          content: { type: "STRING", description: "完整 Markdown 內容(action=new_chapter 或 append 時必須 >= 200 字, skip 才可空)" },
           reasoning: { type: "STRING", description: "一句話解釋決定" }
         },
-        required: ["concepts", "domain", "subtopic", "action", "reasoning"]
+        required: ["concepts", "domain", "subtopic", "action", "content", "reasoning"]
       };
 
       // 重整章節用的 schema
@@ -10267,6 +10268,21 @@ ${dec.reasoning || ''}
           _timing.ai1 = Object.assign({ ms: Math.round(_now() - _ai1Start) }, window._lastGeminiCallStats || {});
           const dec = extractJSON(raw);
           _timing.decision = dec && dec.action;
+          // v376: AI 給空白 content 就退回 new_chapter,避免「亂選 append 但又啥都沒加」
+          if (dec && (dec.action === 'append' || dec.action === 'new_chapter')) {
+            const contentLen = (dec.content || '').trim().length;
+            if (contentLen < 80) {
+              console.warn('[addQToNotebook] AI 給空白 content (len=' + contentLen + '), 強制改為 new_chapter 並用題目本身當 content fallback');
+              dec.action = 'new_chapter';
+              if (!dec.chapter_name) dec.chapter_name = (q.topic || q.meta || '未命名章節') + ' (待整理)';
+              if (contentLen < 80) {
+                // 用題目+答案+詳解當 fallback 內容,至少不是空白
+                const optText = (q.options || []).join('\n');
+                const correctOpt = (q.options || [])[q.answer] || '';
+                dec.content = '## ' + dec.chapter_name + '\n\n**題目**: ' + (q.question || '') + '\n\n' + optText + '\n\n**答案**: ' + correctOpt + '\n\n**詳解**:\n' + (q.explanation || '(無詳解)') + '\n\n> ⚠️ 此章節由 AI fallback 生成,請手動補充重點';
+              }
+            }
+          }
           // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
           // 智慧判斷：
           //   - 短章節 (<800 字)：第 1 階段已看到接近全文摘要，跳過第 2 階段省 API 額度

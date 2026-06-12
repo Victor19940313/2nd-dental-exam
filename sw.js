@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-chapter-level-merge-on-listener-too';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-schema-content-required-plus-fallback';
 const PRECACHE = [
   './',
   './index.html',

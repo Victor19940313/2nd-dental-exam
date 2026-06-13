@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-sidebar-year-filter';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-topic-progress-modal';
 const PRECACHE = [
   './',
   './index.html',

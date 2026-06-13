@@ -4363,6 +4363,17 @@
     </div>
 
     <!-- ONBOARDING WIZARD -->
+    <!-- v381: 考點進度 modal -->
+    <div id="topic-progress-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeTopicProgress()">
+      <div style="background:white;border-radius:14px;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;padding:1.1rem 1.2rem;box-shadow:0 25px 60px rgba(0,0,0,.3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+          <h3 id="topic-progress-title" style="margin:0;font-size:1rem;color:#1f2937">📊 進度</h3>
+          <button onclick="closeTopicProgress()" style="background:#f3f4f6;border:none;border-radius:8px;padding:.35rem .7rem;cursor:pointer;font-size:.85rem;color:#4b5563">✕ 關閉</button>
+        </div>
+        <div id="topic-progress-body"></div>
+      </div>
+    </div>
+
     <div id="onboarding-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closeOnboarding()">
       <div style="background:white;border-radius:16px;max-width:580px;width:100%;margin:1rem auto;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-height:92vh;display:flex;flex-direction:column;overflow:hidden">
         <!-- header -->
@@ -5120,6 +5131,95 @@
       window.selectAllSidebarYears = selectAllSidebarYears;
       window.clearSidebarYears = clearSidebarYears;
 
+      // v381: 考點進度 modal — 顯示某 topic 在 105~115 各年-次的完成度
+      function _isQDone(qid) {
+        const s = qState[qid];
+        if (!s) return false;
+        // 選過任一選項 (count > 0) 就算做了, 不依賴狀態標記
+        return (s.count || 0) > 0 || (s.status && s.status !== 'none');
+      }
+      function openTopicProgress(subj, cat) {
+        const all = QS.filter(q => q.subject === subj && getTopicCat(q.topic) === cat);
+        const byYS = {};
+        for (let y = 105; y <= 115; y++) for (const s of [1,2]) byYS[y + '-' + s] = { total: 0, done: 0 };
+        all.forEach(q => {
+          const ys = q.year + '-' + q.session;
+          if (!byYS[ys]) return;
+          byYS[ys].total++;
+          if (_isQDone(q.id)) byYS[ys].done++;
+        });
+        // 整體統計
+        const totAll = all.length;
+        const totDone = all.filter(q => _isQDone(q.id)).length;
+        const totPct = totAll > 0 ? Math.round(totDone / totAll * 100) : 0;
+        // 渲染表格
+        let rows = '';
+        for (let y = 105; y <= 115; y++) {
+          const cells = [];
+          for (const s of [1,2]) {
+            const ys = y + '-' + s;
+            const { total, done } = byYS[ys];
+            let bg='#f8fafc', col='#94a3b8', icon='—', label='—';
+            if (total === 0) {
+              icon = '—'; label = '無題';
+            } else if (done === total) {
+              bg = '#dcfce7'; col = '#166534'; icon = '✅'; label = `${done}/${total}`;
+            } else if (done > total * 0.5) {
+              bg = '#fef3c7'; col = '#92400e'; icon = '🟡'; label = `${done}/${total}`;
+            } else if (done > 0) {
+              bg = '#fee2e2'; col = '#991b1b'; icon = '🟠'; label = `${done}/${total}`;
+            } else {
+              bg = '#f3f4f6'; col = '#6b7280'; icon = '⬜'; label = `0/${total}`;
+            }
+            const clickable = total > 0 ? `cursor:pointer` : '';
+            const onclickJs = total > 0
+              ? `onclick="_jumpToYear('${subj}','${cat.replace(/'/g,"\\'")}','${ys}')"` : '';
+            cells.push(`<td style="background:${bg};color:${col};padding:.45rem .55rem;text-align:center;border:1px solid #e5e7eb;${clickable};font-size:.8rem" ${onclickJs}><div style="font-size:.95rem">${icon}</div><div style="font-weight:700">${label}</div></td>`);
+          }
+          rows += `<tr><td style="padding:.4rem .55rem;background:#7c3aed;color:white;font-weight:700;text-align:center;font-size:.85rem">${y}</td>${cells.join('')}</tr>`;
+        }
+        const overlay = document.getElementById('topic-progress-overlay');
+        const body = document.getElementById('topic-progress-body');
+        const titleEl = document.getElementById('topic-progress-title');
+        titleEl.textContent = `📊 ${cat} 進度`;
+        body.innerHTML = `
+          <div style="margin-bottom:.7rem;padding:.6rem .8rem;background:#ede9fe;border-radius:8px;color:#5b21b6;font-size:.88rem">
+            <strong>整體：${totDone} / ${totAll} 題 (${totPct}%)</strong>
+          </div>
+          <div style="overflow-x:auto;margin-bottom:.5rem">
+            <table style="border-collapse:collapse;width:100%;font-size:.78rem">
+              <thead><tr>
+                <th style="padding:.35rem;background:#1f2937;color:white">年份</th>
+                <th style="padding:.35rem;background:#1f2937;color:white">上半年</th>
+                <th style="padding:.35rem;background:#1f2937;color:white">下半年</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div style="font-size:.73rem;color:#6b7280;line-height:1.6">
+            ✅ 全做完　🟡 過半　🟠 已開始　⬜ 還沒碰　—  那次沒這 topic 的題<br>
+            點任一格 → 直接設定篩選器跳去刷那批題
+          </div>`;
+        overlay.style.display = 'flex';
+      }
+      function _jumpToYear(subj, cat, ys) {
+        sidebarYearSet.clear();
+        sidebarYearSet.add(ys);
+        renderSidebarYearChips();
+        activeKey = subj + '|' + cat;
+        renderTopicSidebar();
+        closeTopicProgress();
+        // 直接開始練習
+        startCatPractice(subj, cat);
+      }
+      function closeTopicProgress() {
+        const o = document.getElementById('topic-progress-overlay');
+        if (o) o.style.display = 'none';
+      }
+      window.openTopicProgress = openTopicProgress;
+      window.closeTopicProgress = closeTopicProgress;
+      window._jumpToYear = _jumpToYear;
+
       function updateGoBtn() {
         const btn = document.getElementById("ts-go-btn");
         if (!btn) return;
@@ -5189,7 +5289,9 @@
             const dimmed = isFiltered && filtCount === 0 ? ' style="opacity:.35;pointer-events:none"' : "";
             html +=
               `<div class="topic-item${active}"${dimmed} onclick="selectCat('${esc_subj}','${esc_cat}')">` +
-              `<span>${cat}</span><span class="topic-count">${displayCount}</span></div>`;
+              `<span>${cat}</span>` +
+              `<button onclick="event.stopPropagation();openTopicProgress('${esc_subj}','${esc_cat}')" title="看這 topic 各年完成度" style="background:#ede9fe;border:none;border-radius:6px;padding:.15rem .4rem;cursor:pointer;font-size:.75rem;color:#5b21b6;margin-left:auto;margin-right:.4rem">📊</button>` +
+              `<span class="topic-count">${displayCount}</span></div>`;
           });
 
           html += `</div></div>`;

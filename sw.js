@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-table-min-width-5em';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-sidebar-year-filter';
 const PRECACHE = [
   './',
   './index.html',

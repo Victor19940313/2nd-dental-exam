@@ -3414,6 +3414,19 @@
               🔴 送他吧
             </div>
           </div>
+          <details class="ts-year-filter" style="margin:.5rem .55rem .35rem;padding:.35rem .55rem;background:#f3f4f6;border-radius:6px;font-size:.78rem">
+            <summary style="cursor:pointer;font-weight:600;color:#475569;list-style:none;display:flex;align-items:center;gap:.3rem">
+              <span>📅 年份篩選</span>
+              <span id="year-filter-count" style="font-size:.7rem;color:#7c3aed;font-weight:700"></span>
+            </summary>
+            <div style="margin-top:.4rem">
+              <div style="display:flex;gap:.25rem;margin-bottom:.35rem">
+                <button onclick="selectAllSidebarYears()" style="font-size:.7rem;padding:.2rem .45rem;background:#ede9fe;border:1px solid #c4b5fd;border-radius:5px;cursor:pointer;color:#5b21b6;font-weight:700">全選</button>
+                <button onclick="clearSidebarYears()" style="font-size:.7rem;padding:.2rem .45rem;background:#fef3c7;border:1px solid #fcd34d;border-radius:5px;cursor:pointer;color:#92400e;font-weight:700">清除</button>
+              </div>
+              <div id="sidebar-year-chips" class="chip-row" style="gap:.25rem;flex-wrap:wrap"></div>
+            </div>
+          </details>
           <div id="topic-list"></div>
           <div class="ts-go-wrap">
             <button class="ts-go-btn" id="ts-go-btn" onclick="goFromSidebar()">
@@ -4657,6 +4670,7 @@
         updateHomeStats();
         updateMatchCount();
         checkLastPos();
+        renderSidebarYearChips(); // v380
         renderTopicSidebar();
         renderDailyLog();
       }
@@ -5054,6 +5068,7 @@
       // activeKey = 'subj|cat' or null
       let activeKey = null;
       let sidebarStatus = "all";
+      let sidebarYearSet = new Set(); // v380: 空 = 不篩年份; 有值 = 只刷選的「年-次」
 
       function setSidebarStatus(el, status) {
         sidebarStatus = status;
@@ -5061,8 +5076,49 @@
           .querySelectorAll(".ts-chip")
           .forEach((c) => c.classList.remove("sel"));
         el.classList.add("sel");
+        renderTopicSidebar(); // v380: status 變動要重算 count
         updateGoBtn();
       }
+
+      // v380: 年份篩選 sidebar
+      function renderSidebarYearChips() {
+        const el = document.getElementById("sidebar-year-chips");
+        if (!el) return;
+        const items = [];
+        for (let y = 105; y <= 115; y++) {
+          for (const s of [1, 2]) items.push(y + "-" + s);
+        }
+        el.innerHTML = items.map(ys => {
+          const sel = sidebarYearSet.has(ys) ? " sel" : "";
+          const [y, s] = ys.split("-");
+          const label = y + (s === "1" ? "上" : "下");
+          return `<div class="chip chip-year${sel}" data-ys="${ys}" onclick="toggleSidebarYear('${ys}')" style="font-size:.7rem;padding:.18rem .45rem">${label}</div>`;
+        }).join("");
+        const cnt = document.getElementById("year-filter-count");
+        if (cnt) cnt.textContent = sidebarYearSet.size > 0 ? `(已選 ${sidebarYearSet.size})` : "";
+      }
+      function toggleSidebarYear(ys) {
+        if (sidebarYearSet.has(ys)) sidebarYearSet.delete(ys);
+        else sidebarYearSet.add(ys);
+        renderSidebarYearChips();
+        renderTopicSidebar();
+      }
+      function selectAllSidebarYears() {
+        sidebarYearSet.clear();
+        for (let y = 105; y <= 115; y++) {
+          for (const s of [1, 2]) sidebarYearSet.add(y + "-" + s);
+        }
+        renderSidebarYearChips();
+        renderTopicSidebar();
+      }
+      function clearSidebarYears() {
+        sidebarYearSet.clear();
+        renderSidebarYearChips();
+        renderTopicSidebar();
+      }
+      window.toggleSidebarYear = toggleSidebarYear;
+      window.selectAllSidebarYears = selectAllSidebarYears;
+      window.clearSidebarYears = clearSidebarYears;
 
       function updateGoBtn() {
         const btn = document.getElementById("ts-go-btn");
@@ -5088,6 +5144,11 @@
         const filtered = {}; // {subj: {cat: filteredCount}}
         QS.forEach((q) => {
           if (!q.topic) return;
+          // v380: 年份篩選(空集合 = 不篩)
+          if (sidebarYearSet.size > 0) {
+            const ys = q.year + "-" + q.session;
+            if (!sidebarYearSet.has(ys)) return;
+          }
           const s = q.subject;
           const c = getTopicCat(q.topic);
           if (!data[s]) { data[s] = {}; filtered[s] = {}; }
@@ -5100,7 +5161,7 @@
           if (pass) filtered[s][c] = (filtered[s][c] || 0) + 1;
         });
 
-        const isFiltered = sidebarStatus !== "all";
+        const isFiltered = sidebarStatus !== "all" || sidebarYearSet.size > 0;
 
         let html = "";
         SUBJ_ORDER.forEach((subj) => {
@@ -5155,6 +5216,10 @@
         let list = QS.filter(
           (q) => q.subject === subj && getTopicCat(q.topic) === cat,
         );
+        // v380: 年份篩選(空集合 = 不篩)
+        if (sidebarYearSet.size > 0) {
+          list = list.filter((q) => sidebarYearSet.has(q.year + "-" + q.session));
+        }
         if (sidebarStatus === "unmarked")
           list = list.filter((q) => getS(q.id).status === "none");
         else if (sidebarStatus !== "all")

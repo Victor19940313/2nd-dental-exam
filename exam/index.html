@@ -5080,6 +5080,7 @@
       let activeKey = null;
       let sidebarStatus = "all";
       let sidebarYearSet = new Set(); // v380: 空 = 不篩年份; 有值 = 只刷選的「年-次」
+      let _isClassPractice = false;   // v383: true=從 sidebar「分類→開始練習」進入, 才會記分類進度(classCount)
 
       function setSidebarStatus(el, status) {
         sidebarStatus = status;
@@ -5133,11 +5134,11 @@
 
       // v381: 考點進度 modal — 顯示某 topic 在 105~115 各年-次的完成度
       function _isQDone(qid) {
-        // v382: 進度只看「分類模式 count」, 不看狀態標記也不看試卷模式
-        //   原因: 試卷模式做題 count 不增 (line 6481), 跟分類模式分開
-        //   手動標 🟢/🤔/🟡/🔴 不算做過 (使用者可能只是看過)
+        // v383: 分類進度只看 classCount (只有從 sidebar「考點分類→開始練習」進入才會加)
+        //   主畫面練習模式 / 試卷模式 / 昨日錯題 / topic-tag 都不影響 classCount
+        //   手動標 🟢/🤔/🟡/🔴 也不算做過 (標記跟做題分開)
         const s = qState[qid];
-        return !!(s && (s.count || 0) > 0);
+        return !!(s && (s.classCount || 0) > 0);
       }
       function openTopicProgress(subj, cat) {
         const all = QS.filter(q => q.subject === subj && getTopicCat(q.topic) === cat);
@@ -5316,6 +5317,7 @@
       }
 
       function startCatPractice(subj, cat) {
+        _isClassPractice = true; // v383: 唯一會記分類進度的入口
         let list = QS.filter(
           (q) => q.subject === subj && getTopicCat(q.topic) === cat,
         );
@@ -5342,6 +5344,7 @@
       }
 
       function startTopicPractice(topic) {
+        _isClassPractice = false; // v383: tag 點擊進來 → 不算分類進度
         // Still used by topic-tag clicks in practice/DB views
         activeTopic = topic;
         activeKey = null;
@@ -6331,6 +6334,7 @@ ${(q.options || []).join('\n')}
         }
       }
       function startYesterdayWrong(){
+        _isClassPractice = false; // v383: 昨日錯題 → 不算分類進度
         const qids = getYesterdayWrongQids();
         if (qids.length === 0) { showToast('昨天沒有錯題'); return; }
         const qs = qids.map(qid => (typeof QS !== 'undefined') ? QS.find(q => q.id === qid) : null).filter(Boolean);
@@ -6350,6 +6354,7 @@ ${(q.options || []).join('\n')}
         showToast('📅 進入昨日錯題複習(' + qs.length + ' 題)');
       }
       function startPractice(shuffle) {
+        _isClassPractice = false; // v383: 主畫面進入 → 不算分類進度
         let list = getHomeFiltered();
         if (!list.length) {
           showToast("沒有符合條件的題目");
@@ -6584,6 +6589,10 @@ ${(q.options || []).join('\n')}
         if (!examMode) {
           if (!qState[q.id]) qState[q.id] = { status: "none", count: 0 };
           qState[q.id].count = (qState[q.id].count || 0) + 1;
+          // v383: 分類進度 (classCount) 只在從 sidebar 進入時才加, 主畫面進入不算
+          if (_isClassPractice) {
+            qState[q.id].classCount = (qState[q.id].classCount || 0) + 1;
+          }
           trackDailyCount(q);
           // ── 紀錄本輪分數 + 使用者實際選的選項（題號總覽要用）──
           practiceResults[q.id] = isCorrect;
@@ -6634,6 +6643,10 @@ ${(q.options || []).join('\n')}
         const q = practiceList[practiceIdx];
         if (!qState[q.id]) qState[q.id] = { status: "none", count: 0 };
         qState[q.id].count = (qState[q.id].count || 0) + 1;
+        // v383: 分類進度跟主畫面分開
+        if (_isClassPractice) {
+          qState[q.id].classCount = (qState[q.id].classCount || 0) + 1;
+        }
         await persist(q.id);
         updateMarkButtons(q.id);
       }
@@ -6777,6 +6790,7 @@ ${(q.options || []).join('\n')}
       //  Exam Mode (Step-by-step)
       // ════════════════════════════════════════════
       function startExam(scrollMode) {
+        _isClassPractice = false; // v383: 主畫面試卷 → 不算分類進度
         let list = getHomeFiltered();
         if (!list.length) {
           showToast("沒有符合條件的題目");

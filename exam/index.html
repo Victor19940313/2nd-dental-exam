@@ -5133,10 +5133,11 @@
 
       // v381: 考點進度 modal — 顯示某 topic 在 105~115 各年-次的完成度
       function _isQDone(qid) {
+        // v382: 進度只看「分類模式 count」, 不看狀態標記也不看試卷模式
+        //   原因: 試卷模式做題 count 不增 (line 6481), 跟分類模式分開
+        //   手動標 🟢/🤔/🟡/🔴 不算做過 (使用者可能只是看過)
         const s = qState[qid];
-        if (!s) return false;
-        // 選過任一選項 (count > 0) 就算做了, 不依賴狀態標記
-        return (s.count || 0) > 0 || (s.status && s.status !== 'none');
+        return !!(s && (s.count || 0) > 0);
       }
       function openTopicProgress(subj, cat) {
         const all = QS.filter(q => q.subject === subj && getTopicCat(q.topic) === cat);

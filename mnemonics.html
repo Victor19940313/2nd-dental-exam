@@ -1246,10 +1246,13 @@ function _migrateUsers(arr) {
   // (1) 舊 'Shirley' → '腦洞大開'
   // (2) v329 typo 修正:'腦動大開' → '腦洞大開'
   // (3) v384: 補上「考前速看表HUA」「腦洞考前速看表」
+  // (4) v386: 移除多餘的「考前速看表」(舊測試殘留)
   const i = arr.indexOf('Shirley');
   if (i >= 0) arr.splice(i, 1);
   const j = arr.indexOf('腦動大開');
   if (j >= 0) arr.splice(j, 1);
+  const k = arr.indexOf('考前速看表');
+  if (k >= 0) arr.splice(k, 1);
   if (!arr.includes('腦洞大開')) arr.push('腦洞大開');
   if (!arr.includes('考前速看表HUA')) arr.push('考前速看表HUA');
   if (!arr.includes('腦洞考前速看表')) arr.push('腦洞考前速看表');

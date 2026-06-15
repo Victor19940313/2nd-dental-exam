@@ -285,8 +285,8 @@
               window._notebookIdbBridge.applyRemoteNotebook(remote[sk]);
               _recordNbMax(remote[sk]); // v371 stale-device guard
             } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
+              // v385: bridge 自己會 merge 後寫 IDB+localStorage,sync.js 不再覆蓋成 raw remote
               window._examHistoryIdbBridge.applyRemoteExamHistory(remote[sk]);
-              try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
             } else if (sk === 'wrongbook_state' && window._wrongbookIdbBridge && window._wrongbookIdbBridge.applyRemoteWrongbook) {
               window._wrongbookIdbBridge.applyRemoteWrongbook(remote[sk]);
               try { localStorage.setItem(_userId + "_" + sk, remote[sk]); } catch(e) {}
@@ -336,8 +336,8 @@
             window._notebookIdbBridge.applyRemoteNotebook(source[sk]);
             _recordNbMax(source[sk]); // v371 stale-device guard
           } else if (sk === 'examHistory' && window._examHistoryIdbBridge && window._examHistoryIdbBridge.applyRemoteExamHistory) {
+            // v385: bridge 自己會 merge 後寫 IDB+localStorage,sync.js 不再覆蓋成 raw remote
             window._examHistoryIdbBridge.applyRemoteExamHistory(source[sk]);
-            try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}
           } else if (sk === 'wrongbook_state' && window._wrongbookIdbBridge && window._wrongbookIdbBridge.applyRemoteWrongbook) {
             window._wrongbookIdbBridge.applyRemoteWrongbook(source[sk]);
             try { localStorage.setItem(_userId + "_" + sk, source[sk]); } catch(e) {}

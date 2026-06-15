@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-mnemonics-2-new-namespaces';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-exam-history-merge-fix';
 const PRECACHE = [
   './',
   './index.html',

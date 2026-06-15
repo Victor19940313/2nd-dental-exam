@@ -152,6 +152,13 @@ body.comments-collapsed .comments-open-btn { display: inline-block; }
 .chapter-list .ch-item .ch-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chapter-list .ch-item .ch-del { background: none; border: none; color: #cbd5e1; cursor: pointer; padding: .15rem .35rem; border-radius: 4px; font-size: .85rem; }
 .chapter-list .ch-item .ch-del:hover { color: #ef4444; background: #fef2f2; }
+/* v388: 拖曳排序 */
+.chapter-list .ch-item[draggable="true"] { cursor: grab; }
+.chapter-list .ch-item[draggable="true"]:active { cursor: grabbing; }
+.chapter-list .ch-item .ch-grip { color: #cbd5e1; font-size: .8rem; user-select: none; cursor: grab; padding-right: .2rem; }
+.chapter-list .ch-item:hover .ch-grip { color: #7c3aed; }
+.chapter-list .ch-item.dragging { opacity: .4; }
+.chapter-list .ch-item.drag-over { border-top: 3px solid #7c3aed; padding-top: calc(.55rem - 3px); }
 .chapter-list .empty { padding: 1.2rem .7rem; color: var(--text-sub); font-size: .82rem; text-align: center; font-style: italic; }
 .editor-card { background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
 .editor-status { display: flex; align-items: center; justify-content: space-between; padding: .55rem .8rem; background: #fafaf5; border-bottom: 1px solid var(--border); font-size: .78rem; color: var(--text-sub); flex-wrap: wrap; gap: .4rem; }
@@ -1169,13 +1176,72 @@ function renderChapterList() {
     container.innerHTML = `<div class="empty">還沒有章節<br>${tip}</div>`;
     return;
   }
+  const editable = canEditCurrent();
   container.innerHTML = subj.chapters.map(ch => {
     const active = ch.id === _curChapterId;
-    return `<div class="ch-item ${active ? 'active' : ''}" onclick="pickChapter('${ch.id}')">
+    const dragAttrs = editable
+      ? `draggable="true" data-ch-id="${ch.id}" ondragstart="_dragChStart(event,'${ch.id}')" ondragover="_dragChOver(event)" ondragleave="_dragChLeave(event)" ondrop="_dragChDrop(event,'${ch.id}')" ondragend="_dragChEnd(event)"`
+      : '';
+    return `<div class="ch-item ${active ? 'active' : ''}" ${dragAttrs} onclick="pickChapter('${ch.id}')">
+      ${editable ? '<span class="ch-grip" title="拖曳排序">⋮⋮</span>' : ''}
       <span class="ch-title">${escapeHtml(ch.title || '(無標題)')}</span>
-      ${canEditCurrent() ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ''}
+      ${editable ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ''}
     </div>`;
   }).join('');
+}
+
+// v388: 章節拖曳排序
+let _dragChId = null;
+function _dragChStart(e, id){
+  _dragChId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function _dragChOver(e){
+  if (!_dragChId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function _dragChLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+function _dragChEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.ch-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+async function _dragChDrop(e, targetId){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const fromId = _dragChId;
+  _dragChId = null;
+  if (!fromId || fromId === targetId) return;
+  await reorderChapters(fromId, targetId);
+}
+async function reorderChapters(fromId, toId){
+  if (!canEditCurrent()) return;
+  const subj = curState();
+  if (!subj || !Array.isArray(subj.chapters)) return;
+  const fromIdx = subj.chapters.findIndex(c => c.id === fromId);
+  const toIdx = subj.chapters.findIndex(c => c.id === toId);
+  if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+  const [moved] = subj.chapters.splice(fromIdx, 1);
+  // 插入到 target 位置 (拖到誰前面就放誰前面)
+  const newToIdx = subj.chapters.findIndex(c => c.id === toId);
+  subj.chapters.splice(newToIdx, 0, moved);
+  subj.ts = Date.now();
+  subj.updatedBy = CUR_USER.name || 'Guest';
+  await idbSet(k.cloud(_curUser, _curSubject), subj);
+  renderChapterList();
+  try {
+    await fbSet(FB_CONTENT(_curUser, _curSubject), subj);
+    await fbAppendVersion(_curUser, _curSubject, {
+      ts: subj.ts, by: CUR_USER.name, action: `調整章節順序`, snapshot: subj
+    });
+  } catch(err){
+    console.error('[reorder fb] fail', err);
+    showToast('本機已動,雲端同步失敗:' + (err.message||'').slice(0,50));
+  }
 }
 
 function renderUserTabs() {

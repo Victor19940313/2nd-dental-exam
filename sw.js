@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-ns-whitelist-filter';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-mnemonics-drag-reorder';
 const PRECACHE = [
   './',
   './index.html',

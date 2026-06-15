@@ -356,12 +356,12 @@ const IDB_STORE = 'mnemonics';
 // v329:白名單(用於「能不能留言」+「進來看到的是 editor banner 還是唯讀」)
 //       大小寫不敏感,'腦洞大開' 別名也算 Shirley
 const ALLOWED_EDITORS = ['hua', 'shirley', '腦洞大開'];
-const DEFAULT_USERS = ['HUA', '腦洞大開', '考前速看表HUA', '腦洞考前速看表'];
+const DEFAULT_USERS = ['HUA', '腦洞大開'];
 const NAME_TO_NAMESPACE = { 'hua': 'HUA', 'shirley': '腦洞大開', '腦洞大開': '腦洞大開' };
 // v329:每個 namespace 只有對應的人能編輯內容
 //       (HUA 區只有 hua 能編;腦洞大開區只有 shirley 能編。
 //        其他人/對方都能看 + 能留言)
-const NS_OWNER = { 'HUA': 'hua', '腦洞大開': 'shirley', '考前速看表HUA': 'hua', '腦洞考前速看表': 'shirley' };
+const NS_OWNER = { 'HUA': 'hua', '腦洞大開': 'shirley' };
 
 const SUBJECT_NAME = { ya3: '🦷 牙三', ya4: '🩺 牙四', ya5: '🦴 牙五', ya6: '👶 牙六' };
 const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
@@ -1308,10 +1308,9 @@ async function addUser() {
 }
 
 function _migrateUsers(arr) {
-  // v387: 白名單 — 只保留已知 namespace, 其他(包括亂碼、舊測試)一律過濾
-  const WHITELIST = ['HUA', '腦洞大開', '考前速看表HUA', '腦洞考前速看表'];
+  // v389: 白名單恢復成 2 個 — HUA 跟 腦洞大開, 其他(包括之前加的速看表、亂碼)一律過濾
+  const WHITELIST = ['HUA', '腦洞大開'];
   arr = arr.filter(u => WHITELIST.includes(u));
-  // 補齊缺的 (保證 4 個都在)
   WHITELIST.forEach(u => { if (!arr.includes(u)) arr.push(u); });
   return arr;
 }

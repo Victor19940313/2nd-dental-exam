@@ -349,12 +349,12 @@ const IDB_STORE = 'mnemonics';
 // v329:白名單(用於「能不能留言」+「進來看到的是 editor banner 還是唯讀」)
 //       大小寫不敏感,'腦洞大開' 別名也算 Shirley
 const ALLOWED_EDITORS = ['hua', 'shirley', '腦洞大開'];
-const DEFAULT_USERS = ['HUA', '腦洞大開'];
+const DEFAULT_USERS = ['HUA', '腦洞大開', '考前速看表HUA', '腦洞考前速看表'];
 const NAME_TO_NAMESPACE = { 'hua': 'HUA', 'shirley': '腦洞大開', '腦洞大開': '腦洞大開' };
 // v329:每個 namespace 只有對應的人能編輯內容
 //       (HUA 區只有 hua 能編;腦洞大開區只有 shirley 能編。
 //        其他人/對方都能看 + 能留言)
-const NS_OWNER = { 'HUA': 'hua', '腦洞大開': 'shirley' };
+const NS_OWNER = { 'HUA': 'hua', '腦洞大開': 'shirley', '考前速看表HUA': 'hua', '腦洞考前速看表': 'shirley' };
 
 const SUBJECT_NAME = { ya3: '🦷 牙三', ya4: '🩺 牙四', ya5: '🦴 牙五', ya6: '👶 牙六' };
 const SUBJECT_LABEL = { ya3: '牙三', ya4: '牙四', ya5: '牙五', ya6: '牙六' };
@@ -1245,11 +1245,14 @@ function _migrateUsers(arr) {
   // 一次性遷移:
   // (1) 舊 'Shirley' → '腦洞大開'
   // (2) v329 typo 修正:'腦動大開' → '腦洞大開'
+  // (3) v384: 補上「考前速看表HUA」「腦洞考前速看表」
   const i = arr.indexOf('Shirley');
   if (i >= 0) arr.splice(i, 1);
   const j = arr.indexOf('腦動大開');
   if (j >= 0) arr.splice(j, 1);
   if (!arr.includes('腦洞大開')) arr.push('腦洞大開');
+  if (!arr.includes('考前速看表HUA')) arr.push('考前速看表HUA');
+  if (!arr.includes('腦洞考前速看表')) arr.push('腦洞考前速看表');
   return arr;
 }
 

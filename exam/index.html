@@ -5352,7 +5352,7 @@
 
       // 🛡 v286:序列化的 IDB 寫入 queue,確保多次連續寫入都不會掉
       let _wrongbookWriteQueue = Promise.resolve();
-      function _saveQState() {
+      async function _saveQState() {
         const payload = JSON.stringify(qState);
         // IDB(沒 quota 限制,主存)
         if (typeof _idbSet === 'function') {
@@ -5362,13 +5362,25 @@
         }
         // localStorage(舊版相容,撞 quota 預期會失敗,靜默)
         try { localStorage.setItem(uKey("wrongbook_state"), payload); } catch(e) {}
+        // v401:**必須 await** 才能保證後面 pushAll 讀 IDB 拿到的是新資料,
+        //       不然推上雲端的是舊版,別台拉下來合併,標記又跑回去 = 標記莫名其妙不見
+        try { await _wrongbookWriteQueue; } catch(e) {}
         return _wrongbookWriteQueue;
       }
       async function persist(id) {
         const s = qState[id] || { status: "none", count: 0 };
-        _saveQState();
-        // Firebase sync
-        if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        // v401:打時戳,sync 合併時用 updatedAt 判斷誰新,不再用「有 status 優先」這個會吃掉「取消標記」的爛邏輯
+        if (qState[id]) qState[id].updatedAt = Date.now();
+        await _saveQState();
+        // Firebase sync — v401: await + 10s timeout,確保雲端真的收到才結束
+        if(typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+          try {
+            await Promise.race([
+              DentalSync.pushAll(),
+              new Promise(resolve => setTimeout(resolve, 10000))
+            ]);
+          } catch(e) { console.warn('[persist] pushAll fail', e); }
+        }
         if (!USE_SUPABASE) return;
         try {
           await sb
@@ -9243,17 +9255,29 @@ ${(q.options || []).join('\n')}
           let remote = null;
           try { remote = JSON.parse(payload); } catch(e) { return false; }
           if (!remote || typeof remote !== 'object') return false;
-          // 合併:每個 qid 兩邊取「有 status / status 非 none」的優先;count 取較大值
+          // v401:合併用 updatedAt 比較(沒有就 fallback 舊邏輯)
+          //       原本「優先有 status」的邏輯會吃掉「取消標記」「取消旗標」這類操作,標記跨裝置會莫名其妙跑回去
           const merged = Object.assign({}, qState);
           Object.keys(remote).forEach(qid => {
             const r = remote[qid] || {};
             const m = merged[qid];
             if (!m) { merged[qid] = r; return; }
+            const mTs = m.updatedAt || 0;
+            const rTs = r.updatedAt || 0;
+            // 兩邊都有時戳 → 取較新那邊
+            if (mTs > 0 && rTs > 0) {
+              const winner = mTs >= rTs ? m : r;
+              merged[qid] = Object.assign({}, winner, { count: Math.max(m.count||0, r.count||0) });
+              return;
+            }
+            // 有一邊沒時戳(舊版資料)→ 偏好有時戳那邊
+            if (mTs > 0 && rTs === 0) return; // 保留 m
+            if (rTs > 0 && mTs === 0) { merged[qid] = r; return; }
+            // 兩邊都沒時戳 → 舊邏輯(偏好有 status,只用於 v401 升級前的相容性)
             const mHasStatus = m.status && m.status !== 'none';
             const rHasStatus = r.status && r.status !== 'none';
             if (!mHasStatus && rHasStatus) { merged[qid] = r; return; }
             if (mHasStatus && !rHasStatus) { return; }
-            // 兩邊都有 → 合併,count 取大,其他欄位偏好遠端(假設遠端較新)
             merged[qid] = Object.assign({}, m, r, { count: Math.max(m.count || 0, r.count || 0) });
           });
           qState = merged;

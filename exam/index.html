@@ -10176,17 +10176,25 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 - **delta_target_section**: 要塞進哪個 ### 子標題。**先看候選章節的 digest_subsections**,選擇:
   * 如果新題的重點屬於既有某個子段(例「🔗 延伸補充」「📝 易考重點」「🗂 空間來源對照」) → 填那個子段的**完整原文標題**(含 emoji)
   * 如果新題帶來舊章完全沒提過的新子概念 → 填 \`NEW\`,並用 \`delta_new_section_title\` 給新子段標題
-- **delta_markdown**: 只寫**新增**的 markdown 片段(bullet 列 / 表格 row / 短段落)
+- **delta_markdown**: 寫**新增**的 markdown 片段
   * 🚫 **絕對不可重複** \`digest_concepts\` / \`digest_facts\` / \`digest_bullet_starts\` 已經有的東西
   * 🚫 **絕對不可加** \`## 主標題\` 或重複的 \`### 子標題\`(那是舊章已有的,你只寫新內容)
   * ✅ 例:digest_facts 已有「1.7 mm」「Leeway space」→ 你的 delta 就不要再寫 Leeway space 1.7 mm
-  * ✅ 例:delta 只寫 1-3 行 bullet 也 OK,夠精就好
+
+🎯【delta 要寫得「豐富」,不要只丟 2 個 bullet 交差】
+題目帶來的新概念,該寫多深就寫多深。delta_markdown **目標長度 300-800 字**(舊章節已涵蓋的不用重寫就達標)。可用的元素:
+- ✅ **多個短條列**(4-8 個 bullet,每個 ≤ 25 字)
+- ✅ **小對照表**(2+ 同類項目比較相同屬性) — 例如新題講 3 種神經纖維 → 直接寫 3 row 的對照表
+- ✅ **callout** 強化重點:\`> 💡 記憶要點\` / \`> ⚠️ 易混淆陷阱\` / \`> 🏥 臨床要點\` / \`> 📝 易考角度\`
+- ✅ **\`####\` 次子標題**(分小段),例如機制 + 臨床意義 + 鑑別診斷
+- ✅ **[[概念標籤]]** 包重要名詞 / **粗體** 強調關鍵字 / *斜體* 標英文專有名詞
 
 【何時用 skip】
 - 若新題的所有重點都已在 digest_concepts/digest_facts/digest_bullet_starts 中出現 → **直接 skip**(寫 reasoning 解釋為什麼),delta_* 都不填
 - 寧可 skip 也不要為了「有做事」硬塞重複的 bullet
+- 但只要新題帶來**至少 2-3 個新觀念**就 append,delta 寫扎實一點
 
-【delta 範例(必看)】
+【豐富 delta 範例(必看 — 這就是品質目標)】
 情境:候選章節 digest 顯示已有
   digest_subsections: ["📌 一句話定義", "🗂 空間來源對照", "🔗 延伸補充", "📝 易考重點"]
   digest_concepts: ["Incisor liability", "Leeway space", "Primate space", "Intercanine width"]
@@ -10195,19 +10203,24 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 
 新題在問「Tongue-thrusting 異常吞嚥造成前牙開咬」(舊章從沒提過這個)。
 
-✅ 正確 delta 回傳:
+✅ 正確 delta(豐富 + 不重複既有事實):
 {
   "action": "append",
   "chapter_id": "ch_xxx",
   "delta_target_section": "NEW",
   "delta_new_section_title": "👅 Tongue-thrusting 異常吞嚥",
-  "delta_markdown": "- 吞嚥時舌頭前伸 → [[Anterior open-bite]] 前牙開咬\\n- 同時造成前牙唇傾、發音含糊(Lisping)\\n- 治療常用 [[Tongue crib]] 避舌器",
-  "reasoning": "新題在講吐舌癖,舊章從沒提過,加一個新的 ### 子段"
+  "delta_markdown": "依 Proffit [[Equilibrium theory]] 平衡理論,齒列位置由舌肌力與唇頰肌的內外平衡決定;吞嚥時舌頭異常前伸會破壞此平衡。\\n\\n#### 主要臨床表現\\n- **前牙開咬**:舌頭夾在齒間阻礙門牙完全萌發 → [[Anterior open-bite]]\\n- **門牙唇傾**:舌外推力 > 唇壓 → 上門牙突出\\n- **發音含糊**:[[Lisping]],尤其影響 /s/ /z/ 齒齦音\\n- **後牙不受影響**:吐舌壓力向外向前,不會造成後牙擁擠\\n\\n#### 治療裝置\\n| 裝置 | 機制 |\\n|---|---|\\n| [[Tongue crib]] 避舌器 | 阻擋舌頭前伸,讓開咬前牙自然萌出 |\\n| 肌功能訓練 | 重新訓練吞嚥模式,常與避舌器併用 |\\n\\n> ⚠️ 易混陷阱:Tongue-thrusting 跟後牙擁擠**無關**,國考常考此陷阱\\n> 🏥 臨床要點:診斷異常吞嚥需觀察舌位、吞嚥動作,而非僅看牙齒位置",
+  "reasoning": "新題在講吐舌癖,舊章從沒提過,加一個有機制 + 臨床 + 治療表 + callout 的扎實子段"
+}
+
+❌ 錯誤 delta(太薄,只丟 2 個 bullet 交差 — 過去 v392 早期出過這毛病):
+{
+  "delta_markdown": "- 吞嚥時舌頭前伸 → [[Anterior open-bite]]\\n- 治療常用 [[Tongue crib]] 避舌器"  ← 🚫 太薄了!該詳述機制、臨床、治療、易考點
 }
 
 ❌ 錯誤 delta(重複既有事實):
 {
-  "delta_markdown": "- Incisor liability 上顎 7.1 mm、下顎 5.1 mm\\n- Leeway space 上 0.9 / 下 1.7 mm\\n- ..." ← 🚫 這些 digest_facts 已經有了!
+  "delta_markdown": "- Incisor liability 上顎 7.1 mm、下顎 5.1 mm\\n- Leeway space 上 0.9 / 下 1.7 mm\\n- ..." ← 🚫 digest_facts 已經有了!
 }
 
 ❌ 錯誤 delta(自己加 ## 主標題):
@@ -11279,20 +11292,45 @@ ${dec.reasoning || ''}
       // dec.delta_new_section_title: 當 target='NEW' 時的新子段標題
       // dec.delta_markdown: 純新增的 bullet/row/段落
       function surgicalAppend(oldContent, dec){
-        const SAFE_SECTIONS = ['🔗 延伸補充', '📝 易考重點']; // 結尾常見子段,新章節要插在它們之前
+        // 章節結尾固定子段(從章節最末往回排):📝 易考重點 必須在最末,🔗 延伸補充 在它之前
+        // 順序 = 章節中應該出現的順序(由前往後)
+        const ENDING_SECTIONS = ['🔗 延伸補充', '📝 易考重點'];
+        const SAFE_SECTIONS = ENDING_SECTIONS; // 別名,保留舊邏輯名稱
         const delta = (dec.delta_markdown || '').trim();
         if (!delta) return oldContent; // 沒新東西就維持原狀
         // 把 delta 拆成行,跟 oldContent 字面比對去重
-        // v392 fix:舊內容也要剝掉 [[ / ]] / ** / ` 才能跟 delta 的 fingerprint 對得起來
-        const stripMd = (s) => (s || '').replace(/\[\[|\]\]|\*\*|`/g, '').toLowerCase();
+        // v392/v393:舊內容也要剝掉 markdown,並把所有空白壓成 1 個(才能跨換行/多空格 match)
+        const stripMd = (s) => (s || '')
+          .replace(/\[\[|\]\]|\*\*|`/g, '')
+          .replace(/\s+/g, ' ')
+          .toLowerCase();
         const oldStripped = stripMd(oldContent);
+        // v393:抽取關鍵 token(數值+單位、英文詞、中文 2 字以上連續詞)→ 用來偵測「順序顛倒的語意重複」
+        // 數值+單位保留中間單一空格(跟 stripMd 過的 oldStripped 一致),才能 substring match
+        const extractKeyTokens = (text) => {
+          const tokens = new Set();
+          (text.match(/\d+(?:\.\d+)?\s*(?:mm|cm|μm|%|°|歲|天|個月|年|秒|分鐘|小時|mpa|gpa|kg)/gi) || [])
+            .forEach(t => tokens.add(t.toLowerCase().replace(/\s+/g, ' ').trim()));
+          (text.match(/[a-zA-Z][a-zA-Z\-]{2,}/g) || [])
+            .forEach(t => tokens.add(t.toLowerCase()));
+          (text.match(/[一-鿿]{2,}/g) || [])
+            .forEach(t => tokens.add(t));
+          return tokens;
+        };
         const dedupLine = (ln) => {
           const t = ln.replace(/^\s*[-*]\s+/, '').replace(/\s+/g, ' ').trim();
           if (!t) return null;                       // 空行直接丟掉
-          // 取代表性的前 18 個字當指紋(去掉 markdown 標記)
+          // (1) 前 18 字指紋 — 抓字面完全重複
           const fp = stripMd(t).slice(0, 18);
-          if (fp.length < 6) return ln;              // 太短的不去重(保守)
-          if (oldStripped.includes(fp)) return null; // 舊章已有 → 丟掉
+          if (fp.length >= 6 && oldStripped.includes(fp)) return null;
+          // (2) token 重疊率 — 抓語意重複(順序顛倒、改寫但事實相同)
+          //     當這行 ≥ 3 個關鍵 token 且 80% 以上都在舊章節 → 視為重複丟掉
+          const tokens = extractKeyTokens(t);
+          if (tokens.size >= 3) {
+            let inOld = 0;
+            tokens.forEach(tok => { if (oldStripped.includes(tok)) inOld++; });
+            if (inOld / tokens.size >= 0.8) return null;
+          }
           return ln;
         };
         // bullet 行做去重,非 bullet(段落 / table / callout)原樣保留
@@ -11314,8 +11352,10 @@ ${dec.reasoning || ''}
         const target = (dec.delta_target_section || '').trim();
         const isNew = !target || target.toUpperCase() === 'NEW';
 
-        // 「NEW」→ 加一個全新的 ### 子段,放在 🔗 延伸補充 之前(或章節最後)
-        // v392 fix:dec.delta_new_section_title 為空時,若 target 看起來是正常標題(含 emoji 或中文)就直接用它當標題
+        // 「NEW」→ 加一個全新的 ### 子段
+        // v393:智慧排序
+        //   - 標題本身就是結尾類(🔗 延伸補充 / 📝 易考重點)→ 加在章節最末(維持「正常子段 → 🔗 → 📝」順序)
+        //   - 一般 NEW → 插在「第一個出現的結尾子段」前面(才不會破壞 🔗/📝 在末尾的結構)
         if (isNew) {
           let title = (dec.delta_new_section_title || '').trim();
           if (!title) {
@@ -11323,8 +11363,13 @@ ${dec.reasoning || ''}
             else title = '🆕 新主題';
           }
           const newSection = '\n\n### ' + title + '\n\n' + cleanDelta + '\n';
-          // 找第一個 SAFE_SECTIONS 對應的位置 → 插在它前面
-          for (const safe of SAFE_SECTIONS) {
+          const isEndingTitle = ENDING_SECTIONS.some(t => title.includes(t.replace(/[^一-鿿a-zA-Z]/g, '')));
+          if (isEndingTitle) {
+            // 結尾類子段 → 加在章節最後
+            return oldContent.trimEnd() + newSection;
+          }
+          // 一般 NEW → 找第一個結尾子段插在它前面
+          for (const safe of ENDING_SECTIONS) {
             const re = new RegExp('\\n(#{3,4}\\s+' + safe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'm');
             const m = oldContent.match(re);
             if (m) {
@@ -11332,7 +11377,7 @@ ${dec.reasoning || ''}
               return oldContent.slice(0, idx).trimEnd() + newSection + '\n' + oldContent.slice(idx + 1);
             }
           }
-          // 沒找到結尾子段 → 直接黏在章節最後
+          // 沒結尾子段 → 直接黏在章節最後
           return oldContent.trimEnd() + newSection;
         }
 

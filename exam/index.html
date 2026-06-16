@@ -12493,7 +12493,8 @@ ${JSON.stringify(lite, null, 2)}
           if (anyImportant) keepCh.important = true;
           keepCh.updatedAt = Date.now();
           notebook.chapters = (notebook.chapters||[]).filter(c => !otherIds.has(c.id));
-          saveNotebook();
+          // v398:await 確保 IDB 寫完 + 推上雲端才結束(不然合併完關頁面會掉)
+          await saveNotebook();
           return { ok: true, error: null };
         } catch(err) {
           console.error('[_runOneGroupMerge]', err);
@@ -12580,15 +12581,27 @@ ${JSON.stringify(lite, null, 2)}
 
         const prompt = `你是牙醫國考筆記整理員。下面 ${oldChs.length} 個章節要被合併成「${g.new_name}」這一章。
 
+🚨🚨🚨【最高鐵則:整份輸出只能有「一個」## 主標題】🚨🚨🚨
+舊章節各自有一個 \`## 主標題\`,合併後**只能保留一個**(就是新章節名 ${g.new_name})。
+舊章節原本的 \`## XXX\` 通通要降為 \`### XXX\`,**禁止**留 2 個以上 \`## \` 在輸出中。
+
+【絕對禁止(違反任一條 = 失敗)】
+1. ❌ **整份輸出只能有 1 個 \`## \`**(新章節主標題)
+2. ❌ **相同(或近似)的 \`### 子標題\` 禁止出現 2 次以上** — 看到舊章節各自寫「### 📌 一句話定義」、「### 🗂 對照表」這種重複的子段 → **合併成一個**
+3. ❌ **同一個事實/數值/概念禁止重述** — 例如 Leeway space 上 0.9 / 下 1.7 mm 整份只能寫 1 次
+4. ❌ **\`📌 一句話定義\` 整份只能有 1 個**(章節合併後也只有 1 個主題)
+5. ❌ **\`🔗 延伸補充\` 整份只能有 1 個**(所有舊章節的延伸點併進同一個 list,去重)
+6. ❌ **\`📝 易考重點\` 整份只能有 1 個**(所有易考點併進同一個 list,去重)
+
 【核心鐵則(極重要)】
 1. **完整保留**所有原章節的重點(條列、表格、callout、延伸補充)
 2. **合併重複內容**(同一概念不要寫兩遍,選最完整版本)
-3. **整體結構合理**:相關概念放一起,用 ## / ### 分小節
+3. **整體結構合理**:相關概念放一起,用 ## (只 1 個) / ### / #### 分層
 4. **🖼 圖片絕對保留**:所有原章節的 \`![alt](url)\` markdown,**一張都不可刪除**
    - 可調整圖片位置(放到適合的段落下),但禁止省略
    - 禁止改成「(此處有圖)」這類描述、禁止省略 URL
-5. **合併後內容資訊量必須 ≥ 所有原章節的總和**
-6. 保留 \`### 🔗 延伸補充(國考相關必知)\` 區塊(把所有舊章節的延伸補充整合)
+5. **合併後內容資訊量必須 ≥ 所有原章節的「去重後」總和**(去重後比較,不是字數比較;去掉重複本來就會變短,這是被允許的)
+6. 保留 \`### 🔗 延伸補充(國考相關必知)\` 區塊(把所有舊章節的延伸補充整合**並去重**)
 7. **數學/公式禁止 LaTeX**(\`$...$\` 不支援):用 Unicode ≥ ≤ ≠ ± × ÷ → ° ≈
 8. **粗體 \`**\` 兩側不留空格**:\`**敏感性**\` 不是 \`** 敏感性 **\`
 9. **\`[[ ]]\` 跟 \`**\` 不可同時包同一詞**:選一個用
@@ -12617,6 +12630,21 @@ ${allImgs.length === 0 ? '(無圖片)' : allImgs.map(im => `- ${im.md}`).join('\
         const dec = extractJSON(raw);
         let newContent = unescapeIfNeeded(dec.content || '');
         if (!newContent.trim()) throw new Error('AI 沒回內容');
+
+        // 🛡 v398:AI 萬一還是回多個 ## 主標題,把第 2 個之後全部降級成 ### 子段
+        //         (提示詞已說「整份只能 1 個 ##」,這是後處理保險網)
+        const mainCount = (newContent.match(/^## /gm) || []).length;
+        if (mainCount > 1) {
+          let seen = false;
+          newContent = newContent.split('\n').map(ln => {
+            if (/^## /.test(ln)) {
+              if (!seen) { seen = true; return ln; }
+              return '### ' + ln.slice(3); // 降級成 ###
+            }
+            return ln;
+          }).join('\n');
+          console.warn('[mergeChapter] AI 回 ' + mainCount + ' 個 ## 主標,自動降級多餘的成 ### 子段');
+        }
 
         // 🖼 驗證:把漏掉的圖片補回末尾
         const newImgUrls = new Set(_extractImgs(newContent).map(im => im.url));

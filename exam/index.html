@@ -9240,10 +9240,12 @@ ${(q.options || []).join('\n')}
         return _idbWriteQueue;
       }
 
-      function saveNotebook() {
+      async function saveNotebook() {
         const payload = JSON.stringify(notebook);
         // 1. 先寫 IndexedDB(沒 quota 限制,主要儲存)
-        _queueIdbWrite(payload);
+        //    v397:**必須 await**,不然下面 pushAll 讀 IDB 拿到的會是舊資料,推上雲端的就是舊版,
+        //          使用者重開頁面拉雲端蓋掉本機 → 章節改了又跑回去 = 災難
+        try { await _queueIdbWrite(payload); } catch(e) { console.warn('[saveNotebook] IDB write fail', e); }
         // 2. 再試 localStorage(舊版相容,撞 quota 預期會失敗,靜默處理免吵)
         try {
           localStorage.setItem(NOTEBOOK_KEY, payload);
@@ -14156,13 +14158,21 @@ ${(q.options||[]).join('\n')}
 【素材：${qs.length} 題】
 ${qBlocks}
 
+🚨🚨🚨【最高鐵則:整份輸出只能有「一個」## 主標題】🚨🚨🚨
+舊章節常常因為過去 bug 累積出 6 個 \`## 主標題\`,每個都各自寫一遍定義/對照表/延伸補充。
+這次重整**必須一次清乾淨**:
+1. ❌ 整份輸出只能有 **1 個** \`## \` 開頭的主標題(章節名)
+2. ❌ 不可有「### 標題」內容大幅重複的子段(例如兩個「### 一句話定義」、兩個「### 空間來源對照」)→ 看到重複立刻合併成一個
+3. ❌ 同一個事實/數值/概念**只能出現一次**(例:Leeway space 上 0.9 / 下 1.7 mm 全份只寫一次)
+4. ✅ 看到重複先合併,再決定哪些放在主段落、哪些放 🔗 延伸補充
+
 【整理風格】
-- Markdown: ## / ###、**粗體**、- 條列、| 表格 |
-- 結構: 概念 → 分類 → 機制 → 臨床意義 → 🔗 延伸補充 → 📝 易考重點
-- 同概念要合併，不要每題各寫一段
+- Markdown: ## (只 1 個) / ### / **粗體** / - 條列 / | 表格 |
+- 結構: 📌 一句話定義 → 🗂 分類或對照表 → ⚙️ 機制 → 🏥 臨床意義 → 🔗 延伸補充 → 📝 易考重點
+- 同概念**必須合併**,不要每題各寫一段
 - 中英對照
-- **必加 \`### 🔗 延伸補充（國考相關必知）\`**：身為準備國考的牙醫學生，看到這題會被連帶問到的延伸知識，3–6 點短條列、每點 ≤ 25 字
-- 結尾留 "### 📝 易考重點"
+- **必加 \`### 🔗 延伸補充（國考相關必知）\`**:延伸知識 3–6 點短條列、每點 ≤ 25 字
+- 結尾必加 \`### 📝 易考重點\`
 
 【🧭 邏輯順序原則（極重要）】
 排條列、排表格列、排章節段落都**必須先想邏輯順序再寫**，不要隨意排：
@@ -14182,8 +14192,8 @@ ${qBlocks}
 【章節既有圖片(必須全部保留)】
 ${_extractImgs(ch.content || '').map(x => x.md).join('\n') || '(無)'}
 
-【既有章節 markdown（供參考整體脈絡）】
-${(ch.content || '').slice(0, 3000)}
+【既有章節 markdown(完整內容,讓你看清楚哪些是重複要清掉的)】
+${(ch.content || '').slice(0, 15000)}
 
 【回 JSON】
 { "content": "完整 Markdown 章節內容" }`;
@@ -14223,7 +14233,8 @@ ${(ch.content || '').slice(0, 3000)}
             ch.content = newContent;
             ch.updatedAt = Date.now();
             trimHistory();
-            saveNotebook();
+            // v397:await saveNotebook 確保 IDB 寫完 + 雲端推完才解開 UI
+            await saveNotebook();
             renderNotebook();
             showToast('✓ 已重新整理');
           }

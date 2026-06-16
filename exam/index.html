@@ -9099,9 +9099,21 @@ ${(q.options || []).join('\n')}
           }
 
           // v375: listener apply 也做 chapter-level union merge
-          // 不再無條件用 remote 蓋本機 → 保住本機獨有的章節(別台還沒看到的新章節)
+          //       不再無條件用 remote 蓋本機 → 保住本機獨有的章節(別台還沒看到的新章節)
+          // v400: 加 tombstones(墓碑)機制 → 刪除/合併的章節能跨裝置傳遞,不會被別台殭屍復活
           let mergedNb = remoteData;
           const memNb = (typeof notebook !== 'undefined' && notebook) ? notebook : null;
+          // 先聯集兩邊的 tombstones(每個 id 取最大時戳)
+          const localTombs = (memNb && Array.isArray(memNb._tombstones)) ? memNb._tombstones : [];
+          const remoteTombs = Array.isArray(remoteData._tombstones) ? remoteData._tombstones : [];
+          const tombMap = new Map();
+          [...localTombs, ...remoteTombs].forEach(t => {
+            if (!t || !t.id) return;
+            const ex = tombMap.get(t.id);
+            if (!ex || (t.ts||0) > (ex.ts||0)) tombMap.set(t.id, t);
+          });
+          // 最多保留 300 個 tombstone(已合併刪除的章節有限)
+          const unionTombs = Array.from(tombMap.values()).sort((a,b) => (b.ts||0) - (a.ts||0)).slice(0, 300);
           if (memNb && Array.isArray(memNb.chapters) && memNb.chapters.length > 0) {
             const byId = new Map();
             remoteData.chapters.forEach(c => { if (c && c.id) byId.set(c.id, c); });
@@ -9122,13 +9134,36 @@ ${(q.options || []).join('\n')}
               }
             });
             byId.forEach((c, id) => { if (!used.has(id)) merged.push(c); });
+            // v400: 過濾掉「在 tombstones 裡且 updatedAt < 墓碑時戳」的章節
+            //       → 別台對該章節做的修改若比刪除時間晚才會復活,否則保留刪除
+            let killedByTomb = 0;
+            const merged2 = merged.filter(c => {
+              if (!c || !c.id) return true;
+              const tomb = tombMap.get(c.id);
+              if (!tomb) return true;
+              if ((c.updatedAt||0) > (tomb.ts||0)) return true; // 比墓碑晚的更新 → 復活
+              killedByTomb++;
+              return false;
+            });
             mergedNb = {
-              chapters: merged,
+              chapters: merged2,
               history: memNb.history || remoteData.history || [],
+              _tombstones: unionTombs,
             };
             if (memNb.byId) mergedNb.byId = memNb.byId;
             else if (remoteData.byId) mergedNb.byId = remoteData.byId;
-            console.log('[remote apply] 🔀 v375 merge: remote=' + remoteData.chapters.length + ' mem=' + memNb.chapters.length + ' → merged=' + merged.length + ' (+' + localOnly + ' 本機獨有, ' + localNewer + ' 本機較新)');
+            console.log('[remote apply] 🔀 v400 merge: remote=' + remoteData.chapters.length + ' mem=' + memNb.chapters.length + ' → merged=' + merged2.length + ' (+' + localOnly + ' 本機獨有, ' + localNewer + ' 本機較新, -' + killedByTomb + ' 被墓碑刪掉, tombs=' + unionTombs.length + ')');
+          } else {
+            // 沒記憶體可比 → 只保留 tombstones 過濾遠端
+            mergedNb = Object.assign({}, remoteData, {
+              chapters: (remoteData.chapters || []).filter(c => {
+                if (!c || !c.id) return true;
+                const tomb = tombMap.get(c.id);
+                if (!tomb) return true;
+                return (c.updatedAt||0) > (tomb.ts||0);
+              }),
+              _tombstones: unionTombs,
+            });
           }
 
           const mergedStr = JSON.stringify(mergedNb);
@@ -9252,7 +9287,17 @@ ${(q.options || []).join('\n')}
         } catch (e) {
           // 撞 quota 是預期狀況(IDB 是主存),不再噴 warn
         }
-        if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        // 3. v400:await pushAll — 確保雲端真的收到才結束(不然合併完關頁面雲端沒同步上)
+        //         加 10 秒 timeout,雲端慢/離線不會卡住整個流程
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+          try {
+            const pushPromise = DentalSync.pushAll();
+            await Promise.race([
+              pushPromise,
+              new Promise(resolve => setTimeout(resolve, 10000))
+            ]);
+          } catch(e) { console.warn('[saveNotebook] pushAll fail', e); }
+        }
       }
 
       // ── 載入時:先讀 localStorage(瞬間),再 async 讀 IDB 覆寫(取最新)──
@@ -12493,6 +12538,12 @@ ${JSON.stringify(lite, null, 2)}
           if (anyImportant) keepCh.important = true;
           keepCh.updatedAt = Date.now();
           notebook.chapters = (notebook.chapters||[]).filter(c => !otherIds.has(c.id));
+          // v400:加 tombstones — 被合併掉的章節 id 寫進墓碑,別台 sync 收到才知道「這幾章被刪了」
+          //        否則別台會把舊章節當「本機獨有」再推回雲端,使用者重開又看到舊章節
+          if (!Array.isArray(notebook._tombstones)) notebook._tombstones = [];
+          const tombTs = Date.now();
+          otherIds.forEach(id => notebook._tombstones.push({ id, ts: tombTs }));
+          notebook._tombstones = notebook._tombstones.slice(-300); // 上限 300
           // v398:await 確保 IDB 寫完 + 推上雲端才結束(不然合併完關頁面會掉)
           await saveNotebook();
           return { ok: true, error: null };
@@ -14134,12 +14185,16 @@ ${JSON.stringify(candidates, null, 2)}
           renderNotebook();
         }
       }
-      function deleteChapter(id){
+      async function deleteChapter(id){
         const ch = notebook.chapters.find(c => c.id === id);
         if (!ch) return;
         if (!confirm('確定刪除章節「' + ch.name + '」？此操作無法復原。')) return;
         notebook.chapters = notebook.chapters.filter(c => c.id !== id);
-        saveNotebook();
+        // v400:加 tombstone,別台同步收到才知道這章被刪了,不會殭屍復活
+        if (!Array.isArray(notebook._tombstones)) notebook._tombstones = [];
+        notebook._tombstones.push({ id, ts: Date.now() });
+        notebook._tombstones = notebook._tombstones.slice(-300);
+        await saveNotebook();
         renderNotebook();
       }
       async function reorganizeChapter(id){

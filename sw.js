@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-db-merge-browse';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-notebook-delta-merge';
 const PRECACHE = [
   './',
   './index.html',

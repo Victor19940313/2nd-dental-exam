@@ -9151,6 +9151,9 @@ ${(q.options || []).join('\n')}
           const merged = (typeof _mergeExamHistRecords === 'function')
             ? _mergeExamHistRecords(window._examHistoryCache, remote)
             : remote;
+          // v392:本機有遠端沒有的紀錄 → 排程一次 push,把本機獨有的試卷推上去
+          //       (場景:這台做完試卷沒同步成功,等隔壁台 push 拉下來合併才補推)
+          const localOnlyCount = merged.length - remote.length;
           window._examHistoryCache = merged;
           const payload2 = JSON.stringify(merged);
           try { await _idbSet(uKey('examHistory'), payload2); } catch(e){}
@@ -9163,7 +9166,14 @@ ${(q.options || []).join('\n')}
               if (document.getElementById('exam-res-history')) renderExamHistory('exam-res-history');
             }
           } catch(e){}
-          console.log('[examHistory remote apply] 合併後 ' + merged.length + ' 筆');
+          console.log('[examHistory remote apply] 合併後 ' + merged.length + ' 筆 (本機獨有 ' + Math.max(0,localOnlyCount) + ')');
+          // 排程 push:讓 sync 流程先結束,再推本機獨有的紀錄回雲端
+          if (localOnlyCount > 0) {
+            setTimeout(() => {
+              try { if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) DentalSync.pushAll(); }
+              catch(e) { console.warn('[examHistory post-merge push]', e); }
+            }, 800);
+          }
           return true;
         }
       };
@@ -9876,11 +9886,15 @@ ${(q.options || []).join('\n')}
           subtopic: { type: "STRING", description: "章節屬於哪個子主題（如：Pulp 牙髓、Cementum 牙骨質、Major connectors 主連接體），英文為主+中文輔助" },
           action: { type: "STRING", enum: ["new_chapter", "append", "skip"], description: "決策" },
           chapter_id: { type: "STRING", description: "action=append 時必填" },
-          chapter_name: { type: "STRING", description: "action=new_chapter 時必填" },
-          content: { type: "STRING", description: "完整 Markdown 內容(action=new_chapter 或 append 時必須 >= 200 字, skip 才可空)" },
+          chapter_name: { type: "STRING", description: "action=new_chapter 時必填,或 action=append 想改主標題時也可填" },
+          // v392:append 時用 delta 機制(省 token);只寫新增的子段/bullet,程式碼負責插進對的位置 + 自動去重
+          delta_target_section: { type: "STRING", description: "action=append 必填:要把新內容塞進哪個 ### 子標題(寫該子標題原文,如「🔗 延伸補充」)。如果新題帶來完全新的子概念,寫「NEW」並用 delta_new_section_title 給新子段標題" },
+          delta_new_section_title: { type: "STRING", description: "delta_target_section='NEW' 時必填:新子段標題(含 emoji,例「👅 Tongue-thrusting 吐舌癖」)。會以 ### 層級加入,放在「🔗 延伸補充」之前" },
+          delta_markdown: { type: "STRING", description: "action=append 必填:只寫**新增**的 markdown 片段(bullet 列 / 表格 row / 短段落)。舊章節已經有的事實/數值/概念**絕對不要再寫一次**。delta 可以很短(1-3 行也行),沒新東西就 action=skip" },
+          content: { type: "STRING", description: "action=new_chapter 必填:完整 Markdown 內容(>= 200 字)。action=append 時留空,改用 delta_* 欄位。skip 時可空" },
           reasoning: { type: "STRING", description: "一句話解釋決定" }
         },
-        required: ["concepts", "domain", "subtopic", "action", "content", "reasoning"]
+        required: ["concepts", "domain", "subtopic", "action", "reasoning"]
       };
 
       // 重整章節用的 schema
@@ -10010,39 +10024,61 @@ ${(q.options || []).join('\n')}
           const { topicHit } = findRelatedChapters(q, chapters);
           candidateIds = new Set((topicHit || []).map(c => c.id));
         } catch(e) { /* 找不到也沒關係 */ }
-        // 抽章節結構大綱（## 標題列表）+ 關鍵字（粗體、[[ ]] 概念）給 AI 看
-        // 這樣 AI 不用看全文就知道每章在講什麼，更容易判斷相關性
-        const _extractMeta = (content) => {
-          if (!content) return { outline: '', keywords: [] };
-          const outline = [];
+        // v392:候選章節改用「結構摘要 digest」取代「前 400 字 summary」,讓 AI 確切知道哪些事實/數值已被寫過
+        //       核心目的:AI 不必再花 token 重寫整章,只回傳「真正新增的 delta」就好
+        const _extractDigest = (content) => {
+          if (!content) return { subsections: [], concepts: [], facts: [], bullet_starts: [] };
+          // ### 子標題清單
+          const subsections = [];
+          // [[concept]] 標籤
+          const concepts = new Set();
+          // 數值 + 單位(常考題目都會問具體數字)
+          const facts = new Set();
+          // bullet 第一句(讓 AI 知道既有 bullet 講了什麼)
+          const bullet_starts = [];
           content.split('\n').forEach(line => {
-            const m = line.match(/^(#{2,4})\s+(.+)$/);
-            if (m) outline.push('H' + m[1].length + ': ' + m[2].trim());
-          });
-          const kws = new Set();
-          (content.match(/\*\*([^*\n]+?)\*\*/g) || []).forEach(s => {
-            const t = s.replace(/\*\*/g, '').trim();
-            if (t.length >= 2 && t.length <= 25) kws.add(t);
+            const h = line.match(/^(#{2,4})\s+(.+)$/);
+            if (h) subsections.push((h[2] || '').trim());
+            const b = line.match(/^\s*[-*]\s+(.+)$/);
+            if (b) {
+              const t = (b[1] || '').replace(/\*\*|\[\[|\]\]|`/g, '').trim();
+              if (t) bullet_starts.push(t.slice(0, 40));
+            }
           });
           (content.match(/\[\[([^\]]+?)\]\]/g) || []).forEach(s => {
             const t = s.replace(/\[\[|\]\]/g, '').trim();
-            if (t.length >= 2 && t.length <= 25) kws.add(t);
+            if (t.length >= 2 && t.length <= 30) concepts.add(t);
           });
-          return { outline: outline.join(' | '), keywords: Array.from(kws).slice(0, 25) };
+          (content.match(/\*\*([^*\n]+?)\*\*/g) || []).forEach(s => {
+            const t = s.replace(/\*\*/g, '').trim();
+            if (t.length >= 2 && t.length <= 30) concepts.add(t);
+          });
+          // 數值 + 中英文單位
+          (content.match(/\d+(?:[\.\-~–]\d+)?\s*(?:mm|cm|μm|m|nm|%|°|歲|天|個月|年|秒|分鐘|小時|MPa|GPa|N\b|kg)/g) || []).forEach(s => facts.add(s.replace(/\s+/g, ' ').trim()));
+          // Class I/II/III, Type 1/2,角度等
+          (content.match(/(?:Class|Type|Grade|Stage|Phase)\s*[IVX0-9]+/gi) || []).forEach(s => facts.add(s));
+          return {
+            subsections: subsections.slice(0, 20),
+            concepts: Array.from(concepts).slice(0, 40),
+            facts: Array.from(facts).slice(0, 30),
+            bullet_starts: bullet_starts.slice(0, 30)
+          };
         };
-        // 候選章節:詳盡資訊(AI 主要看這個決定 append) / 其他章節:精簡(只給名稱 + subtopic + concepts)
+        // 候選章節:詳盡 digest(AI 主要看這個決定 append) / 其他章節:精簡(只給名稱 + subtopic + concepts)
         // 限制 candidates 最多 8 章,避免章節爆多時 prompt 失控
         const MAX_CANDIDATES = 8;
         const buildCandidateEntry = (c) => {
-          const meta = _extractMeta(c.content || '');
+          const digest = _extractDigest(c.content || '');
           return {
             id: c.id,
             name: c.name,
             subtopic: c.subtopic || '',
             concepts: (c.concepts || []).slice(0, 8),
-            outline: (meta.outline || '').slice(0, 400),
-            keywords: (meta.keywords || []).slice(0, 10),
-            summary: (c.content || '').slice(0, 400)
+            // 章節已寫過哪些子段/概念/數值 → AI 寫 delta 時要避開這些
+            digest_subsections: digest.subsections,
+            digest_concepts: digest.concepts,
+            digest_facts: digest.facts,
+            digest_bullet_starts: digest.bullet_starts
           };
         };
         // 其他章節超精簡 — 只給 AI 知道有這章,讓它判斷要不要從 others 挑出來 append
@@ -10084,11 +10120,12 @@ ${(q.options || []).join('\n')}
 題目科目是 **${SMAP[q.subject] || q.subject}**。下面看到的所有章節(candidates + others)**都已經過濾為 ${SMAP[q.subject] || q.subject} 科目**,你看不到其他科的章節。
 意思:**你只能在這 ${chapters.length} 章內 append,或 new_chapter**。不要試圖 append 到「不存在於下方清單」的章節。
 
-【判斷相關性時請優先看這幾個欄位】
-- **outline**：章節的所有 ## 小標題列表（最能反映章節在講什麼）
-- **keywords**：章節內所有粗體詞 + [[概念]] 標籤（章節重視的關鍵字）
-- **concepts / subtopic / name**
-- summary 只是內容前段摘要，**outline 跟 keywords 比 summary 更能反映章節主題**
+【判斷相關性時請優先看這幾個欄位(v392)】
+- **digest_subsections**:章節已有的 ### 子標題清單(最能反映章節內容)
+- **digest_concepts**:章節已有的 [[概念]] + **粗體** 關鍵字
+- **digest_facts**:章節已有的數值/單位/Class 分級(常考具體數字)
+- **digest_bullet_starts**:章節已有的 bullet 前 40 字(讓你知道既有條目講了什麼)
+- **concepts / subtopic / name**:章節大方向
 
 【🎯 強烈推薦候選章節（${candidates.length} 章；按相似度排序）】
 ${candidates.length === 0 ? '（無 — 但仍要從下面「其他章節」找最接近的；找不到才開新章）' : JSON.stringify(candidates, null, 2)}
@@ -10120,16 +10157,63 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
    * **盡量沿用現有章節已有的 subtopic**（看現有索引），同主題的章節應該 group 在同一 subtopic
    * 例：「Pulp 牙髓」「Cementum 牙骨質」「Dentin 牙本質」「Microbiology 微生物」「Diagnosis 診斷」「Periodontitis 牙周炎」「Major connectors 主連接體」「Clasp 牙鈎」「Implant 植牙」
    * **一個 subtopic 應該涵蓋 5-10 章**（往粗的方向取，不要切太細）
-4. 行動三選一（**重要：預設 append，new_chapter 是最後選擇**）：
-   - **append**: 屬於某現有章節但有新重點 → 整段重寫該章（合併舊內容+新重點，去重）
+4. 行動三選一(**重要:預設 append,new_chapter 是最後選擇**):
+   - **append**: 屬於某現有章節但有新重點 → **回傳 delta(新增片段),不要整章重寫**
      * 只要強候選章節有**任一個 concept / subtopic / 內容**跟新題重疊 → 一律 append 到那章
-     * **不確定哪章最相符 → 選最相近那章 append**（寧可併到稍微不完全相同的章也比開新章好）
-     * 章節名可以**保持原樣**或在 content 裡加新小標題擴充（不需要為了新題改章節名）
+     * **不確定哪章最相符 → 選最相近那章 append**(寧可併到稍微不完全相同的章也比開新章好)
+     * 主標題(chapter_name)可以**保持原樣**;只有新題明確擴大了章節範圍才填新的 chapter_name 改名
    - new_chapter: **只有當所有候選章節 + 其他章節都跟這題完全無關時才用**
-     * 章節名要**精確概念**：英文 + 中文，比 subtopic 更具體
-     * 例：subtopic="Pulp 牙髓"，chapter_name="Normal pulp immune cells 正常牙髓免疫細胞"
+     * 章節名要**精確概念**:英文 + 中文,比 subtopic 更具體
+     * 例:subtopic="Pulp 牙髓",chapter_name="Normal pulp immune cells 正常牙髓免疫細胞"
    - skip: 現有章節已**完整涵蓋**這題重點 → 不改筆記
-5. **判斷 append 還是 new_chapter 時，往 append 那邊靠** — 寧可併章太雜也不要開過多重複概念的章
+5. **判斷 append 還是 new_chapter 時,往 append 那邊靠** — 寧可併章太雜也不要開過多重複概念的章
+
+🚨🚨🚨【append 時的 delta 機制(v392 新增,極重要)】🚨🚨🚨
+新流程:你不再整章重寫,只回**新增的那幾行**。程式碼會幫你插進對的位置,而且會自動跳過重複內容。
+
+【append 時必填欄位】
+- chapter_id: 要 append 到哪章
+- **delta_target_section**: 要塞進哪個 ### 子標題。**先看候選章節的 digest_subsections**,選擇:
+  * 如果新題的重點屬於既有某個子段(例「🔗 延伸補充」「📝 易考重點」「🗂 空間來源對照」) → 填那個子段的**完整原文標題**(含 emoji)
+  * 如果新題帶來舊章完全沒提過的新子概念 → 填 \`NEW\`,並用 \`delta_new_section_title\` 給新子段標題
+- **delta_markdown**: 只寫**新增**的 markdown 片段(bullet 列 / 表格 row / 短段落)
+  * 🚫 **絕對不可重複** \`digest_concepts\` / \`digest_facts\` / \`digest_bullet_starts\` 已經有的東西
+  * 🚫 **絕對不可加** \`## 主標題\` 或重複的 \`### 子標題\`(那是舊章已有的,你只寫新內容)
+  * ✅ 例:digest_facts 已有「1.7 mm」「Leeway space」→ 你的 delta 就不要再寫 Leeway space 1.7 mm
+  * ✅ 例:delta 只寫 1-3 行 bullet 也 OK,夠精就好
+
+【何時用 skip】
+- 若新題的所有重點都已在 digest_concepts/digest_facts/digest_bullet_starts 中出現 → **直接 skip**(寫 reasoning 解釋為什麼),delta_* 都不填
+- 寧可 skip 也不要為了「有做事」硬塞重複的 bullet
+
+【delta 範例(必看)】
+情境:候選章節 digest 顯示已有
+  digest_subsections: ["📌 一句話定義", "🗂 空間來源對照", "🔗 延伸補充", "📝 易考重點"]
+  digest_concepts: ["Incisor liability", "Leeway space", "Primate space", "Intercanine width"]
+  digest_facts: ["7.1 mm", "5.1 mm", "0.9 mm", "1.7 mm"]
+  digest_bullet_starts: ["Incisor liability 數值:上顎約 7.1 mm", "Primate space 位置:上顎在乳側切牙", ...]
+
+新題在問「Tongue-thrusting 異常吞嚥造成前牙開咬」(舊章從沒提過這個)。
+
+✅ 正確 delta 回傳:
+{
+  "action": "append",
+  "chapter_id": "ch_xxx",
+  "delta_target_section": "NEW",
+  "delta_new_section_title": "👅 Tongue-thrusting 異常吞嚥",
+  "delta_markdown": "- 吞嚥時舌頭前伸 → [[Anterior open-bite]] 前牙開咬\\n- 同時造成前牙唇傾、發音含糊(Lisping)\\n- 治療常用 [[Tongue crib]] 避舌器",
+  "reasoning": "新題在講吐舌癖,舊章從沒提過,加一個新的 ### 子段"
+}
+
+❌ 錯誤 delta(重複既有事實):
+{
+  "delta_markdown": "- Incisor liability 上顎 7.1 mm、下顎 5.1 mm\\n- Leeway space 上 0.9 / 下 1.7 mm\\n- ..." ← 🚫 這些 digest_facts 已經有了!
+}
+
+❌ 錯誤 delta(自己加 ## 主標題):
+{
+  "delta_markdown": "## 恆門齒空間代償與吐舌癖\\n### 一句話定義\\n..."  ← 🚫 你只寫新內容,不寫主標題!
+}
 
 【內容寫作規範（極重要，不照做就是失敗）】
 排版要求：
@@ -10332,15 +10416,107 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
         const LETTERS = ['A','B','C','D','E'];
         const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
         const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
-        return `你是牙醫國考筆記整理員。我有一份既有章節，現在要把一道新題目「加深加廣」進去。
+        return `你是牙醫國考筆記整理員。我有一份既有章節,現在要把一道新題目「加深加廣」進去。
 
-【核心鐵則（極重要）】
-1. **保留**現有章節所有正確內容（不可刪除原本的條目、表格、callout、延伸補充）
-2. **修正**現有章節中明顯錯誤的內容（若新題詳解顯示舊敘述是錯的，更正它，但要保留該段落結構）
-3. **擴充**新題帶來的新重點（同概念補強、加新例子、加新對照表列）
-4. **整合**重複內容（同一概念不要寫兩遍）
-5. 保持原本的整體結構（標題層級、表格、callout、🔗 延伸補充 區塊都要在）
-6. **合併後內容資訊量必須 ≥ 原內容**（你只能補強，不能刪減未提及的部分）
+🚨🚨🚨【最高鐵則:去重至上,絕對禁止重複內容】🚨🚨🚨
+這份筆記過去常常出現「同概念被寫 5、6 遍」的災難——每次新題進來,AI 就在章節尾巴又貼一個新的 \`## 章節主標題\` 塊,把整套定義、3~6歲穩定平台期、Leeway space 數值、Tongue-thrusting 機制重寫一遍。
+**這次必須一勞永逸把這毛病修掉**。
+
+【絕對禁止(違反任一條 = 失敗)】
+1. ❌ **整份合併結果只能有「一個」\`## 標題\`**(最頂層 H2)。
+   - 舊章節已經有 \`## 某主標\` → 新內容就用 \`### 子標題\` 接在底下,**禁止再開第二個 \`## 標題\`**
+   - 看到舊章有多個 \`## \` 主標題?那是過去的 bug → 你要在這次合併時**把它們合併成一個**(留最完整的那個當主標,其他降為 \`### \` 或併入既有子段)
+2. ❌ **相同(或近似)的 \`### 子標題\` 禁止出現兩次以上**。
+   - 例:章節裡已有 \`### 👶 乳齒列期牙弓空間變化(3~6歲)\` → 新題就算又講到 3~6歲乳齒列期,**也只能補進那個段落底下,不可再開新 \`### 子段\` 重講一次**
+   - 凡是看到 2 次以上同主題的子段 → 合併成一段
+3. ❌ **同一個事實/數值/定義禁止重述**。
+   - 「Leeway space 上 0.9 / 下 1.7 mm」如果章節某處已寫過,新題的延伸補充就**不要再寫**
+   - 「Primate space 位置:上顎在側門齒與犬齒間、下顎在犬齒與第一乳臼齒間」寫過就不要再寫
+   - 「穩定平台期:3~6 歲牙弓寬長不主動增加」寫過就不要再寫
+4. ❌ **\`📌 一句話定義\` 整份只能有一個**(因為一個章節只有一個主題,定義就一句)
+5. ❌ **\`🔗 延伸補充\` 整份只能有一個**(所有題目的延伸點併進同一個 list,去重)
+6. ❌ **\`📝 易考重點\` 整份只能有一個**(所有題目的易考點併進同一個 list,去重)
+
+【正確的合併流程(必照做)】
+Step 1 — 掃舊章節,列出所有已涵蓋的事實/數值/概念(心裡列,別寫出來)。
+Step 2 — 看新題目,列出新題帶來的事實/數值/概念。
+Step 3 — 「新題清單」減掉「舊章清單」= 真正要新增的 **delta**。
+Step 4 — 如果 delta 是空的(或只有 1-2 個小點) → 把它們補進對應的既有 \`### 子段\` 結尾,**不要新開任何子段**。
+Step 5 — 如果 delta 帶來一個明顯不同的新子概念(舊章完全沒提) → 加一個全新的 \`### 子段\`。
+Step 6 — 最後檢查整份輸出:
+   - 只有 1 個 \`## \` ?
+   - 沒有任何 \`### \` 子標題重複 ?
+   - 沒有任何事實/數值被寫兩次 ?
+   - 都通過才能輸出。
+
+【正面範例:正確的合併】
+舊章節已有:
+\`\`\`
+## Incisor liability 恆門齒空間代償
+### 📌 一句話定義
+恆前牙總寬 - 乳前牙總寬 = 不足量,需靠生理機制代償。
+
+### 🗂 空間來源對照
+| 機制 | 作用 |
+|---|---|
+| Intercanine width 增加 | 犬齒間牙弓變寬 |
+| Leeway space | 下顎 1.7 mm、上顎 0.9 mm |
+
+### 🔗 延伸補充
+- Primate space 位置:上犬齒前、下犬齒後
+- Tanaka-Johnston 公式:下顎 = X/2 + 10.5
+\`\`\`
+
+新題目在講「[[Tongue-thrusting]] 造成前牙開咬」,還順便提了「Lip bumper 可增加牙弓長度」。
+
+✅ 正確合併結果(在既有 \`## \` 底下補新 \`### \` 子段,不重述舊內容):
+\`\`\`
+## Incisor liability 恆門齒空間代償
+### 📌 一句話定義
+恆前牙總寬 - 乳前牙總寬 = 不足量,需靠生理機制代償。
+
+### 🗂 空間來源對照
+| 機制 | 作用 |
+|---|---|
+| Intercanine width 增加 | 犬齒間牙弓變寬 |
+| Leeway space | 下顎 1.7 mm、上顎 0.9 mm |
+| [[Lip bumper]] | 阻擋唇肌,使下大臼齒遠移、前牙唇傾  ← 新題帶來的新 row,塞進既有表格 |
+
+### 👅 肌力平衡與 Tongue-thrusting(新子段,舊章完全沒提過)
+- 吞嚥時舌頭前伸 → [[Anterior open-bite]]
+- 同時造成前牙唇傾、發音含糊(Lisping)
+
+### 🔗 延伸補充
+- Primate space 位置:上犬齒前、下犬齒後
+- Tanaka-Johnston 公式:下顎 = X/2 + 10.5
+- [[Lip bumper]] 利用唇肌力推大臼齒遠移         ← 延伸新增 1 點
+- Tongue-thrusting 不影響後牙擁擠                ← 延伸新增 1 點
+\`\`\`
+
+❌ 錯誤合併結果(這就是過去 bug 的樣子,**禁止**):
+\`\`\`
+## Incisor liability 恆門齒空間代償
+### 📌 一句話定義
+恆前牙總寬 - 乳前牙總寬 = 不足量。
+[全部舊內容...]
+
+## 恆門齒空間代償與肌力平衡    ← ❌ 開第二個 ## 主標題
+### 📌 一句話定義              ← ❌ 再寫一次定義
+[[Incisor liability]] 為恆前牙與乳前牙寬度差。
+### 🗂 空間來源對照            ← ❌ 跟上面重複的子段
+| Intercanine width 增加 | ... |
+| Leeway space | 下顎 1.7 mm  | ← ❌ 數值重述
+### 👅 Tongue-thrusting
+...
+\`\`\`
+
+【核心鐵則(極重要)】
+1. **去重至上**:同概念/數值/事實只能出現 1 次
+2. **保留**舊章節所有獨有資訊(不能因為去重而把舊內容刪掉)
+3. **修正**舊章節中明顯錯誤(新題詳解顯示舊敘述錯了,更正並只保留正確版本)
+4. **擴充**只擴充新題帶來的「真正新東西」,沒新東西就只補 1-2 句到既有段落
+5. **保持結構**:整份只有 1 個 \`## \`、子段不重複、\`📌 / 🔗 / 📝\` 各只有 1 個
+6. **長度可以變短**:如果舊章節本身就有重複(過去 bug),這次合併後**比原內容短是正確的、也是被允許的**——不要為了「資訊量 ≥ 原內容」硬留重複段落
 
 【現有章節（完整內容）】
 章節名：${oldCh.name}
@@ -10621,26 +10797,48 @@ ${dec.reasoning || ''}
           _timing.ai1 = Object.assign({ ms: Math.round(_now() - _ai1Start) }, window._lastGeminiCallStats || {});
           const dec = extractJSON(raw);
           _timing.decision = dec && dec.action;
-          // v376: AI 給空白 content 就退回 new_chapter,避免「亂選 append 但又啥都沒加」
-          if (dec && (dec.action === 'append' || dec.action === 'new_chapter')) {
+          // v376/v392: AI 給空白 content 才退回 new_chapter,避免「亂選 append 但又啥都沒加」
+          //            v392:append 用 delta_markdown 時,content 本來就會留空 → 只檢查 new_chapter
+          //            append + 沒 delta + 沒 content → 退回 new_chapter (跟舊行為一致)
+          if (dec && dec.action === 'new_chapter') {
             const contentLen = (dec.content || '').trim().length;
             if (contentLen < 80) {
-              console.warn('[addQToNotebook] AI 給空白 content (len=' + contentLen + '), 強制改為 new_chapter 並用題目本身當 content fallback');
-              dec.action = 'new_chapter';
+              console.warn('[addQToNotebook] AI 給空白 new_chapter content (len=' + contentLen + '), 用題目本身當 fallback');
               if (!dec.chapter_name) dec.chapter_name = (q.topic || q.meta || '未命名章節') + ' (待整理)';
-              if (contentLen < 80) {
-                // 用題目+答案+詳解當 fallback 內容,至少不是空白
-                const optText = (q.options || []).join('\n');
-                const correctOpt = (q.options || [])[q.answer] || '';
-                dec.content = '## ' + dec.chapter_name + '\n\n**題目**: ' + (q.question || '') + '\n\n' + optText + '\n\n**答案**: ' + correctOpt + '\n\n**詳解**:\n' + (q.explanation || '(無詳解)') + '\n\n> ⚠️ 此章節由 AI fallback 生成,請手動補充重點';
+              const optText = (q.options || []).join('\n');
+              const correctOpt = (q.options || [])[q.answer] || '';
+              dec.content = '## ' + dec.chapter_name + '\n\n**題目**: ' + (q.question || '') + '\n\n' + optText + '\n\n**答案**: ' + correctOpt + '\n\n**詳解**:\n' + (q.explanation || '(無詳解)') + '\n\n> ⚠️ 此章節由 AI fallback 生成,請手動補充重點';
+            }
+          }
+          if (dec && dec.action === 'append') {
+            const hasDelta = !!(dec.delta_markdown && dec.delta_markdown.trim() && dec.delta_target_section);
+            const hasContent = (dec.content || '').trim().length >= 80;
+            if (!hasDelta && !hasContent) {
+              console.warn('[addQToNotebook] append 但 delta_markdown 跟 content 都空 → 改為 skip');
+              dec.action = 'skip';
+              dec.reasoning = (dec.reasoning || '') + ' [系統:無新增內容,自動 skip]';
+            }
+          }
+          // v392:append 走「外科手術合併」(用 delta_markdown)
+          //       AI 只寫新增的幾行,程式碼負責插進對的位置 + 自動去重 + 跳過第 2 階段
+          //       省 token + 不會重複內容
+          if (dec && dec.action === 'append' && dec.delta_markdown && dec.delta_target_section) {
+            const chId = dec.chapter_id || dec.chapterId;
+            const oldCh = notebook.chapters.find(c => c.id === chId);
+            if (oldCh) {
+              try {
+                const merged = surgicalAppend(oldCh.content || '', dec);
+                dec.content = _preserveImagesIn(oldCh.content || '', merged);
+                _timing.ai2 = { ms: 0, skipped_reason: 'delta_merge' };
+              } catch(mergeErr) {
+                console.warn('[surgicalAppend] failed, fallback to legacy merge:', mergeErr);
+                // 跌回舊路徑(legacy mergePrompt)
+                dec.delta_markdown = null;
               }
             }
           }
-          // ── 第 2 階段：append 時做完整合併（避免覆蓋舊章節）──
-          // 智慧判斷：
-          //   - 短章節 (<800 字)：第 1 階段已看到接近全文摘要，跳過第 2 階段省 API 額度
-          //   - 長章節 (≥800 字)：做完整 2 階段合併避免覆蓋
-          if (dec && dec.action === 'append') {
+          // ── 舊路徑(fallback):append 但沒有 delta_markdown 時做完整合併
+          if (dec && dec.action === 'append' && !dec.delta_markdown) {
             const chId = dec.chapter_id || dec.chapterId;
             const oldCh = notebook.chapters.find(c => c.id === chId);
             const oldContent = (oldCh && oldCh.content) || '';
@@ -11076,6 +11274,86 @@ ${dec.reasoning || ''}
         alert('✅ 修了:\n  \\n 亂碼: ' + nlCount + ' 處\n  HTML→md 表格: ' + htmlTblCount + ' 個\n  孤兒列: ' + orphanCount + ' 處\n影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
       }
       window.fixEscapedNewlinesInAllChapters = fixEscapedNewlinesInAllChapters;
+      // v392:外科手術合併 — 把 AI 的 delta_markdown 插進舊章節對的位置 + 自動去重
+      // dec.delta_target_section: 既有 ### 子標題原文(含 emoji) 或 "NEW"
+      // dec.delta_new_section_title: 當 target='NEW' 時的新子段標題
+      // dec.delta_markdown: 純新增的 bullet/row/段落
+      function surgicalAppend(oldContent, dec){
+        const SAFE_SECTIONS = ['🔗 延伸補充', '📝 易考重點']; // 結尾常見子段,新章節要插在它們之前
+        const delta = (dec.delta_markdown || '').trim();
+        if (!delta) return oldContent; // 沒新東西就維持原狀
+        // 把 delta 拆成行,跟 oldContent 字面比對去重
+        // v392 fix:舊內容也要剝掉 [[ / ]] / ** / ` 才能跟 delta 的 fingerprint 對得起來
+        const stripMd = (s) => (s || '').replace(/\[\[|\]\]|\*\*|`/g, '').toLowerCase();
+        const oldStripped = stripMd(oldContent);
+        const dedupLine = (ln) => {
+          const t = ln.replace(/^\s*[-*]\s+/, '').replace(/\s+/g, ' ').trim();
+          if (!t) return null;                       // 空行直接丟掉
+          // 取代表性的前 18 個字當指紋(去掉 markdown 標記)
+          const fp = stripMd(t).slice(0, 18);
+          if (fp.length < 6) return ln;              // 太短的不去重(保守)
+          if (oldStripped.includes(fp)) return null; // 舊章已有 → 丟掉
+          return ln;
+        };
+        // bullet 行做去重,非 bullet(段落 / table / callout)原樣保留
+        const filteredLines = delta.split('\n').map(ln => {
+          if (/^\s*[-*]\s+/.test(ln)) return dedupLine(ln);
+          // table row: 含 | 且不是分隔線 → 拿前 18 字當指紋
+          if (/^\s*\|/.test(ln) && !/^\s*\|[\s:\-|]+\|\s*$/.test(ln)) {
+            const cells = ln.split('|').filter(c => c.trim());
+            if (cells.length >= 2) {
+              const fp = stripMd(cells[0]).slice(0, 18);
+              if (fp.length >= 4 && oldStripped.includes(fp)) return null;
+            }
+          }
+          return ln;
+        }).filter(ln => ln !== null);
+        const cleanDelta = filteredLines.join('\n').trim();
+        if (!cleanDelta) return oldContent; // 全被去重 → 沒新東西
+
+        const target = (dec.delta_target_section || '').trim();
+        const isNew = !target || target.toUpperCase() === 'NEW';
+
+        // 「NEW」→ 加一個全新的 ### 子段,放在 🔗 延伸補充 之前(或章節最後)
+        if (isNew) {
+          const title = (dec.delta_new_section_title || '🆕 新主題').trim();
+          const newSection = '\n\n### ' + title + '\n\n' + cleanDelta + '\n';
+          // 找第一個 SAFE_SECTIONS 對應的位置 → 插在它前面
+          for (const safe of SAFE_SECTIONS) {
+            const re = new RegExp('\\n(#{3,4}\\s+' + safe.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'm');
+            const m = oldContent.match(re);
+            if (m) {
+              const idx = oldContent.indexOf(m[0]);
+              return oldContent.slice(0, idx).trimEnd() + newSection + '\n' + oldContent.slice(idx + 1);
+            }
+          }
+          // 沒找到結尾子段 → 直接黏在章節最後
+          return oldContent.trimEnd() + newSection;
+        }
+
+        // 把 delta 插進指定的 ### 子段尾巴(下一個 ### 或 ## 之前)
+        // 1. 用正則找 target section 開頭(允許 H3/H4)
+        const escTarget = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const startRe = new RegExp('(^|\\n)(#{2,4})\\s+.*?' + escTarget + '[^\\n]*\\n', 'i');
+        const startM = oldContent.match(startRe);
+        if (!startM) {
+          // 找不到目標子段 → 跌回 NEW 策略
+          console.warn('[surgicalAppend] target_section not found, falling back to NEW:', target);
+          return surgicalAppend(oldContent, Object.assign({}, dec, { delta_target_section: 'NEW' }));
+        }
+        const startIdx = oldContent.indexOf(startM[0]) + startM[0].length;
+        // 找下一個同層或更高層 heading,當作 section 結束
+        const restRe = /\n(#{2,4})\s+/g;
+        restRe.lastIndex = startIdx;
+        const next = restRe.exec(oldContent);
+        const endIdx = next ? next.index : oldContent.length;
+
+        // 插入位置:section 結尾(下一個 heading 前)
+        const sectionBody = oldContent.slice(startIdx, endIdx).replace(/\s+$/, '');
+        const insertion = sectionBody ? '\n' + cleanDelta : cleanDelta;
+        return oldContent.slice(0, startIdx) + sectionBody + '\n' + insertion + '\n\n' + oldContent.slice(endIdx).replace(/^\s+/, '');
+      }
+
       function applyAIDecision(dec, q){
         const histEntry = {
           ts: Date.now(),
@@ -11151,6 +11429,14 @@ ${dec.reasoning || ''}
           histEntry.snapshot = { name: ch.name, content: ch.content, qids: [...ch.qids], concepts: [...(ch.concepts||[])] };
           histEntry.note = '補進章節「' + ch.name + '」';
           ch.content = unescapeIfNeeded(dec.content) || ch.content;
+          // v392:AI 在 append 時若改了 chapter_name(因新題擴大章節範圍)→ 沿用新名字
+          //       但只在新名字明顯不同、且舊名沒被使用者手動編輯過時才換(保守起見)
+          if (dec.chapter_name && dec.chapter_name.trim() && dec.chapter_name.trim() !== ch.name) {
+            const newName = dec.chapter_name.trim();
+            const oldName = ch.name;
+            ch.name = newName;
+            histEntry.note += '(改名「' + oldName + '」→「' + newName + '」)';
+          }
           if (!ch.qids.includes(q.id)) ch.qids.push(q.id);
           // 合併 concept tags 去重
           const allC = new Set([...(ch.concepts||[]), ...(dec.concepts||[])]);

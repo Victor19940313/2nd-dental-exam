@@ -2289,5 +2289,37 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
+<!-- v390:從重看試卷右上「🧠 口訣區」跳過來時,秀一個浮動「🔙 回試卷·第N題」按鈕(樣式仿偷看筆記返回鈕) -->
+<script>
+(function(){
+  let raw = null;
+  try { raw = sessionStorage.getItem('_examReviewMnemReturn'); } catch(e){ return; }
+  if (!raw) return;
+  let data; try { data = JSON.parse(raw); } catch(e){ return; }
+  if (!data || !data.entry) return;
+  const idx = (data.idx || 0) + 1;
+  function mount(){
+    if (document.getElementById('mnem-review-return-btn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'mnem-review-return-btn';
+    btn.textContent = `🔙 回試卷 · 第 ${idx} 題`;
+    btn.style.cssText = 'position:fixed !important;top:12px !important;right:12px !important;z-index:99999 !important;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.6rem 1.05rem;border-radius:22px;box-shadow:0 4px 14px rgba(124,58,237,.45);font-size:.85rem;font-weight:700;cursor:pointer;display:block !important';
+    btn.onclick = function(){
+      try {
+        sessionStorage.setItem('_examReviewReopenSignal', raw);
+        sessionStorage.removeItem('_examReviewMnemReturn');
+      } catch(e){}
+      location.href = 'exam/index.html';
+    };
+    document.body.appendChild(btn);
+  }
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    mount();
+  } else {
+    document.addEventListener('DOMContentLoaded', mount);
+  }
+})();
+</script>
+
 </body>
 </html>

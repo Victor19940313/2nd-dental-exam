@@ -3948,7 +3948,10 @@
             <div style="font-weight:800;font-size:1.05rem">📋 重看試卷</div>
             <div id="exam-review-meta" style="font-size:.82rem;opacity:.92;margin-top:.15rem">—</div>
           </div>
-          <button onclick="closeExamReview()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.2rem;cursor:pointer">×</button>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-shrink:0">
+            <button onclick="goToMnemonicsFromReview()" title="到口訣區看一下,等等可以一鍵回到這題" style="background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35);color:#fff;padding:.42rem .85rem;border-radius:18px;font-size:.83rem;font-weight:700;cursor:pointer;white-space:nowrap">🧠 口訣區</button>
+            <button onclick="closeExamReview()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:1.2rem;cursor:pointer">×</button>
+          </div>
         </div>
         <div style="padding:1rem 1.2rem">
           <div id="exam-review-detail" style="min-height:200px;padding-bottom:1rem;border-bottom:1px solid #e5e7eb;margin-bottom:1rem"></div>
@@ -7785,6 +7788,58 @@ ${(q.options || []).join('\n')}
         window._reviewPeekActive = true;
         if (typeof peekNotebook === 'function') peekNotebook(q);
       }
+      // 從重看試卷右上角的「🧠 口訣區」跳到 mnemonics.html
+      // 把當前 review 狀態存到 sessionStorage,讓口訣區頁面可以秀「🔙 回試卷」一鍵回來
+      function goToMnemonicsFromReview(){
+        if (!_reviewEntry) { location.href = '../mnemonics.html'; return; }
+        const metaEl = document.getElementById('exam-review-meta');
+        try {
+          sessionStorage.setItem('_examReviewMnemReturn', JSON.stringify({
+            entry: _reviewEntry,
+            idx: _reviewIdx,
+            meta: metaEl ? metaEl.textContent : '',
+            filter: _reviewFilter
+          }));
+        } catch(e) { console.warn('save review state failed', e); }
+        location.href = '../mnemonics.html';
+      }
+      // 進入 exam 頁時若 sessionStorage 有 reopen 信號 → 自動還原重看試卷
+      (function _maybeReopenReviewFromMnem(){
+        function doReopen(){
+          let raw = null;
+          try { raw = sessionStorage.getItem('_examReviewReopenSignal'); } catch(e){}
+          if (!raw) return;
+          try { sessionStorage.removeItem('_examReviewReopenSignal'); } catch(e){}
+          try { sessionStorage.removeItem('_examReviewMnemReturn'); } catch(e){}
+          let data; try { data = JSON.parse(raw); } catch(e){ return; }
+          if (!data || !data.entry) return;
+          // 等 QS 載入(題庫資料)再開
+          let tries = 0;
+          const tryOpen = () => {
+            tries++;
+            if ((typeof QS === 'undefined' || !QS || !QS.length) && tries < 60) {
+              setTimeout(tryOpen, 200); return;
+            }
+            _reviewEntry = data.entry;
+            _reviewIdx = data.idx || 0;
+            _reviewFilter = data.filter || 'all';
+            const modal = document.getElementById('exam-review-modal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            const m = document.getElementById('exam-review-meta');
+            if (m) m.textContent = data.meta || '';
+            try { setReviewFilter(_reviewFilter); } catch(e){}
+            try { renderReviewQ(_reviewIdx); } catch(e){}
+          };
+          tryOpen();
+        }
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+          setTimeout(doReopen, 50);
+        } else {
+          document.addEventListener('DOMContentLoaded', () => setTimeout(doReopen, 50));
+        }
+      })();
+
       // 從筆記本回到剛剛的「重看試卷」(自動還原當時看的那一題)
       function returnToReview(){
         const r = window._reviewReturnState;

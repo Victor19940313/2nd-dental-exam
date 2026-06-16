@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-notebook-25q-stress';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-sync-wrongs-fix';
 const PRECACHE = [
   './',
   './index.html',

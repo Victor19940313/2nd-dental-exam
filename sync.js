@@ -296,6 +296,15 @@
           }
         });
         localStorage.setItem(_userId + "__ts", String(remoteTs));
+        // v395:PULL 結束後也排程一次 push — 保證本機獨有的紀錄(bridge 合併後存在)會推回雲端
+        //       不能直接 push(_syncing 還是 true),用 setTimeout 等 syncOnLoad 完成
+        setTimeout(function(){
+          if (!_syncing) {
+            pushToFirebase().then(function(){
+              localStorage.setItem(_userId + "__ts", String(Date.now()));
+            }).catch(function(e){ console.warn('[sync] PULL-then-PUSH failed', e); });
+          }
+        }, 1500);
       } else {
         return pushToFirebase().then(function() {
           localStorage.setItem(_userId + "__ts", String(Date.now()));

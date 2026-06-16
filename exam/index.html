@@ -6291,6 +6291,24 @@ ${(q.options || []).join('\n')}
       }
 
       // 📅 昨日錯題:從 examHistory 撈昨天的考試紀錄,合併所有 wrongs.qid 去重
+      // v395:wrongs 空時(舊版整頁捲動沒記)→ 用 qids + userAnswers 重算錯題,救回舊資料
+      function _reconstructWrongs(h){
+        if (Array.isArray(h.wrongs) && h.wrongs.length > 0) return h.wrongs;
+        if (!Array.isArray(h.qids) || !h.userAnswers) return [];
+        if (typeof QS === 'undefined') return [];
+        const out = [];
+        h.qids.forEach(qid => {
+          const userAns = h.userAnswers[qid];
+          if (userAns == null) return; // 跳過未作答
+          const q = QS.find(x => x.id === qid);
+          if (!q) return;
+          const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+          if (!correctArr.includes(userAns)) {
+            out.push({ qid, userAns, correctAns: correctArr });
+          }
+        });
+        return out;
+      }
       function getYesterdayWrongQids(){
         const now = new Date();
         const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
@@ -6301,7 +6319,7 @@ ${(q.options || []).join('\n')}
         const qids = new Set();
         (hist || []).forEach(h => {
           if (!h.date || !h.date.startsWith(yKey)) return;
-          (h.wrongs || []).forEach(w => { if (w.qid) qids.add(w.qid); });
+          _reconstructWrongs(h).forEach(w => { if (w.qid) qids.add(w.qid); });
         });
         return Array.from(qids);
       }
@@ -6965,6 +6983,7 @@ ${(q.options || []).join('\n')}
         let correct = 0;
         let answered = 0;
         const total = scrollExamList.length; // 總題數 = 試卷全部題目
+        const wrongQs = []; // v395:整頁捲動也要記 wrongs,昨日錯題才撈得到
         scrollExamList.forEach((q) => {
           const userIdx = scrollExamAnswers[q.id];
           const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
@@ -6986,6 +7005,7 @@ ${(q.options || []).join('\n')}
             answered++;
             const ok = correctArr.includes(userIdx);
             if (ok) correct++;
+            else wrongQs.push({ q, userIdx, correctArr }); // v395
             if (resultEl)
               resultEl.innerHTML = ok
                 ? '<span class="scroll-result-badge ok">✓ 答對</span>'
@@ -6997,7 +7017,7 @@ ${(q.options || []).join('\n')}
         const score = (correct * 1.25).toFixed(2);
         const fullScore = (total * 1.25).toFixed(2);
         const skipped = total - answered;
-        saveExamHistory(correct, total, "整頁捲動");
+        saveExamHistory(correct, total, "整頁捲動", wrongQs);
         const subText = skipped > 0
           ? `答對 ${correct}/${total} 題 · 跳過 ${skipped} 題`
           : (total - correct === 0 ? "🎉 全對！" : `答對 ${correct}/${total} 題`);

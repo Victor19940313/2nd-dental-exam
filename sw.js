@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-marks-xdevice-fix';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-browse-qa-quiz';
 const PRECACHE = [
   './',
   './index.html',

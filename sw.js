@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-mnem-shortcut';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-db-merge-browse';
 const PRECACHE = [
   './',
   './index.html',

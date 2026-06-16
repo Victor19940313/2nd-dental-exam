@@ -3304,7 +3304,6 @@
         <button class="btn-mode" id="btn-wrongbook" onclick="showWrongbook()">錯題本</button>
         <button class="btn-mode" id="btn-notebook" onclick="showNotebook()">🗂 筆記本</button>
         <button class="btn-mode" id="btn-mnemonics" onclick="location.href='../mnemonics.html'" title="共筆口訣區">🧠 口訣區</button>
-        <button class="btn-mode" id="btn-db" onclick="showDB()">資料庫</button>
         <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
           瀏覽
         </button>
@@ -4059,49 +4058,34 @@
           牙六
         </div>
       </div>
+      <!-- v391:考點篩選列(從卡片上的 🏷 topic 點過來會顯示) -->
+      <div class="db-topic-bar" id="bf-topic-bar" style="display:none">
+        🏷 考點篩選：<span id="bf-topic-label"></span>
+        <button class="db-topic-bar-clear" onclick="clearBrowseTopicFilter()">
+          ✕ 清除
+        </button>
+      </div>
+      <!-- v391:「只看有詳解」開關 -->
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:.4rem 0 .2rem">
+        <label style="display:flex;align-items:center;gap:.35rem;font-size:.82rem;color:#475569;cursor:pointer;user-select:none">
+          <input type="checkbox" id="bf-expl-only" onchange="setBrowseExplOnly(this.checked)" style="cursor:pointer">
+          只看有詳解的題目
+        </label>
+        <span id="bf-result-count" style="margin-left:auto;font-size:.78rem;color:#9ca3af"></span>
+      </div>
       <div class="search-wrap">
         <input
           class="search-input"
           type="search"
-          placeholder="🔍 搜尋題目..."
+          placeholder="🔍 搜尋題目、選項、詳解、題號(例如 ya5-110-1-3)..."
           oninput="browseSearch(this.value)"
         />
       </div>
       <div class="q-list" id="q-list"></div>
     </div>
 
-    <!-- ═══════════════ DATABASE SCREEN ═══════════════ -->
-    <div id="screen-db">
-      <div class="db-filter" id="db-filter-row">
-        <div class="db-chip sel" data-dbsubj="ya3" onclick="toggleDBSubj(this)">
-          牙三
-        </div>
-        <div class="db-chip sel" data-dbsubj="ya4" onclick="toggleDBSubj(this)">
-          牙四
-        </div>
-        <div class="db-chip sel" data-dbsubj="ya5" onclick="toggleDBSubj(this)">
-          牙五
-        </div>
-        <div class="db-chip sel" data-dbsubj="ya6" onclick="toggleDBSubj(this)">
-          牙六
-        </div>
-      </div>
-      <div class="db-topic-bar" id="db-topic-bar" style="display: none">
-        🏷 考點篩選：<span id="db-topic-label"></span>
-        <button class="db-topic-bar-clear" onclick="clearTopicFilter()">
-          ✕ 清除
-        </button>
-      </div>
-      <div class="db-search-wrap">
-        <input
-          class="search-input"
-          type="search"
-          placeholder="🔍 搜尋題目或詳解..."
-          oninput="dbSearch(this.value)"
-        />
-      </div>
-      <div class="db-list" id="db-list"></div>
-    </div>
+    <!-- 資料庫已併入瀏覽(v391),保留空殼避免舊程式 reference 崩 -->
+    <div id="screen-db" style="display:none"></div>
 
     <!-- ═══════════════ WRONGBOOK SCREEN ═══════════════ -->
     <div id="screen-wrongbook" style="display:none">
@@ -6077,7 +6061,6 @@ ${(q.options || []).join('\n')}
         const __fx_h = document.getElementById("screen-fixexam"); if (__fx_h) __fx_h.style.display = "none";
         const __ner_h = document.getElementById("screen-exam-results"); if (__ner_h) __ner_h.style.display = "none";
         document.getElementById("btn-home").classList.add("active");
-        document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.remove("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
         const __nb_btn = document.getElementById("btn-notebook"); if (__nb_btn) __nb_btn.classList.remove("active");
@@ -6101,7 +6084,6 @@ ${(q.options || []).join('\n')}
         const __nb_b = document.getElementById("screen-notebook"); if (__nb_b) __nb_b.style.display = "none";
         const __fx_b = document.getElementById("screen-fixexam"); if (__fx_b) __fx_b.style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
-        document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.add("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
         const __nb_btnb = document.getElementById("btn-notebook"); if (__nb_btnb) __nb_btnb.classList.remove("active");
@@ -6139,7 +6121,6 @@ ${(q.options || []).join('\n')}
         const er = document.getElementById("screen-exam-results");
         if (er) er.style.display = "none";
         document.getElementById("btn-home").classList.remove("active");
-        document.getElementById("btn-db").classList.remove("active");
         document.getElementById("btn-browse").classList.remove("active");
         document.getElementById("btn-wrongbook").classList.remove("active");
         const nbBtn = document.getElementById("btn-notebook");
@@ -7120,6 +7101,8 @@ ${(q.options || []).join('\n')}
           }
           // 2. 試寫 localStorage(舊版相容,撞 quota 預期會失敗,靜默處理)
           try { localStorage.setItem(uKey('examHistory'), payload); } catch (lsErr) {}
+          // v391:存完馬上 push 雲端,別等下次自動同步,另一台才能即時拿到
+          try { if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) DentalSync.pushAll(); } catch(e) { console.warn('[saveExamHistory push]', e); }
         } catch (e) {
           console.error('saveExamHistory:', e);
           if (typeof showToast === 'function') showToast('❌ 試卷紀錄儲存失敗:' + (e.message||'').slice(0,60));
@@ -8040,35 +8023,134 @@ ${(q.options || []).join('\n')}
         renderBrowse();
       }
 
+      // v391:debounce 150ms,避免每打一個字就重 render
+      let _browseSearchTimer = null;
       function browseSearch(q) {
-        browseQ = q.trim().toLowerCase();
+        clearTimeout(_browseSearchTimer);
+        _browseSearchTimer = setTimeout(() => {
+          browseQ = q.trim().toLowerCase();
+          renderBrowse();
+        }, 150);
+      }
+
+      // v391:「只看有詳解」開關
+      let bfExplOnly = false;
+      function setBrowseExplOnly(on) {
+        bfExplOnly = !!on;
+        renderBrowse();
+      }
+
+      // v391:瀏覽用的考點篩選(取代舊 db 的 dbTopicFilter)
+      let bfTopicFilter = null;
+      function clearBrowseTopicFilter() {
+        bfTopicFilter = null;
+        const bar = document.getElementById("bf-topic-bar");
+        if (bar) bar.style.display = "none";
         renderBrowse();
       }
 
       function getBrowseFiltered() {
+        const _q = browseQ;
         return QS.filter((q) => {
           if (!bfSubjs.has(q.subject)) return false;
-          const st = getS(q.id).status;
-          if (bfStatus !== "all" && st !== bfStatus) return false;
-          if (browseQ) {
-            const hay = [q.question, q.meta, q.explanation || ""]
+          const st = getS(q.id);
+          if (bfStatus !== "all" && st.status !== bfStatus) return false;
+          // v391:詳解可能來自 expl_override / 原 explanation / NotebookLM / clinical
+          const expl = st.expl_override ?? q.explanation ?? "";
+          const nb = q.explanation_notebooklm || "";
+          const clinical = q.clinical || "";
+          // 「只看有詳解」= 有 Gemini 詳解(原本資料庫的定義),NotebookLM/clinical 大部分題目都有,不算
+          if (bfExplOnly && !expl) return false;
+          const topic = st.topic || q.topic || "";
+          if (bfTopicFilter && topic !== bfTopicFilter) return false;
+          if (_q) {
+            const opts = (q.options || []).join(" ");
+            const explAll = expl + " " + nb + " " + clinical;
+            const hay = [q.id, q.question, q.meta, opts, explAll, topic]
               .join(" ")
               .toLowerCase();
-            if (!hay.includes(browseQ)) return false;
+            if (!hay.includes(_q)) return false;
           }
           return true;
         });
       }
 
+      // v391:批次 render,避免 6000+ 題一次塞進去
+      const BROWSE_PAGE_SIZE = 80;
+      let _browseShowN = BROWSE_PAGE_SIZE;
+      let _browseFiltered = [];
+      let _browseLoadMoreIO = null;
+
       function renderBrowse() {
         const list = document.getElementById("q-list");
-        const filtered = getBrowseFiltered();
-        if (!filtered.length) {
+        if (!list) return;
+        _browseFiltered = getBrowseFiltered();
+        _browseShowN = BROWSE_PAGE_SIZE;
+        const cnt = document.getElementById("bf-result-count");
+        if (cnt) cnt.textContent = `共 ${_browseFiltered.length} 題`;
+        if (!_browseFiltered.length) {
           list.innerHTML =
             '<div class="empty"><div class="icon">🔍</div><p>沒有符合的題目</p></div>';
           return;
         }
-        list.innerHTML = filtered.map(renderBrowseCard).join("");
+        list.innerHTML =
+          _browseFiltered.slice(0, _browseShowN).map(renderBrowseCard).join("") +
+          (_browseFiltered.length > _browseShowN
+            ? `<div id="browse-load-more" style="text-align:center;padding:1rem;color:#7c3aed;font-weight:700;cursor:pointer" onclick="_browseLoadMore()">▼ 載入更多(剩 ${_browseFiltered.length - _browseShowN} 題)</div>`
+            : "");
+        _installBrowseAutoLoad();
+      }
+
+      function _browseLoadMore() {
+        if (_browseShowN >= _browseFiltered.length) return;
+        const list = document.getElementById("q-list");
+        if (!list) return;
+        const next = _browseFiltered.slice(_browseShowN, _browseShowN + BROWSE_PAGE_SIZE);
+        _browseShowN += BROWSE_PAGE_SIZE;
+        const moreBtn = document.getElementById("browse-load-more");
+        const html = next.map(renderBrowseCard).join("");
+        const remaining = _browseFiltered.length - _browseShowN;
+        if (moreBtn) {
+          moreBtn.insertAdjacentHTML("beforebegin", html);
+          if (remaining > 0) {
+            moreBtn.textContent = `▼ 載入更多(剩 ${remaining} 題)`;
+          } else {
+            moreBtn.remove();
+          }
+        }
+        _installBrowseAutoLoad();
+      }
+
+      function _installBrowseAutoLoad() {
+        if (!("IntersectionObserver" in window)) return;
+        if (_browseLoadMoreIO) _browseLoadMoreIO.disconnect();
+        const btn = document.getElementById("browse-load-more");
+        if (!btn) return;
+        _browseLoadMoreIO = new IntersectionObserver((ents) => {
+          ents.forEach((e) => { if (e.isIntersecting) _browseLoadMore(); });
+        }, { rootMargin: "400px" });
+        _browseLoadMoreIO.observe(btn);
+      }
+
+      // v391:卡片點開才 render 詳解(formatExpl 很重,延後到打開才跑)
+      function browseToggleCard(id) {
+        const card = document.getElementById("bc-" + id);
+        if (!card) return;
+        card.classList.toggle("open");
+        if (card.classList.contains("open")) {
+          const slot = card.querySelector(".expl-slot");
+          if (slot && slot.getAttribute("data-rendered") === "0") {
+            const q = (typeof QS !== "undefined") ? QS.find((x) => x.id === id) : null;
+            if (q) {
+              const st = getS(id);
+              const expl = st.expl_override ?? q.explanation ?? "";
+              const src = st.src_override ?? q.explanation_source ?? "";
+              slot.innerHTML =
+                clinicalExplBlock(q) + geminiExplBlock(expl, src, id) + nbExplBlock(q);
+              slot.setAttribute("data-rendered", "1");
+            }
+          }
+        }
       }
 
       const SMAP2 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
@@ -8097,8 +8179,6 @@ ${(q.options || []).join('\n')}
       function renderBrowseCard(q) {
         const st = getS(q.id);
         const expl = st.expl_override ?? q.explanation ?? "";
-        const src = st.src_override ?? q.explanation_source ?? "";
-        const LETTERS = ["A", "B", "C", "D"];
 
         const correctArr2 = Array.isArray(q.answer) ? q.answer : [q.answer];
         const optHtml = (q.options || [])
@@ -8112,13 +8192,15 @@ ${(q.options || []).join('\n')}
         const topicTagB = topicB
           ? `<span class="topic-tag" style="margin-left:0;margin-bottom:.35rem;display:inline-block" onclick="filterByTopic('${topicB.replace(/'/g, "\\'")}');event.stopPropagation();">🏷 ${topicB}</span>`
           : "";
-        const explHtml = (expl || q.explanation_notebooklm || q.clinical || q.explanation_pending)
-          ? `${topicTagB}${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}`
-          : `${topicTagB}<p class="no-expl">尚無詳解</p>`;
+        // v391:詳解區先用 placeholder,打開卡片才 render(formatExpl 很重)
+        const hasAnyExpl = !!(expl || q.explanation_notebooklm || q.clinical || q.explanation_pending);
+        const explSlot = hasAnyExpl
+          ? `<div class="expl-slot" data-rendered="0"><div style="color:#9ca3af;font-size:.8rem;padding:.4rem 0">📖 詳解載入中…</div></div>`
+          : `<p class="no-expl">尚無詳解</p>`;
 
         return `
 <div class="q-card" id="bc-${q.id}">
-  <div class="q-card-hdr" onclick="document.getElementById('bc-${q.id}').classList.toggle('open')">
+  <div class="q-card-hdr" onclick="browseToggleCard('${q.id}')">
     <div class="q-hdr-main">
       <div class="q-badges" style="margin-bottom:.3rem">
         <span class="badge badge-${q.subject}">${SMAP2[q.subject] || q.subject}</span>
@@ -8133,7 +8215,7 @@ ${(q.options || []).join('\n')}
   </div>
   <div class="q-body">
     <div class="q-opt-list">${optHtml}</div>
-    ${explHtml}
+    ${topicTagB}${explSlot}
     <div class="q-actions">
       <button class="a-mark ${SCLS[st.status]}" onclick="browseToggleStatus('${q.id}',event)">${SLABELS[st.status]}</button>
       <button class="a-count" onclick="browseIncCount('${q.id}',event)">已寫過 ${st.count} 次</button>
@@ -16777,175 +16859,34 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
 
         showToast("✅ 所有標記已重置");
         // Refresh current view
-        const homeVisible =
-          document.getElementById("screen-home").style.display !== "none";
-        const dbVisible =
-          document.getElementById("screen-db")?.style.display !== "none";
-        if (homeVisible || (!homeVisible && !dbVisible)) {
-          updateHomeStats();
-          updateMatchCount();
-          renderTopicSidebar();
-        } else if (dbVisible) showDB();
+        updateHomeStats();
+        updateMatchCount();
+        renderTopicSidebar();
+        if (typeof renderBrowse === "function") renderBrowse();
       }
 
 
       // ════════════════════════════════════════════
-      //  Database screen
+      //  Database screen — v391:已併入瀏覽。底下保留薄殼,讓舊呼叫不會炸
       // ════════════════════════════════════════════
-      let dbSubjs = new Set(["ya3", "ya4", "ya5", "ya6"]);
-      let dbSearchQ = "";
-      let dbTopicFilter = null;
-
+      // 把考點 tag 點擊轉導到 browse 的考點篩選
       function filterByTopic(topic) {
-        dbTopicFilter = topic;
-        const bar = document.getElementById("db-topic-bar");
+        bfTopicFilter = topic;
+        const bar = document.getElementById("bf-topic-bar");
+        const lab = document.getElementById("bf-topic-label");
         if (topic) {
-          document.getElementById("db-topic-label").textContent = topic;
-          bar.style.display = "";
+          if (lab) lab.textContent = topic;
+          if (bar) bar.style.display = "";
         } else {
-          bar.style.display = "none";
+          if (bar) bar.style.display = "none";
         }
-        showDB();
+        // 確保在瀏覽畫面
+        if (typeof showBrowse === "function") showBrowse();
+        else if (typeof renderBrowse === "function") renderBrowse();
       }
 
-      function clearTopicFilter() {
-        filterByTopic(null);
-      }
-
-      function showDB() {
-        closeAllOverlays();
-        document.getElementById("screen-home").style.display = "none";
-        document.getElementById("screen-practice").style.display = "none";
-        document.getElementById("screen-browse").style.display = "none";
-        document.getElementById("screen-scroll-exam").style.display = "none";
-        document.getElementById("screen-wrongbook").style.display = "none";
-        const __nb_d = document.getElementById("screen-notebook"); if (__nb_d) __nb_d.style.display = "none";
-        const __fx_d = document.getElementById("screen-fixexam"); if (__fx_d) __fx_d.style.display = "none";
-        document.getElementById("screen-db").style.display = "block";
-        document.getElementById("btn-home").classList.remove("active");
-        document.getElementById("btn-db").classList.add("active");
-        document.getElementById("btn-browse").classList.remove("active");
-        document.getElementById("btn-wrongbook").classList.remove("active");
-        const __nb_btnd = document.getElementById("btn-notebook"); if (__nb_btnd) __nb_btnd.classList.remove("active");
-        renderDB();
-      }
-
-      function toggleDBSubj(el) {
-        const s = el.dataset.dbsubj;
-        el.classList.toggle("sel");
-        dbSubjs.has(s) ? dbSubjs.delete(s) : dbSubjs.add(s);
-        renderDB();
-      }
-
-      function dbSearch(q) {
-        dbSearchQ = q.trim().toLowerCase();
-        renderDB();
-      }
-
-      function renderDB() {
-        const list = document.getElementById("db-list");
-
-        // Get questions with explanations
-        const withExpl = QS.filter((q) => {
-          if (!dbSubjs.has(q.subject)) return false;
-          const st = getS(q.id);
-          const expl = st.expl_override ?? q.explanation ?? "";
-          if (!expl) return false;
-          const topic = st.topic || q.topic || "";
-          if (dbTopicFilter && topic !== dbTopicFilter) return false;
-          if (dbSearchQ) {
-            const hay = [q.question, q.meta, expl, topic]
-              .join(" ")
-              .toLowerCase();
-            if (!hay.includes(dbSearchQ)) return false;
-          }
-          return true;
-        });
-
-        if (!withExpl.length) {
-          const emptyMsg = dbTopicFilter
-            ? `考點「${dbTopicFilter}」沒有符合的題目`
-            : dbSearchQ
-              ? "沒有符合的題目"
-              : "還沒有詳解\n答題後點「✨ 要詳解」開始累積";
-          list.innerHTML = `<div class="db-empty"><div class="icon">📚</div><p>${emptyMsg}</p></div>`;
-          return;
-        }
-
-        // Group by subject → year-session
-        const SMAP3 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
-        const groups = {};
-        withExpl.forEach((q) => {
-          const key = `${q.subject}||${q.year}-${q.session}`;
-          if (!groups[key]) groups[key] = [];
-          groups[key].push(q);
-        });
-
-        const SESSION_LABEL = { 1: "上", 2: "下" };
-        let html = "";
-        // Sort groups by subject order then year-session
-        const SUBJ_ORDER = ["ya3", "ya4", "ya5", "ya6"];
-        const sortedKeys = Object.keys(groups).sort((a, b) => {
-          const [sa, ysa] = a.split("||");
-          const [sb, ysb] = b.split("||");
-          const si = SUBJ_ORDER.indexOf(sa) - SUBJ_ORDER.indexOf(sb);
-          if (si !== 0) return si;
-          return ysa.localeCompare(ysb);
-        });
-
-        sortedKeys.forEach((key) => {
-          const [subj, ys] = key.split("||");
-          const [year, sess] = ys.split("-");
-          const qs = groups[key].sort((a, b) => a.number - b.number);
-          html += `<div class="db-group-title">${SMAP3[subj] || subj} · ${year}年${SESSION_LABEL[sess] || sess}（${qs.length} 題）</div>`;
-          qs.forEach((q) => {
-            html += renderDBCard(q);
-          });
-        });
-
-        list.innerHTML = html;
-      }
-
-      function renderDBCard(q) {
-        const st = getS(q.id);
-        const expl = st.expl_override ?? q.explanation ?? "";
-        const src = st.src_override ?? q.explanation_source ?? "";
-        const topic = st.topic || q.topic || "";
-        const SMAP3 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
-        const LETTERS = ["A", "B", "C", "D", "E"];
-        const correctArr3 = Array.isArray(q.answer) ? q.answer : [q.answer];
-        const optHtml = (q.options || [])
-          .map((opt, i) => {
-            const isC = correctArr3.includes(i);
-            return `<div class="q-opt ${isC ? "correct" : "wrong"}">${isC ? "✓ " : ""}${opt}</div>`;
-          })
-          .join("");
-        const topicEsc = topic.replace(/'/g, "\\'");
-
-        return `
-<div class="db-card" id="dbc-${q.id}">
-  <div class="db-card-hdr" onclick="document.getElementById('dbc-${q.id}').classList.toggle('open')">
-    <div class="db-hdr-main">
-      <div class="q-badges" style="margin-bottom:.3rem">
-        <span class="badge badge-meta">${q.meta || ""}</span>
-        ${topic ? `<span class="topic-tag" onclick="event.stopPropagation();filterByTopic('${topicEsc}')">🏷 ${topic}</span>` : ""}
-      </div>
-      <div style="font-size:.85rem;line-height:1.55;color:#1e293b">${q.question}</div>
-    </div>
-    <div class="db-hdr-right">
-      <span class="status-dot ${DOTCLS[st.status]}"></span>
-      <span class="db-chevron">▼</span>
-    </div>
-  </div>
-  <div class="db-body">
-    <div class="q-opt-list">${optHtml}</div>
-    ${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}
-    <div class="q-actions">
-      <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️ 編輯</button>
-    </div>
-  </div>
-</div>`;
-      }
+      function clearTopicFilter() { filterByTopic(null); }
+      function showDB() { if (typeof showBrowse === "function") showBrowse(); }
 
       // ════════════════════════════════════════════
       //  User badge in header

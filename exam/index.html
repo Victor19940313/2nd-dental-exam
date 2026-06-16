@@ -11315,8 +11315,13 @@ ${dec.reasoning || ''}
         const isNew = !target || target.toUpperCase() === 'NEW';
 
         // 「NEW」→ 加一個全新的 ### 子段,放在 🔗 延伸補充 之前(或章節最後)
+        // v392 fix:dec.delta_new_section_title 為空時,若 target 看起來是正常標題(含 emoji 或中文)就直接用它當標題
         if (isNew) {
-          const title = (dec.delta_new_section_title || '🆕 新主題').trim();
+          let title = (dec.delta_new_section_title || '').trim();
+          if (!title) {
+            if (target && target.toUpperCase() !== 'NEW') title = target;
+            else title = '🆕 新主題';
+          }
           const newSection = '\n\n### ' + title + '\n\n' + cleanDelta + '\n';
           // 找第一個 SAFE_SECTIONS 對應的位置 → 插在它前面
           for (const safe of SAFE_SECTIONS) {
@@ -11337,9 +11342,12 @@ ${dec.reasoning || ''}
         const startRe = new RegExp('(^|\\n)(#{2,4})\\s+.*?' + escTarget + '[^\\n]*\\n', 'i');
         const startM = oldContent.match(startRe);
         if (!startM) {
-          // 找不到目標子段 → 跌回 NEW 策略
-          console.warn('[surgicalAppend] target_section not found, falling back to NEW:', target);
-          return surgicalAppend(oldContent, Object.assign({}, dec, { delta_target_section: 'NEW' }));
+          // 找不到目標子段 → 用 target 當新子段標題建立(保留 AI 原本指定的標題,不要降級成「🆕 新主題」)
+          console.warn('[surgicalAppend] target_section not found, creating new section with that title:', target);
+          return surgicalAppend(oldContent, Object.assign({}, dec, {
+            delta_target_section: 'NEW',
+            delta_new_section_title: dec.delta_new_section_title || target
+          }));
         }
         const startIdx = oldContent.indexOf(startM[0]) + startM[0].length;
         // 找下一個同層或更高層 heading,當作 section 結束
@@ -11349,9 +11357,10 @@ ${dec.reasoning || ''}
         const endIdx = next ? next.index : oldContent.length;
 
         // 插入位置:section 結尾(下一個 heading 前)
+        // v392 fix:sectionBody 後只接 1 個 \n(不要 \n\n 把 bullet list 切斷)
         const sectionBody = oldContent.slice(startIdx, endIdx).replace(/\s+$/, '');
-        const insertion = sectionBody ? '\n' + cleanDelta : cleanDelta;
-        return oldContent.slice(0, startIdx) + sectionBody + '\n' + insertion + '\n\n' + oldContent.slice(endIdx).replace(/^\s+/, '');
+        const joined = sectionBody ? (sectionBody + '\n' + cleanDelta) : cleanDelta;
+        return oldContent.slice(0, startIdx) + joined + '\n\n' + oldContent.slice(endIdx).replace(/^\s+/, '');
       }
 
       function applyAIDecision(dec, q){

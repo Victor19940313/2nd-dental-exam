@@ -11356,12 +11356,29 @@ ${dec.reasoning || ''}
         // bullet 行做去重,非 bullet(段落 / table / callout)原樣保留
         const filteredLines = delta.split('\n').map(ln => {
           if (/^\s*[-*]\s+/.test(ln)) return dedupLine(ln);
-          // table row: 含 | 且不是分隔線 → 拿前 18 字當指紋
+          // table row: 含 | 且不是分隔線
+          // v395 fix:用「row key (第一格內文)」當指紋,舊章節同一個 key 已有 → 視為更新意圖,去重
+          //          這樣 AI 寫「| 終模 | PVS / Polyether |」想擴充舊「| 終模 | PVS |」會被擋掉,
+          //          AI 應該另開一行 row 寫「| 補充終模選擇 | ... |」之類
           if (/^\s*\|/.test(ln) && !/^\s*\|[\s:\-|]+\|\s*$/.test(ln)) {
-            const cells = ln.split('|').filter(c => c.trim());
+            const cells = ln.split('|').map(c => c.trim()).filter(c => c);
             if (cells.length >= 2) {
-              const fp = stripMd(cells[0]).slice(0, 18);
-              if (fp.length >= 4 && oldStripped.includes(fp)) return null;
+              const firstCell = stripMd(cells[0]).trim();
+              if (firstCell.length >= 2) {
+                // 舊章節有「| firstCell」這個 row key → 重複
+                if (oldStripped.includes('| ' + firstCell)) return null;
+              }
+              // 退而求其次:用整行(拿掉 |)前 18 字當指紋(舊邏輯)
+              const flat = ln.replace(/\|/g, ' ').replace(/\s+/g, ' ').trim();
+              const fp = stripMd(flat).slice(0, 18);
+              if (fp.length >= 6 && oldStripped.includes(fp)) return null;
+              // token 重疊率檢查
+              const tokens = extractKeyTokens(flat);
+              if (tokens.size >= 3) {
+                let inOld = 0;
+                tokens.forEach(tok => { if (oldStripped.includes(tok)) inOld++; });
+                if (inOld / tokens.size >= 0.8) return null;
+              }
             }
           }
           return ln;

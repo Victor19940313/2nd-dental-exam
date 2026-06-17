@@ -6526,7 +6526,7 @@ ${(q.options || []).join('\n')}
         renderQGrid();
       }
 
-      function answerQ(idx) {
+      async function answerQ(idx) {
         // 試卷模式答題後仍可改答案，直到「下一題」/「交卷」為止
         if (answered && !examMode) return;
         const q = practiceList[practiceIdx];
@@ -6640,10 +6640,11 @@ ${(q.options || []).join('\n')}
           practiceAnswers[q.id] = idx;
           updatePracticeScoreUI();
         }
-        persist(q.id);
+        // v403:await persist 確保 IDB 寫完 + 推上雲端才繼續(不然下一題答太快會 race)
         updateMarkButtons(q.id);
         qgridSkipped[practiceIdx] = false; // mark as answered
         renderQGrid();
+        await persist(q.id);
       }
 
       function toggleExpl() {
@@ -7711,8 +7712,8 @@ ${(q.options || []).join('\n')}
         if (!q) return;
         if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
         qState[q.id].status = qState[q.id].status === status ? 'none' : status;
+        // v403:persist 內部已經 await pushAll,不需要再呼叫一次
         await persist(q.id);
-        if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
         renderReviewQ(_reviewIdx);
         showToast({
           give_up: '🔴 送他吧',
@@ -7728,7 +7729,6 @@ ${(q.options || []).join('\n')}
         if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
         qState[q.id].flagged = !qState[q.id].flagged;
         await persist(q.id);
-        if (typeof DentalSync !== 'undefined') DentalSync.pushAll();
         renderReviewQ(_reviewIdx);
         showToast(qState[q.id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
       }
@@ -17445,12 +17445,19 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         )
           return;
 
+        // v403:每筆都打 updatedAt,避免跨裝置 merge 把這次 reset 吃掉(沒時戳會走舊邏輯,優先有 status)
+        const now = Date.now();
         for (const id in qState) {
           qState[id].status = "none";
           qState[id].count = 0;
+          qState[id].updatedAt = now;
         }
-        _saveQState();
-        if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        // v403:await 確保 IDB 寫完才 push(下面的 pushAll 也是 await)
+        await _saveQState();
+        if(typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+          try { await Promise.race([DentalSync.pushAll(), new Promise(r => setTimeout(r, 10000))]); }
+          catch(e) { console.warn('[resetAllMarks] push fail', e); }
+        }
 
         if (USE_SUPABASE) {
           try {
@@ -17514,15 +17521,16 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       // ════════════════════════════════════════════
       //  Flag (wrongbook) toggle
       // ════════════════════════════════════════════
-      function toggleFlag(){
+      async function toggleFlag(){
         const q = practiceList[practiceIdx];
         if(!q) return;
         if(!qState[q.id]) qState[q.id] = {status:'none',count:0};
         qState[q.id].flagged = !qState[q.id].flagged;
-        persist(q.id);
-        if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        // v403:必須 await persist,不然底下重複的 pushAll 會在 IDB 寫完前先觸發,推舊資料上雲端 → 標記莫名其妙不見
+        //       而且 persist 內部已經會 pushAll,不需要再呼叫一次
         updateFlagBtn(q.id);
         showToast(qState[q.id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
+        await persist(q.id);
       }
 
       function updateFlagBtn(id){
@@ -17691,18 +17699,25 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         const file = e.target.files[0];
         if(!file) return;
         const reader = new FileReader();
-        reader.onload = function(ev){
+        reader.onload = async function(ev){
           try{
             const arr = JSON.parse(ev.target.result);
             let count = 0;
+            // v403:打時戳,確保跨裝置 merge 時這次匯入會贏
+            const now = Date.now();
             arr.forEach(item=>{
               if(item.id){
                 if(!qState[item.id]) qState[item.id] = {status:'none',count:0};
                 qState[item.id].flagged = true;
+                qState[item.id].updatedAt = now;
                 count++;
               }
             });
-            _saveQState();
+            await _saveQState();
+            if(typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+              try { await Promise.race([DentalSync.pushAll(), new Promise(r => setTimeout(r, 10000))]); }
+              catch(e) { console.warn('[handleWBImport] push fail', e); }
+            }
             renderWrongbook();
             showToast('已匯入 ' + count + ' 題');
           }catch(err){
@@ -17793,14 +17808,22 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       // ════════════════════════════════════════════
       //  Reset wrongbook
       // ════════════════════════════════════════════
-      function resetWrongbook(){
+      async function resetWrongbook(){
         if(!confirm('確定要清空錯題本嗎？\n所有 🚩 標記都會被移除。')) return;
         if(!confirm('最後確認：清空錯題本？\n此操作無法復原。')) return;
+        // v403:每筆都打 updatedAt,await 寫入 + push
+        const now = Date.now();
         for(var id in qState){
-          if(qState[id].flagged) qState[id].flagged = false;
+          if(qState[id].flagged) {
+            qState[id].flagged = false;
+            qState[id].updatedAt = now;
+          }
         }
-        _saveQState();
-        if(typeof DentalSync !== 'undefined') DentalSync.pushAll();
+        await _saveQState();
+        if(typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+          try { await Promise.race([DentalSync.pushAll(), new Promise(r => setTimeout(r, 10000))]); }
+          catch(e) { console.warn('[resetWrongbook] push fail', e); }
+        }
         renderWrongbook();
         showToast('錯題本已清空');
       }

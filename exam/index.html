@@ -500,7 +500,9 @@
         justify-content: space-between;
         position: sticky;
         top: 0;
-        z-index: 100;
+        /* v406:z-index 提到 11000,蓋過 onboarding(9999) / exam-review(10000) / peek(10500),
+           避免 overlay 蓋住 nav 按鈕導致 user 按了沒反應(俗稱「白屏 bug」) */
+        z-index: 11000;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       }
       .header h1 {

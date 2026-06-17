@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-h5-render-fix';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-hr-aesthetics';
 const PRECACHE = [
   './',
   './index.html',

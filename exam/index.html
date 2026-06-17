@@ -10417,10 +10417,27 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
 - ✅ **\`####\` 次子標題**(分小段),例如機制 + 臨床意義 + 鑑別診斷
 - ✅ **[[概念標籤]]** 包重要名詞 / **粗體** 強調關鍵字 / *斜體* 標英文專有名詞
 
-【何時用 skip】
-- 若新題的所有重點都已在 digest_concepts/digest_facts/digest_bullet_starts 中出現 → **直接 skip**(寫 reasoning 解釋為什麼),delta_* 都不填
-- 寧可 skip 也不要為了「有做事」硬塞重複的 bullet
-- 但只要新題帶來**至少 2-3 個新觀念**就 append,delta 寫扎實一點
+🚨🚨🚨【何時用 skip — 嚴格版,不要亂判已涵蓋】🚨🚨🚨
+**skip 的判斷標準很高,寧可 append 一個短 delta 也不要錯判 skip**。
+看到 digest_concepts 有同名概念**絕對不夠**,因為:
+- 概念名出現在標籤 ≠ 該題的細節都涵蓋(例:digest 有「[[血友病]]」但章節可能沒提「血友病 A/B/C 三型分類」)
+- 名詞重複 ≠ 機制/數值/治療/臨床細節都已寫過
+
+✅ 真的可以 skip(必須同時滿足):
+1. 題目問的**具體事實**(數值、治療藥名、機制名)逐項出現在 digest_facts 或 digest_bullet_starts
+2. 題目選項裡的**關鍵詞**至少 80% 出現在 digest 裡
+3. 題目詳解強調的**獨特觀念**全部覆蓋
+
+❌ 千萬別 skip 的訊號:
+- 題目詳解有**數值/單位**但 digest_facts 沒這個數值 → 必須 append 補上
+- 題目選項提到**某個藥/器械/分類名稱**但 digest 沒這名詞 → 必須 append
+- 題目重點是**比較對照**(A vs B)但章節只提了 A 沒提 B → 必須 append 加 B
+- 章節有 \`📌 一句話定義\` 但題目細節在「機制」「臨床」這些子段沒有 → 必須 append
+- 你不確定到底有沒有涵蓋 → **預設 append**,寫個短 delta 也好過漏掉重點
+
+📝 reasoning 必寫清楚:如果你 skip,要明確說出題目的每個重點對應到 digest 哪一條,不能含糊「已涵蓋」交差
+- ❌ 爛 reasoning:「已涵蓋」「概念已存在」
+- ✅ 好 reasoning:「題目考 Leeway 數值 0.9/1.7 mm 已在 digest_facts;考 late mesial shift 機制已在 bullet_starts」
 
 【豐富 delta 範例(必看 — 這就是品質目標)】
 情境:候選章節 digest 顯示已有
@@ -11576,7 +11593,7 @@ ${dec.reasoning || ''}
           if (tokens.size >= 3) {
             let inOld = 0;
             tokens.forEach(tok => { if (oldStripped.includes(tok)) inOld++; });
-            if (inOld / tokens.size >= 0.8) return null;
+            if (inOld / tokens.size >= 0.9) return null; // v407:80% → 90%,寬鬆一點,避免名詞重複但細節不同的句子被誤殺
           }
           return ln;
         };
@@ -11604,7 +11621,7 @@ ${dec.reasoning || ''}
               if (tokens.size >= 3) {
                 let inOld = 0;
                 tokens.forEach(tok => { if (oldStripped.includes(tok)) inOld++; });
-                if (inOld / tokens.size >= 0.8) return null;
+                if (inOld / tokens.size >= 0.9) return null; // v407:80% → 90%,寬鬆一點,避免名詞重複但細節不同的句子被誤殺
               }
             }
           }

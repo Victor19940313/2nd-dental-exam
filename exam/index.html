@@ -10137,10 +10137,16 @@ ${(q.options || []).join('\n')}
       function migrateBrokenChapters(){
         if (!notebook || !notebook.chapters) return 0;
         let fixed = 0;
+        let h5fixed = 0;
         for (const ch of notebook.chapters) {
           if (!ch.content) continue;
           const before = ch.content;
-          const after = unescapeIfNeeded(before);
+          let after = unescapeIfNeeded(before);
+          // v404:把 ##### / ###### 收斂成 ####(網站最深支援 H4)
+          if (/^#{5,}\s/m.test(after)) {
+            after = after.replace(/^#{5,}\s/gm, '#### ');
+            h5fixed++;
+          }
           if (after !== before) {
             ch.content = after;
             ch.updatedAt = Date.now();
@@ -10149,7 +10155,7 @@ ${(q.options || []).join('\n')}
         }
         if (fixed > 0) {
           saveNotebook();
-          console.log('[migrateBrokenChapters] 自動修復了', fixed, '個被雙重編碼搞壞的章節');
+          console.log('[migrateBrokenChapters] 自動修復了', fixed, '個章節 (含', h5fixed, '個 ##### → ####)');
         }
         return fixed;
       }
@@ -12781,7 +12787,7 @@ ${JSON.stringify(lite, null, 2)}
 【核心鐵則(極重要)】
 1. **完整保留**所有原章節的重點(條列、表格、callout、延伸補充)
 2. **合併重複內容**(同一概念不要寫兩遍,選最完整版本)
-3. **整體結構合理**:相關概念放一起,用 ## (只 1 個) / ### / #### 分層
+3. **整體結構合理**:相關概念放一起,用 ## (只 1 個) / ### / #### 分層;🚫 **禁止 \`#####\` 或更深**(網站渲染不吃,會直接秀「#####」原文很醜)
 4. **🖼 圖片絕對保留**:所有原章節的圖片 markdown(\`!【\` 開頭那種,看下面「圖片清單」),**一張都不可刪除**
    - 可調整圖片位置(放到適合的段落下),但禁止省略
    - 禁止改成「(此處有圖)」這類描述、禁止省略 URL
@@ -14385,7 +14391,8 @@ ${qBlocks}
 4. ✅ 看到重複先合併,再決定哪些放在主段落、哪些放 🔗 延伸補充
 
 【整理風格】
-- Markdown: ## (只 1 個) / ### / **粗體** / - 條列 / | 表格 |
+- Markdown: ## (只 1 個) / ### / #### / **粗體** / - 條列 / | 表格 |
+- 🚫 **標題最深寫到 \`####\`,禁止 \`#####\` 或更深**(網站渲染最深支援 H4,寫更深會被當原文秀出來變醜)
 - 結構: 📌 一句話定義 → 🗂 分類或對照表 → ⚙️ 機制 → 🏥 臨床意義 → 🔗 延伸補充 → 📝 易考重點
 - 同概念**必須合併**,不要每題各寫一段
 - 中英對照
@@ -14550,7 +14557,7 @@ ${instruction.trim()}
 【任務】
 依使用者指令修改上面的內容。${isPaginated ? '\n⚠ 只能改「上面這一頁」,不要新增其他頁的內容。' : ''}
 維持原有的 Markdown 排版風格:
-- ## h2 ### h3 #### h4 標題
+- ## h2 ### h3 #### h4 標題(🚫 **禁止 \`#####\` 或更深**,網站只渲染到 h4,寫更深會被當原文秀出來)
 - **粗體** 用於重要主項目名稱
 - - 條列為主,每點獨佔一行
 - | 表格 | 做對照
@@ -15061,7 +15068,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         });
         // 兜底：清掉殘留的單獨 &gt; 行
         s = s.replace(/^&gt;[ \t]*$/gm, '');
-        // headings (h4 first to avoid being captured by h3)
+        // headings (從深到淺,避免被外層 capture)
+        // v404:H5/H6 全部 fallback 成 H4(網站結構建議最深 H4),不然 AI 寫的 ##### 會被當原文秀出來變醜
+        s = s.replace(/^#{5,6} (.+)$/gm, '<h4>$1</h4>');
         s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
         s = s.replace(/^### (.+)$/gm, '<h3>$1</h3>');
         s = s.replace(/^## (.+)$/gm, '<h2>$1</h2>');

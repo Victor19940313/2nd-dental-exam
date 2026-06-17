@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-marks-race-roundup';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-h5-render-fix';
 const PRECACHE = [
   './',
   './index.html',

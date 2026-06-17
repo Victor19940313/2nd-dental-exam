@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-resume-btn-skip-feedback';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-ai-guardrails-progress-rename-unnamed';
 const PRECACHE = [
   './',
   './index.html',

@@ -4182,6 +4182,7 @@
           <button class="nb-tb-btn" onclick="openHistoryModal()" title="編輯歷史">🕓 歷史</button>
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目（牙三/牙四/牙五/牙六）有沒有分錯，一鍵修正">🔧 修正科目</button>
           <button class="nb-tb-btn" onclick="fixEscapedNewlinesInAllChapters()" title="掃所有章節:(1) 字面「\n」→ 真換行 (2) 表格孤兒列(空行隔開的「| ... |」)→ 接回主表" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🧹 修亂碼</button>
+          <button class="nb-tb-btn" onclick="renameUnnamedChapters()" title="用 AI 幫名稱含「未命名」或「待整理」的章節改成正常名稱" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🏷 修未命名章節</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
         </div>
@@ -7016,6 +7017,7 @@ ${(q.options || []).join('\n')}
         _silentResetCooldowns(); // 使用者主動按 → 清乾淨
         _nbInflight.add(qid);
         _nbPending++;
+        _nbStartTimes.set(qid, Date.now());
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理(可繼續寫題)');
         renderScrollExam(); // 立即把這題按鈕變成「⏳ AI 整理中…」
@@ -7028,6 +7030,7 @@ ${(q.options || []).join('\n')}
           .finally(() => {
             _nbInflight.delete(qid);
             _nbPending--;
+            _nbStartTimes.delete(qid);
             _updateNbBadge();
             renderScrollExam();
             Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
@@ -7771,6 +7774,7 @@ ${(q.options || []).join('\n')}
         _silentResetCooldowns(); // 使用者主動按 → 清乾淨
         _nbInflight.add(q.id);
         _nbPending++;
+        _nbStartTimes.set(q.id, Date.now());
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理(可繼續看其他題)');
         renderReviewQ(_reviewIdx); // 立即顯示「⏳ AI 整理中…」
@@ -7779,6 +7783,7 @@ ${(q.options || []).join('\n')}
           .finally(() => {
             _nbInflight.delete(q.id);
             _nbPending--;
+            _nbStartTimes.delete(q.id);
             _updateNbBadge();
             renderReviewQ(_reviewIdx);
           });
@@ -10396,6 +10401,23 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
    - skip: 現有章節已**完整涵蓋**這題重點 → 不改筆記
 5. **判斷 append 還是 new_chapter 時,往 append 那邊靠** — 寧可併章太雜也不要開過多重複概念的章
 
+🛑🛑🛑【v408 — 開新章節的硬門檻(很重要,違反就是錯)】🛑🛑🛑
+**寧可 append 到 60% 相符的章節,也不要開新章節**(使用者反映 AI 太愛開新章節)。
+new_chapter **同時滿足這 3 條才允許**,缺一條都改 append:
+1. **強推薦候選章節清單裡找不到 subtopic 一致的章**(系統已幫你過濾,看候選的 subtopic 跟新題該歸的 subtopic 是否一樣)
+2. **其他既有章節清單也找不到 subtopic 一致的章**
+3. **新題的核心概念跟全部現有章節的 concepts 都沒任何重疊**
+
+如果你「猶豫要 append 還是 new_chapter」→ **預設 append**,加個短 delta 到最接近的章。
+記住:章節太多反而難讀,使用者寧可一章稍微長一點也不要 10 個小章節重複講類似東西。
+
+🛑【v408 — skip 自打嘴巴防呆,必讀】🛑
+**reasoning 的內容會被系統檢查**。如果你 action=skip 但 reasoning 出現以下任一字眼,系統會自動標記為「AI 自相矛盾」並要使用者強制補進:
+- 「可補充」「可擴充」「可補強」「可以補」「可以加」「可加上」「可再補」「還可以加」「相關擴充」「延伸補充」「沒提到」「未提及」「沒寫到」「未涵蓋」「沒涵蓋」
+
+→ 如果你寫了上面任一字眼,**強迫自己改成 action=append**,寫個短 delta 補上那個「可補充」的點。
+→ skip 的 reasoning 只能用:「題目重點 X / Y / Z 逐項對應到 digest 的 …」這種**逐條確認**的句型,不能含糊。
+
 🚨🚨🚨【append 時的 delta 機制(v392 新增,極重要)】🚨🚨🚨
 新流程:你不再整章重寫,只回**新增的那幾行**。程式碼會幫你插進對的位置,而且會自動跳過重複內容。
 
@@ -10859,16 +10881,36 @@ ${dec.reasoning || ''}
       // 背景排隊：使用者連續按多題也不會 race condition
       let _nbQueue = Promise.resolve();
       let _nbPending = 0;
+      // v408:進度感 — 記錄每筆 in-flight 的 start time,badge 顯示已耗秒數
+      const _nbStartTimes = new Map();
+      let _nbBadgeTimer = null;
       function _updateNbBadge(){
         let badge = document.getElementById('nb-pending-badge');
-        if (_nbPending <= 0) { if (badge) badge.remove(); return; }
+        if (_nbPending <= 0) {
+          if (badge) badge.remove();
+          if (_nbBadgeTimer) { clearInterval(_nbBadgeTimer); _nbBadgeTimer = null; }
+          return;
+        }
         if (!badge) {
           badge = document.createElement('div');
           badge.id = 'nb-pending-badge';
           badge.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:20000;background:#7c3aed;color:white;padding:.55rem .85rem;border-radius:24px;box-shadow:0 6px 20px rgba(0,0,0,.45),0 0 0 2px rgba(255,255,255,.9);font-size:.85rem;font-weight:700;display:flex;align-items:center;gap:.4rem;cursor:default';
           document.body.appendChild(badge);
         }
-        badge.innerHTML = '<span class="nb-loading" style="border-color:white;border-top-color:transparent"></span> AI 整理中：' + _nbPending + ' 題';
+        let oldestSec = 0;
+        if (_nbStartTimes.size > 0) {
+          const now = Date.now();
+          for (const ts of _nbStartTimes.values()) {
+            const sec = Math.floor((now - ts) / 1000);
+            if (sec > oldestSec) oldestSec = sec;
+          }
+        }
+        const secText = oldestSec > 0 ? ' · ' + oldestSec + 's' : '';
+        badge.innerHTML = '<span class="nb-loading" style="border-color:white;border-top-color:transparent"></span> AI 整理中：' + _nbPending + ' 題' + secText;
+        // 啟動秒數更新 timer(只開一個)
+        if (!_nbBadgeTimer && _nbPending > 0) {
+          _nbBadgeTimer = setInterval(() => _updateNbBadge(), 1000);
+        }
       }
 
       function addCurrentToNotebook(){
@@ -10885,6 +10927,7 @@ ${dec.reasoning || ''}
         // 立刻給回饋，使用者可以繼續做下一題
         _nbInflight.add(q.id);
         _nbPending++;
+        _nbStartTimes.set(q.id, Date.now());
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理（可繼續做題）');
         // 立即把按鈕變成「整理中」disabled
@@ -10895,6 +10938,7 @@ ${dec.reasoning || ''}
           .finally(() => {
             _nbInflight.delete(q.id);
             _nbPending--;
+            _nbStartTimes.delete(q.id);
             _updateNbBadge();
             // 整理完成後，若還在同一題就更新徽章 + 按鈕
             const cur = practiceList[practiceIdx];
@@ -11032,6 +11076,8 @@ ${dec.reasoning || ''}
       async function addQToNotebook(q, opts){
         opts = opts || {};
         const _t0 = _now();
+        // v408:讓 applyAIDecision 的 toast 能顯示總耗時
+        window._addQT0 = _t0;
         const _timing = {
           qid: q.id,
           qmeta: q.meta || q.id,
@@ -11065,6 +11111,17 @@ ${dec.reasoning || ''}
           _timing.ai1 = Object.assign({ ms: Math.round(_now() - _ai1Start) }, window._lastGeminiCallStats || {});
           const dec = extractJSON(raw);
           _timing.decision = dec && dec.action;
+          // v408:防呆 — AI 自打嘴巴(action=skip 但 reasoning 自承「可補充/相關/擴充」)
+          //        遇到就標 flag,toast 提醒使用者「可到歷史強制補進」
+          if (dec && dec.action === 'skip' && dec.reasoning) {
+            const r = String(dec.reasoning);
+            const contradictWords = /可補充|可擴充|可補強|可以補|可以加|可加上|可再補|還可以加|相關擴充|延伸補充|可補上|沒提到|未提及|沒寫到|未涵蓋|沒涵蓋/;
+            const confirmSkip = /完全相同|逐項對應|逐條對應|完全涵蓋|完整覆蓋|已逐一|逐一對應|每個重點都/;
+            if (contradictWords.test(r) && !confirmSkip.test(r)) {
+              console.warn('[addQToNotebook] AI 自打嘴巴: skip + reasoning 含補充字眼', r.slice(0, 200));
+              dec._contradictSkip = true;
+            }
+          }
           // v376/v392: AI 給空白 content 才退回 new_chapter,避免「亂選 append 但又啥都沒加」
           //            v392:append 用 delta_markdown 時,content 本來就會留空 → 只檢查 new_chapter
           //            append + 沒 delta + 沒 content → 退回 new_chapter (跟舊行為一致)
@@ -11551,6 +11608,89 @@ ${dec.reasoning || ''}
         alert('✅ 修了:\n  \\n 亂碼: ' + nlCount + ' 處\n  HTML→md 表格: ' + htmlTblCount + ' 個\n  孤兒列: ' + orphanCount + ' 處\n影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
       }
       window.fixEscapedNewlinesInAllChapters = fixEscapedNewlinesInAllChapters;
+
+      // v408:用 AI 幫名稱含「未命名」「待整理」的章節重新命名
+      async function renameUnnamedChapters(){
+        if (!notebook || !notebook.chapters || !notebook.chapters.length) {
+          showToast('還沒有章節'); return;
+        }
+        const isUnnamed = (name) => {
+          const n = (name || '').trim();
+          if (!n) return true;
+          return /未命名|待整理|未分類|unnamed|未指定/i.test(n);
+        };
+        const targets = notebook.chapters.filter(c => isUnnamed(c.name) && (c.content || '').trim().length >= 50);
+        if (targets.length === 0) {
+          showToast('✓ 沒有需要更名的章節'); return;
+        }
+        const sample = targets.slice(0, 5).map(c => '· ' + (c.name || '(空)')).join('\n');
+        const msg = '找到 ' + targets.length + ' 個未命名/待整理章節:\n\n' + sample +
+          (targets.length > 5 ? '\n…' : '') +
+          '\n\n要讓 AI 全部重新命名嗎?(每章 1 次 AI 呼叫,可能需要 ' + Math.ceil(targets.length * 5 / 60) + '~' + Math.ceil(targets.length * 15 / 60) + ' 分鐘)';
+        if (!confirm(msg)) return;
+        try { if (typeof backupNotebookToCloud === 'function') await backupNotebookToCloud('修未命名章節前'); } catch(e){}
+
+        const RENAME_SCHEMA = {
+          type: "OBJECT",
+          properties: { name: { type: "STRING", description: "新章節名 — 格式: 英文專有名詞 + 中文短句 (例: Pulp necrosis 牙髓壞死), 反映章節核心,不加 emoji 不加標點" } },
+          required: ["name"]
+        };
+        let done = 0, failed = 0;
+        const samples = [];
+        const _progressToast = (cur, total) => {
+          const t = document.getElementById('toast');
+          if (!t) return;
+          t.textContent = '🏷 AI 命名中 ' + cur + '/' + total + '...';
+          t.classList.add('show');
+          clearTimeout(_tt);
+        };
+        _progressToast(0, targets.length);
+        for (const ch of targets) {
+          try {
+            const content = (ch.content || '').slice(0, 1500);
+            const prompt = '你是牙醫筆記章節命名專家。看下面章節內容,給一個簡短章節名。\n\n' +
+              '【規則】\n' +
+              '1. 格式: "英文專有名詞 中文翻譯" (2-5 字英文 + 中文短句)\n' +
+              '2. 反映章節**核心概念**,不要太籠統(別只寫科目名)\n' +
+              '3. 不加 emoji、標號、引號、句號等任何標點\n' +
+              '4. 只回名稱字串,不要解釋\n\n' +
+              '【章節內容】\n' + content + '\n\n回 JSON: {"name": "..."}';
+            const raw = await callGemini(prompt, RENAME_SCHEMA);
+            const dec = extractJSON(raw);
+            const newName = (dec && dec.name || '').trim()
+              .replace(/^["'「『]+|["'」』]+$/g, '')
+              .replace(/[。、,，;；]+$/g, '');
+            if (newName && newName.length >= 2 && newName.length <= 50 && !isUnnamed(newName)) {
+              if (samples.length < 5) samples.push('· ' + (ch.name || '(空)') + ' → ' + newName);
+              ch.name = newName;
+              ch.updatedAt = Date.now();
+              done++;
+            } else {
+              failed++;
+            }
+          } catch(err) {
+            console.warn('[renameUnnamedChapters] failed for', ch.id, err);
+            failed++;
+            // 撞額度就停下,讓使用者明天再來
+            if (/429|quota|exceed/i.test(err.message || '')) {
+              alert('⚠️ AI 額度滿了,已更名 ' + done + ' 章,剩下 ' + (targets.length - done - failed) + ' 章下次再試');
+              break;
+            }
+          }
+          _progressToast(done + failed, targets.length);
+          // 每 3 章存一次,避免出錯整批丟掉
+          if ((done + failed) % 3 === 0) {
+            try { saveNotebook(); } catch(e){}
+          }
+        }
+        saveNotebook();
+        if (typeof renderNotebook === 'function') renderNotebook();
+        renderNotebookIfVisible();
+        const finalMsg = '✅ 已更名 ' + done + ' 章' + (failed ? '(' + failed + ' 章失敗,維持原名)' : '') +
+          (samples.length ? '\n\n部分結果:\n' + samples.join('\n') : '');
+        alert(finalMsg);
+      }
+      window.renameUnnamedChapters = renameUnnamedChapters;
       // v392:外科手術合併 — 把 AI 的 delta_markdown 插進舊章節對的位置 + 自動去重
       // dec.delta_target_section: 既有 ### 子標題原文(含 emoji) 或 "NEW"
       // dec.delta_new_section_title: 當 target='NEW' 時的新子段標題
@@ -11689,6 +11829,13 @@ ${dec.reasoning || ''}
         return oldContent.slice(0, startIdx) + joined + '\n\n' + oldContent.slice(endIdx).replace(/^\s+/, '');
       }
 
+      // v408:給 toast 加耗時尾巴(>= 3s 才顯示,避免快流程也加干擾)
+      function _addQElapsedTag(){
+        if (!window._addQT0) return '';
+        const sec = Math.round((_now() - window._addQT0) / 1000);
+        return sec >= 3 ? ' (' + sec + 's)' : '';
+      }
+
       function applyAIDecision(dec, q){
         const histEntry = {
           ts: Date.now(),
@@ -11700,12 +11847,22 @@ ${dec.reasoning || ''}
         };
 
         if (dec.action === 'skip') {
-          histEntry.note = '已涵蓋，未變動筆記';
-          notebook.history.unshift(histEntry);
-          trimHistory();
-          saveNotebook();
-          // v407:skip 的訊息更清楚,讓使用者知道「不是出錯,是真的章節已涵蓋」
-          showToast('ℹ️ 這題重點章節已涵蓋,沒新增内容');
+          // v408:AI 自打嘴巴的 skip → toast 警告 + 標記讓歷史紀錄能高亮提醒
+          if (dec._contradictSkip) {
+            histEntry.note = '⚠️ AI 判定已涵蓋但 reasoning 有提到可補充(點此強制補進)';
+            histEntry._contradictSkip = true;
+            notebook.history.unshift(histEntry);
+            trimHistory();
+            saveNotebook();
+            showToast('⚠️ AI 自相矛盾(說已涵蓋但又提到可補充) — 到「AI 整理紀錄」可強制補進' + _addQElapsedTag());
+          } else {
+            histEntry.note = '已涵蓋，未變動筆記';
+            notebook.history.unshift(histEntry);
+            trimHistory();
+            saveNotebook();
+            // v407:skip 的訊息更清楚,讓使用者知道「不是出錯,是真的章節已涵蓋」
+            showToast('ℹ️ 這題重點章節已涵蓋,沒新增内容' + _addQElapsedTag());
+          }
           renderNotebookIfVisible();
           return;
         }
@@ -11730,7 +11887,7 @@ ${dec.reasoning || ''}
           notebook.history.unshift(histEntry);
           trimHistory();
           saveNotebook();
-          showToast('✓ 新建章節「' + newCh.name + '」');
+          showToast('✓ 新建章節「' + newCh.name + '」' + _addQElapsedTag());
           renderNotebookIfVisible();
           return;
         }
@@ -11781,7 +11938,7 @@ ${dec.reasoning || ''}
           notebook.history.unshift(histEntry);
           trimHistory();
           saveNotebook();
-          showToast('✓ 補進章節「' + ch.name + '」');
+          showToast('✓ 補進章節「' + ch.name + '」' + _addQElapsedTag());
           renderNotebookIfVisible();
           return;
         }
@@ -16059,7 +16216,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
           const t = new Date(h.ts);
           const time = `${(t.getMonth()+1)}/${t.getDate()} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
           const concepts = (h.concepts||[]).join(' / ');
-          return `<div class="hist-row">
+          // v408:矛盾 skip(AI 自打嘴巴)高亮橘色,提醒使用者考慮強制補進
+          const rowStyle = h._contradictSkip ? ' style="border-left:3px solid #f97316;background:#fff7ed"' : '';
+          return `<div class="hist-row"${rowStyle}>
             <div class="hist-row-info">
               <div><span style="color:#9ca3af;font-size:.78rem">${time}</span> · <span class="hist-row-meta">${escapeHtml(h.qmeta||h.qid||'')}</span></div>
               ${concepts ? `<div style="font-size:.78rem;color:#7c3aed;margin-top:.15rem">🏷 ${escapeHtml(concepts)}</div>` : ''}

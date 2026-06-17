@@ -5403,20 +5403,29 @@
         try { await _wrongbookWriteQueue; } catch(e) {}
         return _wrongbookWriteQueue;
       }
+      // v406:debounce pushAll(避免快速連按時 race condition + UI 卡頓)
+      //       400ms 內連續呼叫只觸發 1 次,最後一次的 IDB state 會被推上去
+      let _pushAllTimer = null;
+      function _debouncedPushAll() {
+        if (_pushAllTimer) clearTimeout(_pushAllTimer);
+        _pushAllTimer = setTimeout(() => {
+          _pushAllTimer = null;
+          if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+            try { DentalSync.pushAll().catch(e => console.warn('[push] fail', e)); }
+            catch(e) { console.warn('[push] fail', e); }
+          }
+        }, 400);
+      }
       async function persist(id) {
         const s = qState[id] || { status: "none", count: 0 };
         // v401:打時戳,sync 合併時用 updatedAt 判斷誰新,不再用「有 status 優先」這個會吃掉「取消標記」的爛邏輯
         if (qState[id]) qState[id].updatedAt = Date.now();
         await _saveQState();
-        // Firebase sync — v401: await + 10s timeout,確保雲端真的收到才結束
-        if(typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
-          try {
-            await Promise.race([
-              DentalSync.pushAll(),
-              new Promise(resolve => setTimeout(resolve, 10000))
-            ]);
-          } catch(e) { console.warn('[persist] pushAll fail', e); }
-        }
+        // v406:Firebase sync 改成「debounce + 背景跑」
+        //       原本 await pushAll + 10s timeout 會讓 UI 卡到 push 完才回(網路慢時要 1 秒),
+        //       使用者點標記覺得「按下去要等好久」。
+        //       現在 IDB 寫完馬上 return,pushAll 背景跑;debounce 400ms 避免快速連按 race
+        _debouncedPushAll();
         if (!USE_SUPABASE) return;
         try {
           await sb

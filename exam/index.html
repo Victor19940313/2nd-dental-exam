@@ -6273,6 +6273,9 @@ ${(q.options || []).join('\n')}
               : "",
           }),
         ); } catch(e) { /* LS 滿了,LastPos 是輔助功能不影響主流程 */ }
+        // v407:寫完 lastPos 就把 btn-resume 顯示出來,不然開始練習後 startPractice 把它隱藏了,
+        //       使用者切到筆記本 / 瀏覽都看不到「回到考題」 → 找不回練習進度
+        try { if (typeof checkLastPos === 'function') checkLastPos(); } catch(e){}
       }
 
       function clearLastPos() {
@@ -11075,9 +11078,18 @@ ${dec.reasoning || ''}
             const oldCh = notebook.chapters.find(c => c.id === chId);
             if (oldCh) {
               try {
-                const merged = surgicalAppend(oldCh.content || '', dec);
-                dec.content = _preserveImagesIn(oldCh.content || '', merged);
-                _timing.ai2 = { ms: 0, skipped_reason: 'delta_merge' };
+                const oldContent = oldCh.content || '';
+                const merged = surgicalAppend(oldContent, dec);
+                // v407:全部 delta 都被去重(merged === oldContent) → 視為 skip,告訴使用者「章節已涵蓋,沒新增」
+                //       不然 user 看「✓ 補進章節」訊息但章節內容完全沒變,以為「加一加什麼都沒進去」
+                if (merged === oldContent) {
+                  console.log('[addQToNotebook] surgicalAppend 全部去重 → 改為 skip');
+                  dec.action = 'skip';
+                  dec.reasoning = (dec.reasoning || '') + '（你寫的延伸點章節都有了，沒新增）';
+                } else {
+                  dec.content = _preserveImagesIn(oldContent, merged);
+                  _timing.ai2 = { ms: 0, skipped_reason: 'delta_merge' };
+                }
               } catch(mergeErr) {
                 console.warn('[surgicalAppend] failed, fallback to legacy merge:', mergeErr);
                 // 跌回舊路徑(legacy mergePrompt)
@@ -11675,7 +11687,8 @@ ${dec.reasoning || ''}
           notebook.history.unshift(histEntry);
           trimHistory();
           saveNotebook();
-          showToast('✓ 概念已涵蓋，未變動');
+          // v407:skip 的訊息更清楚,讓使用者知道「不是出錯,是真的章節已涵蓋」
+          showToast('ℹ️ 這題重點章節已涵蓋,沒新增内容');
           renderNotebookIfVisible();
           return;
         }

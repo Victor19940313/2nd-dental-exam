@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-nav-zindex-fix';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-resume-btn-skip-feedback';
 const PRECACHE = [
   './',
   './index.html',

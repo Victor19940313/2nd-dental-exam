@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-addq-hard-cap-75s';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-filter-snapshot';
 const PRECACHE = [
   './',
   './index.html',

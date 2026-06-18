@@ -7533,6 +7533,10 @@ ${(q.options || []).join('\n')}
       let _reviewEntry = null;
       let _reviewIdx = 0;
       let _reviewFilter = 'all'; // 'all' | 'wrong_marked'
+      // v410:錯題+標記題 list 快照 — 進入 wrong_marked filter 那刻建立
+      //       目的:防止使用者在 review 內按標記按鈕(toggle) 把該題從 list 中踢掉
+      //       「按一按標記題就消失」就是 toggle 把 status 變回 none,被即時 filter 排除
+      let _reviewMarkSnapshot = null;
       // 判斷某 qid 在當前 review 是否符合「錯題 + 標記題」條件
       function _isWrongOrMarkedInReview(qid){
         if (!_reviewEntry) return false;
@@ -7554,10 +7558,22 @@ ${(q.options || []).join('\n')}
         if (!_reviewEntry) return [];
         const qids = _reviewEntry.qids || [];
         if (_reviewFilter === 'all') return qids.map((qid, i) => ({qid, i}));
-        return qids.map((qid, i) => ({qid, i})).filter(x => _isWrongOrMarkedInReview(x.qid));
+        // v410:wrong_marked filter = 進 filter 時的 snapshot ∪ 現在符合條件的(後來加的標記也算進)
+        //       不再因為「按相同 status 取消」而讓題目從 list 消失
+        return qids.map((qid, i) => ({qid, i})).filter(x => {
+          if (_reviewMarkSnapshot && _reviewMarkSnapshot.has(x.qid)) return true;
+          return _isWrongOrMarkedInReview(x.qid);
+        });
       }
       function setReviewFilter(f){
         _reviewFilter = f;
+        // v410:第一次進「錯題+標記題」filter 時拍快照 — 之後 toggle 不影響清單成員
+        if (f === 'wrong_marked' && !_reviewMarkSnapshot && _reviewEntry) {
+          _reviewMarkSnapshot = new Set();
+          (_reviewEntry.qids || []).forEach(qid => {
+            if (_isWrongOrMarkedInReview(qid)) _reviewMarkSnapshot.add(qid);
+          });
+        }
         // 切換按鈕視覺
         const a = document.getElementById('rvf-all');
         const w = document.getElementById('rvf-wm');
@@ -7609,6 +7625,7 @@ ${(q.options || []).join('\n')}
         _reviewEntry = working;
         _reviewIdx = 0;
         _reviewFilter = 'all'; // 新 session 預設看全部
+        _reviewMarkSnapshot = null; // v410:新 session 清掉舊快照
         // 新的重看試卷 session → 清掉舊的返回狀態(避免「回試卷」按鈕指向舊紀錄)
         window._reviewReturnState = null;
         if (typeof _hideReviewReturnBtn === 'function') _hideReviewReturnBtn();

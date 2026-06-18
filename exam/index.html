@@ -5391,16 +5391,28 @@
       let _wrongbookWriteQueue = Promise.resolve();
       async function _saveQState() {
         const payload = JSON.stringify(qState);
-        // IDB(沒 quota 限制,主存)
+        // localStorage 先寫(同步、最穩),IDB 後寫
+        try { localStorage.setItem(uKey("wrongbook_state"), payload); } catch(e) {}
+        // IDB(主存)
         if (typeof _idbSet === 'function') {
           _wrongbookWriteQueue = _wrongbookWriteQueue
-            .then(() => _idbSet(uKey("wrongbook_state"), payload))
+            .then(async () => {
+              await _idbSet(uKey("wrongbook_state"), payload);
+              // v412:Safari Mac IDB 偶爾會「寫了沒拋錯但實際沒寫」 → verify + retry 3 次
+              try {
+                const got = await _idbGet(uKey("wrongbook_state"));
+                if (got !== payload) {
+                  console.warn('[wrongbook] IDB verify mismatch, retry 1');
+                  await _idbSet(uKey("wrongbook_state"), payload);
+                  const got2 = await _idbGet(uKey("wrongbook_state"));
+                  if (got2 !== payload) {
+                    console.error('[wrongbook] IDB verify mismatch after retry — using LS as truth');
+                  }
+                }
+              } catch(e) { console.warn('[wrongbook] IDB verify fail', e); }
+            })
             .catch(e => console.warn('[wrongbook] IDB write failed', e));
         }
-        // localStorage(舊版相容,撞 quota 預期會失敗,靜默)
-        try { localStorage.setItem(uKey("wrongbook_state"), payload); } catch(e) {}
-        // v401:**必須 await** 才能保證後面 pushAll 讀 IDB 拿到的是新資料,
-        //       不然推上雲端的是舊版,別台拉下來合併,標記又跑回去 = 標記莫名其妙不見
         try { await _wrongbookWriteQueue; } catch(e) {}
         return _wrongbookWriteQueue;
       }
@@ -7537,28 +7549,56 @@ ${(q.options || []).join('\n')}
       // v412:改成 Map<qid, {status, flagged}>,dot 渲染也用 snapshot ∪ qState 取聯集
       //       不只 list 不少,連 dot 顯示都鎖在 review modal 開啟那刻的狀態
       let _reviewMarkSnapshot = null;
-      // v412:把 IDB 上最新的 qState 同步回記憶體(merge 用 updatedAt,新的贏)
+      // v412:把 IDB + localStorage 上最新的 qState 同步回記憶體(merge 用 updatedAt,新的贏)
       //       review modal 開啟前 call,避免 qState 是過期 cache
+      //       讀「兩個來源 + 記憶體」三方比較,取每題最新版本 — 防 Mac Safari IDB 寫失敗
       async function _hydrateQStateFromIDB(){
-        if (typeof _idbGet !== 'function') return;
+        const sources = [{ name: 'mem', obj: qState || {} }];
+        if (typeof _idbGet === 'function') {
+          try {
+            const raw = await _idbGet(uKey("wrongbook_state"));
+            if (raw) {
+              const o = JSON.parse(raw);
+              if (o && typeof o === 'object') sources.push({ name: 'idb', obj: o });
+            }
+          } catch(e) { console.warn('[hydrate qState] IDB read fail', e); }
+        }
         try {
-          const raw = await _idbGet(uKey("wrongbook_state"));
-          if (!raw) return;
-          const fromIdb = JSON.parse(raw);
-          if (!fromIdb || typeof fromIdb !== 'object') return;
-          const merged = Object.assign({}, qState);
-          Object.keys(fromIdb).forEach(qid => {
-            const r = fromIdb[qid] || {};
-            const m = merged[qid];
-            if (!m) { merged[qid] = r; return; }
-            const mTs = m.updatedAt || 0;
-            const rTs = r.updatedAt || 0;
-            // IDB 上比較新 → 用 IDB 上的(代表這台 device 別的 tab/別的時間寫過)
-            if (rTs > mTs) merged[qid] = Object.assign({}, r, { count: Math.max(m.count||0, r.count||0) });
+          const lsRaw = localStorage.getItem(uKey("wrongbook_state"));
+          if (lsRaw) {
+            const o = JSON.parse(lsRaw);
+            if (o && typeof o === 'object') sources.push({ name: 'ls', obj: o });
+          }
+        } catch(e) {}
+        if (sources.length < 2) return;
+        const merged = {};
+        const allQids = new Set();
+        sources.forEach(s => Object.keys(s.obj).forEach(q => allQids.add(q)));
+        allQids.forEach(qid => {
+          let winner = null;
+          let winnerTs = -1;
+          let winnerSrc = '';
+          sources.forEach(s => {
+            const r = s.obj[qid];
+            if (!r || typeof r !== 'object') return;
+            const ts = r.updatedAt || 0;
+            // 有 updatedAt → 比較 ts;沒 updatedAt → 偏好有 status / flagged 的
+            const score = ts > 0 ? ts : (r.status && r.status !== 'none' || r.flagged ? 1 : 0);
+            if (score > winnerTs) { winner = r; winnerTs = score; winnerSrc = s.name; }
           });
-          qState = merged;
-          console.log('[hydrate qState] 從 IDB 重 merge,現有 ' + Object.keys(qState).length + ' 題');
-        } catch(e) { console.warn('[hydrate qState] fail', e); }
+          if (winner) merged[qid] = winner;
+        });
+        // count 用各來源最大值(練習次數累加用)
+        allQids.forEach(qid => {
+          let maxCnt = 0;
+          sources.forEach(s => {
+            const c = (s.obj[qid] && s.obj[qid].count) || 0;
+            if (c > maxCnt) maxCnt = c;
+          });
+          if (merged[qid]) merged[qid].count = maxCnt;
+        });
+        qState = merged;
+        console.log('[hydrate qState] 三方合併後 ' + Object.keys(qState).length + ' 題 (來源:' + sources.map(s=>s.name).join('+') + ')');
       }
       // 判斷某 qid 在當前 review 是否符合「錯題 + 標記題」條件
       function _isWrongOrMarkedInReview(qid){
@@ -7795,18 +7835,29 @@ ${(q.options || []).join('\n')}
       // 重看試卷裡按標記:更新 qState,立即重渲染
       // v411:取消 toggle 行為 — 按相同 status 不再變 'none',只覆蓋成該 status(避免誤觸消失)
       //       要取消標記請用另一個明確的「清除」鈕
+      // v412:標記後也更新 snapshot,並強制 await push 一次,確保 Mac IDB 寫失敗也有 Firebase 兜底
       async function reviewMarkQ(status){
         const q = _currentReviewQ();
         if (!q) return;
         if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
         const prev = qState[q.id].status;
         if (prev === status) {
-          // 提示:已是相同狀態,不會變動;若要取消請按「清除」
           showToast('已是「' + ({give_up:'🔴 送他吧',learning:'🟡 再努力',guessed:'🤔 猜的',understood:'🟢 簡單'}[status] || status) + '」 — 要取消請按清除');
           return;
         }
         qState[q.id].status = status;
         await persist(q.id);
+        // v412:強制立刻 push Firebase,不等 _debouncedPushAll 的 400ms — 標記消失主要 root cause
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+          try { await Promise.race([DentalSync.pushAll(), new Promise(r => setTimeout(r, 5000))]); }
+          catch(e) { console.warn('[reviewMarkQ] push fail', e); }
+        }
+        // v412:更新 snapshot,讓即使 sync race 也不會丟標記
+        if (_reviewMarkSnapshot && _reviewMarkSnapshot instanceof Map) {
+          const cur = _reviewMarkSnapshot.get(q.id) || { status: null, flagged: false };
+          cur.status = status;
+          _reviewMarkSnapshot.set(q.id, cur);
+        }
         renderReviewQ(_reviewIdx);
         showToast({
           give_up: '🔴 送他吧',
@@ -7834,6 +7885,16 @@ ${(q.options || []).join('\n')}
         if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
         qState[q.id].flagged = !qState[q.id].flagged;
         await persist(q.id);
+        // v412:強制立刻 push Firebase,Mac IDB 寫失敗也有 Firebase 兜底
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+          try { await Promise.race([DentalSync.pushAll(), new Promise(r => setTimeout(r, 5000))]); }
+          catch(e) { console.warn('[reviewToggleFlag] push fail', e); }
+        }
+        if (_reviewMarkSnapshot && _reviewMarkSnapshot instanceof Map) {
+          const cur = _reviewMarkSnapshot.get(q.id) || { status: null, flagged: false };
+          cur.flagged = qState[q.id].flagged;
+          _reviewMarkSnapshot.set(q.id, cur);
+        }
         renderReviewQ(_reviewIdx);
         showToast(qState[q.id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
       }

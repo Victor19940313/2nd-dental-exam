@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-no-toggle-clear-btn';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-hydrate-qstate-snapshot-dot';
 const PRECACHE = [
   './',
   './index.html',

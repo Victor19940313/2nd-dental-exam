@@ -7533,10 +7533,33 @@ ${(q.options || []).join('\n')}
       let _reviewEntry = null;
       let _reviewIdx = 0;
       let _reviewFilter = 'all'; // 'all' | 'wrong_marked'
-      // v410:錯題+標記題 list 快照 — 進入 wrong_marked filter 那刻建立
-      //       目的:防止使用者在 review 內按標記按鈕(toggle) 把該題從 list 中踢掉
-      //       「按一按標記題就消失」就是 toggle 把 status 變回 none,被即時 filter 排除
+      // v410/v411:錯題+標記題 list 快照
+      // v412:改成 Map<qid, {status, flagged}>,dot 渲染也用 snapshot ∪ qState 取聯集
+      //       不只 list 不少,連 dot 顯示都鎖在 review modal 開啟那刻的狀態
       let _reviewMarkSnapshot = null;
+      // v412:把 IDB 上最新的 qState 同步回記憶體(merge 用 updatedAt,新的贏)
+      //       review modal 開啟前 call,避免 qState 是過期 cache
+      async function _hydrateQStateFromIDB(){
+        if (typeof _idbGet !== 'function') return;
+        try {
+          const raw = await _idbGet(uKey("wrongbook_state"));
+          if (!raw) return;
+          const fromIdb = JSON.parse(raw);
+          if (!fromIdb || typeof fromIdb !== 'object') return;
+          const merged = Object.assign({}, qState);
+          Object.keys(fromIdb).forEach(qid => {
+            const r = fromIdb[qid] || {};
+            const m = merged[qid];
+            if (!m) { merged[qid] = r; return; }
+            const mTs = m.updatedAt || 0;
+            const rTs = r.updatedAt || 0;
+            // IDB 上比較新 → 用 IDB 上的(代表這台 device 別的 tab/別的時間寫過)
+            if (rTs > mTs) merged[qid] = Object.assign({}, r, { count: Math.max(m.count||0, r.count||0) });
+          });
+          qState = merged;
+          console.log('[hydrate qState] 從 IDB 重 merge,現有 ' + Object.keys(qState).length + ' 題');
+        } catch(e) { console.warn('[hydrate qState] fail', e); }
+      }
       // 判斷某 qid 在當前 review 是否符合「錯題 + 標記題」條件
       function _isWrongOrMarkedInReview(qid){
         if (!_reviewEntry) return false;
@@ -7598,7 +7621,10 @@ ${(q.options || []).join('\n')}
         if (!inFiltered) renderReviewQ(filtered[0].i);
         else renderReviewQ(_reviewIdx);
       }
-      function openExamReview(histIdx){
+      async function openExamReview(histIdx){
+        // v412:先把 IDB 最新 qState 拉回記憶體,避免 review 進來時 cache 是舊版,
+        //       導致 dot 看起來沒標記、「錯題+標記題」filter 也漏題
+        await _hydrateQStateFromIDB();
         const hist = (function(){ _maybeMigrateExamHistory(); return (typeof _readExamHistorySync === 'function') ? _readExamHistorySync() : JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'); })();
         const entry = hist[histIdx];
         if (!entry) { showToast('找不到紀錄'); return; }
@@ -7619,13 +7645,21 @@ ${(q.options || []).join('\n')}
         _reviewEntry = working;
         _reviewIdx = 0;
         _reviewFilter = 'all'; // 新 session 預設看全部
-        // v411:modal 開啟那刻就拍 snapshot(舊版只在進 wrong_marked filter 才拍)
-        //       這樣即使 qState 在 review 內被 sync race / 其他改動清掉,list 仍照當下狀態
-        _reviewMarkSnapshot = new Set();
+        // v412:snapshot 改成 Map<qid, {status, flagged}>,dot 渲染也用 snapshot 取聯集,即使 qState 被覆蓋 dot 仍看得到
+        _reviewMarkSnapshot = new Map();
         try {
           (working.qids || []).forEach(qid => {
-            if (_isWrongOrMarkedInReview(qid)) _reviewMarkSnapshot.add(qid);
+            const st = (qState && qState[qid]) ? qState[qid] : null;
+            const hasStatus = st && st.status && st.status !== 'none';
+            const hasFlag = st && st.flagged;
+            if (_isWrongOrMarkedInReview(qid)) {
+              _reviewMarkSnapshot.set(qid, {
+                status: hasStatus ? st.status : null,
+                flagged: !!hasFlag
+              });
+            }
           });
+          console.log('[openExamReview] snapshot 拍了 ' + _reviewMarkSnapshot.size + ' 題');
         } catch(e) { console.warn('[openExamReview] snapshot fail', e); }
         // 新的重看試卷 session → 清掉舊的返回狀態(避免「回試卷」按鈕指向舊紀錄)
         window._reviewReturnState = null;
@@ -7659,12 +7693,16 @@ ${(q.options || []).join('\n')}
             else { bg = '#fee2e2'; bd = '#fca5a5'; fg = '#991b1b'; }
           }
           const ring = (i === _reviewIdx) ? 'box-shadow:0 0 0 2px #7c3aed' : '';
-          const st = (typeof qState !== 'undefined' && qState[qid]) ? qState[qid] : {};
-          const stColor = STATUS_COLOR[st.status];
+          // v412:dot 顯示用「snapshot ∪ qState」,即使 qState 被覆蓋,進 modal 那刻的標記永遠看得到
+          const liveSt = (typeof qState !== 'undefined' && qState[qid]) ? qState[qid] : {};
+          const snapSt = (_reviewMarkSnapshot && _reviewMarkSnapshot instanceof Map && _reviewMarkSnapshot.get(qid)) || null;
+          const showStatus = (liveSt.status && liveSt.status !== 'none') ? liveSt.status : (snapSt && snapSt.status) || null;
+          const showFlag = liveSt.flagged || (snapSt && snapSt.flagged) || false;
+          const stColor = STATUS_COLOR[showStatus];
           const stDot = stColor
             ? `<span style="position:absolute;top:-3px;left:-3px;width:8px;height:8px;border-radius:50%;background:${stColor};border:1.5px solid white;z-index:2"></span>`
             : '';
-          const flagDot = st.flagged
+          const flagDot = showFlag
             ? `<span style="position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:#f59e0b;border:1.5px solid white;z-index:2"></span>`
             : '';
           return `<div onclick="renderReviewQ(${i})" style="position:relative;background:${bg};border:1px solid ${bd};color:${fg};border-radius:5px;text-align:center;padding:.35rem 0;font-size:.82rem;font-weight:700;cursor:pointer;${ring}">${label}${stDot}${flagDot}</div>`;

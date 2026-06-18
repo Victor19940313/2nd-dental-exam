@@ -7031,6 +7031,7 @@ ${(q.options || []).join('\n')}
             _nbInflight.delete(qid);
             _nbPending--;
             _nbStartTimes.delete(qid);
+            _nbToastedFor.delete(qid);
             _updateNbBadge();
             renderScrollExam();
             Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
@@ -7784,6 +7785,7 @@ ${(q.options || []).join('\n')}
             _nbInflight.delete(q.id);
             _nbPending--;
             _nbStartTimes.delete(q.id);
+            _nbToastedFor.delete(q.id);
             _updateNbBadge();
             renderReviewQ(_reviewIdx);
           });
@@ -10883,6 +10885,8 @@ ${dec.reasoning || ''}
       let _nbPending = 0;
       // v408:進度感 — 記錄每筆 in-flight 的 start time,badge 顯示已耗秒數
       const _nbStartTimes = new Map();
+      // v409:安撫 toast 每 qid 只丟一次
+      const _nbToastedFor = new Set();
       let _nbBadgeTimer = null;
       function _updateNbBadge(){
         let badge = document.getElementById('nb-pending-badge');
@@ -10900,9 +10904,14 @@ ${dec.reasoning || ''}
         let oldestSec = 0;
         if (_nbStartTimes.size > 0) {
           const now = Date.now();
-          for (const ts of _nbStartTimes.values()) {
+          for (const [qid, ts] of _nbStartTimes.entries()) {
             const sec = Math.floor((now - ts) / 1000);
             if (sec > oldestSec) oldestSec = sec;
+            // v409:第 25 秒丟一次安撫 toast,告訴使用者「沒卡住,你繼續做題」(每 qid 只丟一次)
+            if (sec === 25 && !_nbToastedFor.has(qid)) {
+              _nbToastedFor.add(qid);
+              showToast('⏳ Gemini 整理中,你可以繼續做題,弄好會通知你');
+            }
           }
         }
         const secText = oldestSec > 0 ? ' · ' + oldestSec + 's' : '';
@@ -10939,6 +10948,7 @@ ${dec.reasoning || ''}
             _nbInflight.delete(q.id);
             _nbPending--;
             _nbStartTimes.delete(q.id);
+            _nbToastedFor.delete(q.id);
             _updateNbBadge();
             // 整理完成後，若還在同一題就更新徽章 + 按鈕
             const cur = practiceList[practiceIdx];
@@ -11073,11 +11083,29 @@ ${dec.reasoning || ''}
         try { document.execCommand('copy'); if (cb) cb(); } catch(e) {}
         document.body.removeChild(ta);
       }
+      // v409:整題 addQToNotebook 的 hard cap(毫秒) — 超過直接 abort 進 pending queue,讓使用者不再等
+      const ADDQ_HARD_CAP_MS = 75000;
+      // v409:單筆 Gemini call timeout(毫秒) — 從 90s 降到 30s,Gemini 卡住快換 key
+      const ADDQ_GEMINI_TIMEOUT_MS = 30000;
+
       async function addQToNotebook(q, opts){
         opts = opts || {};
         const _t0 = _now();
         // v408:讓 applyAIDecision 的 toast 能顯示總耗時
         window._addQT0 = _t0;
+        // v409:hard cap — 超過 75s 整題直接放棄,進 pending queue 背景重試
+        let _hardCapHit = false;
+        let _hardCapTimer = setTimeout(() => {
+          _hardCapHit = true;
+          console.warn('[addQToNotebook] hard cap 觸發', q.id);
+        }, ADDQ_HARD_CAP_MS);
+        const _hardCapPromise = new Promise((_, rej) => {
+          setTimeout(() => rej(new Error('addQ_hardcap')), ADDQ_HARD_CAP_MS);
+        });
+        const _wrappedCallGemini = (prompt, schema, callOpts) => {
+          const merged = Object.assign({ timeoutMs: ADDQ_GEMINI_TIMEOUT_MS }, callOpts || {});
+          return Promise.race([callGemini(prompt, schema, merged), _hardCapPromise]);
+        };
         const _timing = {
           qid: q.id,
           qmeta: q.meta || q.id,
@@ -11107,7 +11135,7 @@ ${dec.reasoning || ''}
           // 帶 schema 強制 Gemini 回符合結構的 JSON
           const _ai1Start = _now();
           window._lastGeminiCallStats = null;
-          const raw = await callGemini(prompt, ADD_NOTEBOOK_SCHEMA);
+          const raw = await _wrappedCallGemini(prompt, ADD_NOTEBOOK_SCHEMA);
           _timing.ai1 = Object.assign({ ms: Math.round(_now() - _ai1Start) }, window._lastGeminiCallStats || {});
           const dec = extractJSON(raw);
           _timing.decision = dec && dec.action;
@@ -11183,7 +11211,7 @@ ${dec.reasoning || ''}
               try {
                 const mergePrompt = buildMergePrompt(q, oldCh, dec);
                 window._lastGeminiCallStats = null;
-                const mergeRaw = await callGemini(mergePrompt, MERGE_SCHEMA, { maxOutputTokens: 32768 });
+                const mergeRaw = await _wrappedCallGemini(mergePrompt, MERGE_SCHEMA, { maxOutputTokens: 32768 });
                 _timing.ai2 = Object.assign({ ms: Math.round(_now() - _ai2Start) }, window._lastGeminiCallStats || {});
                 const mergeDec = extractJSON(mergeRaw);
                 if (mergeDec && mergeDec.content && mergeDec.content.trim().length >= oldLen * 0.7) {
@@ -11218,8 +11246,10 @@ ${dec.reasoning || ''}
           removeFromPendingQueue(q.id);
           _timing.totalMs = Math.round(_now() - _t0);
           _logNbAddTiming(_timing);
+          clearTimeout(_hardCapTimer);
           return true;
         } catch(err) {
+          clearTimeout(_hardCapTimer);
           _timing.totalMs = Math.round(_now() - _t0);
           _timing.error = (err && err.message ? err.message : String(err)).slice(0, 200);
           _logNbAddTiming(_timing);
@@ -11229,9 +11259,12 @@ ${dec.reasoning || ''}
           const errMsg = (err.message || '').slice(0, 200);
           addToPendingQueue(q, errMsg);
           if (!opts.silent) {
+            const isHardCap = /addQ_hardcap/.test(errMsg);
             const is429 = /429|quota|exceed/i.test(errMsg);
             const is503 = /503|UNAVAILABLE|high demand/i.test(errMsg);
-            if (is429) showToast('📥 額度暫滿,已排隊 — 背景會自動重試,你繼續做題就好');
+            // v409:hard cap 觸發 → 跟使用者講「AI 太慢已排隊」(不是失敗,是切斷不讓她繼續等)
+            if (isHardCap) showToast('⏱ AI 太慢已排隊(' + Math.round(ADDQ_HARD_CAP_MS/1000) + 's),背景會自動重試 — 你繼續做題就好');
+            else if (is429) showToast('📥 額度暫滿,已排隊 — 背景會自動重試,你繼續做題就好');
             else if (is503) showToast('📥 Gemini 暫忙,已排隊 — 背景會自動重試,你繼續做題就好');
             else showToast('📥 整理失敗,已排隊 — 背景會自動重試,你繼續做題就好');
           }

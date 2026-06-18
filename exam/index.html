@@ -7567,13 +7567,7 @@ ${(q.options || []).join('\n')}
       }
       function setReviewFilter(f){
         _reviewFilter = f;
-        // v410:第一次進「錯題+標記題」filter 時拍快照 — 之後 toggle 不影響清單成員
-        if (f === 'wrong_marked' && !_reviewMarkSnapshot && _reviewEntry) {
-          _reviewMarkSnapshot = new Set();
-          (_reviewEntry.qids || []).forEach(qid => {
-            if (_isWrongOrMarkedInReview(qid)) _reviewMarkSnapshot.add(qid);
-          });
-        }
+        // v411:snapshot 改成在 openExamReview 拍,這裡不再拍
         // 切換按鈕視覺
         const a = document.getElementById('rvf-all');
         const w = document.getElementById('rvf-wm');
@@ -7625,7 +7619,14 @@ ${(q.options || []).join('\n')}
         _reviewEntry = working;
         _reviewIdx = 0;
         _reviewFilter = 'all'; // 新 session 預設看全部
-        _reviewMarkSnapshot = null; // v410:新 session 清掉舊快照
+        // v411:modal 開啟那刻就拍 snapshot(舊版只在進 wrong_marked filter 才拍)
+        //       這樣即使 qState 在 review 內被 sync race / 其他改動清掉,list 仍照當下狀態
+        _reviewMarkSnapshot = new Set();
+        try {
+          (working.qids || []).forEach(qid => {
+            if (_isWrongOrMarkedInReview(qid)) _reviewMarkSnapshot.add(qid);
+          });
+        } catch(e) { console.warn('[openExamReview] snapshot fail', e); }
         // 新的重看試卷 session → 清掉舊的返回狀態(避免「回試卷」按鈕指向舊紀錄)
         window._reviewReturnState = null;
         if (typeof _hideReviewReturnBtn === 'function') _hideReviewReturnBtn();
@@ -7721,6 +7722,10 @@ ${(q.options || []).join('\n')}
           const on = curStatus === val;
           return `<button onclick="reviewMarkQ('${val}')" title="${label}" style="background:${on?color:'#fff'};color:${on?'#fff':'#374151'};border:1.5px solid ${color};border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">${emoji} ${label}</button>`;
         };
+        // v411:「清除標記」鈕只在有標記時顯示,避免使用者亂按
+        const clearBtn = (curStatus && curStatus !== 'none')
+          ? `<button onclick="reviewClearStatus()" title="清除這題的標記" style="background:#fff;color:#6b7280;border:1.5px dashed #d1d5db;border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">✕ 清除</button>`
+          : '';
         const markRowHtml = `
           <div style="display:flex;align-items:center;gap:.35rem;margin-bottom:.6rem;flex-wrap:wrap;padding:.45rem .55rem;background:#fafafa;border:1px dashed #d1d5db;border-radius:8px">
             <button onclick="reviewToggleFlag()" title="加入/移出錯題本" style="background:${flagged?'#f59e0b':'#fff'};color:${flagged?'#fff':'#92400e'};border:1.5px solid #f59e0b;border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">🚩 ${flagged?'已收錄':'錯題本'}</button>
@@ -7729,6 +7734,7 @@ ${(q.options || []).join('\n')}
             ${sBtn('guessed','🤔','猜的','#a78bfa')}
             ${sBtn('learning','🟡','再努力','#eab308')}
             ${sBtn('give_up','🔴','送他吧','#ef4444')}
+            ${clearBtn}
             <span style="font-size:.74rem;color:#9ca3af;margin-left:auto">已寫過 ${cnt} 次</span>
           </div>`;
 
@@ -7749,21 +7755,40 @@ ${(q.options || []).join('\n')}
         `;
       }
       // 重看試卷裡按標記:更新 qState,立即重渲染
+      // v411:取消 toggle 行為 — 按相同 status 不再變 'none',只覆蓋成該 status(避免誤觸消失)
+      //       要取消標記請用另一個明確的「清除」鈕
       async function reviewMarkQ(status){
         const q = _currentReviewQ();
         if (!q) return;
         if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
-        qState[q.id].status = qState[q.id].status === status ? 'none' : status;
-        // v403:persist 內部已經 await pushAll,不需要再呼叫一次
+        const prev = qState[q.id].status;
+        if (prev === status) {
+          // 提示:已是相同狀態,不會變動;若要取消請按「清除」
+          showToast('已是「' + ({give_up:'🔴 送他吧',learning:'🟡 再努力',guessed:'🤔 猜的',understood:'🟢 簡單'}[status] || status) + '」 — 要取消請按清除');
+          return;
+        }
+        qState[q.id].status = status;
         await persist(q.id);
         renderReviewQ(_reviewIdx);
         showToast({
           give_up: '🔴 送他吧',
           learning: '🟡 再努力!',
           guessed: '🤔 猜的',
-          understood: '🟢 簡單',
-          none: '標記取消'
-        }[qState[q.id].status]);
+          understood: '🟢 簡單'
+        }[status]);
+      }
+      // v411:明確的「清除標記」 — 不會誤觸,只有按這顆才清狀態
+      async function reviewClearStatus(){
+        const q = _currentReviewQ();
+        if (!q) return;
+        if (!qState[q.id] || !qState[q.id].status || qState[q.id].status === 'none') {
+          showToast('這題沒有標記');
+          return;
+        }
+        qState[q.id].status = 'none';
+        await persist(q.id);
+        renderReviewQ(_reviewIdx);
+        showToast('已清除標記');
       }
       async function reviewToggleFlag(){
         const q = _currentReviewQ();

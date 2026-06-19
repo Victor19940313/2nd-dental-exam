@@ -10495,376 +10495,62 @@ ${(q.options || []).join('\n')}
         });
         const candidates = chapters.filter(c => candidateIds.has(c.id)).slice(0, MAX_CANDIDATES).map(buildCandidateEntry);
         const others = chapters.filter(c => !candidateIds.has(c.id)).map(buildOtherEntry);
-        return `你是一位專業的牙醫國考筆記整理員。
+        return `你是牙醫國考筆記整理員。把這題納入「核心概念筆記本」(不是寫題目詳解,是整理「再遇同概念都能答對」的重點)。
 
-【任務】
-把這題納入我的「核心概念筆記本」。**不是寫題目詳解**，是整理「將來再遇到同概念題目都能答對」的核心重點。同概念多題之間要**合併、去重、累積**，不要每題重寫。
+【最高鐵則】
+1. 不能 skip(schema 已禁) — 只能 append 或 new_chapter
+2. **本科 ${SMAP[q.subject] || q.subject}** 限定,只能用下方章節清單裡的章 append
+3. delta 不重複 candidates 的 subsections/concepts/facts/bullets 已有的東西
 
-⚠️【最高指導原則：寧可併章太雜,也不要開太多重複概念的章】
-**新題只要跟某個現有章節「大主題相關」就 append**。subtopic 不必完全相同,只要兩題在臨床上會被當成「同一個範疇」討論,就算 append。
+【append vs new_chapter — 平衡判斷】
+**不要因為小差異就開新章,也不要硬塞不同主題到同一章**:
+- ✅ append:候選章節 subtopic 跟新題完全相同 或 高度相關(同一個牙科子領域,例如同樣是「Pulp 牙髓」「Implant 植牙」)
+- ✅ new_chapter:候選 subtopic 都不同,或概念完全不重疊
+- ❌ 不要這樣 append:把「全口義齒咬合」塞進「植牙骨頭條件」(雖然候選有出,但完全不同主題 → 應該 new_chapter)
+- ❌ 不要這樣 new_chapter:同樣講「根管沖洗液」只是換濃度 → 一定要 append
 
-✅ 應該 append 的例子(往這邊靠):
-- 舊章在講「植牙的骨頭條件」+ 新題在講「植體間距與齒間乳頭」→ append(同屬植牙術前評估,放同一章方便對讀)
-- 舊章在講「Complete Denture 印模」+ 新題在講「Complete Denture 邊緣封閉」→ append(同屬 CD 印模/邊緣處理)
-- 舊章在講「根管沖洗液」+ 新題在講「不同沖洗液濃度」→ append
-- 舊章 subtopic 跟新題 subtopic 不同,但兩題會出現在同一個臨床決策流程裡 → append
+**章節大小目標**:一章內容相關度高,圍繞 1 個主概念,不要包山包海。10-30 題/章合理。
 
-❌ 才該 new_chapter 的例子(真的完全不同主題):
-- 舊章在講「植牙的骨頭條件」+ 新題在講「全口義齒的咬合垂直高度」→ 完全不同的修復方式,new_chapter
-- 舊章在講「根管沖洗液」+ 新題在講「牙周翻瓣手術」→ 牙髓 vs 牙周,new_chapter
-- 候選章節跟新題沒有任何概念重疊 → new_chapter
+【候選章節 ${candidates.length} 章(按相似度排序)】
+${candidates.length === 0 ? '(無)' : JSON.stringify(candidates, null, 2)}
 
-判斷流程(預設 append):
-1. **看候選章節中,有沒有任何一章跟新題「同一個大概念」**(植牙 / 全口義齒 / 根管治療 / 牙周炎 / 矯正力學...)
-   - 有 → 一律 append 到最接近那章,**就算 subtopic 不完全相同也 append**
-   - 真的完全沒有同概念的 → 再看「其他章節」清單
-   - 都沒有 → 才 new_chapter
-2. 不確定要 append 還是 new_chapter → **永遠選 append**(寧可一章塞 20 題也好過開 10 個小章)
+【其他既有章節 ${others.length} 章(name + subtopic only)】
+${others.length === 0 ? '(無)' : JSON.stringify(others, null, 2)}
 
-🚨【絕對禁止:跨科目分類】
-題目科目是 **${SMAP[q.subject] || q.subject}**。下面看到的所有章節(candidates + others)**都已經過濾為 ${SMAP[q.subject] || q.subject} 科目**,你看不到其他科的章節。
-意思:**你只能在這 ${chapters.length} 章內 append,或 new_chapter**。不要試圖 append 到「不存在於下方清單」的章節。
-
-【判斷相關性時請優先看這幾個欄位(v392)】
-- **digest_subsections**:章節已有的 ### 子標題清單(最能反映章節內容)
-- **digest_concepts**:章節已有的 [[概念]] + **粗體** 關鍵字
-- **digest_facts**:章節已有的數值/單位/Class 分級(常考具體數字)
-- **digest_bullet_starts**:章節已有的 bullet 前 40 字(讓你知道既有條目講了什麼)
-- **concepts / subtopic / name**:章節大方向
-
-【🎯 強烈推薦候選章節（${candidates.length} 章；按相似度排序）】
-${candidates.length === 0 ? '（無 — 但仍要從下面「其他章節」找最接近的；找不到才開新章）' : JSON.stringify(candidates, null, 2)}
-
-【其他既有章節（精簡列表 — 只含 name + subtopic + concepts；如果有候選都不適合,從這邊挑 subtopic 完全相同的;找不到才開新章）】
-${others.length === 0 ? (chapters.length === 0 ? '（筆記本是空的，這是第一題）' : '（無）') : JSON.stringify(others, null, 2)}
-
-【新題目】
-題目 ID: ${q.id}
-科目: ${SMAP[q.subject] || q.subject}
-原始 topic: ${q.topic || ''}
+【新題】
+${q.id} / ${SMAP[q.subject] || q.subject} / topic: ${q.topic || '(無)'}
 題目: ${q.question}
-選項:
 ${(q.options || []).join('\n')}
-正確答案: ${correctTxt}
+正解: ${correctTxt}
+詳解: ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n詳解2: ' + q.explanation_notebooklm : ''}${q.clinical ? '\n臨床: ' + q.clinical : ''}
 
-詳解(Gemini): ${q.explanation || '（無）'}
+【決策欄位】
+- **concepts**(必填):核心概念 1-3 個關鍵字
+- **domain**(必填):${NOTEBOOK_DOMAINS.join(' / ')}
+- **subtopic**(必填):英文 + 中文短句(例 Pulp 牙髓 / Implant 植牙 / Periodontitis 牙周炎),沿用候選的 subtopic
+- **action**:append 或 new_chapter
+- **reasoning**:一句話講為何選這章
 
-詳解(NotebookLM): ${q.explanation_notebooklm || '（無）'}
+【append 必填】
+- chapter_id:候選章節 ID
+- delta_target_section:選候選 subsections 的原文標題(含 emoji),或填 "NEW" + 同時填 delta_new_section_title
+- delta_markdown:300-800 字的**新內容**。不重複既有 facts/concepts。**禁止寫 ## 主標題**。用多個短 bullet(≤25 字/點) + 對照表(2+ 同類項目比較) + callout(\`> 💡/⚠️/🏥/📝 一句話\`) + #### 次子段。用 [[X]] 包重要名詞、**粗體** 強調、*斜體* 標英文
 
-臨床意義: ${q.clinical || '（無）'}
+【new_chapter 必填】
+- chapter_name:精確概念(英文 + 中文,例 "Pulp necrosis 牙髓壞死")
+- content(≥200 字):\`## 主標題\` → \`### 📌 一句話定義\` → \`### 🗂 分類/組成\`(表格) → \`### ⚙️ 機制\` → \`### 🏥 臨床意義\` → \`### 🔗 延伸補充\`(**必加** 3-6 點 ≤25 字) → \`### 📝 易考重點\`
 
-【決策邏輯】
-1. 識別核心概念（最多 3 個關鍵字詞）
-2. 決定領域（domain）— **必填**，從下列固定清單選一個：
-${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
-3. **決定子主題（subtopic）— 必填**，章節在領域中的細分主題
-   * 寫法：英文專有名詞為主 + 括號中文，**簡短**（2-5 字英文 + 中文）
-   * **盡量沿用現有章節已有的 subtopic**（看現有索引），同主題的章節應該 group 在同一 subtopic
-   * 例：「Pulp 牙髓」「Cementum 牙骨質」「Dentin 牙本質」「Microbiology 微生物」「Diagnosis 診斷」「Periodontitis 牙周炎」「Major connectors 主連接體」「Clasp 牙鈎」「Implant 植牙」
-   * **一個 subtopic 應該涵蓋 5-10 章**（往粗的方向取，不要切太細）
-4. 行動二選一 — **v413 禁用 skip,只能 append 或 new_chapter**:
-   - **append**: 屬於某現有章節 → 回傳 delta(新增片段)
-     * 只要強候選章節有任一 concept / subtopic / 內容跟新題重疊 → 一律 append
-     * 不確定哪章最相符 → 選最相近那章 append
-   - new_chapter: 所有現有章節都跟這題完全無關才用
-5. 🛑🛑🛑【絕對不能 skip】使用者反映「AI 太愛說『已涵蓋』實際章節根本沒寫」→ 系統已從 schema 移除 skip。**即使你覺得章節已涵蓋,也必須 append 一個短 delta**(寫使用者可能想加深的「相關背景知識 / 該題沒被章節提到的角度 / 延伸對照」 — 寧可寫 1 個 bullet 也不要交白卷)
+【排版鐵則】
+- 標題最深 \`####\`(H4),禁止 \`#####\`
+- bullet 用 \`- \`(不要 \`*\`)
+- \`[[X]]\` 跟 \`**X**\` 二選一,不要 \`**[[X]]**\`
+- 表格 cell 短句(禁止整段敘事),每行獨佔一行,首尾必須 \`|\`,禁止混 HTML \`<table>\` 跟 markdown
+- 禁止 raw HTML(\`<span>\`/\`<strong>\` 等)、禁止 LaTeX(\`$...$\` / \`\\ge\`)、禁止 \`---\` 分隔線
+- 數學用 Unicode(≥ ≤ ± × ÷ → ° ≈ α β π)
+- 整理順序:解剖→外到內;發育→時間;分類→輕到重;臨床→操作順;預設「定義→機制→臨床→易考」
+- 「🔗 延伸補充」必加 — 易考點/易混概念/相關數值/陷阱題,3-6 點 ≤25 字
 
-🛑🛑🛑【v408 — 開新章節的硬門檻(很重要,違反就是錯)】🛑🛑🛑
-**寧可 append 到 60% 相符的章節,也不要開新章節**(使用者反映 AI 太愛開新章節)。
-new_chapter **同時滿足這 3 條才允許**,缺一條都改 append:
-1. **強推薦候選章節清單裡找不到 subtopic 一致的章**(系統已幫你過濾,看候選的 subtopic 跟新題該歸的 subtopic 是否一樣)
-2. **其他既有章節清單也找不到 subtopic 一致的章**
-3. **新題的核心概念跟全部現有章節的 concepts 都沒任何重疊**
-
-如果你「猶豫要 append 還是 new_chapter」→ **預設 append**,加個短 delta 到最接近的章。
-記住:章節太多反而難讀,使用者寧可一章稍微長一點也不要 10 個小章節重複講類似東西。
-
-🛑【v408 — skip 自打嘴巴防呆,必讀】🛑
-**reasoning 的內容會被系統檢查**。如果你 action=skip 但 reasoning 出現以下任一字眼,系統會自動標記為「AI 自相矛盾」並要使用者強制補進:
-- 「可補充」「可擴充」「可補強」「可以補」「可以加」「可加上」「可再補」「還可以加」「相關擴充」「延伸補充」「沒提到」「未提及」「沒寫到」「未涵蓋」「沒涵蓋」
-
-→ 如果你寫了上面任一字眼,**強迫自己改成 action=append**,寫個短 delta 補上那個「可補充」的點。
-→ skip 的 reasoning 只能用:「題目重點 X / Y / Z 逐項對應到 digest 的 …」這種**逐條確認**的句型,不能含糊。
-
-🚨🚨🚨【append 時的 delta 機制(v392 新增,極重要)】🚨🚨🚨
-新流程:你不再整章重寫,只回**新增的那幾行**。程式碼會幫你插進對的位置,而且會自動跳過重複內容。
-
-【append 時必填欄位】
-- chapter_id: 要 append 到哪章
-- **delta_target_section**: 要塞進哪個 ### 子標題。**先看候選章節的 digest_subsections**,選擇:
-  * 如果新題的重點屬於既有某個子段(例「🔗 延伸補充」「📝 易考重點」「🗂 空間來源對照」) → 填那個子段的**完整原文標題**(含 emoji)
-  * 如果新題帶來舊章完全沒提過的新子概念 → 填 \`NEW\`,並用 \`delta_new_section_title\` 給新子段標題
-- **delta_markdown**: 寫**新增**的 markdown 片段
-  * 🚫 **絕對不可重複** \`digest_concepts\` / \`digest_facts\` / \`digest_bullet_starts\` 已經有的東西
-  * 🚫 **絕對不可加** \`## 主標題\` 或重複的 \`### 子標題\`(那是舊章已有的,你只寫新內容)
-  * ✅ 例:digest_facts 已有「1.7 mm」「Leeway space」→ 你的 delta 就不要再寫 Leeway space 1.7 mm
-
-🎯【delta 要寫得「豐富」,不要只丟 2 個 bullet 交差】
-題目帶來的新概念,該寫多深就寫多深。delta_markdown **目標長度 300-800 字**(舊章節已涵蓋的不用重寫就達標)。可用的元素:
-- ✅ **多個短條列**(4-8 個 bullet,每個 ≤ 25 字)
-- ✅ **小對照表**(2+ 同類項目比較相同屬性) — 例如新題講 3 種神經纖維 → 直接寫 3 row 的對照表
-- ✅ **callout** 強化重點:\`> 💡 記憶要點\` / \`> ⚠️ 易混淆陷阱\` / \`> 🏥 臨床要點\` / \`> 📝 易考角度\`
-- ✅ **\`####\` 次子標題**(分小段),例如機制 + 臨床意義 + 鑑別診斷
-- ✅ **[[概念標籤]]** 包重要名詞 / **粗體** 強調關鍵字 / *斜體* 標英文專有名詞
-
-🚨🚨🚨【何時用 skip — 嚴格版,不要亂判已涵蓋】🚨🚨🚨
-**skip 的判斷標準很高,寧可 append 一個短 delta 也不要錯判 skip**。
-看到 digest_concepts 有同名概念**絕對不夠**,因為:
-- 概念名出現在標籤 ≠ 該題的細節都涵蓋(例:digest 有「[[血友病]]」但章節可能沒提「血友病 A/B/C 三型分類」)
-- 名詞重複 ≠ 機制/數值/治療/臨床細節都已寫過
-
-✅ 真的可以 skip(必須同時滿足):
-1. 題目問的**具體事實**(數值、治療藥名、機制名)逐項出現在 digest_facts 或 digest_bullet_starts
-2. 題目選項裡的**關鍵詞**至少 80% 出現在 digest 裡
-3. 題目詳解強調的**獨特觀念**全部覆蓋
-
-❌ 千萬別 skip 的訊號:
-- 題目詳解有**數值/單位**但 digest_facts 沒這個數值 → 必須 append 補上
-- 題目選項提到**某個藥/器械/分類名稱**但 digest 沒這名詞 → 必須 append
-- 題目重點是**比較對照**(A vs B)但章節只提了 A 沒提 B → 必須 append 加 B
-- 章節有 \`📌 一句話定義\` 但題目細節在「機制」「臨床」這些子段沒有 → 必須 append
-- 你不確定到底有沒有涵蓋 → **預設 append**,寫個短 delta 也好過漏掉重點
-
-📝 reasoning 必寫清楚:如果你 skip,要明確說出題目的每個重點對應到 digest 哪一條,不能含糊「已涵蓋」交差
-- ❌ 爛 reasoning:「已涵蓋」「概念已存在」
-- ✅ 好 reasoning:「題目考 Leeway 數值 0.9/1.7 mm 已在 digest_facts;考 late mesial shift 機制已在 bullet_starts」
-
-【豐富 delta 範例(必看 — 這就是品質目標)】
-情境:候選章節 digest 顯示已有
-  digest_subsections: ["📌 一句話定義", "🗂 空間來源對照", "🔗 延伸補充", "📝 易考重點"]
-  digest_concepts: ["Incisor liability", "Leeway space", "Primate space", "Intercanine width"]
-  digest_facts: ["7.1 mm", "5.1 mm", "0.9 mm", "1.7 mm"]
-  digest_bullet_starts: ["Incisor liability 數值:上顎約 7.1 mm", "Primate space 位置:上顎在乳側切牙", ...]
-
-新題在問「Tongue-thrusting 異常吞嚥造成前牙開咬」(舊章從沒提過這個)。
-
-✅ 正確 delta(豐富 + 不重複既有事實):
-{
-  "action": "append",
-  "chapter_id": "ch_xxx",
-  "delta_target_section": "NEW",
-  "delta_new_section_title": "👅 Tongue-thrusting 異常吞嚥",
-  "delta_markdown": "依 Proffit [[Equilibrium theory]] 平衡理論,齒列位置由舌肌力與唇頰肌的內外平衡決定;吞嚥時舌頭異常前伸會破壞此平衡。\\n\\n#### 主要臨床表現\\n- **前牙開咬**:舌頭夾在齒間阻礙門牙完全萌發 → [[Anterior open-bite]]\\n- **門牙唇傾**:舌外推力 > 唇壓 → 上門牙突出\\n- **發音含糊**:[[Lisping]],尤其影響 /s/ /z/ 齒齦音\\n- **後牙不受影響**:吐舌壓力向外向前,不會造成後牙擁擠\\n\\n#### 治療裝置\\n| 裝置 | 機制 |\\n|---|---|\\n| [[Tongue crib]] 避舌器 | 阻擋舌頭前伸,讓開咬前牙自然萌出 |\\n| 肌功能訓練 | 重新訓練吞嚥模式,常與避舌器併用 |\\n\\n> ⚠️ 易混陷阱:Tongue-thrusting 跟後牙擁擠**無關**,國考常考此陷阱\\n> 🏥 臨床要點:診斷異常吞嚥需觀察舌位、吞嚥動作,而非僅看牙齒位置",
-  "reasoning": "新題在講吐舌癖,舊章從沒提過,加一個有機制 + 臨床 + 治療表 + callout 的扎實子段"
-}
-
-❌ 錯誤 delta(太薄,只丟 2 個 bullet 交差 — 過去 v392 早期出過這毛病):
-{
-  "delta_markdown": "- 吞嚥時舌頭前伸 → [[Anterior open-bite]]\\n- 治療常用 [[Tongue crib]] 避舌器"  ← 🚫 太薄了!該詳述機制、臨床、治療、易考點
-}
-
-❌ 錯誤 delta(重複既有事實):
-{
-  "delta_markdown": "- Incisor liability 上顎 7.1 mm、下顎 5.1 mm\\n- Leeway space 上 0.9 / 下 1.7 mm\\n- ..." ← 🚫 digest_facts 已經有了!
-}
-
-❌ 錯誤 delta(自己加 ## 主標題):
-{
-  "delta_markdown": "## 恆門齒空間代償與吐舌癖\\n### 一句話定義\\n..."  ← 🚫 你只寫新內容,不寫主標題!
-}
-
-【內容寫作規範（極重要，不照做就是失敗）】
-
-🎨🎨🎨【排版美學鐵則 — 違反就是醜】🎨🎨🎨
-1. **標題最深 \`####\`(H4),禁止 \`#####\` 或更深** — 網站只渲染到 h4,寫更深會被當原文「##### 血友病」這樣秀出來很醜
-2. **不要寫 \`---\` 或 \`***\` 當分隔線** — 章節結構靠標題自然分節,不需要 hr;真要加程式會渲染但盡量別用
-3. **bullet 統一用 \`- \`(短橫線+空格),不要用 \`* \`** — \`* \` 容易跟粗體 \`**\` 視覺混淆
-4. **\`** 跟 \`[[ ]]\` 二選一,不要重複包**(例:\`**[[X]]**\` 是錯的,\`[[X]]\` 已經夠醒目)
-5. **表格 cell 內容簡短**(短句/名詞/數值),禁止整段敘事;cell 太長就拆 row 或改條列
-6. **callout 一句話\`> 💡/⚠️/🏥/📝\`,別塞長文**
-7. **數值單位寫 Unicode**(≥ ≤ ± × ÷ → ° ≈ α β π),禁止 LaTeX \`$...$\` 或 \`\\ge\`
-
-排版要求：
-- **超短條列為主**，每點最多 25 字，禁止長段落
-- **每個 bullet 點必須各自獨佔一行**，禁止把多個「- 子項」擠在同一行（這會排版亂掉，例如「- **特點**：xxx - **功能**：yyy」是錯的，必須兩行）
-- **何時用表格**（極重要，請嚴格判斷）：
-  * ✅ **用表格的時機**：「2 個以上同類型項目，比較相同屬性」時 — 例如比較 3 種神經纖維的（直徑/速度/功能）、3 種牙周病分期的（牙周袋/骨缺失/治療）、多種材料的（成分/優點/缺點）
-  * ✅ 表格 cell 內容**短句即可**（一個短句 / 名詞 / 數值 / 簡短描述都行），**禁止當成長文敘事段落用**
-  * ❌ **禁止在 cell 裡塞多段條列**（例如「1. xxx 2. yyy 3. zzz」這種 → 改成多個 row 拆開，或乾脆別用表格）
-  * ❌ **不要用表格**：單一概念的多項描述（用條列或 callout）、需要長段機制解釋
-  * 原則：表格是「**對照表**」不是「**段落容器**」— 想寫長解釋就改用條列 / callout
-- **何時用 callout**：
-  * \`> 💡 ...\` 一句話關鍵記憶點
-  * \`> ⚠️ ...\` 易混淆 / 陷阱題
-  * \`> 🏥 ...\` 臨床要點
-  * \`> 📝 ...\` 易考角度
-- **何時用條列**：列舉、步驟、特性（≥ 3 點），每點 ≤ 25 字
-- **概念標籤**：重要名詞用 \`[[概念名]]\` 包起來會被渲染成彩色標籤
-- 🚫 **絕對禁止寫 raw HTML 標籤**(網站只吃 markdown,寫 HTML 會被當文字逸出顯示成亂碼)
-  * ❌ \`<span class="ctag">咬合平面</span>\`、\`<strong>X</strong>\`、\`<em>X</em>\`、\`<code>X</code>\`
-  * ✅ \`[[咬合平面]]\`、\`**X**\`、\`*X*\`、\`\\\`X\\\`\`
-  * 規則:標籤統一用 \`[[xxx]]\`,粗體用 \`**xxx**\`,**禁止任何 \`<tag>\`**
-- **粗體** 只用在最關鍵的字詞(會被反白醒目顯示)
-- **絕對禁止:\`[[ ]]\` 跟 \`**\` 同時包同一個詞**
-  * ❌ \`**[[起始病灶]]**\`、\`**[[INR]]**\`、\`**[[Aspirin]]**\`
-  * ✅ \`[[起始病灶]]\`(已經是彩色標籤了,不需要再加粗體)
-  * 規則:一個詞**要嘛**用 \`[[ ]]\` 變彩色標籤、**要嘛**用 \`**\` 變反白粗體,**二選一不重疊**
-- **斜體 *英文* 標英文專有名詞
-- 中英對照：首次出現帶英文原文
-- **絕對不要長段落解釋**！能用表格就用表格，能用條列就用條列
-- **數學/公式禁止使用 \`$...$\` 包起來**（網站不支援數學渲染）
-  * ❌ \`$A / (A+C)$\`、\`$A + B$\`、\`$\\ge$ 0.5 mm\`
-  * ✅ \`A / (A+C)\`、\`A + B\`、\`≥ 0.5 mm\`
-- **禁止使用 LaTeX 指令**（\`\\ge\`、\`\\le\`、\`\\pm\`、\`\\times\`、\`\\to\` 等）
-  * 數學符號**直接用 Unicode**：≥ ≤ ≠ ± × ÷ → ← ° ≈ ∞ α β π σ Δ Σ √ ∑ ∫
-  * ❌ \`\\ge 0.5\`、\`x \\times y\`、\`30 \\degree\`、\`\\alpha\` 角
-  * ✅ \`≥ 0.5\`、\`x × y\`、\`30°\`、\`α\` 角
-- **粗體符號 \`**\` 兩側不要留空格**（否則無法正確顯示）
-  * ❌ \`** 敏感性 **\`、\`** 機制 **\`
-  * ✅ \`**敏感性**\`、\`**機制**\`
-- **表格每一行必須各自獨佔一行**，禁止把整張表擠在同一行
-  * 換行 = 真的 \\n（不是空格），header / separator / row1 / row2 都要在自己的行
-  * ❌ \`| A | B |---|---|| row1 | x || row2 | y |\`（全部擠在一行）
-  * ✅ 像這樣分行：
-\`\`\`
-| 標題 A | 標題 B |
-|---|---|
-| row1 | x |
-| row2 | y |
-\`\`\`
-- **表格每一行（包含 header、separator、資料列）結尾必須以 \`|\` 收尾**（少了會解析失敗整張表崩）
-  * ❌ \`| A | B | C\`（少結尾 \`|\`）、\`| :--- | :--- | :---\`（分隔線少結尾 \`|\`）
-  * ✅ \`| A | B | C |\`、\`| :--- | :--- | :--- |\`
-- **同一格 cell 內塞多個 bullet 時，bullet 之間禁止插空白行**（會被誤判成表格結束）
-  * ❌
-\`\`\`
-| 抗凝血劑 | 風險 | - 術前評估 INR
-- 控制在 1.5～2.0
-
-- Aspirin 不需停藥
-- 諮詢內科 |
-\`\`\`
-  * ✅（bullet 之間直接連續，不要空白行）
-\`\`\`
-| 抗凝血劑 | 風險 | - 術前評估 INR
-- 控制在 1.5～2.0
-- Aspirin 不需停藥
-- 諮詢內科 |
-\`\`\`
-- **禁止「row 中途收 \`|\` 把剩餘 cell 丟到下一行」**（會讓後面整張表崩）
-  * ❌
-\`\`\`
-| SCTG | - cell2 | - cell3 |       ← 提早收 |
-- cell4 |                          ← cell 4 跑到下一行
-\`\`\`
-  * ✅（整個 row 寫在同一行，不管多長都不要中途換行）
-\`\`\`
-| SCTG | - cell2 | - cell3 | - cell4 |
-\`\`\`
-- **嚴禁混用 HTML <table> 跟 markdown 表格語法**(v350 加):同一張對照表只能選一種寫法
-  * ❌ 表頭跟前兩列用 \`<table><tr><td>...</td></tr></table>\`,然後又補一列 \`| Tanaka | ... |\` markdown(後者會被當成原文秀出來,連 \`<br>\` 都會跑出來)
-  * ✅ **整張表全部用 markdown**(header + \`|---|---|\` 分隔 + 所有 data rows 連續寫),這是預設首選
-  * ✅ 或整張表全部用 HTML \`<table>\`(所有 \`<tr>\` 都寫進來,不要中途切換)
-  * 絕對不要寫「孤兒列」:沒有 header 跟分隔線在上面、只有單列 \`| ... | ... |\` 的 row(渲染器不認得→秀原文)
-- **表格不要塞「廢列」**：header 後的 \`|---|---|\` 分隔符只能有一條；後面**直接接資料列**，不要再插一條「全是 \`---\` 或空白」的占位列
-  * ❌
-  \`\`\`
-  | A | B |
-  |---|---|
-  | --- | --- |   ← 廢列
-  | row1 | x |
-  \`\`\`
-  * ✅
-  \`\`\`
-  | A | B |
-  |---|---|
-  | row1 | x |
-  \`\`\`
-
-【🧭 整理順序原則（極重要）】
-寫筆記時必須**先想好邏輯順序再開寫**，不要隨意排列。依題目主題選擇對應的順序原則：
-
-- **解剖構造** → 由**外到內**或由**冠到根**
-  * 牙齒：Enamel → Dentin → Pulp / Cementum → PDL → Alveolar bone
-  * 牙周：Gingiva → PDL → Cementum → Alveolar bone
-  * 神經：cell body → axon → myelin → terminal
-- **發育 / 形成過程** → 依**時間先後**
-  * 牙齒發育：Bud → Cap → Bell → Crown formation → Root formation → Eruption
-  * 傷口癒合：Hemostasis → Inflammation → Proliferation → Remodeling
-- **分類 / 層次** → 由**淺到深**或**輕到重**或**主到次**
-  * 齲齒分期：Initial → Moderate → Advanced → Severe
-  * 牙周病：Gingivitis → Early → Moderate → Advanced periodontitis
-- **臨床流程** → 依**操作順序**
-  * 診斷 → 治療計畫 → 治療 → 追蹤
-  * 根管：Access → Cleaning & Shaping → Obturation → Restoration
-- **藥理 / 機制** → 依**生理路徑**
-  * 受體 → 訊號傳導 → 細胞反應 → 臨床效果
-- **大小 / 數值** → 由**小到大**或**低到高**（要明確標示單位）
-
-寫表格時，**列的順序也要照這個邏輯**，不要按字母或隨機排。寫條列時，第 1 點是最先發生 / 最外層 / 最基礎的，依此類推。
-
-如果題目沒有明顯結構（例如單純記憶題），就用「定義 → 機制 → 臨床 → 易考」這個預設順序。
-
-【🎓 必加：考國考延伸補充（極重要）】
-不只整理這一題的核心，還要補上「身為準備國考的牙醫學生，看到這題會被連帶問到 / 一起出現的延伸知識」。
-- 一定要有 \`### 🔗 延伸補充\` 區塊
-- **3–6 點短條列**，每點 ≤ 25 字（嚴禁長篇大論）
-- 內容方向（挑相關的，不用全寫）：
-  * **同主題其他易考點**（這個概念旁邊還常考什麼）
-  * **容易搞混的鄰近概念**（A vs B vs C 的差異）
-  * **相關數值 / 分類 / 公式**（國考會考的具體數字）
-  * **臨床決策 / 鑑別診斷**（看到 X 要先想 Y）
-  * **常考陷阱題型**（題目換句話說的方式）
-- 寧可條目少而精，不要硬湊；但**沒有延伸補充 = 失敗**
-
-章節結構建議（彈性使用，但「🔗 延伸補充」必加）：
-## [概念主標題]
-### 📌 一句話定義
-（≤30 字）
-
-### 🗂 分類 / 組成
-| 類別 | 特性 | 臨床意義 |
-|---|---|---|
-| ... | ... | ... |
-
-### ⚙️ 機制
-1. 短條列
-2. 短條列
-
-> 💡 記憶要點（callout 用）
-
-### 🏥 臨床意義
-- 條列
-
-> ⚠️ 易混淆陷阱
-
-### 🔗 延伸補充（國考相關必知）
-- 短條列（≤25 字 / 點）
-
-### 📝 易考重點
-- 條過的角度
-
-範例（給你參考排版）：
-## 牙本質分層
-### 📌 一句話定義
-牙本質由 [[Mantle]] → [[Primary]] → [[Secondary]] → [[Predentin]] 四層組成
-
-### 🗂 各層對照
-| 層次 | 形成時間 | 礦化 | 臨床 |
-|---|---|---|---|
-| Mantle | 最早 | 低 | 緩衝裂紋 |
-| Primary | 發育期 | 中 | 主體 |
-| Secondary | 終生 | 中 | 髓腔變小、根管難做 |
-| Tertiary | 受刺激後 | 不均 | Reactionary / Reparative |
-| Predentin | 持續存在 | 未鈣化 | 緩衝帶 |
-
-> 💡 由外到內：Mantle → Primary → Secondary → Predentin
-> ⚠️ Tertiary 只在受刺激區下方出現，不是常規層次
-
-### 🔗 延伸補充（國考相關必知）
-- *Dentinal tubule* 走向：外層 S 形、內層直
-- 牙本質知覺傳遞：[[Hydrodynamic theory]] 為主
-- *Odontoblast* 位於 Pulp 側，突起伸入 tubule
-- DEJ 與 CDJ 是 enamel/cementum 交界，常考方向
-- *Sclerotic dentin*（老化或慢性刺激）→ tubule 鈣化封閉
-
-### 📝 易考角度
-- 哪層最先形成 → Mantle
-- 老人髓腔縮小原因 → Secondary 持續沉積
-- Reactionary vs Reparative 差別 → 細胞死活
-
-【回傳】
-直接回 JSON 物件，不要 markdown 反引號包裝。`;
+【回傳】純 JSON,不要 markdown code block 包裝。`;
       }
 
       // ── 同概念第 2 題以後加入時的合併 prompt ──
@@ -12175,6 +11861,60 @@ ${dec.reasoning || ''}
         }
 
         if (dec.action === 'new_chapter') {
+          // v420:章節去重 — 如果新章節跟現有章節高度相似(同 subtopic + 概念重疊 + name 相近)
+          //                就強制改 append,避免「沒事一直加類似章節」
+          try {
+            const _norm = (s) => (s || '').toString().toLowerCase().replace(/[^\w一-鿿]+/g, ' ').trim();
+            const newName = _norm(dec.chapter_name);
+            const newSub = _norm(dec.subtopic);
+            const newConcepts = new Set((dec.concepts || []).map(_norm).filter(Boolean));
+            let bestMatch = null, bestScore = 0;
+            (notebook.chapters || []).forEach(ch => {
+              if (!chapterMatchesSubject(ch, q.subject)) return;
+              const chSub = _norm(ch.subtopic);
+              // 必須同 subtopic 才算重複(否則就讓使用者開新章,不要混雜)
+              if (!chSub || !newSub || chSub !== newSub) return;
+              const chName = _norm(ch.name);
+              const chConcepts = new Set((ch.concepts || []).map(_norm).filter(Boolean));
+              // 算 name 字詞重疊比例
+              const nameTokens = new Set(chName.split(/\s+/).filter(t => t.length >= 2));
+              const newNameTokens = new Set(newName.split(/\s+/).filter(t => t.length >= 2));
+              let nameOverlap = 0;
+              newNameTokens.forEach(t => { if (nameTokens.has(t)) nameOverlap++; });
+              const nameScore = newNameTokens.size > 0 ? nameOverlap / newNameTokens.size : 0;
+              // 算 concept 重疊
+              let cOverlap = 0;
+              newConcepts.forEach(c => { if (chConcepts.has(c)) cOverlap++; });
+              const cScore = newConcepts.size > 0 ? cOverlap / newConcepts.size : 0;
+              const score = Math.max(nameScore, cScore);
+              if (score >= 0.5 && score > bestScore) { bestScore = score; bestMatch = ch; }
+            });
+            if (bestMatch) {
+              console.warn('[applyAIDecision] new_chapter 跟「' + bestMatch.name + '」高度相似(score=' + bestScore.toFixed(2) + '),改 append');
+              // 用題目本身建一段 delta 補進該章末尾
+              const optText = (q.options || []).map((o, i) => '(' + 'ABCDE'[i] + ') ' + o).join('\n');
+              const correctOpt = (q.options || [])[q.answer] || '';
+              const fallbackDelta = '\n\n### 📝 ' + (q.meta || q.id) + ' 補充\n\n' +
+                '**題目重點**:' + (q.question || '').slice(0, 200) + '\n\n' +
+                (correctOpt ? '**正解**:' + correctOpt + '\n\n' : '') +
+                (q.explanation ? '**詳解**:' + String(q.explanation).slice(0, 400) + (q.explanation.length > 400 ? '…' : '') : '') +
+                '\n';
+              const newContent = (bestMatch.content || '').trimEnd() + fallbackDelta;
+              bestMatch.content = _preserveImagesIn(bestMatch.content || '', newContent);
+              if (!bestMatch.qids.includes(q.id)) bestMatch.qids.push(q.id);
+              bestMatch.updatedAt = Date.now();
+              histEntry.chapterId = bestMatch.id;
+              histEntry.snapshot = { name: bestMatch.name, content: bestMatch.content, qids: [...bestMatch.qids], concepts: [...(bestMatch.concepts||[])] };
+              histEntry.note = '補進「' + bestMatch.name + '」(系統去重:本來要新建相似章節)';
+              notebook.history.unshift(histEntry);
+              trimHistory();
+              saveNotebook();
+              showToast('✓ 補進「' + bestMatch.name + '」(避免新建類似章節)' + _addQElapsedTag());
+              renderNotebookIfVisible();
+              return;
+            }
+          } catch(e) { console.warn('[applyAIDecision] 去重檢查 fail', e); }
+
           const newCh = {
             id: 'ch_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
             subject: q.subject, // ★ 加入時就直接寫死科目,以後再也不用推

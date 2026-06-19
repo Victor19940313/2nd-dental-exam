@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-prompt-slim-step1';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-prompt-slim-dedup-chapters';
 const PRECACHE = [
   './',
   './index.html',

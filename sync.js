@@ -522,6 +522,21 @@
     },
 
     pushAll: pushToFirebase,
+    // v413:輕量單 key 推送 — 標記變動只推 wrongbook_state,不要每次都把 examHistory + notebook 全部一起推
+    pushOne: function(sk, payload) {
+      if (!_db || !_userId) return Promise.resolve();
+      var update = {};
+      update[sk] = payload;
+      update._ts = Date.now();
+      var oldUpdate = {};
+      oldUpdate[sk] = payload;
+      _syncing = true;
+      return Promise.all([
+        userRef().update(update),
+        userDataRef().update(oldUpdate)
+      ]).catch(function(err){ console.error('[Sync] pushOne ' + sk + ' error:', err); })
+        .finally(function(){ _syncing = false; });
+    },
 
     forcePull: forcePullFromCloud,
     forcePush: forcePushToCloud,

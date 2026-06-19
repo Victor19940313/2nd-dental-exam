@@ -5443,12 +5443,17 @@
       }
       // v406:debounce pushAll(避免快速連按時 race condition + UI 卡頓)
       //       400ms 內連續呼叫只觸發 1 次,最後一次的 IDB state 會被推上去
+      // v413:標記變動只推 wrongbook_state,不要整批 push(notebook + examHistory 一起推會慢)
       let _pushAllTimer = null;
       function _debouncedPushAll() {
         if (_pushAllTimer) clearTimeout(_pushAllTimer);
         _pushAllTimer = setTimeout(() => {
           _pushAllTimer = null;
-          if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+          if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+            const payload = JSON.stringify(qState);
+            try { DentalSync.pushOne('wrongbook_state', payload).catch(e => console.warn('[push wb] fail', e)); }
+            catch(e) { console.warn('[push wb] fail', e); }
+          } else if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
             try { DentalSync.pushAll().catch(e => console.warn('[push] fail', e)); }
             catch(e) { console.warn('[push] fail', e); }
           }
@@ -7872,10 +7877,12 @@ ${(q.options || []).join('\n')}
         }
         qState[q.id].status = status;
         await persist(q.id);
-        // v412:強制立刻 push Firebase,不等 _debouncedPushAll 的 400ms — 標記消失主要 root cause
-        if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
-          try { await Promise.race([DentalSync.pushAll(), new Promise(r => setTimeout(r, 5000))]); }
-          catch(e) { console.warn('[reviewMarkQ] push fail', e); }
+        // v412/v413:強制立刻 push,只推 wrongbook_state(不要整批,避免 1-2MB examHistory 拖累)
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+          try {
+            const wbPayload = JSON.stringify(qState);
+            await Promise.race([DentalSync.pushOne('wrongbook_state', wbPayload), new Promise(r => setTimeout(r, 5000))]);
+          } catch(e) { console.warn('[reviewMarkQ] push fail', e); }
         }
         // v412:更新 snapshot,讓即使 sync race 也不會丟標記
         if (_reviewMarkSnapshot && _reviewMarkSnapshot instanceof Map) {
@@ -7910,10 +7917,12 @@ ${(q.options || []).join('\n')}
         if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
         qState[q.id].flagged = !qState[q.id].flagged;
         await persist(q.id);
-        // v412:強制立刻 push Firebase,Mac IDB 寫失敗也有 Firebase 兜底
-        if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
-          try { await Promise.race([DentalSync.pushAll(), new Promise(r => setTimeout(r, 5000))]); }
-          catch(e) { console.warn('[reviewToggleFlag] push fail', e); }
+        // v412/v413:強制立刻 push,只推 wrongbook_state
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+          try {
+            const wbPayload = JSON.stringify(qState);
+            await Promise.race([DentalSync.pushOne('wrongbook_state', wbPayload), new Promise(r => setTimeout(r, 5000))]);
+          } catch(e) { console.warn('[reviewToggleFlag] push fail', e); }
         }
         if (_reviewMarkSnapshot && _reviewMarkSnapshot instanceof Map) {
           const cur = _reviewMarkSnapshot.get(q.id) || { status: null, flagged: false };

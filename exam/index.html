@@ -4435,7 +4435,7 @@
     </div>
 
     <!-- PEEK NOTEBOOK MODAL -->
-    <div id="peek-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10500;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closePeekNotebook()">
+    <div id="peek-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:12500;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto" onclick="if(event.target===this)closePeekNotebook()">
       <div style="background:white;border-radius:14px;max-width:780px;width:100%;margin:2rem auto;box-shadow:0 8px 30px rgba(0,0,0,0.3);max-height:90vh;display:flex;flex-direction:column">
         <div style="padding:.85rem 1.2rem;border-bottom:1.5px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f0f9ff;border-radius:14px 14px 0 0">
           <strong style="font-size:1.05rem;color:#0369a1">📖 偷看筆記</strong>
@@ -17014,7 +17014,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         if (!overlay) {
           overlay = document.createElement('div');
           overlay.id = 'bgregen-overlay';
-          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:10500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:12500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
           overlay.onclick = (e) => { if (e.target === overlay) closeBgRegenModal(); };
           document.body.appendChild(overlay);
         }
@@ -17375,7 +17375,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         if (!overlay) {
           overlay = document.createElement('div');
           overlay.id = 'fix-overlay';
-          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:10500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:12500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
           overlay.onclick = (e) => { if (e.target === overlay) closeFixModal(); };
           document.body.appendChild(overlay);
         }
@@ -17494,7 +17494,7 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         if (!overlay) {
           overlay = document.createElement('div');
           overlay.id = 'print-overlay';
-          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:10500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
+          overlay.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);backdrop-filter:blur(3px);z-index:12500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto';
           overlay.onclick = (e) => { if (e.target === overlay) closePrintModal(); };
           document.body.appendChild(overlay);
         }

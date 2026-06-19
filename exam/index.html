@@ -5414,32 +5414,26 @@
 
       // 🛡 v286:序列化的 IDB 寫入 queue,確保多次連續寫入都不會掉
       let _wrongbookWriteQueue = Promise.resolve();
+      // v413:LS 同步寫(快、立刻可讀);IDB 背景跑(不卡 UI);push 由 caller 用記憶體 qState stringify,不依賴 IDB
       async function _saveQState() {
         const payload = JSON.stringify(qState);
-        // localStorage 先寫(同步、最穩),IDB 後寫
         try { localStorage.setItem(uKey("wrongbook_state"), payload); } catch(e) {}
-        // IDB(主存)
         if (typeof _idbSet === 'function') {
           _wrongbookWriteQueue = _wrongbookWriteQueue
             .then(async () => {
               await _idbSet(uKey("wrongbook_state"), payload);
-              // v412:Safari Mac IDB 偶爾會「寫了沒拋錯但實際沒寫」 → verify + retry 3 次
+              // verify + retry 1 次(Safari Mac IDB 偶爾靜默失敗)
               try {
                 const got = await _idbGet(uKey("wrongbook_state"));
                 if (got !== payload) {
                   console.warn('[wrongbook] IDB verify mismatch, retry 1');
                   await _idbSet(uKey("wrongbook_state"), payload);
-                  const got2 = await _idbGet(uKey("wrongbook_state"));
-                  if (got2 !== payload) {
-                    console.error('[wrongbook] IDB verify mismatch after retry — using LS as truth');
-                  }
                 }
               } catch(e) { console.warn('[wrongbook] IDB verify fail', e); }
             })
             .catch(e => console.warn('[wrongbook] IDB write failed', e));
         }
-        try { await _wrongbookWriteQueue; } catch(e) {}
-        return _wrongbookWriteQueue;
+        // v413:不再 await IDB queue,LS 已寫好就讓 caller 繼續,IDB / push 都在背景跑
       }
       // v406:debounce pushAll(避免快速連按時 race condition + UI 卡頓)
       //       400ms 內連續呼叫只觸發 1 次,最後一次的 IDB state 會被推上去
@@ -7877,11 +7871,12 @@ ${(q.options || []).join('\n')}
         }
         qState[q.id].status = status;
         await persist(q.id);
-        // v412/v413:強制立刻 push,只推 wrongbook_state(不要整批,避免 1-2MB examHistory 拖累)
+        // v413 改:立刻觸發單 key push,但不 await(fire-and-forget) — 不卡 UI 速度
+        //          persist 內已 await IDB 寫入 + 三方 hydrate 保險,即使 push 還沒回也安全
         if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
           try {
             const wbPayload = JSON.stringify(qState);
-            await Promise.race([DentalSync.pushOne('wrongbook_state', wbPayload), new Promise(r => setTimeout(r, 5000))]);
+            DentalSync.pushOne('wrongbook_state', wbPayload).catch(e => console.warn('[reviewMarkQ] push fail', e));
           } catch(e) { console.warn('[reviewMarkQ] push fail', e); }
         }
         // v412:更新 snapshot,讓即使 sync race 也不會丟標記
@@ -7917,11 +7912,11 @@ ${(q.options || []).join('\n')}
         if (!qState[q.id]) qState[q.id] = { status: 'none', count: 0 };
         qState[q.id].flagged = !qState[q.id].flagged;
         await persist(q.id);
-        // v412/v413:強制立刻 push,只推 wrongbook_state
+        // v413 改:立刻觸發單 key push 但不 await(fire-and-forget) — 不卡 UI
         if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
           try {
             const wbPayload = JSON.stringify(qState);
-            await Promise.race([DentalSync.pushOne('wrongbook_state', wbPayload), new Promise(r => setTimeout(r, 5000))]);
+            DentalSync.pushOne('wrongbook_state', wbPayload).catch(e => console.warn('[reviewToggleFlag] push fail', e));
           } catch(e) { console.warn('[reviewToggleFlag] push fail', e); }
         }
         if (_reviewMarkSnapshot && _reviewMarkSnapshot instanceof Map) {

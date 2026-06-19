@@ -8663,12 +8663,12 @@ ${(q.options || []).join('\n')}
       //  Toast
       // ════════════════════════════════════════════
       let _tt;
-      function showToast(msg) {
+      function showToast(msg, durationMs) {
         const t = document.getElementById("toast");
         t.textContent = msg;
         t.classList.add("show");
         clearTimeout(_tt);
-        _tt = setTimeout(() => t.classList.remove("show"), 2200);
+        _tt = setTimeout(() => t.classList.remove("show"), durationMs || 2200);
       }
 
       // ════════════════════════════════════════════
@@ -11256,10 +11256,10 @@ ${dec.reasoning || ''}
         try { document.execCommand('copy'); if (cb) cb(); } catch(e) {}
         document.body.removeChild(ta);
       }
-      // v409:整題 addQToNotebook 的 hard cap(毫秒) — 超過直接 abort 進 pending queue,讓使用者不再等
-      const ADDQ_HARD_CAP_MS = 75000;
-      // v409:單筆 Gemini call timeout(毫秒) — 從 90s 降到 30s,Gemini 卡住快換 key
-      const ADDQ_GEMINI_TIMEOUT_MS = 30000;
+      // v419:hard cap 75s → 45s,使用者反映等太久,失敗就快點進 pending queue
+      const ADDQ_HARD_CAP_MS = 45000;
+      // v419:單筆 Gemini call timeout 30s → 20s,key 卡更快換
+      const ADDQ_GEMINI_TIMEOUT_MS = 20000;
 
       async function addQToNotebook(q, opts){
         opts = opts || {};
@@ -11455,11 +11455,11 @@ ${dec.reasoning || ''}
             const isHardCap = /addQ_hardcap/.test(errMsg);
             const is429 = /429|quota|exceed/i.test(errMsg);
             const is503 = /503|UNAVAILABLE|high demand/i.test(errMsg);
-            // v409:hard cap 觸發 → 跟使用者講「AI 太慢已排隊」(不是失敗,是切斷不讓她繼續等)
-            if (isHardCap) showToast('⏱ AI 太慢已排隊(' + Math.round(ADDQ_HARD_CAP_MS/1000) + 's),背景會自動重試 — 你繼續做題就好');
-            else if (is429) showToast('📥 額度暫滿,已排隊 — 背景會自動重試,你繼續做題就好');
-            else if (is503) showToast('📥 Gemini 暫忙,已排隊 — 背景會自動重試,你繼續做題就好');
-            else showToast('📥 整理失敗,已排隊 — 背景會自動重試,你繼續做題就好');
+            // v419:失敗 toast 持續 6 秒,文字明確告訴使用者「這題沒進筆記」,不要再讓使用者以為加成功
+            if (is429) showToast('⚠️ Gemini 額度滿了,這題還沒進筆記(已排到「📥 待整理」,可手動重試或等明天)', 6000);
+            else if (is503) showToast('⚠️ Gemini 太忙,這題還沒進筆記(已排到「📥 待整理」,稍後重試)', 6000);
+            else if (isHardCap) showToast('⚠️ AI 太慢被切斷,這題還沒進筆記(已排到「📥 待整理」,背景重試)', 6000);
+            else showToast('⚠️ 整理失敗,這題還沒進筆記(已排到「📥 待整理」,背景重試)', 6000);
           }
           updatePendingBadge();
           return false;

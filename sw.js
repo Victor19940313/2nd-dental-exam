@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-sync-loadstate-race-fix-no-skip';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-rescue-marks-tool';
 const PRECACHE = [
   './',
   './index.html',

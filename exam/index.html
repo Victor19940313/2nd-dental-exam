@@ -3394,6 +3394,7 @@
             </div>
             <button class="daily-hist-toggle" style="margin-top:.5rem" onclick="openExamHistModal()">📊 歷次試卷成績</button>
             <button class="daily-hist-toggle" style="margin-top:.4rem" onclick="openExamCountModal()">📚 試卷次數統計</button>
+            <button class="daily-hist-toggle" style="margin-top:.4rem;background:#fef3c7;border-color:#fbbf24;color:#92400e" onclick="rescueMarks()" title="從 Firebase + IDB + localStorage 三個來源,挑標記最多的版本救回來">🔍 找回標記</button>
           </div>
           <div class="topic-sidebar-title">🏷 考點分類</div>
           <div class="ts-status-bar">
@@ -11827,6 +11828,94 @@ ${dec.reasoning || ''}
         alert('✅ 修了:\n  \\n 亂碼: ' + nlCount + ' 處\n  HTML→md 表格: ' + htmlTblCount + ' 個\n  孤兒列: ' + orphanCount + ' 處\n影響 ' + chsFixed + ' 章\n\n受影響章節舉例:\n' + samples.join('\n') + (chsFixed > 5 ? '\n…' : ''));
       }
       window.fixEscapedNewlinesInAllChapters = fixEscapedNewlinesInAllChapters;
+
+      // v413:標記救援 — 從 Firebase + IDB + localStorage + 記憶體 四個來源挑「標記最多」的版本套回 qState
+      async function rescueMarks(){
+        const candidates = [];
+        // 記憶體
+        try {
+          if (typeof qState === 'object' && qState) {
+            candidates.push({ src: '記憶體', raw: JSON.stringify(qState) });
+          }
+        } catch(e) {}
+        // IDB
+        try {
+          if (typeof _idbGet === 'function') {
+            const raw = await _idbGet(uKey('wrongbook_state'));
+            if (raw) candidates.push({ src: 'IDB(本機資料庫)', raw });
+          }
+        } catch(e) {}
+        // localStorage
+        try {
+          const raw = localStorage.getItem(uKey('wrongbook_state'));
+          if (raw) candidates.push({ src: 'localStorage(本機暫存)', raw });
+        } catch(e) {}
+        // Firebase
+        try {
+          if (typeof DentalSync !== 'undefined' && DentalSync.getRemoteSnapshot) {
+            const remote = await DentalSync.getRemoteSnapshot();
+            if (remote && remote.wrongbook_state) candidates.push({ src: 'Firebase(雲端)', raw: remote.wrongbook_state });
+          }
+        } catch(e) { console.warn('[rescueMarks] firebase fail', e); }
+
+        if (candidates.length === 0) {
+          alert('❌ 找不到任何標記資料來源');
+          return;
+        }
+
+        // 各候選計算 status / flagged 數量
+        const scored = candidates.map(c => {
+          let status = 0, flagged = 0, total = 0;
+          try {
+            const obj = JSON.parse(c.raw);
+            Object.keys(obj).forEach(qid => {
+              total++;
+              const s = obj[qid] || {};
+              if (s.status && s.status !== 'none') status++;
+              if (s.flagged) flagged++;
+            });
+          } catch(e) {}
+          return Object.assign({}, c, { status, flagged, total });
+        });
+
+        // 顯示對照表 + 自動選「status + flagged 最多」的
+        const lines = scored.map((s, i) =>
+          (i+1) + '. ' + s.src + ':共 ' + s.total + ' 題,標記 ' + s.status + ',旗標 ' + s.flagged
+        ).join('\n');
+        let best = 0;
+        let bestScore = -1;
+        scored.forEach((s, i) => {
+          const score = s.status + s.flagged;
+          if (score > bestScore) { bestScore = score; best = i; }
+        });
+        const winner = scored[best];
+
+        const msg = '【標記資料來源比對】\n\n' + lines + '\n\n建議套用:' + winner.src +
+          '(' + winner.status + ' 個標記 + ' + winner.flagged + ' 個旗標)\n\n' +
+          '要套用嗎?套用後會寫進本機 IDB / localStorage 並同步到 Firebase,蓋掉現在的版本。';
+        if (!confirm(msg)) return;
+
+        // 套用 winner
+        try {
+          qState = JSON.parse(winner.raw);
+        } catch(e) {
+          alert('❌ 套用失敗:解析錯誤');
+          return;
+        }
+        const payload = JSON.stringify(qState);
+        try { localStorage.setItem(uKey('wrongbook_state'), payload); } catch(e) {}
+        if (typeof _idbSet === 'function') {
+          try { await _idbSet(uKey('wrongbook_state'), payload); } catch(e){}
+        }
+        // 立刻 push
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+          try { await DentalSync.pushOne('wrongbook_state', payload); } catch(e){}
+        }
+        try { updateHomeStats(); } catch(e){}
+        try { renderTopicSidebar(); } catch(e){}
+        alert('✅ 已套用「' + winner.src + '」版本(' + winner.status + ' 標記,' + winner.flagged + ' 旗標)\n\n如果還是錯的請告訴我,可以救別的來源。');
+      }
+      window.rescueMarks = rescueMarks;
 
       // v408:用 AI 幫名稱含「未命名」「待整理」的章節重新命名
       async function renameUnnamedChapters(){

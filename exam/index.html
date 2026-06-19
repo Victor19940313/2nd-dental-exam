@@ -4668,6 +4668,8 @@
         } catch(e) {}
       })();
 
+      // v413:loadState 改成 merge(不再直接覆寫),
+      //       避免 sync init 已經把 Firebase 最新版寫進 qState,loadState 慢一步用 IDB 舊版蓋掉
       async function loadState() {
         try {
           if (USE_SUPABASE) {
@@ -4688,7 +4690,28 @@
               catch(e) { console.warn('[wrongbook] IDB read fail', e); }
             }
             if (!raw) raw = localStorage.getItem(uKey("wrongbook_state"));
-            if (raw) qState = JSON.parse(raw);
+            if (raw) {
+              try {
+                const fromStore = JSON.parse(raw);
+                // v413:當前 qState 跟磁碟上資料用 updatedAt 比較,每題取較新
+                //       qState 可能已經被 sync init 套用 remote(更新),不能盲目覆蓋
+                if (!qState || Object.keys(qState).length === 0) {
+                  qState = fromStore;
+                } else {
+                  Object.keys(fromStore).forEach(qid => {
+                    const r = fromStore[qid] || {};
+                    const m = qState[qid];
+                    if (!m) { qState[qid] = r; return; }
+                    const mTs = m.updatedAt || 0;
+                    const rTs = r.updatedAt || 0;
+                    if (rTs > mTs) {
+                      qState[qid] = Object.assign({}, r, { count: Math.max(m.count||0, r.count||0) });
+                    }
+                  });
+                  // fromStore 沒有的 qid(qState 獨有)保留
+                }
+              } catch(e) { console.warn('[loadState] parse fail', e); }
+            }
             // 若 IDB 沒有但 LS 有 → migrate(一次性,寫進 IDB)
             if (raw && typeof _idbSet === 'function') {
               const idbCheck = await _idbGet(uKey("wrongbook_state")).catch(() => null);
@@ -4700,7 +4723,9 @@
           }
         } catch (e) {
           const s = localStorage.getItem(uKey("wrongbook_state"));
-          if (s) qState = JSON.parse(s);
+          if (s) {
+            try { qState = JSON.parse(s); } catch(_) {}
+          }
         }
         updateHomeStats();
         updateMatchCount();
@@ -10254,7 +10279,7 @@ ${(q.options || []).join('\n')}
           concepts: { type: "ARRAY", items: { type: "STRING" }, description: "本題核心概念（1-3 個）" },
           domain: { type: "STRING", enum: NOTEBOOK_DOMAINS, description: "章節屬於哪個領域（必填）" },
           subtopic: { type: "STRING", description: "章節屬於哪個子主題（如：Pulp 牙髓、Cementum 牙骨質、Major connectors 主連接體），英文為主+中文輔助" },
-          action: { type: "STRING", enum: ["new_chapter", "append", "skip"], description: "決策" },
+          action: { type: "STRING", enum: ["new_chapter", "append"], description: "決策 — v413 移除 skip,使用者反映 AI 太愛說「已涵蓋」實際卻沒涵蓋。一律 append 或 new_chapter,寧可加 1 行 bullet 也不要交白卷" },
           chapter_id: { type: "STRING", description: "action=append 時必填" },
           chapter_name: { type: "STRING", description: "action=new_chapter 時必填,或 action=append 想改主標題時也可填" },
           // v392:append 時用 delta 機制(省 token);只寫新增的子段/bullet,程式碼負責插進對的位置 + 自動去重
@@ -10533,16 +10558,12 @@ ${NOTEBOOK_DOMAINS.map(d => '   - ' + d).join('\n')}
    * **盡量沿用現有章節已有的 subtopic**（看現有索引），同主題的章節應該 group 在同一 subtopic
    * 例：「Pulp 牙髓」「Cementum 牙骨質」「Dentin 牙本質」「Microbiology 微生物」「Diagnosis 診斷」「Periodontitis 牙周炎」「Major connectors 主連接體」「Clasp 牙鈎」「Implant 植牙」
    * **一個 subtopic 應該涵蓋 5-10 章**（往粗的方向取，不要切太細）
-4. 行動三選一(**重要:預設 append,new_chapter 是最後選擇**):
-   - **append**: 屬於某現有章節但有新重點 → **回傳 delta(新增片段),不要整章重寫**
-     * 只要強候選章節有**任一個 concept / subtopic / 內容**跟新題重疊 → 一律 append 到那章
-     * **不確定哪章最相符 → 選最相近那章 append**(寧可併到稍微不完全相同的章也比開新章好)
-     * 主標題(chapter_name)可以**保持原樣**;只有新題明確擴大了章節範圍才填新的 chapter_name 改名
-   - new_chapter: **只有當所有候選章節 + 其他章節都跟這題完全無關時才用**
-     * 章節名要**精確概念**:英文 + 中文,比 subtopic 更具體
-     * 例:subtopic="Pulp 牙髓",chapter_name="Normal pulp immune cells 正常牙髓免疫細胞"
-   - skip: 現有章節已**完整涵蓋**這題重點 → 不改筆記
-5. **判斷 append 還是 new_chapter 時,往 append 那邊靠** — 寧可併章太雜也不要開過多重複概念的章
+4. 行動二選一 — **v413 禁用 skip,只能 append 或 new_chapter**:
+   - **append**: 屬於某現有章節 → 回傳 delta(新增片段)
+     * 只要強候選章節有任一 concept / subtopic / 內容跟新題重疊 → 一律 append
+     * 不確定哪章最相符 → 選最相近那章 append
+   - new_chapter: 所有現有章節都跟這題完全無關才用
+5. 🛑🛑🛑【絕對不能 skip】使用者反映「AI 太愛說『已涵蓋』實際章節根本沒寫」→ 系統已從 schema 移除 skip。**即使你覺得章節已涵蓋,也必須 append 一個短 delta**(寫使用者可能想加深的「相關背景知識 / 該題沒被章節提到的角度 / 延伸對照」 — 寧可寫 1 個 bullet 也不要交白卷)
 
 🛑🛑🛑【v408 — 開新章節的硬門檻(很重要,違反就是錯)】🛑🛑🛑
 **寧可 append 到 60% 相符的章節,也不要開新章節**(使用者反映 AI 太愛開新章節)。
@@ -11308,10 +11329,21 @@ ${dec.reasoning || ''}
             const hasDelta = !!(dec.delta_markdown && dec.delta_markdown.trim() && dec.delta_target_section);
             const hasContent = (dec.content || '').trim().length >= 80;
             if (!hasDelta && !hasContent) {
-              console.warn('[addQToNotebook] append 但 delta_markdown 跟 content 都空 → 改為 skip');
-              dec.action = 'skip';
-              dec.reasoning = (dec.reasoning || '') + ' [系統:無新增內容,自動 skip]';
+              // v413:append 沒 delta 沒 content → 不再 skip,改 fallback new_chapter(下面 new_chapter 區塊會用題目 fallback)
+              console.warn('[addQToNotebook] append 但 delta_markdown 跟 content 都空 → 退回 new_chapter fallback');
+              dec.action = 'new_chapter';
+              dec.content = ''; // 讓 new_chapter fallback 用題目本身建內容
+              if (!dec.chapter_name) dec.chapter_name = (q.topic || q.meta || '未命名章節') + ' (待整理)';
+              dec.reasoning = (dec.reasoning || '') + ' [系統:append 內容空,改開新章 fallback]';
             }
+          }
+          // v413:AI 不照 schema 還是回 skip → 強制改 new_chapter,用題目本身 fallback
+          if (dec && dec.action === 'skip') {
+            console.warn('[addQToNotebook] AI 違反 schema 回 skip → 強制改 new_chapter');
+            dec.action = 'new_chapter';
+            dec.content = '';
+            if (!dec.chapter_name) dec.chapter_name = (q.topic || q.meta || '未命名章節') + ' (待整理)';
+            dec.reasoning = (dec.reasoning || '') + ' [系統:禁用 skip,強制改 new_chapter]';
           }
           // v392:append 走「外科手術合併」(用 delta_markdown)
           //       AI 只寫新增的幾行,程式碼負責插進對的位置 + 自動去重 + 跳過第 2 階段
@@ -11322,13 +11354,22 @@ ${dec.reasoning || ''}
             if (oldCh) {
               try {
                 const oldContent = oldCh.content || '';
-                const merged = surgicalAppend(oldContent, dec);
-                // v407:全部 delta 都被去重(merged === oldContent) → 視為 skip,告訴使用者「章節已涵蓋,沒新增」
-                //       不然 user 看「✓ 補進章節」訊息但章節內容完全沒變,以為「加一加什麼都沒進去」
+                let merged = surgicalAppend(oldContent, dec);
+                // v413:全部 delta 被去重 → 不再 skip,改用題目+詳解 build 一段「該題思路 / 相關背景」強制 append
+                //       使用者反映「已涵蓋章節去看也沒有,我還是想加相關知識」→ 一律有東西進章節
                 if (merged === oldContent) {
-                  console.log('[addQToNotebook] surgicalAppend 全部去重 → 改為 skip');
-                  dec.action = 'skip';
-                  dec.reasoning = (dec.reasoning || '') + '（你寫的延伸點章節都有了，沒新增）';
+                  console.log('[addQToNotebook] surgicalAppend 全去重 → fallback 強制補進該題思路');
+                  const optText = (q.options || []).map((o, i) => '(' + 'ABCDE'[i] + ') ' + o).join('\n');
+                  const correctOpt = (q.options || [])[q.answer] || '';
+                  const fallbackDelta = '\n\n### 📝 ' + (q.meta || q.id) + ' 思路\n\n' +
+                    '**題目重點**:' + (q.question || '').slice(0, 200) + '\n\n' +
+                    (correctOpt ? '**正確答案**:' + correctOpt + '\n\n' : '') +
+                    (q.explanation ? '**詳解摘要**:' + String(q.explanation).slice(0, 500) + (q.explanation.length > 500 ? '…' : '') : '') +
+                    '\n';
+                  merged = oldContent.trimEnd() + fallbackDelta;
+                  dec.content = _preserveImagesIn(oldContent, merged);
+                  dec._forcedAppend = true;
+                  _timing.ai2 = { ms: 0, skipped_reason: 'forced_append_fallback' };
                 } else {
                   dec.content = _preserveImagesIn(oldContent, merged);
                   _timing.ai2 = { ms: 0, skipped_reason: 'delta_merge' };
@@ -18240,20 +18281,30 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       // ════════════════════════════════════════════
       //  Init
       // ════════════════════════════════════════════
-      loadState();
+      // v413:把 loadState 跟 sync init 序列化 — loadState 先跑完才啟 sync,避免 race condition 把標記蓋掉
+      window._loadStatePromise = loadState();
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../sync.js"></script>
     <script>
       if(typeof DentalSync !== 'undefined'){
-        DentalSync.init().then(()=>{
-          // Reload state after sync pulls data
-          const s = localStorage.getItem(uKey("wrongbook_state"));
-          if(s){ try{ qState = JSON.parse(s); }catch(e){} }
-          updateHomeStats();
-          updateMatchCount();
-          renderDailyLog();
+        // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
+        (window._loadStatePromise || Promise.resolve()).then(() => DentalSync.init()).then(()=>{
+          // Reload state after sync pulls data — 用三方 merge 避免覆蓋本機新標記
+          if (typeof _hydrateQStateFromIDB === 'function') {
+            _hydrateQStateFromIDB().then(() => {
+              updateHomeStats();
+              updateMatchCount();
+              renderDailyLog();
+            });
+          } else {
+            const s = localStorage.getItem(uKey("wrongbook_state"));
+            if(s){ try{ qState = JSON.parse(s); }catch(e){} }
+            updateHomeStats();
+            updateMatchCount();
+            renderDailyLog();
+          }
         });
       }
       // Live reload when Firebase pushes new data

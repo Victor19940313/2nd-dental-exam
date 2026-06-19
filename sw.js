@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-submit-no-clobber-marks';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-bar-sticky-zfix';
 const PRECACHE = [
   './',
   './index.html',

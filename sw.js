@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-addq-faster-fail-loud-toast';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-prompt-slim-step1';
 const PRECACHE = [
   './',
   './index.html',

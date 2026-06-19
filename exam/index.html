@@ -10421,21 +10421,19 @@ ${(q.options || []).join('\n')}
         throw new Error('AI 回傳格式無法解析(可能被截斷)\n(前 300 字: ' + raw.slice(0, 300).replace(/\n/g, ' ') + ')');
       }
 
+      // v420:大瘦身版 — prompt 從 70K 字壓到 < 10K 字,救 quota
       function buildAIPrompt(q, chapters){
         const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
         const LETTERS = ['A','B','C','D','E'];
         const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
         const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
-        // ★ 跨科過濾(嚴格版):只給 AI 看「明確屬於本科」的章節
-        // 大幅減小 prompt,且避免牙五題誤分到牙三章節
         const totalChapters = (chapters || []).length;
         chapters = (chapters || []).filter(c => chapterMatchesSubject(c, q.subject));
-        // 用 findRelatedChapters 預先排序找出最相似章節，當「強候選」推薦給 AI
         let candidateIds = new Set();
         try {
           const { topicHit } = findRelatedChapters(q, chapters);
           candidateIds = new Set((topicHit || []).map(c => c.id));
-        } catch(e) { /* 找不到也沒關係 */ }
+        } catch(e) {}
         // v392:候選章節改用「結構摘要 digest」取代「前 400 字 summary」,讓 AI 確切知道哪些事實/數值已被寫過
         //       核心目的:AI 不必再花 token 重寫整章,只回傳「真正新增的 delta」就好
         const _extractDigest = (content) => {
@@ -10476,29 +10474,24 @@ ${(q.options || []).join('\n')}
             bullet_starts: bullet_starts.slice(0, 30)
           };
         };
-        // 候選章節:詳盡 digest(AI 主要看這個決定 append) / 其他章節:精簡(只給名稱 + subtopic + concepts)
-        // 限制 candidates 最多 8 章,避免章節爆多時 prompt 失控
-        const MAX_CANDIDATES = 8;
+        // v420:candidates 8 → 4,digest 收緊;others 只給 name + subtopic(拿掉 concepts 省 60% token)
+        const MAX_CANDIDATES = 4;
         const buildCandidateEntry = (c) => {
           const digest = _extractDigest(c.content || '');
           return {
             id: c.id,
             name: c.name,
             subtopic: c.subtopic || '',
-            concepts: (c.concepts || []).slice(0, 8),
-            // 章節已寫過哪些子段/概念/數值 → AI 寫 delta 時要避開這些
-            digest_subsections: digest.subsections,
-            digest_concepts: digest.concepts,
-            digest_facts: digest.facts,
-            digest_bullet_starts: digest.bullet_starts
+            subsections: digest.subsections.slice(0, 8),
+            concepts: digest.concepts.slice(0, 12),
+            facts: digest.facts.slice(0, 8),
+            bullets: digest.bullet_starts.slice(0, 8)
           };
         };
-        // 其他章節超精簡 — 只給 AI 知道有這章,讓它判斷要不要從 others 挑出來 append
         const buildOtherEntry = (c) => ({
           id: c.id,
           name: c.name,
-          subtopic: c.subtopic || '',
-          concepts: (c.concepts || []).slice(0, 4)
+          subtopic: c.subtopic || ''
         });
         const candidates = chapters.filter(c => candidateIds.has(c.id)).slice(0, MAX_CANDIDATES).map(buildCandidateEntry);
         const others = chapters.filter(c => !candidateIds.has(c.id)).map(buildOtherEntry);

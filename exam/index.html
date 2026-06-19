@@ -7223,7 +7223,14 @@ ${(q.options || []).join('\n')}
           // 2. 試寫 localStorage(舊版相容,撞 quota 預期會失敗,靜默處理)
           try { localStorage.setItem(uKey('examHistory'), payload); } catch (lsErr) {}
           // v391:存完馬上 push 雲端,別等下次自動同步,另一台才能即時拿到
-          try { if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) DentalSync.pushAll(); } catch(e) { console.warn('[saveExamHistory push]', e); }
+          // v416:改成只推 examHistory,不推整批 — 整批會抓 IDB 上的 wrongbook_state,但練習中的標記可能還在 IDB 寫入隊列,推上去是舊版會把標記蓋掉
+          try {
+            if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+              DentalSync.pushOne('examHistory', payload).catch(e => console.warn('[saveExamHistory push examHistory]', e));
+            } else if (typeof DentalSync !== 'undefined' && DentalSync.pushAll) {
+              DentalSync.pushAll();
+            }
+          } catch(e) { console.warn('[saveExamHistory push]', e); }
         } catch (e) {
           console.error('saveExamHistory:', e);
           if (typeof showToast === 'function') showToast('❌ 試卷紀錄儲存失敗:' + (e.message||'').slice(0,60));

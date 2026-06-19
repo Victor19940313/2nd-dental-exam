@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-remove-rescue-btn';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-submit-no-clobber-marks';
 const PRECACHE = [
   './',
   './index.html',

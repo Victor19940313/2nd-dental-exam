@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-resume-wait-qs-no-clear-lastpos';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-lastpos-idb-mac-safari-hardening';
 const PRECACHE = [
   './',
   './index.html',

@@ -6295,42 +6295,60 @@ ${(q.options || []).join('\n')}
         if (!practiceList.length) return;
         const q = practiceList[practiceIdx];
         const modeTag = examMode ? "📋 試卷" : "練習";
-        try { localStorage.setItem(
-          LASTPOS_KEY,
-          JSON.stringify({
-            ids: practiceList.map((q) => q.id),
-            idx: practiceIdx,
-            examMode: examMode,
-            examAnswers: examMode ? examAnswers : null,
-            practiceAnswers: examMode ? null : practiceAnswers,
-            practiceResults: examMode ? null : practiceResults,
-            qgridSkipped: qgridSkipped,
-            meta: q
-              ? `${modeTag}・第 ${practiceIdx + 1} / ${practiceList.length} 題・${q.meta || ""}`
-              : "",
-          }),
-        ); } catch(e) { /* LS 滿了,LastPos 是輔助功能不影響主流程 */ }
-        // v407:寫完 lastPos 就把 btn-resume 顯示出來,不然開始練習後 startPractice 把它隱藏了,
-        //       使用者切到筆記本 / 瀏覽都看不到「回到考題」 → 找不回練習進度
+        const payload = JSON.stringify({
+          ids: practiceList.map((q) => q.id),
+          idx: practiceIdx,
+          examMode: examMode,
+          examAnswers: examMode ? examAnswers : null,
+          practiceAnswers: examMode ? null : practiceAnswers,
+          practiceResults: examMode ? null : practiceResults,
+          qgridSkipped: qgridSkipped,
+          meta: q
+            ? `${modeTag}・第 ${practiceIdx + 1} / ${practiceList.length} 題・${q.meta || ""}`
+            : "",
+          savedAt: Date.now(),
+        });
+        // v423:雙寫 LS + IDB(Mac Safari ITP 偶爾把 LS 清掉,IDB 較穩)
+        try { localStorage.setItem(LASTPOS_KEY, payload); } catch(e) {}
+        if (typeof _idbSet === 'function') {
+          _idbSet(LASTPOS_KEY, payload).catch(() => {});
+        }
         try { if (typeof checkLastPos === 'function') checkLastPos(); } catch(e){}
       }
 
       function clearLastPos() {
         localStorage.removeItem(LASTPOS_KEY);
+        if (typeof _idbSet === 'function') _idbSet(LASTPOS_KEY, '').catch(() => {});
         document.getElementById("btn-resume").style.display = "none";
         document.getElementById("resume-info").style.display = "none";
       }
 
-      function checkLastPos() {
+      // v423:Mac Safari 滑動上一頁/切 tab/關 page 都會觸發以下事件,確保 lastPos 一定有寫
+      ['visibilitychange', 'pagehide', 'beforeunload'].forEach(ev => {
+        window.addEventListener(ev, () => {
+          try {
+            if (practiceList && practiceList.length) saveLastPos();
+            else if (scrollExamList && scrollExamList.length && typeof saveScrollExamLastPos === 'function') saveScrollExamLastPos();
+          } catch(e){}
+        });
+      });
+
+      async function checkLastPos() {
         try {
-          const raw = localStorage.getItem(LASTPOS_KEY);
+          let raw = localStorage.getItem(LASTPOS_KEY);
+          // v423:LS 沒有也問 IDB,Mac Safari LS 偶爾被清也能撈回
+          if (!raw && typeof _idbGet === 'function') {
+            try {
+              raw = await _idbGet(LASTPOS_KEY);
+              if (raw) { try { localStorage.setItem(LASTPOS_KEY, raw); } catch(e){} }
+            } catch(e) {}
+          }
           if (!raw) return;
           const pos = JSON.parse(raw);
           if (!pos.ids || !pos.ids.length) return;
           document.getElementById("btn-resume").style.display = "block";
-          document.getElementById("resume-info").style.display = "block";
-          document.getElementById("resume-info").textContent =
-            pos.meta || `第 ${pos.idx + 1} / ${pos.ids.length} 題`;
+          const ri = document.getElementById("resume-info");
+          if (ri) { ri.style.display = "block"; ri.textContent = pos.meta || `第 ${pos.idx + 1} / ${pos.ids.length} 題`; }
         } catch (e) {}
       }
 
@@ -6354,8 +6372,15 @@ ${(q.options || []).join('\n')}
             try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
             return;
           }
-          // (2) 記憶體沒有 → 試 localStorage
-          const raw = localStorage.getItem(LASTPOS_KEY);
+          // (2) 記憶體沒有 → 試 LS,LS 沒有再試 IDB
+          let raw = localStorage.getItem(LASTPOS_KEY);
+          if (!raw && typeof _idbGet === 'function') {
+            try {
+              raw = await _idbGet(LASTPOS_KEY);
+              // IDB 有 → 同步寫回 LS
+              if (raw) { try { localStorage.setItem(LASTPOS_KEY, raw); } catch(e){} }
+            } catch(e) {}
+          }
           if (!raw) {
             showToast('沒有上次的進度,請從「考試首頁」開始');
             return;

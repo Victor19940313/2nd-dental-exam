@@ -7343,7 +7343,10 @@ ${(q.options || []).join('\n')}
           if (!key) return;
           const s = _getReviewedExams();
           if (input.checked) s.add(key); else s.delete(key);
-          localStorage.setItem(uKey('exam_reviewed'), JSON.stringify(Array.from(s)));
+          const payload = JSON.stringify(Array.from(s));
+          localStorage.setItem(uKey('exam_reviewed'), payload);
+          // v425:跨裝置同步
+          if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) DentalSync.pushOne('exam_reviewed', payload).catch(() => {});
           row.classList.toggle('is-reviewed', input.checked);
         } catch(e){}
       }
@@ -7526,13 +7529,18 @@ ${(q.options || []).join('\n')}
         try {
           const hist = JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]');
           const filtered = hist.filter(h => !(h.date === date && h.label === label));
-          localStorage.setItem(uKey('examHistory'), JSON.stringify(filtered));
+          const histPayload = JSON.stringify(filtered);
+          localStorage.setItem(uKey('examHistory'), histPayload);
+          if (typeof _idbSet === 'function') _idbSet(uKey('examHistory'), histPayload).catch(() => {});
+          if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) DentalSync.pushOne('examHistory', histPayload).catch(() => {});
           // 也清掉 reviewed 標記
           const reviewed = _getReviewedExams();
           const examKey = date + '|' + label;
           if (reviewed.has(examKey)) {
             reviewed.delete(examKey);
-            localStorage.setItem(uKey('exam_reviewed'), JSON.stringify(Array.from(reviewed)));
+            const rPayload = JSON.stringify(Array.from(reviewed));
+            localStorage.setItem(uKey('exam_reviewed'), rPayload);
+            if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) DentalSync.pushOne('exam_reviewed', rPayload).catch(() => {});
           }
         } catch(e){}
         // re-render 所有有開的列表
@@ -8801,6 +8809,13 @@ ${(q.options || []).join('\n')}
           _idbSet(uKey("daily_log"), _dlPayload).catch(e => console.warn('[daily_log] IDB fail', e));
         }
         try { localStorage.setItem(uKey("daily_log"), _dlPayload); } catch(e) {}
+        // v425:跨裝置同步(debounce 避免每答一題都推一次,改 3 秒內合併推一次)
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+          clearTimeout(window._dlPushTimer);
+          window._dlPushTimer = setTimeout(() => {
+            DentalSync.pushOne('daily_log', _dlPayload).catch(() => {});
+          }, 3000);
+        }
         renderDailyLog();
       }
 
@@ -11251,9 +11266,11 @@ ${dec.reasoning || ''}
         } catch(e) { return []; }
       }
       function savePendingQueue(arr){
-        try {
-          localStorage.setItem(uKey('notebook_pending'), JSON.stringify(arr));
-        } catch(e) { console.error('save pending failed', e); }
+        const payload = JSON.stringify(arr);
+        try { localStorage.setItem(uKey('notebook_pending'), payload); }
+        catch(e) { console.error('save pending failed', e); }
+        // v425:跨裝置同步
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) DentalSync.pushOne('notebook_pending', payload).catch(() => {});
       }
       function addToPendingQueue(q, errMsg){
         const arr = getPendingQueue();
@@ -16201,11 +16218,16 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         }
         document.getElementById('ai-settings-overlay').classList.add('open');
       }
+      // v425:主題類設定一律雙寫 LS + 跨裝置同步
+      function _pushOneSafe(sk, val){
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) DentalSync.pushOne(sk, val).catch(() => {});
+      }
       // 主題切換 — 每個使用者完全獨立,只存自己的 key
       function setNotebookTheme(themeClass){
         document.body.className = document.body.className.split(/\s+/).filter(c => !c.startsWith('theme-')).join(' ').trim();
         if (themeClass) document.body.classList.add(themeClass);
         try { localStorage.setItem(uKey('nb_theme'), themeClass); } catch(e){}
+        _pushOneSafe('nb_theme', themeClass);
         document.querySelectorAll('#theme-pills-settings button, #theme-pills-gradient button, #theme-pills-japanese button').forEach(b => {
           b.classList.toggle('is-active', (b.dataset.theme || '') === themeClass);
         });
@@ -16263,7 +16285,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         });
       }
       function applyThemeSat(pct){
-        localStorage.setItem(uKey('nb_theme_sat'), String(pct));
+        const v = String(pct);
+        localStorage.setItem(uKey('nb_theme_sat'), v);
+        _pushOneSafe('nb_theme_sat', v);
         applyThemeFilters();
         const valEl = document.getElementById('theme-sat-value');
         if (valEl) valEl.textContent = pct + '%';
@@ -16271,7 +16295,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         if (slider) slider.value = pct;
       }
       function applyThemeOpa(pct){
-        localStorage.setItem(uKey('nb_theme_opa'), String(pct));
+        const v = String(pct);
+        localStorage.setItem(uKey('nb_theme_opa'), v);
+        _pushOneSafe('nb_theme_opa', v);
         applyThemeFilters();
         const valEl = document.getElementById('theme-opa-value');
         if (valEl) valEl.textContent = pct + '%';
@@ -16279,7 +16305,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         if (slider) slider.value = pct;
       }
       function applyThemeGstr(pct){
-        localStorage.setItem(uKey('nb_theme_gstr'), String(pct));
+        const v = String(pct);
+        localStorage.setItem(uKey('nb_theme_gstr'), v);
+        _pushOneSafe('nb_theme_gstr', v);
         applyThemeGstrCss();
         const valEl = document.getElementById('theme-gstr-value');
         if (valEl) valEl.textContent = pct + '%';
@@ -16294,7 +16322,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       function resetThemeOpa(){ applyThemeOpa(100); }
       function resetThemeGstr(){ applyThemeGstr(100); }
       function applyTocMono(on){
-        try { localStorage.setItem(uKey('nb_toc_mono'), on ? '1' : '0'); } catch(e){}
+        const v = on ? '1' : '0';
+        try { localStorage.setItem(uKey('nb_toc_mono'), v); } catch(e){}
+        _pushOneSafe('nb_toc_mono', v);
         if (document.body) document.body.classList.toggle('nb-toc-mono', !!on);
       }
       function _applyTocMonoFromStorage(){
@@ -16302,7 +16332,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         if (document.body) document.body.classList.toggle('nb-toc-mono', on);
       }
       function applyBgStyle(style){
-        try { localStorage.setItem(uKey('nb_bg_style'), style || ''); } catch(e){}
+        const v = style || '';
+        try { localStorage.setItem(uKey('nb_bg_style'), v); } catch(e){}
+        _pushOneSafe('nb_bg_style', v);
         if (!document.body) return;
         ['bg-style-grid','bg-style-solid','bg-style-paper','bg-style-washi','bg-style-kraft','bg-style-vintage','bg-style-linen','bg-style-rice','bg-style-canvas','bg-style-note','bg-style-dot','bg-style-graph','bg-style-grad-paper','bg-style-marble','bg-style-marble-vein','bg-style-grunge','bg-style-white-paint','bg-style-white-paint-2','bg-style-abstract'].forEach(c => document.body.classList.remove(c));
         if (style) document.body.classList.add('bg-style-' + style);
@@ -16311,7 +16343,9 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         applyBgStyle(localStorage.getItem(uKey('nb_bg_style')) || '');
       }
       function applyFontStyle(style){
-        try { localStorage.setItem(uKey('nb_font_style'), style || ''); } catch(e){}
+        const v = style || '';
+        try { localStorage.setItem(uKey('nb_font_style'), v); } catch(e){}
+        _pushOneSafe('nb_font_style', v);
         if (!document.body) return;
         ['font-serif','font-kai','font-maru','font-mincho'].forEach(c => document.body.classList.remove(c));
         if (style) document.body.classList.add('font-' + style);

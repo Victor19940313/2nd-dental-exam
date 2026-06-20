@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-lastpos-firebase-cross-device';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-all-storage-firebase-sync';
 const PRECACHE = [
   './',
   './index.html',

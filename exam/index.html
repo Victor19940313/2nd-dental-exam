@@ -6338,7 +6338,9 @@ ${(q.options || []).join('\n')}
       //       第二個版本只讀 localStorage,讀不到就 silent return → 「回到考題」變空白畫面
       //       這版改成:先用記憶體 practiceList(現場最常見),不行才退回 localStorage,
       //       全空就明確 toast,任何 throw 不再被吞掉
-      function resumePractice() {
+      // v422:resumePractice 改 async,等 QS 載完才動作
+      //       原因:從口訣區回來 hash=#resume DOMContentLoaded 立刻 call,但 QS 還沒 load → list=[] → 誤判沒進度 → 還清掉 lastPos
+      async function resumePractice() {
         try {
           // (1) 記憶體有 practiceList → 直接用(從筆記本/錯題本切回的常見情境)
           if (practiceList && practiceList.length > 0) {
@@ -6352,21 +6354,51 @@ ${(q.options || []).join('\n')}
             try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
             return;
           }
-          // (2) 記憶體沒有 → 試 localStorage(重新整理頁面後從首頁點「回到考題」)
+          // (2) 記憶體沒有 → 試 localStorage
           const raw = localStorage.getItem(LASTPOS_KEY);
           if (!raw) {
             showToast('沒有上次的進度,請從「考試首頁」開始');
             return;
           }
+          // v422:等 QS load 完(從口訣區回來時 QS 還在載)
+          for (let i = 0; i < 50; i++) {
+            if (typeof QS !== 'undefined' && QS.length > 100) break;
+            await new Promise(r => setTimeout(r, 200));
+          }
+          if (typeof QS === 'undefined' || QS.length === 0) {
+            showToast('題庫還在載入,請稍後再按「回到考題」');
+            return;
+          }
           const pos = JSON.parse(raw);
+          // v422:整頁捲動模式恢復
+          if (pos.scrollMode) {
+            const idSetS = new Set(pos.ids);
+            const idOrderS = Object.fromEntries(pos.ids.map((id, i) => [id, i]));
+            const listS = QS.filter((q) => idSetS.has(q.id)).sort((a, b) => idOrderS[a.id] - idOrderS[b.id]);
+            if (!listS.length) {
+              showToast('找不到上次的題目(題庫可能改過),lastPos 保留可重試');
+              return;
+            }
+            scrollExamList = listS;
+            scrollExamAnswers = pos.scrollExamAnswers || {};
+            scrollExamSubmitted = !!pos.scrollExamSubmitted;
+            if (typeof renderScrollExam === 'function') renderScrollExam();
+            ['screen-home','screen-practice','screen-browse','screen-exam-results','screen-wrongbook','screen-notebook'].forEach(s => {
+              const el = document.getElementById(s); if (el) el.style.display = 'none';
+            });
+            const se = document.getElementById('screen-scroll-exam');
+            if (se) se.style.display = 'block';
+            try { window.scrollTo(0, 0); } catch(e){}
+            return;
+          }
           const idSet = new Set(pos.ids);
           const idOrder = Object.fromEntries(pos.ids.map((id, i) => [id, i]));
           const list = QS.filter((q) => idSet.has(q.id)).sort(
             (a, b) => idOrder[a.id] - idOrder[b.id],
           );
           if (!list.length) {
-            clearLastPos();
-            showToast("找不到上次的題目");
+            // v422:不再 clearLastPos — 可能是 QS 還沒完整載入,別清掉避免使用者再試也救不回來
+            showToast('找不到上次的題目(題庫可能改過或還在載入),lastPos 保留可重試');
             return;
           }
           examMode = !!pos.examMode;
@@ -6381,6 +6413,7 @@ ${(q.options || []).join('\n')}
           if (submitBtn) submitBtn.style.display = "";
           if (!examMode) updatePracticeScoreUI();
           loadPracticeQ();
+          try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
         } catch (e) {
           console.error('[resumePractice] failed:', e);
           showToast('回到考題失敗:' + ((e && e.message) || e));
@@ -6910,6 +6943,8 @@ ${(q.options || []).join('\n')}
           if (er) er.style.display = "none";
           window.scrollTo(0, 0);
           if (useTimer) startTimer(3600);
+          // v422:整頁捲動模式也存 lastPos,從口訣區回得來
+          try { saveScrollExamLastPos(); } catch(e){}
           return;
         }
         examMode = true;
@@ -7000,9 +7035,28 @@ ${(q.options || []).join('\n')}
           .join("");
       }
 
+      // v422:整頁捲動模式存 lastPos(從口訣區回來時 resumePractice 能回到原試卷)
+      function saveScrollExamLastPos(){
+        if (!scrollExamList || !scrollExamList.length) return;
+        try {
+          localStorage.setItem(LASTPOS_KEY, JSON.stringify({
+            ids: scrollExamList.map(q => q.id),
+            idx: 0,
+            scrollMode: true,
+            examMode: true,
+            scrollExamAnswers: scrollExamAnswers || {},
+            scrollExamSubmitted: !!scrollExamSubmitted,
+            meta: '📋 試卷(整頁捲動)・' + scrollExamList.length + ' 題'
+          }));
+        } catch(e) {}
+        try { if (typeof checkLastPos === 'function') checkLastPos(); } catch(e){}
+      }
+
       function scrollExamAnswer(qid, idx) {
         if (scrollExamSubmitted) return;
         scrollExamAnswers[qid] = idx;
+        // v422:每答一題重存 lastPos
+        try { saveScrollExamLastPos(); } catch(e){}
         // Highlight selected
         const LETTERS = ["A", "B", "C", "D", "E"];
         const q = scrollExamList.find((q) => q.id === qid);

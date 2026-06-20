@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-mnemonics-table-tools';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-resume-wait-qs-no-clear-lastpos';
 const PRECACHE = [
   './',
   './index.html',

@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-lastpos-idb-mac-safari-hardening';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-lastpos-firebase-cross-device';
 const PRECACHE = [
   './',
   './index.html',

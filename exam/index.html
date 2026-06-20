@@ -6313,6 +6313,11 @@ ${(q.options || []).join('\n')}
         if (typeof _idbSet === 'function') {
           _idbSet(LASTPOS_KEY, payload).catch(() => {});
         }
+        // v424:即時推 Firebase(用當下 payload,不從 LS 拿,LS 可能寫失敗)
+        //       本機 IDB/LS 都掛掉,Firebase 上仍有最新進度,任何裝置都救得回
+        if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+          DentalSync.pushOne('wrongbook_lastpos', payload).catch(() => {});
+        }
         try { if (typeof checkLastPos === 'function') checkLastPos(); } catch(e){}
       }
 
@@ -6372,14 +6377,24 @@ ${(q.options || []).join('\n')}
             try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(e) {}
             return;
           }
-          // (2) 記憶體沒有 → 試 LS,LS 沒有再試 IDB
+          // (2) 記憶體沒有 → 試 LS → IDB → Firebase remote
           let raw = localStorage.getItem(LASTPOS_KEY);
           if (!raw && typeof _idbGet === 'function') {
             try {
               raw = await _idbGet(LASTPOS_KEY);
-              // IDB 有 → 同步寫回 LS
               if (raw) { try { localStorage.setItem(LASTPOS_KEY, raw); } catch(e){} }
             } catch(e) {}
+          }
+          // v424:本機都沒 → 拉 Firebase remote(跨裝置救援)
+          if (!raw && typeof DentalSync !== 'undefined' && DentalSync.getRemoteSnapshot) {
+            try {
+              const remote = await DentalSync.getRemoteSnapshot();
+              if (remote && remote.wrongbook_lastpos) {
+                raw = remote.wrongbook_lastpos;
+                try { localStorage.setItem(LASTPOS_KEY, raw); } catch(e){}
+                if (typeof _idbSet === 'function') _idbSet(LASTPOS_KEY, raw).catch(() => {});
+              }
+            } catch(e) { console.warn('[resumePractice] remote 撈 lastpos fail', e); }
           }
           if (!raw) {
             showToast('沒有上次的進度,請從「考試首頁」開始');
@@ -18216,6 +18231,8 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
             updateMatchCount();
             renderDailyLog();
           }
+          // v424:sync 拉完 Firebase remote 後再 call 一次 checkLastPos,讓「回到考題」按鈕從別台裝置寫的進度顯示出來
+          if (typeof checkLastPos === 'function') checkLastPos();
         });
       }
       // Live reload when Firebase pushes new data

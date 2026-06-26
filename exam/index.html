@@ -17838,6 +17838,52 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       }
       window.addEventListener('hashchange', _maybeOpenFromHash);
 
+      // v426:鍵盤左右鍵翻題(練習頁 + 重看試卷),焦點在輸入框/有 modal 開著時不觸發
+      document.addEventListener('keydown', function(e){
+        // 1. 焦點在輸入框 → 不攔截(避免影響游標)
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        // 2. 有 modifier 鍵(Ctrl/Cmd/Alt) → 不攔截(避免衝突)
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const k = e.key;
+        const isNext = (k === 'ArrowRight' || k === 'ArrowDown');
+        const isPrev = (k === 'ArrowLeft' || k === 'ArrowUp');
+        if (!isNext && !isPrev) return;
+
+        // 3. 偷看筆記 / AI 設定 / 其他 modal 開著 → 不翻題(讓使用者在 modal 內滾動)
+        const peek = document.getElementById('peek-overlay');
+        if (peek && peek.style.display && peek.style.display !== 'none') return;
+        const aiSet = document.getElementById('ai-settings-overlay');
+        if (aiSet && aiSet.classList.contains('open')) return;
+
+        // 4. 優先處理「重看試卷」modal
+        const reviewModal = document.getElementById('exam-review-modal');
+        if (reviewModal && reviewModal.style.display !== 'none' && typeof _reviewEntry !== 'undefined' && _reviewEntry) {
+          try {
+            const filtered = (typeof _filteredReviewQids === 'function') ? _filteredReviewQids() : null;
+            if (filtered && filtered.length) {
+              const cur = filtered.findIndex(x => x.i === _reviewIdx);
+              let nextI;
+              if (isNext) nextI = cur >= 0 && cur < filtered.length - 1 ? filtered[cur + 1].i : filtered[0].i;
+              else        nextI = cur > 0 ? filtered[cur - 1].i : filtered[filtered.length - 1].i;
+              if (typeof renderReviewQ === 'function') renderReviewQ(nextI);
+              e.preventDefault();
+            }
+          } catch(err) { console.warn('[keynav review]', err); }
+          return;
+        }
+
+        // 5. 練習頁
+        const practiceScreen = document.getElementById('screen-practice');
+        if (practiceScreen && practiceScreen.style.display !== 'none' &&
+            typeof practiceList !== 'undefined' && practiceList && practiceList.length) {
+          try {
+            if (isNext && typeof nextQ === 'function') { nextQ(); e.preventDefault(); }
+            else if (isPrev && typeof prevQ === 'function') { prevQ(); e.preventDefault(); }
+          } catch(err) { console.warn('[keynav practice]', err); }
+        }
+      });
+
       // ════════════════════════════════════════════
       //  Reset All Marks
       // ════════════════════════════════════════════

@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-all-storage-firebase-sync';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-keyboard-nav-prev-next';
 const PRECACHE = [
   './',
   './index.html',

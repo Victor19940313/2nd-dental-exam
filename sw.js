@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-opt-strike-highlight-marks';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-opt-row-keep-border';
 const PRECACHE = [
   './',
   './index.html',

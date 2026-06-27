@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-practice-reveal-opt-row-color';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-reveal-color-over-highlight';
 const PRECACHE = [
   './',
   './index.html',

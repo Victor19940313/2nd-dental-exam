@@ -1103,18 +1103,15 @@
         font-weight: 700;
         margin-right: 0.3rem;
       }
-      /* v430:試卷回顧時上方選項也要顯示對錯(劃線/螢光筆優先,黃底會蓋過綠/紅底但邊框與 ✓/✗ 還在) */
+      /* v430:試卷回顧時上方選項也要顯示對錯 */
+      /* v432:答對/答錯時 review 色強制蓋過螢光筆(答案揭曉後綠/紅優先) */
       .opt-row.review-correct {
-        border-color: #22c55e;
-        background: #dcfce7;
+        border-color: #22c55e !important;
+        background: #dcfce7 !important;
       }
       .opt-row.review-wrong {
-        border-color: #ef4444;
-        background: #fee2e2;
-      }
-      .opt-row.review-correct.mark-highlight,
-      .opt-row.review-wrong.mark-highlight {
-        background: #fde047;  /* 螢光筆優先 */
+        border-color: #ef4444 !important;
+        background: #fee2e2 !important;
       }
       .opt-row .review-marker {
         font-size: 0.78rem;

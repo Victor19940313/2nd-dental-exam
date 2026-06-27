@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-keyboard-nav-prev-next';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-opt-strike-highlight-marks';
 const PRECACHE = [
   './',
   './index.html',

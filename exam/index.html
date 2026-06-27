@@ -1068,6 +1068,90 @@
         margin-right: 0.4rem;
       }
 
+      /* v427:選項拆「上方文字(可點字劃線/螢光筆)+下方 ABCD 按鈕(選答案)」 */
+      .opts-display {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18rem;
+        margin-bottom: 0.55rem;
+      }
+      .opt-row {
+        padding: 0.4rem 0.55rem;
+        font-size: 0.92rem;
+        line-height: 1.7;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.1s;
+        color: #1e293b;
+        -webkit-tap-highlight-color: transparent;
+        user-select: text;
+      }
+      .opt-row.opt-row-noMark { cursor: default; }
+      .opt-row.mark-strike {
+        color: #dc2626;
+        text-decoration: line-through;
+        text-decoration-thickness: 1.5px;
+      }
+      .opt-row.mark-highlight {
+        background: #fde047;
+      }
+      .opt-row .opt-letter {
+        font-weight: 700;
+        margin-right: 0.3rem;
+      }
+      .ans-row {
+        display: grid;
+        grid-template-columns: repeat(var(--ans-cols, 4), 1fr);
+        gap: 0.5rem;
+        padding: 0.6rem 0.7rem;
+        background: #f1f5f9;
+        border-radius: 12px;
+        margin-bottom: 0.8rem;
+      }
+      .ans-btn {
+        background: white;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 9px;
+        padding: 0.55rem 0;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #1e293b;
+        transition: all 0.12s;
+      }
+      .ans-btn:hover:not(:disabled):not(.locked) {
+        border-color: var(--purple);
+      }
+      .ans-btn.sel {
+        background: #eef2ff;
+        border-color: #6366f1;
+        color: #4338ca;
+      }
+      .ans-btn.show-correct {
+        background: #dcfce7;
+        border-color: #22c55e;
+        color: #15803d;
+      }
+      .ans-btn.show-wrong {
+        background: #fee2e2;
+        border-color: #ef4444;
+        color: #991b1b;
+      }
+      .ans-btn.dim { opacity: 0.45; }
+      .ans-btn:disabled, .ans-btn.locked { cursor: default; }
+      .clear-marks-btn {
+        background: #fff;
+        color: #6b7280;
+        border: 1.5px dashed #d1d5db;
+        border-radius: 7px;
+        padding: 0.32rem 0.6rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .clear-marks-btn:hover { background: #f9fafb; color: #374151; }
+
       /* Result area */
       .result-area {
         display: none;
@@ -4007,6 +4091,14 @@
           交卷
         </button>
         <button
+          class="clear-marks-btn"
+          style="margin: 0"
+          onclick="clearAllOptMarks(scrollExamList?.map(q=>q.id) || []); _scrollExamRehydrateUI && _scrollExamRehydrateUI();"
+          title="清除所有題目的劃線與螢光筆痕跡"
+        >
+          ✕ 清除痕跡
+        </button>
+        <button
           class="start-btn secondary"
           style="padding: 0.4rem 0.8rem; font-size: 0.8rem; margin: 0"
           onclick="showHome()"
@@ -6593,17 +6685,25 @@ ${(q.options || []).join('\n')}
           imgEl.style.display = "none";
         }
 
-        // Options
+        // Options — v427:上方選項文字(點字劃線/螢光筆) + 下方 ABCD 按鈕(選答案)
         const LETTERS = ["A", "B", "C", "D", "E"];
         const isMulti = Array.isArray(q.answer);
-        document.getElementById("pq-options").innerHTML = (q.options || [])
-          .map(
-            (opt, i) =>
-              `<button class="opt-btn" onclick="answerQ(${i})" id="opt-${i}">
-      <span class="opt-letter">${LETTERS[i]}.</span>${opt.replace(/^\([A-E]\)\s*/, "")}
-    </button>`,
-          )
-          .join("");
+        const _optsHtml = (q.options || []).map((opt, i) => {
+          const _t = opt.replace(/^\([A-E]\)\s*/, "");
+          const _isImg = /<img/i.test(_t);
+          const _click = _isImg ? "" : ` onclick="cycleOptMark('${q.id}',${i})"`;
+          const _cls = _isImg ? "opt-row opt-row-noMark" : "opt-row";
+          return `<div class="${_cls}" id="opt-row-${i}" data-idx="${i}" data-qid-scope="${q.id}"${_click}><span class="opt-letter">(${LETTERS[i]})</span><span class="opt-text">${_t}</span></div>`;
+        }).join("");
+        const _ansBtns = (q.options || []).map((_, i) =>
+          `<button class="ans-btn" id="ans-${i}" onclick="answerQ(${i})">${LETTERS[i]}</button>`
+        ).join("");
+        const _ansCols = (q.options || []).length || 4;
+        document.getElementById("pq-options").innerHTML =
+          `<div class="opts-display">${_optsHtml}</div>` +
+          `<div class="ans-row" style="--ans-cols:${_ansCols}">${_ansBtns}</div>`;
+        // 套用已存標記
+        if (typeof applyOptMarks === 'function') applyOptMarks(q.id);
 
         // Result area
         document.getElementById("result-area").style.display = "none";
@@ -6635,15 +6735,12 @@ ${(q.options || []).join('\n')}
           const prev = examAnswers[q.id];
           if (prev !== undefined) {
             answered = true;
-            document.querySelectorAll(".opt-btn").forEach((b, i) => {
+            // v427:.opt-btn → .ans-btn(下方 ABCD 按鈕)
+            document.querySelectorAll(".ans-btn").forEach((b, i) => {
               b.disabled = false;
-              if (i === prev) {
-                b.style.borderColor = '#6366f1';
-                b.style.background = '#eef2ff';
-                b.style.color = '#4338ca';
-              } else {
-                b.classList.add('dim');
-              }
+              b.classList.remove('dim', 'sel');
+              if (i === prev) b.classList.add('sel');
+              else b.classList.add('dim');
             });
             document.getElementById("btn-next").style.display = "block";
           } else {
@@ -6657,6 +6754,66 @@ ${(q.options || []).join('\n')}
         renderQGrid();
       }
 
+      // v427:選項刪除線/螢光筆標記 — in-memory(per session),切題保留,reload 清空
+      // 結構:_optMarks[qid] = {0: 1, 1: 2}; 0/缺=無標記、1=紅色刪除線、2=黃色螢光筆
+      window._optMarks = window._optMarks || {};
+      function cycleOptMark(qid, idx) {
+        if (!_optMarks[qid]) _optMarks[qid] = {};
+        const cur = _optMarks[qid][idx] || 0;
+        const next = (cur + 1) % 3; // 0 → 1 → 2 → 0
+        if (next === 0) delete _optMarks[qid][idx];
+        else _optMarks[qid][idx] = next;
+        if (Object.keys(_optMarks[qid]).length === 0) delete _optMarks[qid];
+        applyOptMarks(qid);
+        // 整頁捲動模式:同個 qid 卡片內也要重套
+        applyOptMarksScrollExam(qid);
+        // 試卷回顧 modal 開著時 → re-render(讓「清除痕跡」按鈕跟著痕跡顯示/隱藏)
+        const reviewModal = document.getElementById('exam-review-modal');
+        if (reviewModal && reviewModal.style.display && reviewModal.style.display !== 'none'
+            && typeof renderReviewQ === 'function' && typeof _reviewIdx !== 'undefined') {
+          try { renderReviewQ(_reviewIdx); } catch(e) {}
+        }
+      }
+      // v427:用 querySelectorAll 找出所有 data-qid-scope 對應的 opt-row(練習/捲動/試卷回顧三處可能同時 DOM 都存在)
+      function applyOptMarks(qid) {
+        const marks = _optMarks[qid] || {};
+        document.querySelectorAll('.opt-row[data-qid-scope="' + qid + '"]').forEach(row => {
+          const i = parseInt(row.dataset.idx);
+          if (isNaN(i)) return;
+          row.classList.remove('mark-strike', 'mark-highlight');
+          if (marks[i] === 1) row.classList.add('mark-strike');
+          else if (marks[i] === 2) row.classList.add('mark-highlight');
+        });
+      }
+      function applyOptMarksScrollExam(qid) {
+        const marks = _optMarks[qid] || {};
+        for (let i = 0; i < 5; i++) {
+          const row = document.getElementById('se-row-' + qid + '-' + i);
+          if (!row) continue;
+          row.classList.remove('mark-strike', 'mark-highlight');
+          if (marks[i] === 1) row.classList.add('mark-strike');
+          else if (marks[i] === 2) row.classList.add('mark-highlight');
+        }
+      }
+      function clearAllOptMarks(qids) {
+        let cleared = 0;
+        if (Array.isArray(qids)) {
+          qids.forEach(qid => { if (_optMarks[qid]) { delete _optMarks[qid]; cleared++; } });
+        } else {
+          cleared = Object.keys(_optMarks).length;
+          window._optMarks = {};
+        }
+        // 重新套用(清掉現在 DOM 上的)
+        document.querySelectorAll('.opt-row').forEach(el => {
+          el.classList.remove('mark-strike', 'mark-highlight');
+        });
+        showToast(cleared ? '已清除 ' + cleared + ' 題的選項痕跡' : '沒有可清除的痕跡');
+      }
+      window.cycleOptMark = cycleOptMark;
+      window.applyOptMarks = applyOptMarks;
+      window.applyOptMarksScrollExam = applyOptMarksScrollExam;
+      window.clearAllOptMarks = clearAllOptMarks;
+
       async function answerQ(idx) {
         // 試卷模式答題後仍可改答案，直到「下一題」/「交卷」為止
         if (answered && !examMode) return;
@@ -6666,21 +6823,13 @@ ${(q.options || []).join('\n')}
         if (examMode) {
           answered = true;
           examAnswers[q.id] = idx;
-          // 標出目前選的選項(不告訴對錯)，不 disable，允許繼續切換
-          const opts = document.querySelectorAll(".opt-btn");
+          // v427:標出選中的下方 ABCD 按鈕(不告訴對錯,允許繼續切換)
+          const opts = document.querySelectorAll(".ans-btn");
           opts.forEach((b, i) => {
             b.disabled = false;
-            b.classList.remove('dim');
-            b.style.borderColor = '';
-            b.style.background = '';
-            b.style.color = '';
-            if (i === idx) {
-              b.style.borderColor = '#6366f1';
-              b.style.background = '#eef2ff';
-              b.style.color = '#4338ca';
-            } else {
-              b.classList.add('dim');
-            }
+            b.classList.remove('dim', 'sel', 'show-correct', 'show-wrong');
+            if (i === idx) b.classList.add('sel');
+            else b.classList.add('dim');
           });
           // 隱藏答案/詳解區塊,只露 mark-row + 加入筆記
           document.getElementById("result-banner").style.display = "none";
@@ -6702,18 +6851,17 @@ ${(q.options || []).join('\n')}
           ? correct.includes(idx)
           : idx === correct;
 
-        const opts = document.querySelectorAll(".opt-btn");
+        // v427:揭曉答案 — 操作下方 ABCD 按鈕(上方文字保留使用者標記不動)
+        const opts = document.querySelectorAll(".ans-btn");
         opts.forEach((b, i) => {
           b.disabled = true;
+          b.classList.add("locked");
           if (correctArr.includes(i)) b.classList.add("show-correct");
-          else if (i === idx && !isCorrect) b.classList.add("selected-wrong");
+          else if (i === idx && !isCorrect) b.classList.add("show-wrong");
           else b.classList.add("dim");
         });
         if (isCorrect) {
-          document.querySelectorAll(".opt-btn")[idx].classList.remove("dim");
-          document
-            .querySelectorAll(".opt-btn")
-            [idx].classList.add("selected-right");
+          opts[idx]?.classList.remove("dim");
         }
 
         // Result banner
@@ -7034,15 +7182,18 @@ ${(q.options || []).join('\n')}
             const imgHtml = q.image
               ? `<img class="scroll-q-img" src="${/^https?:\/\//.test(q.image) ? q.image : 'images/' + q.image}" alt="題目圖片">`
               : "";
-            const opts = (q.options || [])
-              .map(
-                (opt, i) =>
-                  `<div class="scroll-opt" id="se-opt-${q.id}-${i}" onclick="scrollExamAnswer('${q.id}',${i})">
-        <span class="scroll-opt-letter">${LETTERS[i]}</span>
-        <span>${opt.replace(/^\([A-E]\)\s*/, "")}</span>
-      </div>`,
-              )
-              .join("");
+            // v427:選項拆「上方文字(可標記)+下方 ABCD 按鈕(選答案)」
+            const opts = (q.options || []).map((opt, i) => {
+              const _t = opt.replace(/^\([A-E]\)\s*/, "");
+              const _isImg = /<img/i.test(_t);
+              const _click = _isImg ? "" : ` onclick="cycleOptMark('${q.id}',${i})"`;
+              const _cls = _isImg ? "opt-row opt-row-noMark" : "opt-row";
+              return `<div class="${_cls}" id="se-row-${q.id}-${i}" data-idx="${i}" data-qid-scope="${q.id}"${_click}><span class="opt-letter">(${LETTERS[i]})</span><span class="opt-text">${_t}</span></div>`;
+            }).join("");
+            const ansBtnsSE = (q.options || []).map((_, i) =>
+              `<button class="ans-btn" id="se-ans-${q.id}-${i}" onclick="scrollExamAnswer('${q.id}',${i})">${LETTERS[i]}</button>`
+            ).join("");
+            const ansColsSE = (q.options || []).length || 4;
             const curStatus = (qState[q.id] && qState[q.id].status) || 'none';
             const _markBtn = (st, emoji, label, activeBg, activeBd) => {
               const active = curStatus === st;
@@ -7067,13 +7218,34 @@ ${(q.options || []).join('\n')}
       </div>
       <div class="scroll-q-text">${q.question}</div>
       ${imgHtml}
-      <div class="scroll-opts" id="se-opts-${q.id}">${opts}</div>
+      <div class="opts-display" id="se-opts-${q.id}">${opts}</div>
+      <div class="ans-row" style="--ans-cols:${ansColsSE}">${ansBtnsSE}</div>
       <div id="se-result-${q.id}"></div>
       ${actionsHtml}
     </div>`;
           })
           .join("");
+        // v427:渲染後重套標記 + 已答按鈕
+        try { _scrollExamRehydrateUI(); } catch(e) {}
       }
+
+      // v427:整頁捲動 re-render 後重套「已選答案的 ans-btn」+ 「劃線/螢光筆標記」
+      function _scrollExamRehydrateUI(){
+        const list = scrollExamList || [];
+        list.forEach(q => {
+          const ansIdx = scrollExamAnswers[q.id];
+          if (ansIdx !== undefined) {
+            (q.options || []).forEach((_, i) => {
+              const el = document.getElementById(`se-ans-${q.id}-${i}`);
+              if (!el) return;
+              if (i === ansIdx) { el.classList.add('sel'); el.classList.remove('dim'); }
+              else { el.classList.remove('sel'); el.classList.add('dim'); }
+            });
+          }
+          if (typeof applyOptMarksScrollExam === 'function') applyOptMarksScrollExam(q.id);
+        });
+      }
+      window._scrollExamRehydrateUI = _scrollExamRehydrateUI;
 
       // v422:整頁捲動模式存 lastPos(從口訣區回來時 resumePractice 能回到原試卷)
       function saveScrollExamLastPos(){
@@ -7097,13 +7269,14 @@ ${(q.options || []).join('\n')}
         scrollExamAnswers[qid] = idx;
         // v422:每答一題重存 lastPos
         try { saveScrollExamLastPos(); } catch(e){}
-        // Highlight selected
-        const LETTERS = ["A", "B", "C", "D", "E"];
+        // v427:Highlight 下方 ABCD 按鈕(上方文字保留標記不動)
         const q = scrollExamList.find((q) => q.id === qid);
         if (!q) return;
         (q.options || []).forEach((_, i) => {
-          const el = document.getElementById(`se-opt-${qid}-${i}`);
-          if (el) el.classList.toggle("sel", i === idx);
+          const el = document.getElementById(`se-ans-${qid}-${i}`);
+          if (!el) return;
+          if (i === idx) { el.classList.add('sel'); el.classList.remove('dim'); }
+          else { el.classList.remove('sel'); el.classList.add('dim'); }
         });
         // Update count
         const done = Object.keys(scrollExamAnswers).length;
@@ -7117,12 +7290,7 @@ ${(q.options || []).join('\n')}
         await persist(qid);
         const labels = { give_up:'🔴 送他吧', learning:'🟡 再努力!', guessed:'🤔 猜的', understood:'🟢 簡單', none:'標記取消' };
         showToast(labels[qState[qid].status]);
-        renderScrollExam();
-        // 保留答題狀態(re-render 會 reset opt 選中,要重套)
-        Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
-          const el = document.getElementById('se-opt-' + id + '-' + idx);
-          if (el) el.classList.add('sel');
-        });
+        renderScrollExam(); // 內含 _scrollExamRehydrateUI
       }
       async function scrollExamToggleFlag(qid){
         if (!qState[qid]) qState[qid] = { status: 'none', count: 0 };
@@ -7130,10 +7298,6 @@ ${(q.options || []).join('\n')}
         await persist(qid);
         showToast(qState[qid].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
         renderScrollExam();
-        Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
-          const el = document.getElementById('se-opt-' + id + '-' + idx);
-          if (el) el.classList.add('sel');
-        });
       }
       function scrollExamAddNotebook(qid){
         const q = scrollExamList.find(x => x.id === qid);
@@ -7150,11 +7314,7 @@ ${(q.options || []).join('\n')}
         _nbStartTimes.set(qid, Date.now());
         _updateNbBadge();
         showToast('🤖 已送進 AI 整理(可繼續寫題)');
-        renderScrollExam(); // 立即把這題按鈕變成「⏳ AI 整理中…」
-        Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
-          const el = document.getElementById('se-opt-' + id + '-' + idx);
-          if (el) el.classList.add('sel');
-        });
+        renderScrollExam(); // 內含 _scrollExamRehydrateUI
         _nbQueue = _nbQueue.then(() => addQToNotebook(q))
           .catch(err => console.error('scroll nb queue err', err))
           .finally(() => {
@@ -7163,11 +7323,7 @@ ${(q.options || []).join('\n')}
             _nbStartTimes.delete(qid);
             _nbToastedFor.delete(qid);
             _updateNbBadge();
-            renderScrollExam();
-            Object.entries(scrollExamAnswers).forEach(([id, idx]) => {
-              const el = document.getElementById('se-opt-' + id + '-' + idx);
-              if (el) el.classList.add('sel');
-            });
+            renderScrollExam(); // 內含 _scrollExamRehydrateUI
           });
       }
       function submitScrollExam() {
@@ -7182,11 +7338,13 @@ ${(q.options || []).join('\n')}
         scrollExamList.forEach((q) => {
           const userIdx = scrollExamAnswers[q.id];
           const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
-          // Lock all options
+          // v427:Lock 下方 ABCD 答題按鈕(上方文字保留標記)
           (q.options || []).forEach((_, i) => {
-            const el = document.getElementById(`se-opt-${q.id}-${i}`);
+            const el = document.getElementById(`se-ans-${q.id}-${i}`);
             if (!el) return;
+            el.disabled = true;
             el.classList.add("locked");
+            el.classList.remove("sel", "dim");
             if (correctArr.includes(i)) el.classList.add("show-correct");
             else if (i === userIdx && !correctArr.includes(i))
               el.classList.add("show-wrong");
@@ -7907,15 +8065,28 @@ ${(q.options || []).join('\n')}
         const isCorrect = userIdx != null && correctArr.includes(userIdx);
         const status = userIdx == null ? '未作答' : isCorrect ? '答對' : '答錯';
         const statusColor = userIdx == null ? '#9ca3af' : isCorrect ? '#059669' : '#dc2626';
+        // v427:試卷回顧也支援點字劃線/螢光筆(opt-row),下方再放一排「正解+你選的」狀態按鈕
         const optionsHtml = (q.options || []).map((opt, i) => {
+          const _t = (opt || '').replace(/^\([A-E]\)\s*/, '');
+          const _isImg = /<img/i.test(_t);
+          const _click = _isImg ? '' : ` onclick="cycleOptMark('${q.id}',${i}); applyOptMarks('${q.id}');"`;
+          const _cls = _isImg ? 'opt-row opt-row-noMark' : 'opt-row';
+          return `<div class="${_cls}" id="opt-row-${i}" data-idx="${i}" data-qid-scope="${q.id}"${_click}><span class="opt-letter">(${LETTERS[i]})</span><span class="opt-text">${escapeHtml(_t)}</span></div>`;
+        }).join('');
+        const ansBtnsReview = (q.options || []).map((_, i) => {
           const isCorrectOpt = correctArr.includes(i);
           const isUserPick = i === userIdx;
-          let bg = '#f9fafb', bd = '#e5e7eb', mark = '';
-          if (isCorrectOpt) { bg = '#dcfce7'; bd = '#86efac'; mark = ' ✓ 正解'; }
-          if (isUserPick && !isCorrectOpt) { bg = '#fee2e2'; bd = '#fca5a5'; mark = ' ✗ 你選的'; }
-          else if (isUserPick && isCorrectOpt) { mark = ' ✓ 你選的（正確）'; }
-          return `<div style="background:${bg};border:1.5px solid ${bd};border-radius:8px;padding:.5rem .8rem;margin-bottom:.4rem;font-size:.9rem;line-height:1.55">${escapeHtml(opt)}<strong style="color:${isCorrectOpt?'#059669':'#dc2626'};font-size:.78rem;margin-left:.3rem">${mark}</strong></div>`;
+          let cls = 'ans-btn locked';
+          if (isCorrectOpt) cls += ' show-correct';
+          else if (isUserPick) cls += ' show-wrong';
+          else cls += ' dim';
+          const title = isCorrectOpt ? (isUserPick ? '你選的（正確）' : '正解') : (isUserPick ? '你選的（錯）' : '');
+          return `<button class="${cls}" disabled title="${title}">${LETTERS[i]}</button>`;
         }).join('');
+        const ansColsReview = (q.options || []).length || 4;
+        const optsBlockHtml =
+          `<div class="opts-display">${optionsHtml}</div>` +
+          `<div class="ans-row" style="--ans-cols:${ansColsReview}">${ansBtnsReview}</div>`;
         const imgHtml = q.image ? `<img src="images/${q.image}" style="max-width:100%;border-radius:8px;margin:.6rem 0" />` : '';
         const st = (typeof getS === 'function') ? getS(q.id) : {};
         const expl = (st.expl_override ?? q.explanation) || '';
@@ -7937,6 +8108,12 @@ ${(q.options || []).join('\n')}
         const clearBtn = (curStatus && curStatus !== 'none')
           ? `<button onclick="reviewClearStatus()" title="清除這題的標記" style="background:#fff;color:#6b7280;border:1.5px dashed #d1d5db;border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">✕ 清除</button>`
           : '';
+        // v427:整份試卷的「清除所有選項痕跡」按鈕(只在有任何痕跡時顯示)
+        const _allQids = (_reviewEntry && _reviewEntry.qids) || [];
+        const hasAnyMarks = _allQids.some(qid => window._optMarks && window._optMarks[qid] && Object.keys(window._optMarks[qid]).length);
+        const clearMarksAllBtn = hasAnyMarks
+          ? `<button class="clear-marks-btn" onclick="(function(){clearAllOptMarks(${JSON.stringify(_allQids).replace(/"/g,'&quot;')}); renderReviewQ(_reviewIdx);})()" title="清除整份試卷的選項劃線與螢光筆痕跡">✕ 清除所有選項痕跡</button>`
+          : '';
         const markRowHtml = `
           <div style="display:flex;align-items:center;gap:.35rem;margin-bottom:.6rem;flex-wrap:wrap;padding:.45rem .55rem;background:#fafafa;border:1px dashed #d1d5db;border-radius:8px">
             <button onclick="reviewToggleFlag()" title="加入/移出錯題本" style="background:${flagged?'#f59e0b':'#fff'};color:${flagged?'#fff':'#92400e'};border:1.5px solid #f59e0b;border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">🚩 ${flagged?'已收錄':'錯題本'}</button>
@@ -7946,6 +8123,7 @@ ${(q.options || []).join('\n')}
             ${sBtn('learning','🟡','再努力','#eab308')}
             ${sBtn('give_up','🔴','送他吧','#ef4444')}
             ${clearBtn}
+            ${clearMarksAllBtn}
             <span style="font-size:.74rem;color:#9ca3af;margin-left:auto">已寫過 ${cnt} 次</span>
           </div>`;
 
@@ -7961,9 +8139,11 @@ ${(q.options || []).join('\n')}
           </div>
           <div style="font-size:.95rem;line-height:1.7;color:#1f2937;margin-bottom:.8rem">${escapeHtml(q.question||'')}</div>
           ${imgHtml}
-          ${optionsHtml}
+          ${optsBlockHtml}
           ${explHtml}
         `;
+        // v427:渲染後套用該題已存的劃線/螢光筆標記
+        try { applyOptMarks(q.id); } catch(e) {}
       }
       // 重看試卷裡按標記:更新 qState,立即重渲染
       // v411:取消 toggle 行為 — 按相同 status 不再變 'none',只覆蓋成該 status(避免誤觸消失)

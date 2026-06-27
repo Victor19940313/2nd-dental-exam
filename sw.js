@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-opt-marks-cross-device-sync';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-opt-row-show-correct-wrong';
 const PRECACHE = [
   './',
   './index.html',

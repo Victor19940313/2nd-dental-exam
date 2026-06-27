@@ -1103,6 +1103,26 @@
         font-weight: 700;
         margin-right: 0.3rem;
       }
+      /* v430:試卷回顧時上方選項也要顯示對錯(劃線/螢光筆優先,黃底會蓋過綠/紅底但邊框與 ✓/✗ 還在) */
+      .opt-row.review-correct {
+        border-color: #22c55e;
+        background: #dcfce7;
+      }
+      .opt-row.review-wrong {
+        border-color: #ef4444;
+        background: #fee2e2;
+      }
+      .opt-row.review-correct.mark-highlight,
+      .opt-row.review-wrong.mark-highlight {
+        background: #fde047;  /* 螢光筆優先 */
+      }
+      .opt-row .review-marker {
+        font-size: 0.78rem;
+        margin-left: 0.35rem;
+        font-weight: 700;
+      }
+      .opt-row.review-correct .review-marker { color: #15803d; }
+      .opt-row.review-wrong .review-marker { color: #991b1b; }
       .ans-row {
         display: grid;
         grid-template-columns: repeat(var(--ans-cols, 4), 1fr);
@@ -8134,12 +8154,24 @@ ${(q.options || []).join('\n')}
         const status = userIdx == null ? '未作答' : isCorrect ? '答對' : '答錯';
         const statusColor = userIdx == null ? '#9ca3af' : isCorrect ? '#059669' : '#dc2626';
         // v427:試卷回顧也支援點字劃線/螢光筆(opt-row),下方再放一排「正解+你選的」狀態按鈕
+        // v430:上方選項本身也加綠/紅底 + ✓/✗ 顯示對錯
         const optionsHtml = (q.options || []).map((opt, i) => {
           const _t = (opt || '').replace(/^\([A-E]\)\s*/, '');
           const _isImg = /<img/i.test(_t);
           const _click = _isImg ? '' : ` onclick="cycleOptMark('${q.id}',${i}); applyOptMarks('${q.id}');"`;
-          const _cls = _isImg ? 'opt-row opt-row-noMark' : 'opt-row';
-          return `<div class="${_cls}" id="opt-row-${i}" data-idx="${i}" data-qid-scope="${q.id}"${_click}><span class="opt-letter">(${LETTERS[i]})</span><span class="opt-text">${escapeHtml(_t)}</span></div>`;
+          const _isCorrectOpt = correctArr.includes(i);
+          const _isUserPick = i === userIdx;
+          let _reviewCls = '', _marker = '';
+          if (_isCorrectOpt) {
+            _reviewCls = ' review-correct';
+            _marker = _isUserPick ? ' ✓ 你選的（正確）' : ' ✓ 正解';
+          } else if (_isUserPick) {
+            _reviewCls = ' review-wrong';
+            _marker = ' ✗ 你選的';
+          }
+          const _baseCls = _isImg ? 'opt-row opt-row-noMark' : 'opt-row';
+          const _markerHtml = _marker ? `<strong class="review-marker">${_marker}</strong>` : '';
+          return `<div class="${_baseCls}${_reviewCls}" id="opt-row-${i}" data-idx="${i}" data-qid-scope="${q.id}"${_click}><span class="opt-letter">(${LETTERS[i]})</span><span class="opt-text">${escapeHtml(_t)}</span>${_markerHtml}</div>`;
         }).join('');
         const ansBtnsReview = (q.options || []).map((_, i) => {
           const isCorrectOpt = correctArr.includes(i);

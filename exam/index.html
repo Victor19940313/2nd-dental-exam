@@ -6951,6 +6951,30 @@ ${(q.options || []).join('\n')}
         if (isCorrect) {
           opts[idx]?.classList.remove("dim");
         }
+        // v431:上方選項本身也加綠/紅底 + ✓/✗ marker(劃線/螢光筆優先,黃底蓋過綠/紅,但邊框跟標記還在)
+        document.querySelectorAll('#pq-options .opt-row').forEach(row => {
+          const i = parseInt(row.dataset.idx);
+          if (isNaN(i)) return;
+          row.classList.remove('review-correct', 'review-wrong');
+          // 清掉舊 marker
+          row.querySelectorAll('.review-marker').forEach(m => m.remove());
+          const isCorrectOpt = correctArr.includes(i);
+          const isUserPick = i === idx;
+          let marker = '';
+          if (isCorrectOpt) {
+            row.classList.add('review-correct');
+            marker = isUserPick ? ' ✓ 你選的（正確）' : ' ✓ 正解';
+          } else if (isUserPick) {
+            row.classList.add('review-wrong');
+            marker = ' ✗ 你選的';
+          }
+          if (marker) {
+            const m = document.createElement('strong');
+            m.className = 'review-marker';
+            m.textContent = marker;
+            row.appendChild(m);
+          }
+        });
 
         // Result banner
         const banner = document.getElementById("result-banner");
@@ -7436,6 +7460,29 @@ ${(q.options || []).join('\n')}
             if (correctArr.includes(i)) el.classList.add("show-correct");
             else if (i === userIdx && !correctArr.includes(i))
               el.classList.add("show-wrong");
+          });
+          // v431:上方選項 row 也加綠/紅底 + ✓/✗ marker
+          (q.options || []).forEach((_, i) => {
+            const row = document.getElementById(`se-row-${q.id}-${i}`);
+            if (!row) return;
+            row.classList.remove('review-correct', 'review-wrong');
+            row.querySelectorAll('.review-marker').forEach(m => m.remove());
+            const isCorrectOpt = correctArr.includes(i);
+            const isUserPick = i === userIdx;
+            let mk = '';
+            if (isCorrectOpt) {
+              row.classList.add('review-correct');
+              mk = isUserPick ? ' ✓ 你選的（正確）' : ' ✓ 正解';
+            } else if (isUserPick) {
+              row.classList.add('review-wrong');
+              mk = ' ✗ 你選的';
+            }
+            if (mk) {
+              const m = document.createElement('strong');
+              m.className = 'review-marker';
+              m.textContent = mk;
+              row.appendChild(m);
+            }
           });
           const resultEl = document.getElementById(`se-result-${q.id}`);
           if (userIdx === undefined) {

@@ -21,7 +21,8 @@
     "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo",
     "examHistory", "exam_reviewed",
     "nb_theme", "nb_theme_sat", "nb_theme_opa", "nb_theme_gstr",
-    "nb_toc_mono", "nb_bg_style", "nb_font_style"
+    "nb_toc_mono", "nb_bg_style", "nb_font_style",
+    "opt_marks"  // v429:選項劃線/螢光筆痕跡(跨裝置同步)
   ];
   // v373:gemini_model 拿掉不跨 device sync
   // 原因:HUA 改 lite 馬上被別台 device IDB 內的 3.5 push 蓋回來,改設定改不掉

@@ -6758,9 +6758,69 @@ ${(q.options || []).join('\n')}
         renderQGrid();
       }
 
-      // v427:選項刪除線/螢光筆標記 — in-memory(per session),切題保留,reload 清空
+      // v427:選項刪除線/螢光筆標記
+      // v429:三層同步(LS + Firebase pushOne + 啟動/visibility/poll hydrate),跨裝置可帶
       // 結構:_optMarks[qid] = {0: 1, 1: 2}; 0/缺=無標記、1=紅色刪除線、2=黃色螢光筆
       window._optMarks = window._optMarks || {};
+      let _saveOptMarksTimer = null;
+      const OPT_MARKS_KEY = 'opt_marks';
+      function _getOptMarksLSKey() {
+        const uid = (typeof DentalSync !== 'undefined' && DentalSync.getUserId && DentalSync.getUserId()) || null;
+        return uid ? (uid + '_' + OPT_MARKS_KEY) : null;
+      }
+      function _saveOptMarksFlush() {
+        try {
+          const lsKey = _getOptMarksLSKey();
+          if (!lsKey) return;
+          const json = JSON.stringify(window._optMarks || {});
+          localStorage.setItem(lsKey, json);
+          if (typeof DentalSync !== 'undefined' && DentalSync.pushOne) {
+            DentalSync.pushOne(OPT_MARKS_KEY, json).catch(e => console.warn('[push opt_marks]', e));
+          }
+        } catch(e) { console.warn('[saveOptMarks]', e); }
+      }
+      function _scheduleSaveOptMarks() {
+        clearTimeout(_saveOptMarksTimer);
+        _saveOptMarksTimer = setTimeout(_saveOptMarksFlush, 800);
+      }
+      function _loadOptMarks() {
+        try {
+          const lsKey = _getOptMarksLSKey();
+          if (!lsKey) return;
+          const raw = localStorage.getItem(lsKey);
+          if (!raw) return;
+          const obj = JSON.parse(raw);
+          if (!obj || typeof obj !== 'object') return;
+          // 三方合併:remote LS + 本機記憶體 → 兩邊 union(LS 為主,因為 LS 已是 sync 拉回最新)
+          // 但本機可能有未推上去的標記,要保留
+          const merged = Object.assign({}, obj);
+          Object.keys(window._optMarks || {}).forEach(qid => {
+            if (!merged[qid]) merged[qid] = window._optMarks[qid];
+            else {
+              // 同 qid 兩邊都有 → 用 LS 為主(因為 LS 是 sync 拉回最新),但本機有 LS 沒有的 idx 也保留
+              const m = Object.assign({}, window._optMarks[qid], merged[qid]);
+              merged[qid] = m;
+            }
+          });
+          window._optMarks = merged;
+          // 套到目前 DOM 上所有 opt-row
+          Object.keys(window._optMarks).forEach(qid => {
+            try { applyOptMarks(qid); } catch(e) {}
+            try { applyOptMarksScrollExam(qid); } catch(e) {}
+          });
+        } catch(e) { console.warn('[loadOptMarks]', e); }
+      }
+      window._loadOptMarks = _loadOptMarks;
+      window._saveOptMarksFlush = _saveOptMarksFlush;
+
+      // 啟動時 + 延遲(等 sync 拉完) + visibility 切回 + 定期 poll(防 sync listener 拉回沒通知前端)
+      window.addEventListener('DOMContentLoaded', () => _loadOptMarks());
+      setTimeout(() => _loadOptMarks(), 3000);  // 給 DentalSync.init() 拉資料的時間
+      setTimeout(() => _loadOptMarks(), 8000);  // 再保險一次
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') _loadOptMarks();
+      });
+      setInterval(() => _loadOptMarks(), 30000);  // 每 30 秒同步一次(輕量)
       function cycleOptMark(qid, idx) {
         if (!_optMarks[qid]) _optMarks[qid] = {};
         const cur = _optMarks[qid][idx] || 0;
@@ -6777,6 +6837,8 @@ ${(q.options || []).join('\n')}
             && typeof renderReviewQ === 'function' && typeof _reviewIdx !== 'undefined') {
           try { renderReviewQ(_reviewIdx); } catch(e) {}
         }
+        // v429:debounce 推 LS + Firebase
+        _scheduleSaveOptMarks();
       }
       // v427:用 querySelectorAll 找出所有 data-qid-scope 對應的 opt-row(練習/捲動/試卷回顧三處可能同時 DOM 都存在)
       function applyOptMarks(qid) {
@@ -6811,6 +6873,8 @@ ${(q.options || []).join('\n')}
         document.querySelectorAll('.opt-row').forEach(el => {
           el.classList.remove('mark-strike', 'mark-highlight');
         });
+        // v429:推 LS + Firebase
+        _scheduleSaveOptMarks();
         showToast(cleared ? '已清除 ' + cleared + ' 題的選項痕跡' : '沒有可清除的痕跡');
       }
       window.cycleOptMark = cycleOptMark;

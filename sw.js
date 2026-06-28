@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-reveal-color-over-highlight';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-fix-cooldown-prompt-toast';
 const PRECACHE = [
   './',
   './index.html',

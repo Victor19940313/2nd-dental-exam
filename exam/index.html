@@ -5956,7 +5956,7 @@ ${(q.options || []).join('\n')}
           }
         } catch (err) {
           console.error('regenerate expl failed', err);
-          showToast('❌ 生成失敗: ' + (err.message || '').slice(0, 100));
+          showToast(_geminiErrorMsg(err, '❌ 重生詳解失敗:'), 6000);
         } finally {
           // 🛡 v284:還原按鈕(成功路徑後 explBox 會被重畫,btnEl 已不在 DOM 也沒關係)
           if (btnEl && btnEl.isConnected && _btnOrigHTML !== null) {
@@ -10333,6 +10333,27 @@ ${(q.options || []).join('\n')}
         Object.keys(_keyCooldowns).forEach(k => delete _keyCooldowns[k]);
         Object.keys(_key429Count).forEach(k => delete _key429Count[k]);
       }
+      window._silentResetCooldowns = _silentResetCooldowns;
+      // v433:統一把 Gemini error 翻譯成白話 toast
+      function _geminiErrorMsg(err, prefix){
+        const msg = (err && err.message) || '';
+        let body;
+        if (/429|quota|exceed|rate.*limit/i.test(msg)) {
+          body = '額度撞滿了,5 把 key 都在冷卻(60 秒),稍等再試';
+        } else if (/503|UNAVAILABLE|overloaded|high demand/i.test(msg)) {
+          body = 'Gemini 端忙線(503),等 30 秒到幾分鐘再試';
+        } else if (/timeout|abort|90 ?秒/i.test(msg)) {
+          body = 'AI 跑超時(90 秒沒回應),試試章節拆短或換 flash-lite';
+        } else if (/key.*失效|invalid.*key|API_KEY_INVALID|全部失效/i.test(msg)) {
+          body = '有 key 失效,請去 AI 設定檢查';
+        } else if (/空內容|empty|safety/i.test(msg)) {
+          body = 'AI 回了空內容(可能被安全過濾擋住),再試一次';
+        } else {
+          body = msg.slice(0, 100) || '未知錯誤';
+        }
+        return (prefix || '⚠️ ') + body;
+      }
+      window._geminiErrorMsg = _geminiErrorMsg;
       const GITHUB_TOKEN_LS = uKey("github_token");
       const GITHUB_REPO_LS = uKey("github_repo");
       function getGithubToken(){ return localStorage.getItem(GITHUB_TOKEN_LS) || ''; }
@@ -10955,7 +10976,7 @@ ${q.id} / ${SMAP[q.subject] || q.subject} / topic: ${q.topic || '(無)'}
 題目: ${q.question}
 ${(q.options || []).join('\n')}
 正解: ${correctTxt}
-詳解: ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n詳解2: ' + q.explanation_notebooklm : ''}${q.clinical ? '\n臨床: ' + q.clinical : ''}
+詳解: ${(q.explanation || '(無)').slice(0, 1500)}${q.explanation_notebooklm ? '\n詳解2: ' + q.explanation_notebooklm.slice(0, 1500) : ''}${q.clinical ? '\n臨床: ' + q.clinical.slice(0, 800) : ''}
 
 【決策欄位】
 - **concepts**(必填):核心概念 1-3 個關鍵字
@@ -11115,11 +11136,11 @@ ${oldCh.content || ''}
 ${(q.options || []).join('\n')}
 正確答案: ${correctTxt}
 
-詳解(Gemini): ${q.explanation || '（無）'}
+詳解(Gemini): ${(q.explanation || '（無）').slice(0, 1500)}
 
-詳解(NotebookLM): ${q.explanation_notebooklm || '（無）'}
+詳解(NotebookLM): ${(q.explanation_notebooklm || '（無）').slice(0, 1500)}
 
-臨床意義: ${q.clinical || '（無）'}
+臨床意義: ${(q.clinical || '（無）').slice(0, 800)}
 
 【AI 第一階段給的提示】
 ${dec.reasoning || ''}
@@ -12720,6 +12741,8 @@ ${dec.reasoning || ''}
           return;
         }
         if (!confirm('讓 AI 幫所有 ' + notebook.chapters.length + ' 個章節重新分配子主題分組？\n\n相同概念的章節會被歸到同一個 subtopic，例如「Pulp 牙髓」「Cementum 牙骨質」這種，讓目錄整齊好找。\n\n⚠ 重整前會自動備份整本筆記到雲端,可從「🛟 還原備份」回滾')) return;
+        // v433:使用者主動按 → 清掉所有 key 的 cooldown
+        _silentResetCooldowns();
 
         // v341:子主題分組前先備份(同 mergeChapters 的安全網)
         try { await backupNotebookToCloud('子主題分組前'); }
@@ -12796,7 +12819,7 @@ ${JSON.stringify(list, null, 2)}
         } catch(err) {
           // v341:中斷時把已套用的部分也存起來,不要留 partial state 在記憶體裡
           try { saveNotebook(); renderNotebook(); } catch(e) {}
-          alert('AI 重整失敗(已套用部分):\n\n' + err.message + '\n\n要還原回重整前,去「🛟 還原備份」選「子主題分組前」');
+          alert(_geminiErrorMsg(err, 'AI 重整失敗(已套用部分):\n\n') + '\n\n要還原回重整前,去「🛟 還原備份」選「子主題分組前」');
         } finally {
           if (btn) { btn.disabled = false; btn.innerHTML = orig; }
         }
@@ -15037,6 +15060,8 @@ ${JSON.stringify(candidates, null, 2)}
       async function reorganizeChapter(id){
         const ch = notebook.chapters.find(c => c.id === id);
         if (!ch) return;
+        // v433:使用者主動按 → 清掉所有 key 的 cooldown(跟 addCurrentToNotebook/regenerateExpl 一致)
+        _silentResetCooldowns();
         // 🛡 v284:長章節警告(章節整理是「整章重寫」,輸出有 token 上限,長章節會被截斷)
         const chLen = (ch.content || '').length;
         const isLong = chLen >= 6000;
@@ -15169,7 +15194,7 @@ ${(ch.content || '').slice(0, 15000)}
             showToast('✓ 已重新整理');
           }
         } catch(err) {
-          showToast('❌ 重整失敗：' + err.message.slice(0,80));
+          showToast(_geminiErrorMsg(err, '❌ 重整失敗:'), 6000);
         } finally {
           if (btn) { btn.disabled = false; btn.innerHTML = orig; }
         }

@@ -4296,6 +4296,7 @@
           <button class="nb-tb-btn" onclick="diagnoseChapterSubjects()" title="檢查每章的科目（牙三/牙四/牙五/牙六）有沒有分錯，一鍵修正">🔧 修正科目</button>
           <button class="nb-tb-btn" onclick="fixEscapedNewlinesInAllChapters()" title="掃所有章節:(1) 字面「\n」→ 真換行 (2) 表格孤兒列(空行隔開的「| ... |」)→ 接回主表" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🧹 修亂碼</button>
           <button class="nb-tb-btn" onclick="renameUnnamedChapters()" title="用 AI 幫名稱含「未命名」或「待整理」的章節改成正常名稱" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">🏷 修未命名章節</button>
+          <button class="nb-tb-btn" onclick="regenPendingChapters()" title="一鍵重生所有「(待整理)」章節 — 刪掉空章節後,把它們的題目重新讓 AI 分類到現有章節或建有實質內容的新章。v434 有 retry 保證品質" style="background:#fef3c7;border-color:#f97316;color:#9a3412">🔄 重生待整理章節</button>
           <button class="nb-tb-btn" onclick="openPrintModal()" title="列印單頁/多頁/全部章節">🖨️ 列印</button>
           <button class="nb-tb-btn" onclick="exportNotebookMD()" title="匯出為 Markdown">📥 匯出</button>
         </div>
@@ -10751,10 +10752,11 @@ ${(q.options || []).join('\n')}
           delta_target_section: { type: "STRING", description: "action=append 必填:要把新內容塞進哪個 ### 子標題(寫該子標題原文,如「🔗 延伸補充」)。如果新題帶來完全新的子概念,寫「NEW」並用 delta_new_section_title 給新子段標題" },
           delta_new_section_title: { type: "STRING", description: "delta_target_section='NEW' 時必填:新子段標題(含 emoji,例「👅 Tongue-thrusting 吐舌癖」)。會以 ### 層級加入,放在「🔗 延伸補充」之前" },
           delta_markdown: { type: "STRING", description: "action=append 必填:只寫**新增**的 markdown 片段(bullet 列 / 表格 row / 短段落)。舊章節已經有的事實/數值/概念**絕對不要再寫一次**。delta 可以很短(1-3 行也行),沒新東西就 action=skip" },
-          content: { type: "STRING", description: "action=new_chapter 必填:完整 Markdown 內容(>= 200 字)。action=append 時留空,改用 delta_* 欄位。skip 時可空" },
+          content: { type: "STRING", description: "action=new_chapter 必填:完整 Markdown 內容**必須 >= 500 字**且結構完整(## 主標 + ### 📌 定義 + ### 🗂 分類/表格 + ### ⚙️ 機制 + ### 🏥 臨床 + ### 🔗 延伸補充 + ### 📝 易考重點)。如果你發現這題內容太薄開不出 500 字的章,應該改用 action=append 塞進既有章節。action=append 時留空,改用 delta_* 欄位" },
           reasoning: { type: "STRING", description: "一句話解釋決定" }
         },
-        required: ["concepts", "domain", "subtopic", "action", "reasoning"]
+        // v434:chapter_name 從選填變必填 — 之前沒列進 required,AI 常常交白卷不給名字 → fallback 塞「(待整理)」章節
+        required: ["concepts", "domain", "subtopic", "action", "chapter_name", "reasoning"]
       };
 
       // 重整章節用的 schema
@@ -11441,10 +11443,69 @@ ${dec.reasoning || ''}
           // 帶 schema 強制 Gemini 回符合結構的 JSON
           const _ai1Start = _now();
           window._lastGeminiCallStats = null;
-          const raw = await _wrappedCallGemini(prompt, ADD_NOTEBOOK_SCHEMA);
+          let raw = await _wrappedCallGemini(prompt, ADD_NOTEBOOK_SCHEMA);
           _timing.ai1 = Object.assign({ ms: Math.round(_now() - _ai1Start) }, window._lastGeminiCallStats || {});
-          const dec = extractJSON(raw);
+          let dec = extractJSON(raw);
           _timing.decision = dec && dec.action;
+          // v434:AI 敷衍偵測 — content < 200 字或沒 chapter_name 就強制 retry 一次(帶懲罰性 prompt)
+          //       避免每題都直接 fallback 產「(待整理)」空章節
+          const _isLazy = (d) => {
+            if (!d) return true;
+            if (d.action === 'new_chapter') {
+              const cLen = (d.content || '').trim().length;
+              const nameOk = (d.chapter_name || '').trim().length >= 3;
+              if (cLen < 200 || !nameOk) return true;
+            }
+            if (d.action === 'append') {
+              const hasDelta = !!(d.delta_markdown && d.delta_markdown.trim() && d.delta_target_section);
+              const hasCon = (d.content || '').trim().length >= 80;
+              if (!hasDelta && !hasCon) return true;
+            }
+            return false;
+          };
+          if (_isLazy(dec)) {
+            console.warn('[addQToNotebook] AI 敷衍偵測:', {
+              action: dec && dec.action,
+              contentLen: (dec && dec.content || '').length,
+              chapterName: dec && dec.chapter_name,
+              deltaLen: (dec && dec.delta_markdown || '').length,
+            });
+            const _ai1RetryStart = _now();
+            const retryPrompt = prompt + `
+
+🚨🚨🚨【上一次你交白卷】🚨🚨🚨
+上次你回了:
+- action: ${dec && dec.action}
+- chapter_name: ${dec && dec.chapter_name || '(空)'}
+- content 長度: ${((dec && dec.content) || '').length} 字
+- delta_markdown 長度: ${((dec && dec.delta_markdown) || '').length} 字
+
+這是**不合格**的:
+- new_chapter 的 content 必須 >= 500 字且有完整結構(## 主標 + 5-6 個 ### 子段)
+- append 的 delta_markdown 必須有實質新內容(不能只寫「見上文」/「已涵蓋」/「參考本題」)
+- chapter_name 必須是具體概念名詞(例「Pulp necrosis 牙髓壞死」),不能空、不能寫「未命名」/「待整理」
+
+**這次請認真寫。**看題目的詳解 + NotebookLM 詳解,把核心考點整理成結構化 markdown。
+如果真的沒東西寫,寧可 append 到最相近的候選章節加一條 bullet,也不要開新章交白卷。`;
+            try {
+              window._lastGeminiCallStats = null;
+              const raw2 = await _wrappedCallGemini(retryPrompt, ADD_NOTEBOOK_SCHEMA);
+              const dec2 = extractJSON(raw2);
+              _timing.ai1_retry = Object.assign({ ms: Math.round(_now() - _ai1RetryStart) }, window._lastGeminiCallStats || {});
+              if (dec2 && !_isLazy(dec2)) {
+                console.log('[addQToNotebook] retry 成功,採用第 2 版');
+                dec = dec2;
+                raw = raw2;
+                _timing.decision = dec.action + '_retry';
+              } else {
+                console.warn('[addQToNotebook] retry 也敷衍,只能 fallback');
+                _timing.retry_still_lazy = true;
+              }
+            } catch(retryErr) {
+              console.warn('[addQToNotebook] retry 失敗', retryErr && retryErr.message);
+              _timing.retry_err = (retryErr && retryErr.message || '').slice(0, 120);
+            }
+          }
           // v408:防呆 — AI 自打嘴巴(action=skip 但 reasoning 自承「可補充/相關/擴充」)
           //        遇到就標 flag,toast 提醒使用者「可到歷史強制補進」
           if (dec && dec.action === 'skip' && dec.reasoning) {
@@ -12140,6 +12201,63 @@ ${dec.reasoning || ''}
         alert(finalMsg);
       }
       window.renameUnnamedChapters = renameUnnamedChapters;
+
+      // v434:一鍵重生所有「(待整理)」章節 — 使用者不用手動一題一題
+      // 做法:找出「(待整理)」章節 → 記下 qids → 刪章節 → 逐題重跑 addQToNotebook(v434 有 retry 邏輯,不會又進 fallback)
+      async function regenPendingChapters(){
+        loadNotebook();
+        if (!notebook.chapters.length) { showToast('還沒有章節'); return; }
+        const isPending = (name) => /待整理|未命名|未分類|unnamed|未指定/i.test((name || '').trim());
+        const pendingChs = notebook.chapters.filter(c => isPending(c.name));
+        if (pendingChs.length === 0) {
+          showToast('✓ 沒有待整理章節'); return;
+        }
+        const qidsToReprocess = [];
+        pendingChs.forEach(c => (c.qids || []).forEach(qid => { if (qid) qidsToReprocess.push(qid); }));
+        // 去重
+        const uniqQids = Array.from(new Set(qidsToReprocess));
+        const sample = pendingChs.slice(0, 6).map(c => '· ' + (c.name || '(空)') + ' — ' + ((c.qids || []).length) + ' 題').join('\n');
+        const est = Math.ceil(uniqQids.length * 12 / 60);
+        const msg = '找到 ' + pendingChs.length + ' 個待整理章節,共 ' + uniqQids.length + ' 題:\n\n' + sample +
+          (pendingChs.length > 6 ? '\n…' : '') +
+          '\n\n流程:\n1. 刪掉這些空/薄章節\n2. 逐題重新讓 AI 分類(AI 可能把題目 append 進現有章節,或建有實質內容的新章)\n3. v434 加了 retry 機制,AI 若敷衍會強制重試一次\n\n預估 ' + est + '~' + (est*2) + ' 分鐘。要繼續嗎?\n\n⚠ 開始前會備份到雲端,可從「🛟 還原備份」回滾';
+        if (!confirm(msg)) return;
+        try { if (typeof backupNotebookToCloud === 'function') await backupNotebookToCloud('重生待整理章節前'); } catch(e){}
+        if (typeof _silentResetCooldowns === 'function') _silentResetCooldowns();
+        // 刪掉待整理章節
+        const delIds = new Set(pendingChs.map(c => c.id));
+        notebook.chapters = notebook.chapters.filter(c => !delIds.has(c.id));
+        try { await saveNotebook(); } catch(e){}
+        try { renderNotebook(); } catch(e){}
+
+        let done = 0, failed = 0;
+        for (let i = 0; i < uniqQids.length; i++) {
+          const qid = uniqQids[i];
+          const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+          if (!q) { failed++; continue; }
+          showToast('🤖 重生 ' + (i+1) + '/' + uniqQids.length + ': ' + (q.meta || qid));
+          try {
+            const ok = await addQToNotebook(q, { silent: true });
+            if (ok) done++; else failed++;
+          } catch(e) {
+            failed++;
+            const errMsg = (e && e.message) || '';
+            console.warn('[regenPending]', qid, errMsg.slice(0, 120));
+            if (/429|quota|exceed/i.test(errMsg)) {
+              showToast('⏳ 撞額度,等 60 秒讓配額恢復...');
+              await new Promise(r => setTimeout(r, 60000));
+            }
+          }
+          // 間隔 3 秒避免撞 RPM
+          if (i < uniqQids.length - 1) await new Promise(r => setTimeout(r, 3000));
+        }
+        try { await saveNotebook(); } catch(e){}
+        try { renderNotebook(); } catch(e){}
+        alert('✅ 重生完成\n\n成功 ' + done + ' 題,失敗 ' + failed + ' 題' +
+          (failed > 0 ? '\n\n失敗的題已排到「📥 待整理」佇列,可手動重試' : '') +
+          '\n\n可到筆記檢查新章節。要還原可從「🛟 還原備份」選「重生待整理章節前」');
+      }
+      window.regenPendingChapters = regenPendingChapters;
       // v392:外科手術合併 — 把 AI 的 delta_markdown 插進舊章節對的位置 + 自動去重
       // dec.delta_target_section: 既有 ### 子標題原文(含 emoji) 或 "NEW"
       // dec.delta_new_section_title: 當 target='NEW' 時的新子段標題

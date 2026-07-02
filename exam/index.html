@@ -10978,7 +10978,7 @@ ${q.id} / ${SMAP[q.subject] || q.subject} / topic: ${q.topic || '(無)'}
 題目: ${q.question}
 ${(q.options || []).join('\n')}
 正解: ${correctTxt}
-詳解: ${(q.explanation || '(無)').slice(0, 1500)}${q.explanation_notebooklm ? '\n詳解2: ' + q.explanation_notebooklm.slice(0, 1500) : ''}${q.clinical ? '\n臨床: ' + q.clinical.slice(0, 800) : ''}
+詳解: ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n詳解2: ' + q.explanation_notebooklm : ''}${q.clinical ? '\n臨床: ' + q.clinical : ''}
 
 【決策欄位】
 - **concepts**(必填):核心概念 1-3 個關鍵字
@@ -11138,11 +11138,11 @@ ${oldCh.content || ''}
 ${(q.options || []).join('\n')}
 正確答案: ${correctTxt}
 
-詳解(Gemini): ${(q.explanation || '（無）').slice(0, 1500)}
+詳解(Gemini): ${q.explanation || '（無）'}
 
-詳解(NotebookLM): ${(q.explanation_notebooklm || '（無）').slice(0, 1500)}
+詳解(NotebookLM): ${q.explanation_notebooklm || '（無）'}
 
-臨床意義: ${(q.clinical || '（無）').slice(0, 800)}
+臨床意義: ${q.clinical || '（無）'}
 
 【AI 第一階段給的提示】
 ${dec.reasoning || ''}
@@ -11443,69 +11443,13 @@ ${dec.reasoning || ''}
           // 帶 schema 強制 Gemini 回符合結構的 JSON
           const _ai1Start = _now();
           window._lastGeminiCallStats = null;
-          let raw = await _wrappedCallGemini(prompt, ADD_NOTEBOOK_SCHEMA);
+          const raw = await _wrappedCallGemini(prompt, ADD_NOTEBOOK_SCHEMA);
           _timing.ai1 = Object.assign({ ms: Math.round(_now() - _ai1Start) }, window._lastGeminiCallStats || {});
-          let dec = extractJSON(raw);
+          const dec = extractJSON(raw);
           _timing.decision = dec && dec.action;
-          // v434:AI 敷衍偵測 — content < 200 字或沒 chapter_name 就強制 retry 一次(帶懲罰性 prompt)
-          //       避免每題都直接 fallback 產「(待整理)」空章節
-          const _isLazy = (d) => {
-            if (!d) return true;
-            if (d.action === 'new_chapter') {
-              const cLen = (d.content || '').trim().length;
-              const nameOk = (d.chapter_name || '').trim().length >= 3;
-              if (cLen < 200 || !nameOk) return true;
-            }
-            if (d.action === 'append') {
-              const hasDelta = !!(d.delta_markdown && d.delta_markdown.trim() && d.delta_target_section);
-              const hasCon = (d.content || '').trim().length >= 80;
-              if (!hasDelta && !hasCon) return true;
-            }
-            return false;
-          };
-          if (_isLazy(dec)) {
-            console.warn('[addQToNotebook] AI 敷衍偵測:', {
-              action: dec && dec.action,
-              contentLen: (dec && dec.content || '').length,
-              chapterName: dec && dec.chapter_name,
-              deltaLen: (dec && dec.delta_markdown || '').length,
-            });
-            const _ai1RetryStart = _now();
-            const retryPrompt = prompt + `
-
-🚨🚨🚨【上一次你交白卷】🚨🚨🚨
-上次你回了:
-- action: ${dec && dec.action}
-- chapter_name: ${dec && dec.chapter_name || '(空)'}
-- content 長度: ${((dec && dec.content) || '').length} 字
-- delta_markdown 長度: ${((dec && dec.delta_markdown) || '').length} 字
-
-這是**不合格**的:
-- new_chapter 的 content 必須 >= 500 字且有完整結構(## 主標 + 5-6 個 ### 子段)
-- append 的 delta_markdown 必須有實質新內容(不能只寫「見上文」/「已涵蓋」/「參考本題」)
-- chapter_name 必須是具體概念名詞(例「Pulp necrosis 牙髓壞死」),不能空、不能寫「未命名」/「待整理」
-
-**這次請認真寫。**看題目的詳解 + NotebookLM 詳解,把核心考點整理成結構化 markdown。
-如果真的沒東西寫,寧可 append 到最相近的候選章節加一條 bullet,也不要開新章交白卷。`;
-            try {
-              window._lastGeminiCallStats = null;
-              const raw2 = await _wrappedCallGemini(retryPrompt, ADD_NOTEBOOK_SCHEMA);
-              const dec2 = extractJSON(raw2);
-              _timing.ai1_retry = Object.assign({ ms: Math.round(_now() - _ai1RetryStart) }, window._lastGeminiCallStats || {});
-              if (dec2 && !_isLazy(dec2)) {
-                console.log('[addQToNotebook] retry 成功,採用第 2 版');
-                dec = dec2;
-                raw = raw2;
-                _timing.decision = dec.action + '_retry';
-              } else {
-                console.warn('[addQToNotebook] retry 也敷衍,只能 fallback');
-                _timing.retry_still_lazy = true;
-              }
-            } catch(retryErr) {
-              console.warn('[addQToNotebook] retry 失敗', retryErr && retryErr.message);
-              _timing.retry_err = (retryErr && retryErr.message || '').slice(0, 120);
-            }
-          }
+          // v435:拿掉 v434 的敷衍偵測+retry — 治標不治本,也浪費 token
+          //       真正的解法在 v435:把 v433 砍掉的完整詳解餵回 AI(不再 slice 到 1500 字)
+          //       + schema.required 加 chapter_name(v434 保留)
           // v408:防呆 — AI 自打嘴巴(action=skip 但 reasoning 自承「可補充/相關/擴充」)
           //        遇到就標 flag,toast 提醒使用者「可到歷史強制補進」
           if (dec && dec.action === 'skip' && dec.reasoning) {

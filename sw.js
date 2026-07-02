@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-no-more-pending-chapters';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-restore-full-context';
 const PRECACHE = [
   './',
   './index.html',

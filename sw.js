@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-restore-full-context';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-dedup-questions-data';
 const PRECACHE = [
   './',
   './index.html',

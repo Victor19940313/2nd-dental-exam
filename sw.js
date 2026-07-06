@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-normalize-gemini-table-format';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-render-markdown-table-as-html';
 const PRECACHE = [
   './',
   './index.html',

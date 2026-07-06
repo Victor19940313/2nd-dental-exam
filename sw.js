@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-keynav-fix-plus-gemini-table';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-normalize-gemini-table-format';
 const PRECACHE = [
   './',
   './index.html',

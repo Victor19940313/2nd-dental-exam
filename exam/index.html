@@ -5719,10 +5719,12 @@
         return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}${actionBar}</div></details>${qid ? geminiTableBlock(qid) : ''}`;
       }
       // v437:相關表格區塊 — 有 qState[qid].table_override 就顯示
+      // v438:渲染前套 _normalizeMarkdownTable,救舊表格
       function geminiTableBlock(qid) {
         const st = (typeof getS === 'function') ? getS(qid) : {};
-        const tbl = st.table_override;
+        let tbl = st.table_override;
         if (!tbl || !tbl.trim()) return '';
+        tbl = _normalizeMarkdownTable(tbl);
         const formatted = _cleanExplHtml(formatExpl(tbl));
         const regenBtn = `<div style="text-align:center;margin-top:.6rem;padding-top:.5rem;border-top:1px dashed #e5e7eb"><button onclick="event.stopPropagation();generateRelatedTable('${qid}',this)" title="重新生成相關表格(會覆寫)" style="background:#f0f9ff;color:#0369a1;border:1.5px solid #7dd3fc;padding:.35rem .8rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">🔄 重生表格</button><button onclick="event.stopPropagation();clearRelatedTable('${qid}',this)" title="清掉這題的表格" style="background:#fff;color:#6b7280;border:1.5px dashed #d1d5db;padding:.35rem .8rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;margin-left:.4rem">✕ 清除</button></div>`;
         return `<details class="gemini-expl" open style="margin-top:.6rem"><summary>📊 相關表格(Gemini 生成)</summary><div class="gemini-expl-content">${formatted}${regenBtn}</div></details>`;
@@ -5982,6 +5984,7 @@ ${(q.options || []).join('\n')}
       }
 
       // v437:「請 Gemini 做相關表格」— 針對這題核心考點做一份對比表格
+      // v438:加強格式規範 — AI 常把整張表擠一行 + 用 <br> raw HTML,明確禁止並附錯誤範例
       function buildTablePrompt(q) {
         const LETTERS = ['A','B','C','D','E'];
         const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
@@ -6002,24 +6005,74 @@ ${(q.options || []).join('\n')}
 【詳解】
 ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳解】\n' + q.explanation_notebooklm : ''}${q.clinical ? '\n\n【臨床】\n' + q.clinical : ''}
 
-【格式規範】
-- 純 markdown 表格 — header 用 \`|\` 分隔,第 2 行必須是 \`| --- |\` separator,資料列每行首尾必須 \`|\` 收尾
-- 表格 3-6 欄、3-8 列為原則,cell 內容**短句/名詞/數值**不要塞長段落
-- 表格前寫 1 句「導言」(≤ 30 字)點出這張表在比什麼
-- 表格後寫 1 句「金句」(≤ 30 字)幫學生記憶重點
-- 禁止 LaTeX、禁止 raw HTML、禁止 \`---\` 分隔線
+🚨🚨🚨【格式規範 — 嚴格,違反會壞掉】🚨🚨🚨
+
+**✅ 正確格式(每一行獨佔一行,用真實換行 \\n 分隔):**
+\`\`\`
+**這是關於 Seddon 神經損傷分類的對比表格**
+
+| 損傷類型 | 軸突狀態 | 恢復時間 | 預後 |
+| --- | --- | --- | --- |
+| 神經失用症 (Neuropraxia) | 完整 | 數天至數週 | 完全復原 |
+| 軸索斷裂 (Axonotmesis) | 斷裂 | 數月 | 尚可 |
+| 神經斷裂 (Neurotmesis) | 完全斷 | 無自發性復原 | 差 |
+
+💡 **記憶重點**:praxia 最輕、tmesis 最重
+\`\`\`
+
+**❌ 絕對禁止(這樣寫會壞掉):**
+
+1. **禁止把整張表擠在一行** — 每個 row(header/separator/每筆資料)都必須用 \`\\n\` 換行結束
+   ❌ \`| a | b | | --- | --- | | x | y | | z | w |\`(全塞一行)
+   ✅ 每個 row 各自獨佔一行
+
+2. **禁止 raw HTML 標籤** — 網站不吃 HTML,會被當文字秀出來
+   ❌ \`神經失用症<br>(Neuropraxia)\`(用 <br> 換行)
+   ✅ \`神經失用症 (Neuropraxia)\`(直接用空格,不換行)
+   ✅ 若真要換行,拆成兩個 cell 或分兩列
+
+3. **禁止 \`---\` 分隔線**(除了 markdown 表格 separator 之外)
+4. **禁止 LaTeX**(\`\\text\` / \`\\ge\` / \`$...$\` 等)
+
+【表格結構要求】
+- 3-6 欄、3-8 列為原則
+- cell 內容**短句/名詞/數值**,不要塞長段落
+- 表格前 1 句「導言」(≤ 30 字)
+- 表格後 1 句「金句」(≤ 30 字)
 - 數學符號用 Unicode(≥ ≤ ± × ÷ ° ≈)
 
-【回傳純 markdown,結構如下】
-
-**這是關於 XX 的對比表格**(← 導言)
-
-| 欄 1 | 欄 2 | 欄 3 |
-| --- | --- | --- |
-| ... | ... | ... |
-
-💡 **記憶重點**:XXX (← 金句)`;
+【回傳純 markdown 文字,直接照上方 ✅ 範例格式輸出,不要用 code block 包裝】`;
       }
+
+      // v438:把 AI 生的表格 markdown 正規化 — 移除 raw HTML tag + 表格擠一行時自動拆行
+      function _normalizeMarkdownTable(md) {
+        if (!md || typeof md !== 'string') return md;
+        let s = md;
+        // 1. raw HTML tag 移除或轉 markdown
+        s = s.replace(/<br\s*\/?>/gi, ' ');
+        s = s.replace(/<\/?span[^>]*>/gi, '');
+        s = s.replace(/<\/?div[^>]*>/gi, '\n');
+        s = s.replace(/<\/?p[^>]*>/gi, '\n');
+        s = s.replace(/<\/?strong>/gi, '**');
+        s = s.replace(/<\/?em>/gi, '*');
+        s = s.replace(/<\/?b>/gi, '**');
+        s = s.replace(/<\/?i>/gi, '*');
+        // 2. 表格擠一行拆行:偵測「| |」(兩個 pipe 中間只有空白)為 row 邊界 → 拆行
+        //    這種 pattern 出現在「上一列結尾 | 下一列開頭 |」被塞在同一行時
+        //    多次做直到穩定
+        for (let i = 0; i < 3; i++) {
+          const before = s;
+          s = s.replace(/\|[ \t]+\|(?=[ \t]*[-|\S])/g, '|\n|');
+          if (s === before) break;
+        }
+        // 3. header 跟 separator 中間也可能沒 \n (例如 "| header | | --- | ---")
+        //    上面 step 2 應該已處理,但保險再修一次
+        s = s.replace(/(\|)\n?(\|\s*-{3,})/g, '$1\n$2');
+        // 4. 清多餘空白
+        s = s.replace(/[ \t]+\n/g, '\n');
+        return s;
+      }
+      window._normalizeMarkdownTable = _normalizeMarkdownTable;
 
       async function generateRelatedTable(qid, btnEl) {
         const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
@@ -6041,8 +6094,10 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
         try {
           const prompt = buildTablePrompt(q);
           const raw = await callGemini(prompt, null, { maxOutputTokens: 4096 });
-          const cleaned = (raw || '').trim();
+          let cleaned = (raw || '').trim();
           if (!cleaned) throw new Error('AI 回了空內容');
+          // v438:AI 常擠一行 + 用 <br>,存進去前先正規化
+          cleaned = _normalizeMarkdownTable(cleaned);
           // 存進 qState.table_override + persist(qState 走 wrongbook_state 跨裝置同步)
           if (typeof qState !== 'undefined') {
             if (!qState[qid]) qState[qid] = { status: 'none', count: 0 };

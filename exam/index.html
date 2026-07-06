@@ -5712,8 +5712,20 @@
           `<span class="bg-note">📌 背景:${content}</span>`
         );
         formatted = _cleanExplHtml(formatted);
-        const regenBtn = qid ? `<div style="text-align:center;margin-top:.8rem;padding-top:.5rem;border-top:1px dashed #e5e7eb"><button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}',this)" title="覺得這篇詳解品質不好?用最新版 prompt 重新生成(覆寫舊版)" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.25)">🔄 請 Gemini 重生詳解</button><div style="font-size:.7rem;color:#9ca3af;margin-top:.3rem">覺得這篇寫得太爛?按一下用最新 prompt 重做</div></div>` : '';
-        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}${regenBtn}</div></details>`;
+        // v437:兩個 action 按鈕 — 重生詳解 + 產出相關表格
+        const regenBtn = qid ? `<button onclick="event.stopPropagation();regenerateGeminiExpl('${qid}',this)" title="覺得這篇詳解品質不好?用最新版 prompt 重新生成(覆寫舊版)" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.25)">🔄 請 Gemini 重生詳解</button>` : '';
+        const tableBtn = qid ? `<button onclick="event.stopPropagation();generateRelatedTable('${qid}',this)" title="讓 Gemini 幫這題做一份「相關對比表格」(選項對照/鑑別診斷/概念比較等)" style="background:linear-gradient(135deg,#0891b2,#06b6d4);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(8,145,178,.25)">📊 請 Gemini 做相關表格</button>` : '';
+        const actionBar = qid ? `<div style="text-align:center;margin-top:.8rem;padding-top:.5rem;border-top:1px dashed #e5e7eb;display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center">${regenBtn}${tableBtn}</div>` : '';
+        return `<details class="gemini-expl"><summary>🤖 Gemini 詳解</summary><div class="gemini-expl-content">${formatted}${srcHtml}${links}${actionBar}</div></details>${qid ? geminiTableBlock(qid) : ''}`;
+      }
+      // v437:相關表格區塊 — 有 qState[qid].table_override 就顯示
+      function geminiTableBlock(qid) {
+        const st = (typeof getS === 'function') ? getS(qid) : {};
+        const tbl = st.table_override;
+        if (!tbl || !tbl.trim()) return '';
+        const formatted = _cleanExplHtml(formatExpl(tbl));
+        const regenBtn = `<div style="text-align:center;margin-top:.6rem;padding-top:.5rem;border-top:1px dashed #e5e7eb"><button onclick="event.stopPropagation();generateRelatedTable('${qid}',this)" title="重新生成相關表格(會覆寫)" style="background:#f0f9ff;color:#0369a1;border:1.5px solid #7dd3fc;padding:.35rem .8rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer">🔄 重生表格</button><button onclick="event.stopPropagation();clearRelatedTable('${qid}',this)" title="清掉這題的表格" style="background:#fff;color:#6b7280;border:1.5px dashed #d1d5db;padding:.35rem .8rem;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;margin-left:.4rem">✕ 清除</button></div>`;
+        return `<details class="gemini-expl" open style="margin-top:.6rem"><summary>📊 相關表格(Gemini 生成)</summary><div class="gemini-expl-content">${formatted}${regenBtn}</div></details>`;
       }
       // 用「考生作答思路」風格重新生成詳解,覆寫到 expl_override(不動原始 q.explanation 跟 NotebookLM 詳解)
       function buildRegenExplPrompt(q){
@@ -5968,6 +5980,137 @@ ${(q.options || []).join('\n')}
           }
         }
       }
+
+      // v437:「請 Gemini 做相關表格」— 針對這題核心考點做一份對比表格
+      function buildTablePrompt(q) {
+        const LETTERS = ['A','B','C','D','E'];
+        const SMAP = { ya3:'牙三', ya4:'牙四', ya5:'牙五', ya6:'牙六' };
+        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const correctTxt = correctArr.map(i => LETTERS[i]).join('/');
+        return `你是牙醫國考助教。針對這題的核心考點,幫學生做一份「**相關對比表格**」— 常見類型:
+- **選項對照表**:把 4 個選項橫向對比(名稱/機制/適應症/差異)
+- **鑑別診斷表**:同類疾病/技術/材料的橫向比較(區分特徵/臨床表現/處置)
+- **概念比較表**:同主題但易混的兩三個概念(定義/機轉/範圍)
+- **分類表**:同一大類下的子分類(名稱/特徵/例子)
+
+【題目】
+${q.id} / ${SMAP[q.subject] || q.subject} / topic: ${q.topic || ''}
+題目: ${q.question}
+${(q.options || []).join('\n')}
+正解: ${correctTxt}
+
+【詳解】
+${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳解】\n' + q.explanation_notebooklm : ''}${q.clinical ? '\n\n【臨床】\n' + q.clinical : ''}
+
+【格式規範】
+- 純 markdown 表格 — header 用 \`|\` 分隔,第 2 行必須是 \`| --- |\` separator,資料列每行首尾必須 \`|\` 收尾
+- 表格 3-6 欄、3-8 列為原則,cell 內容**短句/名詞/數值**不要塞長段落
+- 表格前寫 1 句「導言」(≤ 30 字)點出這張表在比什麼
+- 表格後寫 1 句「金句」(≤ 30 字)幫學生記憶重點
+- 禁止 LaTeX、禁止 raw HTML、禁止 \`---\` 分隔線
+- 數學符號用 Unicode(≥ ≤ ± × ÷ ° ≈)
+
+【回傳純 markdown,結構如下】
+
+**這是關於 XX 的對比表格**(← 導言)
+
+| 欄 1 | 欄 2 | 欄 3 |
+| --- | --- | --- |
+| ... | ... | ... |
+
+💡 **記憶重點**:XXX (← 金句)`;
+      }
+
+      async function generateRelatedTable(qid, btnEl) {
+        const q = (typeof QS !== 'undefined') ? QS.find(x => x.id === qid) : null;
+        if (!q) { showToast('找不到題目'); return; }
+        if (!getGeminiKey()) {
+          showToast('請先設定 Gemini API key');
+          openAISettings();
+          return;
+        }
+        let _btnOrigHTML = null;
+        if (btnEl && btnEl.tagName === 'BUTTON') {
+          _btnOrigHTML = btnEl.innerHTML;
+          btnEl.disabled = true;
+          btnEl.innerHTML = '📊 生成表格中…';
+          btnEl.style.opacity = '0.75';
+        }
+        showToast('📊 Gemini 生成表格中... 約 5-15 秒');
+        if (typeof _silentResetCooldowns === 'function') _silentResetCooldowns();
+        try {
+          const prompt = buildTablePrompt(q);
+          const raw = await callGemini(prompt, null, { maxOutputTokens: 4096 });
+          const cleaned = (raw || '').trim();
+          if (!cleaned) throw new Error('AI 回了空內容');
+          // 存進 qState.table_override + persist(qState 走 wrongbook_state 跨裝置同步)
+          if (typeof qState !== 'undefined') {
+            if (!qState[qid]) qState[qid] = { status: 'none', count: 0 };
+            qState[qid].table_override = cleaned;
+            if (typeof persist === 'function') await persist(qid);
+          }
+          showToast('✅ 表格生成完成');
+          // 重繪當前畫面
+          try {
+            const curQ = (typeof practiceList !== 'undefined' && practiceList[practiceIdx]) || null;
+            if (curQ && curQ.id === qid) {
+              const explBox = document.getElementById('pq-expl');
+              if (explBox) {
+                const st = getS(qid);
+                const src = st.src_override ?? q.explanation_source ?? '';
+                const expl = st.expl_override ?? q.explanation ?? '';
+                const topic = st.topic || q.topic || '';
+                const topicTag = topic ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block">🏷 ${topic}</span>` : '';
+                explBox.innerHTML = topicTag + clinicalExplBlock(q) + geminiExplBlock(expl, src, q.id) + nbExplBlock(q);
+                explBox.classList.add('visible');
+              }
+            }
+          } catch(e) {}
+          if (typeof renderReviewQ === 'function' && typeof _reviewIdx !== 'undefined' && _reviewEntry) {
+            const reviewQid = _reviewEntry.qids && _reviewEntry.qids[_reviewIdx];
+            if (reviewQid === qid) renderReviewQ(_reviewIdx);
+          }
+        } catch(err) {
+          console.error('generateRelatedTable failed', err);
+          showToast((typeof _geminiErrorMsg === 'function') ? _geminiErrorMsg(err, '❌ 表格生成失敗:') : ('❌ 表格生成失敗:' + (err.message || '').slice(0, 100)), 6000);
+        } finally {
+          if (btnEl && btnEl.isConnected && _btnOrigHTML !== null) {
+            btnEl.disabled = false;
+            btnEl.innerHTML = _btnOrigHTML;
+            btnEl.style.opacity = '';
+          }
+        }
+      }
+      window.generateRelatedTable = generateRelatedTable;
+
+      async function clearRelatedTable(qid, btnEl) {
+        if (!confirm('確定清掉這題的相關表格?')) return;
+        try {
+          if (typeof qState !== 'undefined' && qState[qid]) {
+            delete qState[qid].table_override;
+            if (typeof persist === 'function') await persist(qid);
+          }
+          showToast('✓ 已清除');
+          const curQ = (typeof practiceList !== 'undefined' && practiceList[practiceIdx]) || null;
+          if (curQ && curQ.id === qid) {
+            const explBox = document.getElementById('pq-expl');
+            if (explBox) {
+              const st = getS(qid);
+              const q = QS.find(x => x.id === qid);
+              const src = st.src_override ?? q.explanation_source ?? '';
+              const expl = st.expl_override ?? q.explanation ?? '';
+              const topic = st.topic || q.topic || '';
+              const topicTag = topic ? `<span class="topic-tag" style="margin-left:0;margin-top:.35rem;display:inline-block">🏷 ${topic}</span>` : '';
+              explBox.innerHTML = topicTag + clinicalExplBlock(q) + geminiExplBlock(expl, src, q.id) + nbExplBlock(q);
+            }
+          }
+          if (typeof renderReviewQ === 'function' && typeof _reviewIdx !== 'undefined' && _reviewEntry) {
+            const reviewQid = _reviewEntry.qids && _reviewEntry.qids[_reviewIdx];
+            if (reviewQid === qid) renderReviewQ(_reviewIdx);
+          }
+        } catch(e) { console.warn('[clearRelatedTable]', e); }
+      }
+      window.clearRelatedTable = clearRelatedTable;
 
       // 把 LaTeX 標記轉成 Unicode(網站不支援 LaTeX 渲染,但 AI 偶爾會寫進來)
       // 抓 AI 詳解結尾寫的答案字母(支援「最後留 (X)」「答案是 (X)」等)
@@ -18275,8 +18418,23 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
             if (filtered && filtered.length) {
               const cur = filtered.findIndex(x => x.i === _reviewIdx);
               let nextI;
-              if (isNext) nextI = cur >= 0 && cur < filtered.length - 1 ? filtered[cur + 1].i : filtered[0].i;
-              else        nextI = cur > 0 ? filtered[cur - 1].i : filtered[filtered.length - 1].i;
+              if (cur === -1) {
+                // v437:當前題目被 filter 踢出(例如剛按「✕ 清除標記」後),照原始 index 找相對的下一個
+                //       修 bug:清完標記後按右鍵會跳回第一題
+                if (isNext) {
+                  const nx = filtered.find(x => x.i > _reviewIdx);
+                  nextI = nx ? nx.i : filtered[0].i;
+                } else {
+                  let px = null;
+                  for (let j = filtered.length - 1; j >= 0; j--) {
+                    if (filtered[j].i < _reviewIdx) { px = filtered[j]; break; }
+                  }
+                  nextI = px ? px.i : filtered[filtered.length - 1].i;
+                }
+              } else {
+                if (isNext) nextI = cur < filtered.length - 1 ? filtered[cur + 1].i : filtered[0].i;
+                else        nextI = cur > 0 ? filtered[cur - 1].i : filtered[filtered.length - 1].i;
+              }
               if (typeof renderReviewQ === 'function') renderReviewQ(nextI);
               e.preventDefault();
             }

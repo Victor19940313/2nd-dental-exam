@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-dedup-questions-data';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-review-keynav-fix-plus-gemini-table';
 const PRECACHE = [
   './',
   './index.html',

@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-render-markdown-table-as-html';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-auto-cdn-fallback-for-broken-images';
 const PRECACHE = [
   './',
   './index.html',

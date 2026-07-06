@@ -6064,6 +6064,42 @@ ${(q.options || []).join('\n')}
         }
       }
 
+      // v440:img 載入失敗自動 fallback — 使用者反映「有時候圖片顯示不出來」
+      //       root cause:raw.githubusercontent / jsdelivr CDN 有時候暫時性 rate limit / 快取延遲 → 破圖
+      //       修法:全域 img error 監聽 → 自動輪替 GitHub 4 個 CDN 鏡像,直到有一個 load 成功
+      (function(){
+        const CDN_CHAIN = [
+          { re: /^https?:\/\/raw\.githubusercontent\.com\/([^/]+\/[^/]+)\/([^/]+)\/(.+)$/,
+            to: (m) => 'https://cdn.jsdelivr.net/gh/' + m[1] + '@' + m[2] + '/' + m[3] },
+          { re: /^https?:\/\/cdn\.jsdelivr\.net\/gh\/([^/]+\/[^/]+)@([^/]+)\/(.+)$/,
+            to: (m) => 'https://cdn.statically.io/gh/' + m[1] + '/' + m[2] + '/' + m[3] },
+          { re: /^https?:\/\/cdn\.statically\.io\/gh\/([^/]+\/[^/]+)\/([^/]+)\/(.+)$/,
+            to: (m) => 'https://rawcdn.githack.com/' + m[1] + '/' + m[2] + '/' + m[3] },
+          { re: /^https?:\/\/rawcdn\.githack\.com\/([^/]+\/[^/]+)\/([^/]+)\/(.+)$/,
+            to: (m) => 'https://raw.githubusercontent.com/' + m[1] + '/' + m[2] + '/' + m[3] },
+        ];
+        window._imgFallback = function(img){
+          if (!img || img.tagName !== 'IMG') return;
+          const src = img.currentSrc || img.src || '';
+          if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
+          const strip = src.split('?')[0].split('#')[0];
+          let tries = parseInt(img.dataset.cdnTries || '0', 10);
+          if (tries >= CDN_CHAIN.length) return;
+          for (const rule of CDN_CHAIN) {
+            const m = strip.match(rule.re);
+            if (m) {
+              const next = rule.to(m);
+              img.dataset.cdnTries = String(tries + 1);
+              img.src = next + '?t=' + Date.now();
+              return;
+            }
+          }
+        };
+        document.addEventListener('error', function(e){
+          if (e.target && e.target.tagName === 'IMG') window._imgFallback(e.target);
+        }, true);
+      })();
+
       // v437:「請 Gemini 做相關表格」— 針對這題核心考點做一份對比表格
       // v438:加強格式規範 — AI 常把整張表擠一行 + 用 <br> raw HTML,明確禁止並附錯誤範例
       function buildTablePrompt(q) {

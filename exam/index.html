@@ -6064,6 +6064,62 @@ ${(q.options || []).join('\n')}
         }
       }
 
+      // v441:圖片點擊放大 lightbox — 題目照片有多張比較圖時 stack 起來看不清細節,點一下全螢幕放大 + 可雙指縮放
+      (function(){
+        function _openImageLightbox(src){
+          // 若已開就先關
+          const old = document.getElementById('_img-lightbox');
+          if (old) old.remove();
+          const wrap = document.createElement('div');
+          wrap.id = '_img-lightbox';
+          wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;touch-action:pinch-zoom;user-select:none';
+          const img = document.createElement('img');
+          img.src = src;
+          img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;box-shadow:0 6px 30px rgba(0,0,0,.4);touch-action:pinch-zoom';
+          const closeBtn = document.createElement('button');
+          closeBtn.textContent = '✕';
+          closeBtn.style.cssText = 'position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.15);color:white;border:none;font-size:1.5rem;width:40px;height:40px;border-radius:50%;cursor:pointer;line-height:1;padding:0';
+          const hint = document.createElement('div');
+          hint.textContent = '點外面關閉 · 雙指縮放';
+          hint.style.cssText = 'position:absolute;bottom:1rem;left:0;right:0;text-align:center;color:rgba(255,255,255,.55);font-size:.75rem';
+          wrap.appendChild(img);
+          wrap.appendChild(closeBtn);
+          wrap.appendChild(hint);
+          document.body.appendChild(wrap);
+          // 關閉:點外圍 / 按鈕 / Esc
+          const close = () => wrap.remove();
+          wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+          closeBtn.addEventListener('click', close);
+          const onKey = (e) => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+          document.addEventListener('keydown', onKey);
+          // 桌面滾輪縮放
+          let scale = 1;
+          img.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            scale = Math.max(0.5, Math.min(5, scale + (e.deltaY < 0 ? 0.15 : -0.15)));
+            img.style.transform = 'scale(' + scale + ')';
+            img.style.transition = 'transform .05s linear';
+          }, { passive: false });
+        }
+        window._openImageLightbox = _openImageLightbox;
+        // 全域 event delegation:點題目/詳解區內任何 img 就放大(排除 icon / button / logo 等小圖)
+        document.addEventListener('click', function(e){
+          const img = e.target;
+          if (!img || img.tagName !== 'IMG') return;
+          // 排除:資料 URL / 太小(< 60px)/ 有 no-lightbox class
+          const src = img.currentSrc || img.src || '';
+          if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
+          if (img.classList.contains('no-lightbox')) return;
+          const w = img.naturalWidth || img.width || 0;
+          const h = img.naturalHeight || img.height || 0;
+          if (w < 80 && h < 80) return;  // icon
+          // 排除:img 在 button / a 內(可能是按鈕圖)
+          if (img.closest('button, a[href]')) return;
+          e.preventDefault();
+          _openImageLightbox(src);
+        }, false);
+      })();
+
       // v440:img 載入失敗自動 fallback — 使用者反映「有時候圖片顯示不出來」
       //       root cause:raw.githubusercontent / jsdelivr CDN 有時候暫時性 rate limit / 快取延遲 → 破圖
       //       修法:全域 img error 監聽 → 自動輪替 GitHub 4 個 CDN 鏡像,直到有一個 load 成功

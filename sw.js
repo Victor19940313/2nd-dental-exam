@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-auto-cdn-fallback-for-broken-images';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-click-image-to-zoom-lightbox';
 const PRECACHE = [
   './',
   './index.html',

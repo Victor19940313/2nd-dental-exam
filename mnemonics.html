@@ -319,6 +319,53 @@ body.theme-dark .editor-status { background: #2a2c3e; border-bottom-color: #3a3a
 </div>
 
 <script>
+// v441:圖片點擊放大 lightbox — 手機看多張比較圖看不清時,點一下全螢幕放大
+(function(){
+  function _openImageLightbox(src){
+    const old = document.getElementById('_img-lightbox');
+    if (old) old.remove();
+    const wrap = document.createElement('div');
+    wrap.id = '_img-lightbox';
+    wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out;touch-action:pinch-zoom;user-select:none';
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;box-shadow:0 6px 30px rgba(0,0,0,.4);touch-action:pinch-zoom';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.15);color:white;border:none;font-size:1.5rem;width:40px;height:40px;border-radius:50%;cursor:pointer;line-height:1;padding:0';
+    const hint = document.createElement('div');
+    hint.textContent = '點外面關閉 · 雙指縮放';
+    hint.style.cssText = 'position:absolute;bottom:1rem;left:0;right:0;text-align:center;color:rgba(255,255,255,.55);font-size:.75rem';
+    wrap.appendChild(img); wrap.appendChild(closeBtn); wrap.appendChild(hint);
+    document.body.appendChild(wrap);
+    const close = () => wrap.remove();
+    wrap.addEventListener('click', (e) => { if (e.target === wrap) close(); });
+    closeBtn.addEventListener('click', close);
+    const onKey = (e) => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    let scale = 1;
+    img.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      scale = Math.max(0.5, Math.min(5, scale + (e.deltaY < 0 ? 0.15 : -0.15)));
+      img.style.transform = 'scale(' + scale + ')';
+    }, { passive: false });
+  }
+  window._openImageLightbox = _openImageLightbox;
+  document.addEventListener('click', function(e){
+    const img = e.target;
+    if (!img || img.tagName !== 'IMG') return;
+    const src = img.currentSrc || img.src || '';
+    if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
+    if (img.classList.contains('no-lightbox')) return;
+    const w = img.naturalWidth || img.width || 0;
+    const h = img.naturalHeight || img.height || 0;
+    if (w < 80 && h < 80) return;
+    if (img.closest('button, a[href]')) return;
+    e.preventDefault();
+    _openImageLightbox(src);
+  }, false);
+})();
+
 // v440:img 載入失敗自動 fallback — 使用者反映「有時候圖片顯示不出來」
 //       root cause:raw.githubusercontent / jsdelivr CDN 有時候暫時性 rate limit / 快取延遲 → 破圖
 //       修法:全域 img error 監聽 → 自動輪替 GitHub 4 個 CDN 鏡像,直到有一個 load 成功

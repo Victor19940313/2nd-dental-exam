@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-click-image-to-zoom-lightbox';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-regen-115-images-from-pdf';
 const PRECACHE = [
   './',
   './index.html',

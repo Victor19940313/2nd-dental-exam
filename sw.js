@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-regen-115-images-from-pdf';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-sidebar-progress-modal-plus-wrong-pct';
 const PRECACHE = [
   './',
   './index.html',

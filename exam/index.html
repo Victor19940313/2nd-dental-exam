@@ -3558,6 +3558,9 @@
               <div id="sidebar-year-chips" class="chip-row" style="gap:.25rem;flex-wrap:wrap"></div>
             </div>
           </details>
+          <div style="padding:.3rem .55rem .1rem;display:flex;justify-content:flex-end">
+            <button id="btn-wrong-pct" onclick="toggleWrongPct()" title="開/關側邊每類別的錯誤率顯示(只算試卷成績內做過的題)" style="font-size:.72rem;padding:.25rem .5rem;background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;cursor:pointer;color:#6b7280;font-weight:700">📊 顯示錯誤率</button>
+          </div>
           <div id="topic-list"></div>
           <div class="ts-go-wrap">
             <button class="ts-go-btn" id="ts-go-btn" onclick="goFromSidebar()">
@@ -5296,12 +5299,10 @@
       window.clearSidebarYears = clearSidebarYears;
 
       // v381: 考點進度 modal — 顯示某 topic 在 105~115 各年-次的完成度
+      // v443: 使用者反映考卷模式做的沒被記進進度 → 改用 qState.count 涵蓋所有模式(考卷/練習/分類)
       function _isQDone(qid) {
-        // v383: 分類進度只看 classCount (只有從 sidebar「考點分類→開始練習」進入才會加)
-        //   主畫面練習模式 / 試卷模式 / 昨日錯題 / topic-tag 都不影響 classCount
-        //   手動標 🟢/🤔/🟡/🔴 也不算做過 (標記跟做題分開)
         const s = qState[qid];
-        return !!(s && (s.classCount || 0) > 0);
+        return !!(s && ((s.count || 0) > 0 || (s.classCount || 0) > 0));
       }
       function openTopicProgress(subj, cat) {
         const all = QS.filter(q => q.subject === subj && getTopicCat(q.topic) === cat);
@@ -5364,6 +5365,10 @@
           <div style="font-size:.73rem;color:#6b7280;line-height:1.6">
             ✅ 全做完　🟡 過半　🟠 已開始　⬜ 還沒碰　—  那次沒這 topic 的題<br>
             點任一格 → 直接設定篩選器跳去刷那批題
+          </div>
+          <div style="display:flex;gap:.5rem;margin-top:.8rem;padding-top:.6rem;border-top:1px solid #e5e7eb">
+            <button onclick="_startPracticeFromProgress('${subj.replace(/'/g,"\\'")}','${cat.replace(/'/g,"\\'")}')" style="flex:1;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:.55rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,.25)">▶ 開始練習全部</button>
+            <button onclick="closeTopicProgress()" style="background:#f3f4f6;color:#374151;border:1.5px solid #d1d5db;padding:.55rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer">關閉</button>
           </div>`;
         overlay.style.display = 'flex';
       }
@@ -5381,7 +5386,13 @@
         const o = document.getElementById('topic-progress-overlay');
         if (o) o.style.display = 'none';
       }
+      // v443:進度 modal 內按「開始練習全部」→ 關 modal + 呼叫原本的 startCatPractice
+      function _startPracticeFromProgress(subj, cat) {
+        closeTopicProgress();
+        if (typeof startCatPractice === 'function') startCatPractice(subj, cat);
+      }
       window.openTopicProgress = openTopicProgress;
+      window._startPracticeFromProgress = _startPracticeFromProgress;
       window.closeTopicProgress = closeTopicProgress;
       window._jumpToYear = _jumpToYear;
 
@@ -5400,9 +5411,51 @@
         startCatPractice(subj, cat);
       }
 
+      // v443:錯誤率統計 — 只算試卷成績內(examHistory),按類別+已選年份聚合
+      const _WRONG_PCT_LS = uKey('sidebar_show_wrong_pct');
+      let _wrongPctOn = localStorage.getItem(_WRONG_PCT_LS) === '1';
+      function toggleWrongPct(){
+        _wrongPctOn = !_wrongPctOn;
+        localStorage.setItem(_WRONG_PCT_LS, _wrongPctOn ? '1' : '0');
+        renderTopicSidebar();
+      }
+      window.toggleWrongPct = toggleWrongPct;
+      function _calcWrongRateStats(){
+        const eh = (typeof _readExamHistorySync === 'function')
+          ? _readExamHistorySync()
+          : (JSON.parse(localStorage.getItem(uKey('examHistory')) || '[]'));
+        const doneQids = new Set();
+        const wrongQids = new Set();
+        (eh || []).forEach(e => {
+          const ans = e.userAnswers || {};
+          Object.keys(ans).forEach(qid => doneQids.add(qid));
+          (e.wrongs || []).forEach(w => { if (w && w.qid) wrongQids.add(w.qid); });
+        });
+        // 按 subject+cat 聚合(跟 sidebarYearSet 聯動)
+        const stats = {};   // {subj: {cat: {done, wrong}}}
+        QS.forEach(q => {
+          if (!q.topic) return;
+          if (sidebarYearSet.size > 0) {
+            const ys = q.year + '-' + q.session;
+            if (!sidebarYearSet.has(ys)) return;
+          }
+          if (!doneQids.has(q.id)) return; // 沒做過的不列入
+          const subj = q.subject;
+          const cat = getTopicCat(q.topic);
+          if (!stats[subj]) stats[subj] = {};
+          if (!stats[subj][cat]) stats[subj][cat] = { done: 0, wrong: 0 };
+          stats[subj][cat].done++;
+          if (wrongQids.has(q.id)) stats[subj][cat].wrong++;
+        });
+        return stats;
+      }
+
       function renderTopicSidebar() {
         const list = document.getElementById("topic-list");
         if (!list) return;
+
+        // v443:如果錯誤率開了,順便算 stats
+        const wrongStats = _wrongPctOn ? _calcWrongRateStats() : null;
 
         // Aggregate: subj → cat → total count AND filtered count
         const data = {};     // {subj: {cat: totalCount}}
@@ -5452,11 +5505,22 @@
             const esc_cat = cat.replace(/'/g, "\\'");
             const active = key === activeKey ? " active" : "";
             const dimmed = isFiltered && filtCount === 0 ? ' style="opacity:.35;pointer-events:none"' : "";
+            // v443:錯誤率(開了才顯示,沒做過→「—」不顯示)
+            let wrongPctHtml = '';
+            if (wrongStats) {
+              const st = (wrongStats[subj] || {})[cat];
+              if (st && st.done > 0) {
+                const pct = Math.round(st.wrong / st.done * 100);
+                const col = pct >= 40 ? '#dc2626' : pct >= 25 ? '#ea580c' : '#059669';
+                wrongPctHtml = `<span title="錯 ${st.wrong}/${st.done} 題" style="font-size:.72rem;font-weight:700;color:${col};margin-right:.35rem">${pct}%</span>`;
+              } else {
+                wrongPctHtml = `<span style="font-size:.72rem;color:#cbd5e1;margin-right:.35rem">—</span>`;
+              }
+            }
             html +=
               `<div class="topic-item${active}"${dimmed} onclick="selectCat('${esc_subj}','${esc_cat}')">` +
               `<span>${cat}</span>` +
-              `<button onclick="event.stopPropagation();openTopicProgress('${esc_subj}','${esc_cat}')" title="看這 topic 各年完成度" style="background:#ede9fe;border:none;border-radius:6px;padding:.15rem .4rem;cursor:pointer;font-size:.75rem;color:#5b21b6;margin-left:auto;margin-right:.4rem">📊</button>` +
-              `<span class="topic-count">${displayCount}</span></div>`;
+              `<span style="display:flex;align-items:center">${wrongPctHtml}<span class="topic-count">${displayCount}</span></span></div>`;
           });
 
           html += `</div></div>`;
@@ -5466,6 +5530,19 @@
           html ||
           '<div style="padding:.6rem .85rem;font-size:.78rem;color:#94a3b8">（無考點資料）</div>';
         updateGoBtn();
+        // v443:錯誤率開關按鈕視覺狀態
+        const btn = document.getElementById('btn-wrong-pct');
+        if (btn) {
+          if (_wrongPctOn) {
+            btn.style.background = '#7c3aed';
+            btn.style.color = 'white';
+            btn.style.borderColor = '#7c3aed';
+          } else {
+            btn.style.background = '#f3f4f6';
+            btn.style.color = '#6b7280';
+            btn.style.borderColor = '#d1d5db';
+          }
+        }
       }
 
       function filterTopicList(val) {
@@ -5477,6 +5554,8 @@
         expandedSubjs.add(subj);
         renderTopicSidebar();
         updateGoBtn();
+        // v443:點類別直接開進度 modal(使用者要求),modal 內按「開始練習」才進題目
+        if (typeof openTopicProgress === 'function') openTopicProgress(subj, cat);
       }
 
       function startCatPractice(subj, cat) {

@@ -5500,7 +5500,7 @@
 
           // Sort cats by total count desc
           const cats = Object.entries(data[subj]).sort((a, b) => b[1] - a[1]);
-          cats.forEach(([cat, totalCount]) => {
+          cats.forEach(([cat, totalCount], _catIdx) => {
             const filtCount = (filtered[subj] || {})[cat] || 0;
             const displayCount = isFiltered ? filtCount : totalCount;
             const key = subj + "|" + cat;
@@ -5520,9 +5520,10 @@
                 wrongPctHtml = `<span style="font-size:.72rem;color:#cbd5e1;margin-right:.35rem">—</span>`;
               }
             }
+            const catNum = String(_catIdx + 1).padStart(2, '0');
             html +=
               `<div class="topic-item${active}"${dimmed} onclick="selectCat('${esc_subj}','${esc_cat}')">` +
-              `<span>${cat}</span>` +
+              `<span><span style="color:#94a3b8;font-weight:600;margin-right:.35rem">${catNum}</span>${cat}</span>` +
               `<span style="display:flex;align-items:center">${wrongPctHtml}<span class="topic-count">${displayCount}</span></span></div>`;
           });
 

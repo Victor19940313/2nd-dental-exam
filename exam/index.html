@@ -6870,6 +6870,8 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
           practiceAnswers: examMode ? null : practiceAnswers,
           practiceResults: examMode ? null : practiceResults,
           qgridSkipped: qgridSkipped,
+          // v445:記錄「這份 practiceList 是不是從分類練習入口進的」,reload 後恢復,才能正確累加 classCount
+          isClass: !!_isClassPractice,
           meta: q
             ? `${modeTag}・第 ${practiceIdx + 1} / ${practiceList.length} 題・${q.meta || ""}`
             : "",
@@ -7015,6 +7017,8 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
           qgridSkipped = pos.qgridSkipped || {};
           practiceList = list;
           practiceIdx = Math.min(pos.idx, list.length - 1);
+          // v445:恢復「分類練習」flag,重整/reload 後繼續做題才會累加 classCount
+          _isClassPractice = !!pos.isClass;
           showPractice();
           const submitBtn = document.getElementById("btn-submit-exam");
           if (submitBtn) submitBtn.style.display = "";

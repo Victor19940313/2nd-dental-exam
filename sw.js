@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-revert-class-only-progress';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-persist-isClassPractice-through-reload';
 const PRECACHE = [
   './',
   './index.html',

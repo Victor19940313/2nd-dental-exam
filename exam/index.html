@@ -5299,10 +5299,13 @@
       window.clearSidebarYears = clearSidebarYears;
 
       // v381: 考點進度 modal — 顯示某 topic 在 105~115 各年-次的完成度
-      // v443: 使用者反映考卷模式做的沒被記進進度 → 改用 qState.count 涵蓋所有模式(考卷/練習/分類)
+      // v383: 分類進度只看 classCount(只有從「考點分類→開始練習」入口才會加)
+      //   主畫面練習模式 / 試卷模式 / 昨日錯題 / topic-tag 都不影響 classCount
+      //   手動標 🟢/🤔/🟡/🔴 也不算做過(標記跟做題分開)
+      // v444: revert v443 — 使用者原本要的就是「用分類練習」的專屬進度,不要混其他模式
       function _isQDone(qid) {
         const s = qState[qid];
-        return !!(s && ((s.count || 0) > 0 || (s.classCount || 0) > 0));
+        return !!(s && (s.classCount || 0) > 0);
       }
       function openTopicProgress(subj, cat) {
         const all = QS.filter(q => q.subject === subj && getTopicCat(q.topic) === cat);

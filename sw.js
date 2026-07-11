@@ -1,5 +1,5 @@
 importScripts('./version.js');
-const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-sidebar-progress-modal-plus-wrong-pct';
+const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-revert-class-only-progress';
 const PRECACHE = [
   './',
   './index.html',

@@ -3928,7 +3928,7 @@
       </div>
 
       <div class="result-area" id="result-area">
-        <div id="similar-btn-slot" style="text-align:center;margin-bottom:.7rem"><button type="button" id="btn-similar-qs-top" onclick="openSimilarForCurrent()" style="background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border:none;padding:.55rem 1.1rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.9rem;box-shadow:0 3px 10px rgba(13,148,136,.3)">🔗 找 10 題最像的</button></div>
+        <div id="similar-btn-slot" style="text-align:center;margin:0 0 .5rem;padding:0"><button type="button" id="btn-similar-qs-top" onclick="openSimilarForCurrent()" style="background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border:none;padding:.45rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem;box-shadow:0 2px 6px rgba(13,148,136,.25)">🔗 找 10 題最像的</button></div>
         <div class="result-banner" id="result-banner"></div>
         <div class="expl-box" id="pq-expl"></div>
         <button
@@ -5705,13 +5705,19 @@
       function openSimilarForCurrent(){
         try {
           let qid = null;
-          if (typeof _scrollExamState !== 'undefined' && _scrollExamState && _scrollExamState.qid) qid = _scrollExamState.qid;
-          if (!qid && typeof filteredQs !== 'undefined' && Array.isArray(filteredQs) && typeof currentIdx === 'number') {
-            const q = filteredQs[currentIdx]; if (q) qid = q.id;
+          // 練習模式 / 考試模式(共用 practiceList)
+          if (typeof practiceList !== 'undefined' && Array.isArray(practiceList) && typeof practiceIdx === 'number') {
+            const q = practiceList[practiceIdx]; if (q) qid = q.id;
+          }
+          // scroll-exam 整頁捲動
+          if (!qid && typeof _scrollExamState !== 'undefined' && _scrollExamState && _scrollExamState.qid) qid = _scrollExamState.qid;
+          // 重看試卷
+          if (!qid && typeof _reviewEntry !== 'undefined' && _reviewEntry && typeof _reviewIdx === 'number' && Array.isArray(_reviewEntry.qids)) {
+            qid = _reviewEntry.qids[_reviewIdx];
           }
           if (!qid) { alert('找不到目前這題,請等頁面完全載入再試'); return; }
           const sims = (typeof SIMILAR_QS !== 'undefined' && SIMILAR_QS) ? (SIMILAR_QS[qid] || []) : [];
-          if (!sims.length) { alert('這題沒有相似題資料 (可能相似題資料還在載入,或這題不在資料集中)。qid=' + qid); return; }
+          if (!sims.length) { alert('這題沒有相似題資料。qid=' + qid); return; }
           openSimilarModal(qid);
         } catch(e) { console.warn('openSimilarForCurrent fail', e); alert('相似題功能出錯: ' + (e && e.message ? e.message : e)); }
       }

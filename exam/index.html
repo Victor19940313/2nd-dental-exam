@@ -5697,17 +5697,64 @@
           html += links.map(l => `<span class="cross-tag">${l}</span>`).join('');
           html += '</div>';
         }
+        // v448:相似題改成按鈕觸發 modal(新分頁開啟保留現況)
         const sims = SIMILAR_QS[qid];
         if (sims && sims.length) {
-          html += '<div class="similar-qs"><span class="cross-label">🔗 相似題：</span>';
-          html += sims.map(sid => {
-            const sq = QS.find(q => q.id === sid);
-            const label = sq ? sq.meta : sid;
-            return `<a class="sim-link" href="#" onclick="event.preventDefault();jumpToQ('${sid}')">${label}</a>`;
-          }).join('');
-          html += '</div>';
+          const n = sims.length;
+          html += `<div class="similar-qs-wrap" style="margin-top:.5rem"><button type="button" onclick="event.stopPropagation();openSimilarModal('${qid}')" style="background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(13,148,136,.25)">🔗 找 ${n} 題最像的</button></div>`;
         }
         return html;
+      }
+
+      // v448:相似題 modal(每題顯示題號 + 題幹前綴 + 答案,點入用新分頁)
+      function openSimilarModal(qid) {
+        const sims = SIMILAR_QS[qid] || [];
+        if (!sims.length) return;
+        const srcQ = QS.find(q => q.id === qid);
+        if (!srcQ) return;
+
+        const items = sims.map((sid, i) => {
+          const q = QS.find(qq => qq.id === sid);
+          if (!q) return '';
+          const stem = (q.question || '').replace(/\s+/g, ' ').slice(0, 90);
+          const optArr = Array.isArray(q.options) ? q.options : [];
+          const ansIdx = typeof q.answer === 'number' ? q.answer : -1;
+          const ansTxt = (ansIdx >= 0 && optArr[ansIdx]) ? String(optArr[ansIdx]).replace(/\s+/g, ' ').slice(0, 60) : '';
+          const url = '?q=' + encodeURIComponent(sid);
+          const topic = q.topic || '';
+          const num = String(i + 1).padStart(2, '0');
+          return `
+            <a href="${url}" target="_blank" rel="noopener" class="sim-item" style="display:block;text-decoration:none;color:inherit;background:white;border:1px solid #e5e7eb;border-radius:10px;padding:.75rem;margin-bottom:.5rem;transition:all .15s">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
+                <span style="font-size:.75rem;color:#94a3b8;font-weight:700">${num}</span>
+                <span style="font-size:.72rem;color:#0d9488;font-weight:600">${q.meta || sid}</span>
+              </div>
+              <div style="font-size:.7rem;color:#7c3aed;margin-bottom:.35rem">${topic}</div>
+              <div style="font-size:.85rem;color:#334155;line-height:1.4;margin-bottom:.4rem">${stem}${q.question && q.question.length > 90 ? '…' : ''}</div>
+              ${ansTxt ? `<div style="font-size:.78rem;color:#059669;background:#d1fae5;padding:.3rem .55rem;border-radius:5px">✓ ${ansTxt}</div>` : ''}
+            </a>`;
+        }).filter(Boolean).join('');
+
+        const existing = document.getElementById('similar-modal');
+        if (existing) existing.remove();
+
+        const wrap = document.createElement('div');
+        wrap.id = 'similar-modal';
+        wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+        wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
+        wrap.innerHTML = `
+          <div style="background:#f8fafc;border-radius:14px;max-width:640px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+            <div style="padding:1rem 1.2rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border-radius:14px 14px 0 0">
+              <div>
+                <div style="font-size:1rem;font-weight:700">🔗 相似題 (${sims.length})</div>
+                <div style="font-size:.72rem;opacity:.85;margin-top:.15rem">來自 ${srcQ.meta || qid}・${srcQ.topic || ''}</div>
+              </div>
+              <button type="button" onclick="document.getElementById('similar-modal').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;font-weight:700">✕</button>
+            </div>
+            <div style="padding:.85rem;overflow-y:auto;flex:1">${items}</div>
+            <div style="padding:.6rem 1rem;border-top:1px solid #e5e7eb;font-size:.72rem;color:#94a3b8;text-align:center">🗗 點題目會用新分頁開啟，不會離開這題</div>
+          </div>`;
+        document.body.appendChild(wrap);
       }
 
       // HTML 後處理(用 DOM API,不再用 regex 瞎猜):
@@ -18699,6 +18746,12 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
         if (h === '#notebook' && typeof showNotebook === 'function') showNotebook();
         else if (h === '#wrongbook' && typeof showWrongbook === 'function') showWrongbook();
         else if (h === '#resume' && typeof resumePractice === 'function') resumePractice();
+        // v448: URL ?q=qid 直接跳到該題(相似題 modal 新分頁用)
+        try {
+          const params = new URLSearchParams(location.search);
+          const qid = params.get('q');
+          if (qid && typeof jumpToQ === 'function') setTimeout(() => jumpToQ(qid), 100);
+        } catch(e){}
       }
       if (document.readyState === 'complete' || document.readyState === 'interactive') {
         setTimeout(_maybeOpenFromHash, 0);

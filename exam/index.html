@@ -3948,6 +3948,14 @@
           📒 加入筆記
         </button>
         <button
+          id="btn-similar-qs"
+          onclick="openSimilarForCurrent()"
+          style="display:inline-block;background:#ecfdf5;color:#0d9488;border:1.5px solid #a7f3d0;border-radius:8px;padding:.4rem .85rem;font-weight:700;cursor:pointer;font-size:.84rem;margin-left:.4rem"
+          title="找 10 題最像的題目一起練習"
+        >
+          🔗 找 10 題最像的
+        </button>
+        <button
           id="btn-peek-notebook"
           onclick="peekNotebook()"
           style="display:inline-block;background:#f0f9ff;color:#0369a1;border:1.5px solid #bae6fd;border-radius:8px;padding:.4rem .85rem;font-weight:700;cursor:pointer;font-size:.84rem;margin-left:.4rem"
@@ -5697,16 +5705,22 @@
           html += links.map(l => `<span class="cross-tag">${l}</span>`).join('');
           html += '</div>';
         }
-        // v448:相似題改成按鈕觸發 modal(新分頁開啟保留現況)
-        const sims = SIMILAR_QS[qid];
-        if (sims && sims.length) {
-          const n = sims.length;
-          html += `<div class="similar-qs-wrap" style="margin-top:.5rem"><button type="button" onclick="event.stopPropagation();openSimilarModal('${qid}')" style="background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border:none;padding:.5rem 1rem;border-radius:8px;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(13,148,136,.25)">🔗 找 ${n} 題最像的</button></div>`;
-        }
+        // v449:相似題移到題目主按鈕列(「加入筆記」旁),不再放這裡
         return html;
       }
+      // 從當前做題 / 重看試卷取得 qid 打開相似題 modal
+      function openSimilarForCurrent(){
+        try {
+          let qid = null;
+          if (typeof _scrollExamState !== 'undefined' && _scrollExamState && _scrollExamState.qid) qid = _scrollExamState.qid;
+          if (!qid && typeof filteredQs !== 'undefined' && typeof currentIdx === 'number') {
+            const q = filteredQs[currentIdx]; if (q) qid = q.id;
+          }
+          if (qid) openSimilarModal(qid);
+        } catch(e) { console.warn('openSimilarForCurrent fail', e); }
+      }
 
-      // v448:相似題 modal(每題顯示題號 + 題幹前綴 + 答案,點入用新分頁)
+      // v449:相似題 modal(每題可選選項、選完展開詳解)
       function openSimilarModal(qid) {
         const sims = SIMILAR_QS[qid] || [];
         if (!sims.length) return;
@@ -5716,45 +5730,82 @@
         const items = sims.map((sid, i) => {
           const q = QS.find(qq => qq.id === sid);
           if (!q) return '';
-          const stem = (q.question || '').replace(/\s+/g, ' ').slice(0, 90);
           const optArr = Array.isArray(q.options) ? q.options : [];
           const ansIdx = typeof q.answer === 'number' ? q.answer : -1;
-          const ansTxt = (ansIdx >= 0 && optArr[ansIdx]) ? String(optArr[ansIdx]).replace(/\s+/g, ' ').slice(0, 60) : '';
-          const url = '?q=' + encodeURIComponent(sid);
-          const topic = q.topic || '';
+          const optBtns = optArr.map((opt, oi) => {
+            const optHtml = String(opt).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return `<button type="button" class="sim-opt" data-idx="${oi}" onclick="_simPickOpt(this,${oi},${ansIdx})" style="display:block;width:100%;text-align:left;background:white;border:1.5px solid #e5e7eb;color:#334155;padding:.5rem .7rem;margin:.25rem 0;border-radius:8px;font-size:.85rem;line-height:1.4;cursor:pointer;transition:background .1s">${optHtml}</button>`;
+          }).join('');
+          const explHtml = q.explanation ? _simFormatExpl(q.explanation) : '<i style="color:#94a3b8">(無詳解)</i>';
           const num = String(i + 1).padStart(2, '0');
+          const qhtml = (q.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
           return `
-            <a href="${url}" target="_blank" rel="noopener" class="sim-item" style="display:block;text-decoration:none;color:inherit;background:white;border:1px solid #e5e7eb;border-radius:10px;padding:.75rem;margin-bottom:.5rem;transition:all .15s">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem">
-                <span style="font-size:.75rem;color:#94a3b8;font-weight:700">${num}</span>
-                <span style="font-size:.72rem;color:#0d9488;font-weight:600">${q.meta || sid}</span>
+            <div class="sim-card" data-sid="${sid}" style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:.75rem;margin-bottom:.75rem">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;font-size:.72rem">
+                <span style="color:#94a3b8;font-weight:700">${num}</span>
+                <span style="color:#0d9488;font-weight:600">${q.meta || sid}</span>
               </div>
-              <div style="font-size:.7rem;color:#7c3aed;margin-bottom:.35rem">${topic}</div>
-              <div style="font-size:.85rem;color:#334155;line-height:1.4;margin-bottom:.4rem">${stem}${q.question && q.question.length > 90 ? '…' : ''}</div>
-              ${ansTxt ? `<div style="font-size:.78rem;color:#059669;background:#d1fae5;padding:.3rem .55rem;border-radius:5px">✓ ${ansTxt}</div>` : ''}
-            </a>`;
+              <div style="font-size:.7rem;color:#7c3aed;margin-bottom:.4rem">${q.topic || ''}</div>
+              <div style="font-size:.9rem;color:#1f2937;line-height:1.5;margin-bottom:.5rem">${qhtml}</div>
+              <div class="sim-opts">${optBtns}</div>
+              <div class="sim-expl-wrap" style="display:none;margin-top:.5rem">
+                <details>
+                  <summary style="cursor:pointer;font-weight:700;color:#0d9488;font-size:.85rem;padding:.35rem 0">📖 詳解</summary>
+                  <div style="background:#f8fafc;border-radius:6px;padding:.6rem;margin-top:.3rem;font-size:.82rem;color:#374151;line-height:1.55">${explHtml}</div>
+                </details>
+              </div>
+            </div>`;
         }).filter(Boolean).join('');
 
         const existing = document.getElementById('similar-modal');
         if (existing) existing.remove();
-
         const wrap = document.createElement('div');
         wrap.id = 'similar-modal';
-        wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+        wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:.5rem';
         wrap.onclick = (e) => { if (e.target === wrap) wrap.remove(); };
         wrap.innerHTML = `
-          <div style="background:#f8fafc;border-radius:14px;max-width:640px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-            <div style="padding:1rem 1.2rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border-radius:14px 14px 0 0">
+          <div style="background:#f8fafc;border-radius:14px;max-width:680px;width:100%;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+            <div style="padding:.9rem 1.1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border-radius:14px 14px 0 0">
               <div>
                 <div style="font-size:1rem;font-weight:700">🔗 相似題 (${sims.length})</div>
                 <div style="font-size:.72rem;opacity:.85;margin-top:.15rem">來自 ${srcQ.meta || qid}・${srcQ.topic || ''}</div>
               </div>
               <button type="button" onclick="document.getElementById('similar-modal').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;font-weight:700">✕</button>
             </div>
-            <div style="padding:.85rem;overflow-y:auto;flex:1">${items}</div>
-            <div style="padding:.6rem 1rem;border-top:1px solid #e5e7eb;font-size:.72rem;color:#94a3b8;text-align:center">🗗 點題目會用新分頁開啟，不會離開這題</div>
+            <div style="padding:.75rem;overflow-y:auto;flex:1">${items}</div>
           </div>`;
         document.body.appendChild(wrap);
+      }
+      function _simPickOpt(btn, oi, ansIdx){
+        const card = btn.closest('.sim-card');
+        if (!card) return;
+        const opts = card.querySelectorAll('.sim-opt');
+        opts.forEach(b => {
+          b.disabled = true;
+          b.style.cursor = 'default';
+          const i = parseInt(b.dataset.idx);
+          if (i === ansIdx) {
+            b.style.background = '#d1fae5';
+            b.style.borderColor = '#10b981';
+            b.style.color = '#065f46';
+            b.style.fontWeight = '700';
+          } else if (i === oi && oi !== ansIdx) {
+            b.style.background = '#fee2e2';
+            b.style.borderColor = '#ef4444';
+            b.style.color = '#991b1b';
+          } else {
+            b.style.opacity = '.55';
+          }
+        });
+        const wrap = card.querySelector('.sim-expl-wrap');
+        if (wrap) wrap.style.display = 'block';
+      }
+      function _simFormatExpl(txt){
+        if (!txt) return '';
+        return String(txt)
+          .replace(/&/g, '&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\n/g, '<br>');
       }
 
       // HTML 後處理(用 DOM API,不再用 regex 瞎猜):
@@ -7817,8 +7868,10 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
             const isFlagged = qState[q.id] && qState[q.id].flagged;
             const flagBtn = `<button onclick="scrollExamToggleFlag('${q.id}')" style="background:${isFlagged?'#fee2e2':'#fff'};border:1.5px solid ${isFlagged?'#dc2626':'#e5e7eb'};border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap">🚩 錯題本</button>`;
             const nbBtn = _addNbBtnHTML(q.id, `onclick="scrollExamAddNotebook('${q.id}')"`, 'small');
+            const simBtn = `<button onclick="openSimilarModal('${q.id}')" style="background:#ecfdf5;color:#0d9488;border:1.5px solid #a7f3d0;border-radius:6px;padding:.22rem .55rem;font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap">🔗 找 10 題最像的</button>`;
             const actionsHtml = `<div style="display:flex;gap:.3rem;flex-wrap:wrap;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed #e5e7eb">
               ${nbBtn}
+              ${simBtn}
               ${flagBtn}
               ${_markBtn('understood','🟢','簡單','#dcfce7','#22c55e')}
               ${_markBtn('guessed','🤔','猜的','#ede9fe','#a78bfa')}
@@ -8785,6 +8838,7 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
           ${markRowHtml}
           <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap">
             ${_addNbBtnHTML(q.id, 'onclick="reviewAddToNotebook()"', 'large')}
+            <button onclick="openSimilarModal('${q.id}')" style="background:#ecfdf5;color:#0d9488;border:1.5px solid #a7f3d0;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;cursor:pointer">🔗 找 10 題最像的</button>
             <button onclick="reviewPeekNotebook()" style="background:#ecfeff;color:#0369a1;border:1.5px solid #7dd3fc;border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:700;cursor:pointer">📖 偷看筆記</button>
           </div>
           <div style="font-size:.95rem;line-height:1.7;color:#1f2937;margin-bottom:.8rem">${escapeHtml(q.question||'')}</div>

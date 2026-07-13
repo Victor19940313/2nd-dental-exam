@@ -3922,13 +3922,15 @@
       </div>
 
       <div class="question-area">
-        <div class="q-badges" id="pq-badges"></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap">
+          <div class="q-badges" id="pq-badges" style="margin-bottom:0;flex:1;min-width:0"></div>
+          <button type="button" id="btn-similar-qs-top" onclick="openSimilarForCurrent()" style="background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border:none;padding:.35rem .75rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.78rem;box-shadow:0 2px 6px rgba(13,148,136,.25);white-space:nowrap;flex-shrink:0">🔗 找 10 題最像的</button>
+        </div>
         <div class="q-text" id="pq-text"></div>
         <div class="options" id="pq-options"></div>
       </div>
 
       <div class="result-area" id="result-area">
-        <div id="similar-btn-slot" style="text-align:center;margin:0 0 .5rem;padding:0"><button type="button" id="btn-similar-qs-top" onclick="openSimilarForCurrent()" style="background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border:none;padding:.45rem 1rem;border-radius:8px;font-weight:700;cursor:pointer;font-size:.85rem;box-shadow:0 2px 6px rgba(13,148,136,.25)">🔗 找 10 題最像的</button></div>
         <div class="result-banner" id="result-banner"></div>
         <div class="expl-box" id="pq-expl"></div>
         <button
@@ -5738,9 +5740,14 @@
             const optHtml = String(opt).replace(/</g,'&lt;').replace(/>/g,'&gt;');
             return `<button type="button" class="sim-opt" data-idx="${oi}" onclick="_simPickOpt(this,${oi},${ansIdx})" style="display:block;width:100%;text-align:left;background:white;border:1.5px solid #e5e7eb;color:#334155;padding:.5rem .7rem;margin:.25rem 0;border-radius:8px;font-size:.85rem;line-height:1.4;cursor:pointer;transition:background .1s">${optHtml}</button>`;
           }).join('');
-          const explHtml = q.explanation ? _simFormatExpl(q.explanation) : '<i style="color:#94a3b8">(無詳解)</i>';
+          const geminiExpl = q.explanation ? _simFormatExpl(q.explanation) : '';
+          const nbExpl = q.explanation_notebooklm ? _simFormatExpl(q.explanation_notebooklm) : '';
           const num = String(i + 1).padStart(2, '0');
           const qhtml = (q.question||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+          const explBlocks = [];
+          if (geminiExpl) explBlocks.push(`<details style="margin-top:.35rem"><summary style="cursor:pointer;font-weight:700;color:#7c3aed;font-size:.82rem;padding:.3rem .5rem;background:#f5f3ff;border-radius:6px">🤖 Gemini 詳解</summary><div style="background:#fefbff;border:1px solid #e9d5ff;border-radius:6px;padding:.55rem .7rem;margin-top:.25rem;font-size:.82rem;color:#374151;line-height:1.55">${geminiExpl}</div></details>`);
+          if (nbExpl) explBlocks.push(`<details style="margin-top:.35rem"><summary style="cursor:pointer;font-weight:700;color:#0369a1;font-size:.82rem;padding:.3rem .5rem;background:#f0f9ff;border-radius:6px">📘 NotebookLM 詳解 (參考書)</summary><div style="background:#f0fbff;border:1px solid #bae6fd;border-radius:6px;padding:.55rem .7rem;margin-top:.25rem;font-size:.82rem;color:#374151;line-height:1.55">${nbExpl}</div></details>`);
+          if (!explBlocks.length) explBlocks.push('<i style="color:#94a3b8;font-size:.8rem">(此題暫無詳解)</i>');
           return `
             <div class="sim-card" data-sid="${sid}" style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:.75rem;margin-bottom:.75rem">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;font-size:.72rem">
@@ -5750,12 +5757,7 @@
               <div style="font-size:.7rem;color:#7c3aed;margin-bottom:.4rem">${q.topic || ''}</div>
               <div style="font-size:.9rem;color:#1f2937;line-height:1.5;margin-bottom:.5rem">${qhtml}</div>
               <div class="sim-opts">${optBtns}</div>
-              <div class="sim-expl-wrap" style="display:none;margin-top:.5rem">
-                <details>
-                  <summary style="cursor:pointer;font-weight:700;color:#0d9488;font-size:.85rem;padding:.35rem 0">📖 詳解</summary>
-                  <div style="background:#f8fafc;border-radius:6px;padding:.6rem;margin-top:.3rem;font-size:.82rem;color:#374151;line-height:1.55">${explHtml}</div>
-                </details>
-              </div>
+              <div class="sim-expl-wrap" style="display:none;margin-top:.5rem">${explBlocks.join('')}</div>
             </div>`;
         }).filter(Boolean).join('');
 

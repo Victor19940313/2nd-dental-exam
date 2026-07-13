@@ -3928,6 +3928,7 @@
       </div>
 
       <div class="result-area" id="result-area">
+        <div id="similar-btn-slot" style="text-align:center;margin-bottom:.7rem"><button type="button" id="btn-similar-qs-top" onclick="openSimilarForCurrent()" style="background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border:none;padding:.55rem 1.1rem;border-radius:10px;font-weight:700;cursor:pointer;font-size:.9rem;box-shadow:0 3px 10px rgba(13,148,136,.3)">🔗 找 10 題最像的</button></div>
         <div class="result-banner" id="result-banner"></div>
         <div class="expl-box" id="pq-expl"></div>
         <button
@@ -3946,14 +3947,6 @@
           title="讓 AI 把這題的核心概念整理進筆記本"
         >
           📒 加入筆記
-        </button>
-        <button
-          id="btn-similar-qs"
-          onclick="openSimilarForCurrent()"
-          style="display:inline-block;background:#ecfdf5;color:#0d9488;border:1.5px solid #a7f3d0;border-radius:8px;padding:.4rem .85rem;font-weight:700;cursor:pointer;font-size:.84rem;margin-left:.4rem"
-          title="找 10 題最像的題目一起練習"
-        >
-          🔗 找 10 題最像的
         </button>
         <button
           id="btn-peek-notebook"
@@ -5713,11 +5706,14 @@
         try {
           let qid = null;
           if (typeof _scrollExamState !== 'undefined' && _scrollExamState && _scrollExamState.qid) qid = _scrollExamState.qid;
-          if (!qid && typeof filteredQs !== 'undefined' && typeof currentIdx === 'number') {
+          if (!qid && typeof filteredQs !== 'undefined' && Array.isArray(filteredQs) && typeof currentIdx === 'number') {
             const q = filteredQs[currentIdx]; if (q) qid = q.id;
           }
-          if (qid) openSimilarModal(qid);
-        } catch(e) { console.warn('openSimilarForCurrent fail', e); }
+          if (!qid) { alert('找不到目前這題,請等頁面完全載入再試'); return; }
+          const sims = (typeof SIMILAR_QS !== 'undefined' && SIMILAR_QS) ? (SIMILAR_QS[qid] || []) : [];
+          if (!sims.length) { alert('這題沒有相似題資料 (可能相似題資料還在載入,或這題不在資料集中)。qid=' + qid); return; }
+          openSimilarModal(qid);
+        } catch(e) { console.warn('openSimilarForCurrent fail', e); alert('相似題功能出錯: ' + (e && e.message ? e.message : e)); }
       }
 
       // v449:相似題 modal(每題可選選項、選完展開詳解)

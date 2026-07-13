@@ -5806,6 +5806,14 @@
       }
       function _simFormatExpl(txt){
         if (!txt) return '';
+        // v454:改用網站的 formatExpl,詳解才會有配色 (正確綠 / 錯誤紅 / 數字青 / 選項籤標)
+        if (typeof formatExpl === 'function') {
+          try {
+            let out = formatExpl(txt);
+            if (typeof _cleanExplHtml === 'function') { try { out = _cleanExplHtml(out); } catch(e) {} }
+            return out;
+          } catch(e) {}
+        }
         return String(txt)
           .replace(/&/g, '&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

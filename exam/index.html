@@ -5820,6 +5820,8 @@
           if (!explBlocks.length) explBlocks.push('<i style="color:#94a3b8;font-size:.8rem">(此題暫無詳解)</i>');
           const tm = tier && _TIER_META[tier];
           const tierBadge = tm ? `<span style="background:${tm.bg};color:${tm.color};border:1px solid ${tm.border};border-radius:999px;padding:.15rem .5rem;font-size:.68rem;font-weight:700;margin-left:.35rem">${tm.label}</span>` : '';
+          // v459:有圖題目在 modal 內顯示縮圖(點擊放大)
+          const imgHtml = q.image ? `<div style="margin-bottom:.5rem"><img src="images/${q.image}" alt="題目圖" onclick="_simZoomImage('images/${q.image}')" style="max-width:140px;max-height:90px;border-radius:6px;cursor:zoom-in;border:1px solid #e5e7eb;object-fit:cover;background:#f8fafc" loading="lazy" onerror="this.style.display='none'"></div>` : '';
           return `
             <div class="sim-card" data-sid="${sid}" style="background:white;border:1px solid #e5e7eb;border-radius:10px;padding:.75rem;margin-bottom:.75rem">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;font-size:.72rem;gap:.4rem;flex-wrap:wrap">
@@ -5828,6 +5830,7 @@
               </div>
               <div style="font-size:.7rem;color:#7c3aed;margin-bottom:.4rem">${q.topic || ''}</div>
               <div style="font-size:.9rem;color:#1f2937;line-height:1.5;margin-bottom:.5rem">${qhtml}</div>
+              ${imgHtml}
               <div class="sim-opts">${optBtns}</div>
               <div class="sim-expl-wrap" style="display:none;margin-top:.5rem">${explBlocks.join('')}</div>
             </div>`;
@@ -5875,6 +5878,17 @@
         });
         const wrap = card.querySelector('.sim-expl-wrap');
         if (wrap) wrap.style.display = 'block';
+      }
+      // v459:縮圖點擊放大(全屏 lightbox)
+      function _simZoomImage(src){
+        const existing = document.getElementById('sim-lightbox');
+        if (existing) existing.remove();
+        const wrap = document.createElement('div');
+        wrap.id = 'sim-lightbox';
+        wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10001;display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out';
+        wrap.onclick = () => wrap.remove();
+        wrap.innerHTML = `<img src="${src}" style="max-width:96vw;max-height:92vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5)">`;
+        document.body.appendChild(wrap);
       }
       function _simFormatExpl(txt){
         if (!txt) return '';

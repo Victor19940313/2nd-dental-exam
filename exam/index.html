@@ -5627,20 +5627,17 @@
         const next = (_getSortMode() + 1) % 3;
         try { localStorage.setItem(_SORT_LS, String(next)); } catch(e) {}
         _updateSortBtnLabel();
-        // 若正在練習中,套用新排序到當前 practiceList,並保留當前正在做的題目
+        // v457:切換後直接回第一題(使用者要求)
         try {
-          if (Array.isArray(practiceList) && practiceList.length && typeof practiceIdx === 'number') {
-            const curQid = practiceList[practiceIdx]?.id;
+          if (Array.isArray(practiceList) && practiceList.length) {
             practiceList = _applyPracticeSort(practiceList);
-            if (curQid) {
-              const newIdx = practiceList.findIndex(q => q.id === curQid);
-              if (newIdx >= 0) practiceIdx = newIdx;
-            }
+            practiceIdx = 0;
+            if (typeof resetPracticeScore === 'function') resetPracticeScore();
             if (typeof updatePracticeScoreUI === 'function') updatePracticeScoreUI();
             if (typeof loadPracticeQ === 'function') loadPracticeQ();
           }
         } catch(e) { console.warn('sort re-apply fail', e); }
-        showToast(_sortModeLabel(next).replace('📅 ',''));
+        showToast(_sortModeLabel(next).replace('📅 ','') + ' · 從第一題開始');
       }
       window.cyclePracticeSortMode = cyclePracticeSortMode;
       document.addEventListener('DOMContentLoaded', () => setTimeout(_updateSortBtnLabel, 100));

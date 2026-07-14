@@ -4016,6 +4016,14 @@
         >
           📊 交卷
         </button>
+        <button
+          id="btn-sort-mode"
+          onclick="cyclePracticeSortMode()"
+          title="切換題目排序:原順序 / 最新年份到最舊 / 最舊年份到最新"
+          style="background:#f0fdfa;color:#0d9488;border:1.5px solid #99f6e4;border-radius:8px;padding:.4rem .7rem;font-weight:700;cursor:pointer;font-size:.78rem;white-space:nowrap"
+        >
+          📅 原順序
+        </button>
       </div>
 
       <!-- Question Grid -->
@@ -5583,7 +5591,7 @@
           return;
         }
         activeTopic = null;
-        practiceList = list;
+        practiceList = _applyPracticeSort(list);
         practiceIdx = 0;
         resetPracticeScore();
         clearLastPos();
@@ -5591,6 +5599,51 @@
         updatePracticeScoreUI();
         loadPracticeQ();
       }
+
+      // v456: 練習/考試題目排序 (0=原順序 / 1=新→舊 / 2=舊→新), 存 LS
+      const _SORT_LS = uKey('practice_sort_mode');
+      function _getSortMode(){
+        try { return parseInt(localStorage.getItem(_SORT_LS)) || 0; } catch(e) { return 0; }
+      }
+      function _applyPracticeSort(list){
+        const mode = _getSortMode();
+        if (!mode) return list; // 原順序
+        const cp = list.slice();
+        if (mode === 1) {
+          cp.sort((a,b) => (b.year - a.year) || (b.session - a.session) || (a.number - b.number));
+        } else if (mode === 2) {
+          cp.sort((a,b) => (a.year - b.year) || (a.session - b.session) || (a.number - b.number));
+        }
+        return cp;
+      }
+      function _sortModeLabel(m){
+        return ['📅 原順序','📅 新→舊','📅 舊→新'][m || 0];
+      }
+      function _updateSortBtnLabel(){
+        const btn = document.getElementById('btn-sort-mode');
+        if (btn) btn.textContent = _sortModeLabel(_getSortMode());
+      }
+      function cyclePracticeSortMode(){
+        const next = (_getSortMode() + 1) % 3;
+        try { localStorage.setItem(_SORT_LS, String(next)); } catch(e) {}
+        _updateSortBtnLabel();
+        // 若正在練習中,套用新排序到當前 practiceList,並保留當前正在做的題目
+        try {
+          if (Array.isArray(practiceList) && practiceList.length && typeof practiceIdx === 'number') {
+            const curQid = practiceList[practiceIdx]?.id;
+            practiceList = _applyPracticeSort(practiceList);
+            if (curQid) {
+              const newIdx = practiceList.findIndex(q => q.id === curQid);
+              if (newIdx >= 0) practiceIdx = newIdx;
+            }
+            if (typeof updatePracticeScoreUI === 'function') updatePracticeScoreUI();
+            if (typeof loadPracticeQ === 'function') loadPracticeQ();
+          }
+        } catch(e) { console.warn('sort re-apply fail', e); }
+        showToast(_sortModeLabel(next).replace('📅 ',''));
+      }
+      window.cyclePracticeSortMode = cyclePracticeSortMode;
+      document.addEventListener('DOMContentLoaded', () => setTimeout(_updateSortBtnLabel, 100));
 
       function startTopicPractice(topic) {
         _isClassPractice = false; // v383: tag 點擊進來 → 不算分類進度
@@ -5603,7 +5656,7 @@
           showToast("此考點暫無題目");
           return;
         }
-        practiceList = list;
+        practiceList = _applyPracticeSort(list);
         practiceIdx = 0;
         resetPracticeScore();
         clearLastPos();
@@ -7836,7 +7889,7 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
         examAnswers = {};
         qgridSkipped = {};
         resetPracticeScore();
-        practiceList = list;
+        practiceList = _applyPracticeSort(list);
         practiceIdx = 0;
         clearLastPos();
         showPractice();

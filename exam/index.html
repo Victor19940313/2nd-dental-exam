@@ -4775,7 +4775,8 @@
       // Home filter state
       let homeSubjs = new Set(["ya3"]);
       let homeYears = new Set(["111-1"]);
-      let homeStatus = "all";
+      // v461:homeStatus 改成 Set 支援複選(空 Set = 全部)
+      let homeStatus = new Set();
 
       // ════════════════════════════════════════════
       //  Load / Save (migrate old non-prefixed data)
@@ -6998,21 +6999,34 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
           el.classList.add("sel");
           homeSubjs = new Set([el.dataset.subj]);
         } else {
-          document
-            .querySelectorAll("#chips-year .chip")
-            .forEach((c) => c.classList.remove("sel"));
-          el.classList.add("sel");
-          homeYears = new Set([el.dataset.ys]);
+          // v461:年份改複選 (toggle add/remove)
+          const y = el.dataset.ys;
+          if (homeYears.has(y)) {
+            homeYears.delete(y);
+            el.classList.remove("sel");
+          } else {
+            homeYears.add(y);
+            el.classList.add("sel");
+          }
         }
         updateMatchCount();
       }
 
       function setStatusMode(el) {
-        document
-          .querySelectorAll("[data-status]")
-          .forEach((c) => c.classList.remove("sel"));
-        el.classList.add("sel");
-        homeStatus = el.dataset.status;
+        // v461:標記改複選 — 「全部」=清空 Set、其他 toggle add/remove
+        const st = el.dataset.status;
+        if (st === "all") {
+          homeStatus.clear();
+        } else {
+          if (homeStatus.has(st)) homeStatus.delete(st);
+          else homeStatus.add(st);
+        }
+        // 更新視覺狀態
+        document.querySelectorAll("[data-status]").forEach((c) => {
+          const s = c.dataset.status;
+          if (s === "all") c.classList.toggle("sel", homeStatus.size === 0);
+          else c.classList.toggle("sel", homeStatus.has(s));
+        });
         updateMatchCount();
       }
 
@@ -7020,9 +7034,12 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
         return QS.filter((q) => {
           if (!homeSubjs.has(q.subject)) return false;
           if (!homeYears.has(q.year + "-" + q.session)) return false;
-          const st = getS(q.id).status;
-          if (homeStatus === "unmarked") return st === "none";
-          if (homeStatus !== "all") return st === homeStatus;
+          // v461:homeStatus 為 Set — 空 = 全部, 否則要在 Set 內才通過
+          if (homeStatus.size > 0) {
+            const st = getS(q.id).status;
+            const key = st === "none" ? "unmarked" : st;
+            if (!homeStatus.has(key)) return false;
+          }
           return true;
         });
       }

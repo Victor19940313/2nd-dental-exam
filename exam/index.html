@@ -9707,18 +9707,37 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
         );
       }
 
+      // v464:只重 render 該張卡片,避免整列表重繪造成跳動
+      function _rerenderOneBrowseCard(id){
+        const el = document.getElementById('bc-' + id);
+        if (!el) return false;
+        const q = QS.find(qq => qq.id === id);
+        if (!q) return false;
+        const wasOpen = el.classList.contains('open');
+        const explSlot = el.querySelector('.expl-slot');
+        const explWasRendered = explSlot?.dataset.rendered === '1';
+        const explInnerHtml = explWasRendered ? explSlot.innerHTML : null;
+        const tmp = document.createElement('div');
+        tmp.innerHTML = renderBrowseCard(q);
+        const newEl = tmp.firstElementChild;
+        el.replaceWith(newEl);
+        if (wasOpen) newEl.classList.add('open');
+        // 保留已 render 過的詳解 (避免展開後又要重載)
+        if (explWasRendered) {
+          const newSlot = newEl.querySelector('.expl-slot');
+          if (newSlot) { newSlot.innerHTML = explInnerHtml; newSlot.dataset.rendered = '1'; }
+        }
+        return true;
+      }
       // v462:瀏覽 / 錯題本共用 — 五個獨立標記按鈕
       async function browseSetStatus(id, status, e){
         e?.stopPropagation();
         if (!qState[id]) qState[id] = { status: "none", count: 0 };
-        // 按同一個 → 取消(改成 none)
         qState[id].status = qState[id].status === status ? "none" : status;
         await persist(id);
         updateHomeStats();
-        // 判斷當前螢幕重 render
-        const isWb = document.getElementById('screen-wrongbook')?.style.display === 'block';
-        if (isWb) { renderWrongbook(); }
-        else { renderBrowse(); setTimeout(() => document.getElementById("bc-" + id)?.classList.add("open"), 20); }
+        // 只重繪這張卡片,避免整列表跳動 (標記不影響列表 filter)
+        _rerenderOneBrowseCard(id);
       }
       // v462:瀏覽 / 錯題本共用 — 加入 / 移出錯題本
       async function browseToggleFlag(id, e){
@@ -9728,8 +9747,10 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
         await persist(id);
         showToast(qState[id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
         const isWb = document.getElementById('screen-wrongbook')?.style.display === 'block';
-        if (isWb) { renderWrongbook(); }
-        else { renderBrowse(); setTimeout(() => document.getElementById("bc-" + id)?.classList.add("open"), 20); }
+        // 錯題本內移除 → 要整個重整 (該題會消失)
+        if (isWb && !qState[id].flagged) { renderWrongbook(); return; }
+        // 其他情況只重繪這張卡片
+        _rerenderOneBrowseCard(id);
       }
 
       async function browseIncCount(id, e) {
@@ -9738,11 +9759,8 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
         qState[id].count = (qState[id].count || 0) + 1;
         await persist(id);
         showToast(`已寫過 ${qState[id].count} 次`);
-        renderBrowse();
-        setTimeout(
-          () => document.getElementById("bc-" + id)?.classList.add("open"),
-          20,
-        );
+        // v464:只重繪這張卡片,避免整列表跳動
+        _rerenderOneBrowseCard(id);
       }
 
       // ════════════════════════════════════════════

@@ -4252,9 +4252,16 @@
 
     <!-- ═══════════════ WRONGBOOK SCREEN ═══════════════ -->
     <div id="screen-wrongbook" style="display:none">
-      <div class="wb-header">
-        <h2 class="wb-title">🚩 錯題本</h2>
-        <div class="wb-stats" id="wb-stats"></div>
+      <div class="wb-header" style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:.7rem">
+          <h2 class="wb-title" style="margin:0">🚩 錯題本</h2>
+          <div class="wb-stats" id="wb-stats"></div>
+        </div>
+        <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+          <button onclick="exportWrongbook()" title="匯出錯題本 JSON" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:6px;padding:.25rem .55rem;font-size:.72rem;font-weight:700;cursor:pointer">⬆️ 匯出</button>
+          <button onclick="importWrongbook()" title="從 JSON 匯入" style="background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:6px;padding:.25rem .55rem;font-size:.72rem;font-weight:700;cursor:pointer">⬇️ 匯入</button>
+          <button onclick="resetWrongbook()" title="全部清空" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:6px;padding:.25rem .55rem;font-size:.72rem;font-weight:700;cursor:pointer">🗑 重置</button>
+        </div>
       </div>
       <div class="wb-filters" id="wb-filters">
         <button class="wb-chip sel" data-wbs="all" onclick="setWBFilter(this,'all')">全部</button>
@@ -4263,11 +4270,10 @@
         <button class="wb-chip" data-wbs="ya5" onclick="setWBFilter(this,'ya5')">牙五</button>
         <button class="wb-chip" data-wbs="ya6" onclick="setWBFilter(this,'ya6')">牙六</button>
       </div>
+      <!-- v465:錯題本加年份篩選(可複選) -->
+      <div class="wb-year-filters" id="wb-year-filters" style="display:flex;flex-wrap:wrap;gap:.3rem;margin:.4rem 0"></div>
       <div class="wb-actions">
         <button class="start-btn" onclick="practiceWrongbook()" style="font-size:.85rem;padding:.5rem 1.2rem">開始練習錯題</button>
-        <button class="start-btn secondary" onclick="exportWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯出</button>
-        <button class="start-btn secondary" onclick="importWrongbook()" style="font-size:.82rem;padding:.5rem 1rem">匯入</button>
-        <button class="start-btn secondary" onclick="resetWrongbook()" style="font-size:.82rem;padding:.5rem 1rem;color:#ef4444;border-color:#fca5a5">重置錯題本</button>
         <input type="file" id="wb-import-file" accept=".json" style="display:none" onchange="handleWBImport(event)">
       </div>
       <div class="wb-list" id="wb-list"></div>
@@ -19172,12 +19178,46 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       //  Wrongbook screen
       // ════════════════════════════════════════════
       let wbFilter = 'all';
+      // v465:錯題本年份複選 Set(空 = 不篩年份, 有值 = 只顯示指定年份/次別)
+      let wbYearSet = new Set();
 
       function setWBFilter(el, val){
         document.querySelectorAll('.wb-chip').forEach(c=>c.classList.remove('sel'));
         el.classList.add('sel');
         wbFilter = val;
+        _renderWBYearChips();
         renderWrongbook();
+      }
+      function toggleWBYear(el, ys){
+        if (wbYearSet.has(ys)) { wbYearSet.delete(ys); el.classList.remove('sel'); }
+        else { wbYearSet.add(ys); el.classList.add('sel'); }
+        renderWrongbook();
+      }
+      // 依錯題本內實際存在的年份動態產生 chip (跟主頁固定年份不同,只列有錯題的)
+      function _renderWBYearChips(){
+        const el = document.getElementById('wb-year-filters');
+        if (!el) return;
+        const yset = new Set();
+        QS.forEach(q => {
+          const s = getS(q.id);
+          if (!s.flagged) return;
+          if (wbFilter !== 'all' && q.subject !== wbFilter) return;
+          yset.add(q.year + '-' + q.session);
+        });
+        if (yset.size === 0) { el.innerHTML = ''; return; }
+        // 移除不再存在的選中年份
+        [...wbYearSet].forEach(y => { if (!yset.has(y)) wbYearSet.delete(y); });
+        const sorted = [...yset].sort((a,b) => {
+          const [ay, as] = a.split('-').map(Number);
+          const [by, bs] = b.split('-').map(Number);
+          return (ay - by) || (as - bs);
+        });
+        el.innerHTML = sorted.map(ys => {
+          const [y, s] = ys.split('-');
+          const label = `${y}${s === '1' ? '上' : '下'}`;
+          const sel = wbYearSet.has(ys) ? ' sel' : '';
+          return `<button class="wb-chip${sel}" onclick="toggleWBYear(this,'${ys}')" style="padding:.2rem .55rem;font-size:.72rem">${label}</button>`;
+        }).join('');
       }
 
       function showWrongbook(){
@@ -19199,12 +19239,15 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       }
 
       function renderWrongbook(){
+        // v465:年份也篩
         const flagged = QS.filter(q=>{
           const s = getS(q.id);
           if(!s.flagged) return false;
           if(wbFilter!=='all' && q.subject!==wbFilter) return false;
+          if(wbYearSet.size > 0 && !wbYearSet.has(q.year + '-' + q.session)) return false;
           return true;
         });
+        _renderWBYearChips();
 
         const statsEl = document.getElementById('wb-stats');
         statsEl.textContent = flagged.length + ' 題';
@@ -19263,10 +19306,12 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
       }
 
       function practiceWrongbook(){
+        // v465:年份也篩
         const flagged = QS.filter(q=>{
           const s = getS(q.id);
           if(!s.flagged) return false;
           if(wbFilter!=='all' && q.subject!==wbFilter) return false;
+          if(wbYearSet.size > 0 && !wbYearSet.has(q.year + '-' + q.session)) return false;
           return true;
         });
         if(!flagged.length){ showToast('錯題本是空的'); return; }

@@ -9649,6 +9649,22 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
           ? `<div class="expl-slot" data-rendered="0"><div style="color:#9ca3af;font-size:.8rem;padding:.4rem 0">📖 詳解載入中…</div></div>`
           : `<p class="no-expl">尚無詳解</p>`;
 
+        // v462:錯題本 flag + 5 個獨立標記按鈕
+        const isFlagged = !!st.flagged;
+        const flagBtn = `<button class="a-mark" onclick="browseToggleFlag('${q.id}',event)" style="background:${isFlagged?'#fee2e2':'#fff'};border:1.5px solid ${isFlagged?'#dc2626':'#e5e7eb'};color:${isFlagged?'#991b1b':'#334155'};border-radius:6px;padding:.28rem .6rem;font-size:.78rem;font-weight:700;cursor:pointer">🚩 ${isFlagged?'已收錯題':'錯題本'}</button>`;
+        const markBtn = (statusKey, emoji, label, bg, bd) => {
+          const active = st.status === statusKey;
+          return `<button class="a-mark" onclick="browseSetStatus('${q.id}','${statusKey}',event)" style="background:${active?bg:'#fff'};border:1.5px solid ${active?bd:'#e5e7eb'};color:${active?'#1f2937':'#64748b'};border-radius:6px;padding:.28rem .6rem;font-size:.78rem;font-weight:${active?700:600};cursor:pointer">${emoji} ${label}</button>`;
+        };
+        const actionRow = `
+      ${flagBtn}
+      ${markBtn('understood','🟢','簡單','#dcfce7','#22c55e')}
+      ${markBtn('guessed','🤔','猜的','#ede9fe','#a78bfa')}
+      ${markBtn('learning','🟡','再努力','#fef9c3','#eab308')}
+      ${markBtn('give_up','🔴','送他吧','#fee2e2','#ef4444')}
+      <button class="a-count" onclick="browseIncCount('${q.id}',event)">已寫過 ${st.count} 次</button>
+      <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️</button>`;
+
         return `
 <div class="q-card" id="bc-${q.id}">
   <div class="q-card-hdr" onclick="browseToggleCard('${q.id}')">
@@ -9667,10 +9683,7 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
   <div class="q-body">
     <div class="q-opt-list">${optHtml}</div>
     ${topicTagB}${explSlot}
-    <div class="q-actions">
-      <button class="a-mark ${SCLS[st.status]}" onclick="browseToggleStatus('${q.id}',event)">${SLABELS[st.status]}</button>
-      <button class="a-count" onclick="browseIncCount('${q.id}',event)">已寫過 ${st.count} 次</button>
-      <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️</button>
+    <div class="q-actions" style="display:flex;flex-wrap:wrap;gap:.35rem">${actionRow}
     </div>
   </div>
 </div>`;
@@ -9691,6 +9704,31 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
           () => document.getElementById("bc-" + id)?.classList.add("open"),
           20,
         );
+      }
+
+      // v462:瀏覽 / 錯題本共用 — 五個獨立標記按鈕
+      async function browseSetStatus(id, status, e){
+        e?.stopPropagation();
+        if (!qState[id]) qState[id] = { status: "none", count: 0 };
+        // 按同一個 → 取消(改成 none)
+        qState[id].status = qState[id].status === status ? "none" : status;
+        await persist(id);
+        updateHomeStats();
+        // 判斷當前螢幕重 render
+        const isWb = document.getElementById('screen-wrongbook')?.style.display === 'block';
+        if (isWb) { renderWrongbook(); }
+        else { renderBrowse(); setTimeout(() => document.getElementById("bc-" + id)?.classList.add("open"), 20); }
+      }
+      // v462:瀏覽 / 錯題本共用 — 加入 / 移出錯題本
+      async function browseToggleFlag(id, e){
+        e?.stopPropagation();
+        if (!qState[id]) qState[id] = { status: "none", count: 0 };
+        qState[id].flagged = !qState[id].flagged;
+        await persist(id);
+        showToast(qState[id].flagged ? '🚩 已加入錯題本' : '已從錯題本移除');
+        const isWb = document.getElementById('screen-wrongbook')?.style.display === 'block';
+        if (isWb) { renderWrongbook(); }
+        else { renderBrowse(); setTimeout(() => document.getElementById("bc-" + id)?.classList.add("open"), 20); }
       }
 
       async function browseIncCount(id, e) {
@@ -19174,23 +19212,11 @@ ${_extractImgs(pageContent).map(x => x.md).join('\n') || '(無)'}
           return (si.indexOf(a.subj)-si.indexOf(b.subj)) || a.topic.localeCompare(b.topic);
         });
 
+        // v462:改用 renderBrowseCard — 點卡片就地展開,不再跳走
         let html = '';
         sorted.forEach(g=>{
-          let inner = '';
-          g.items.forEach(q=>{
-            const qText = q.question.length>80 ? q.question.slice(0,80)+'…' : q.question;
-            inner += `<div class="wb-card" onclick="startFromWrongbook('${q.id}')">
-              <div class="wb-card-top">
-                <span class="wb-card-id">${q.meta||q.id}</span>
-                <div>
-                  <span class="wb-card-topic">${getS(q.id).topic||q.topic||''}</span>
-                  <button class="wb-card-remove" onclick="event.stopPropagation();removeFromWB('${q.id}')" title="移除">✕</button>
-                </div>
-              </div>
-              <div class="wb-card-q">${qText}</div>
-            </div>`;
-          });
-          html += `<details class="wb-group"><summary class="wb-group-title">${SMAP[g.subj]||g.subj} — ${g.topic} (${g.items.length})</summary>${inner}</details>`;
+          const inner = g.items.map(q => renderBrowseCard(q)).join('');
+          html += `<details class="wb-group" open><summary class="wb-group-title">${SMAP[g.subj]||g.subj} — ${g.topic} (${g.items.length})</summary>${inner}</details>`;
         });
         listEl.innerHTML = html;
       }

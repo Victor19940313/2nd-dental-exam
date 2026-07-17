@@ -9681,6 +9681,7 @@ ${q.explanation || '(無)'}${q.explanation_notebooklm ? '\n\n【NotebookLM 詳�
     </div>
   </div>
   <div class="q-body">
+    ${q.image ? `<div style="margin-bottom:.5rem"><img src="images/${q.image}" alt="題目圖" onclick="event.stopPropagation();_simZoomImage('images/${q.image}')" style="max-width:160px;max-height:110px;border-radius:6px;cursor:zoom-in;border:1px solid #e5e7eb;object-fit:cover;background:#f8fafc" loading="lazy" onerror="this.style.display='none'"></div>` : ''}
     <div class="q-opt-list">${optHtml}</div>
     ${topicTagB}${explSlot}
     <div class="q-actions" style="display:flex;flex-wrap:wrap;gap:.35rem">${actionRow}

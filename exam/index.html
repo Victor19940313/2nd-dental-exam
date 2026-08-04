@@ -9961,16 +9961,26 @@
       }
       function nbExplBlock(q) {
         const nb = q && q.explanation_notebooklm;
+        let nbHtml = "";
         if (!nb || !nb.trim()) {
           if (q && q.no_notebooklm_source) {
-            return `<details class="nb-expl"><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content" style="background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:8px;padding:.7rem;color:#0369a1;font-size:.88rem"><strong>📖 沒有公衛參考書</strong><br>本題屬於牙科公共衛生科目,目前未建立對應的 NotebookLM 參考書,**請直接看上方 Gemini 詳解**。</div></details>`;
+            nbHtml = `<details class="nb-expl"><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content" style="background:#e0f2fe;border:1.5px solid #38bdf8;border-radius:8px;padding:.7rem;color:#0369a1;font-size:.88rem"><strong>📖 沒有公衛參考書</strong><br>本題屬於牙科公共衛生科目,目前未建立對應的 NotebookLM 參考書,**請直接看上方 Gemini 詳解**。</div></details>`;
+          } else if (q && q.explanation_pending) {
+            nbHtml = `<details class="nb-expl" open><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。</div></details>`;
           }
-          if (q && q.explanation_pending) {
-            return `<details class="nb-expl" open><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content" style="background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:.7rem;color:#92400e;font-size:.88rem"><strong>⏳ 詳解待補</strong><br>因官方更正了標準答案,舊詳解已清除,系統正在重新生成,請耐心等候。</div></details>`;
-          }
-          return "";
+        } else {
+          nbHtml = `<details class="nb-expl"><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content">${_cleanExplHtml(formatExpl(nb))}</div></details>`;
         }
-        return `<details class="nb-expl"><summary>📚 NotebookLM 詳解(依據參考書)</summary><div class="nb-expl-content">${_cleanExplHtml(formatExpl(nb))}</div></details>`;
+        // v476: 追加考生留言區 (預設摺疊, 展開才 fetch)
+        if (
+          q &&
+          q.id &&
+          typeof QuestionComments !== "undefined" &&
+          QuestionComments.renderCollapsed
+        ) {
+          nbHtml += QuestionComments.renderCollapsed(q.id);
+        }
+        return nbHtml;
       }
 
       function clinicalExplBlock(q) {
@@ -28144,7 +28154,9 @@
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="../sync.js"></script>
+    <script src="comment-system.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉

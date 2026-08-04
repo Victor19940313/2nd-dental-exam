@@ -1,0 +1,833 @@
+/**
+ * 每題留言區系統 (v476)
+ * ────────────────────────────────────
+ * 完整版:TipTap 富文字 + 圖片上傳(壓縮) + 按讚/倒讚 + 排序 + 匿名 + 隱藏
+ * 資料存 Firebase RTDB question_comments/{qid}/{cid}
+ * 圖片存 GitHub repo Victor19940313/2nd-dental-exam question-comment-images/
+ * 詳見: 03_維護包/13 留言區系統設計.md
+ */
+(function () {
+  "use strict";
+
+  // ─────────────────────────────────────────
+  // 常數
+  // ─────────────────────────────────────────
+  const FB_ROOT_COMMENTS = "question_comments";
+  const FB_ROOT_COUNTS = "comment_counts";
+  const FB_USER_HIDDEN = "hidden_comments";
+  const FB_USER_QUOTA = "daily_upload_count";
+
+  const IMG_REPO = "Victor19940313/2nd-dental-exam";
+  const IMG_DIR = "question-comment-images";
+  const IMG_MAX_WIDTH = 1600;
+  const IMG_QUALITY = 0.82;
+  const IMG_MAX_PER_COMMENT = 3;
+  const IMG_DAILY_QUOTA = 20;
+  const IMG_HARD_MAX_MB = 2;
+
+  const COMMENT_MAX_LEN = 5000;
+  const RATE_LIMIT_WINDOW_SEC = 60;
+  const RATE_LIMIT_MAX_POSTS = 3;
+
+  const HIDDEN_GUEST_KEY = "guest_hidden_comments_v1";
+
+  // ─────────────────────────────────────────
+  // Firebase helpers (等現有 sync 系統把 firebase 初始化好)
+  // ─────────────────────────────────────────
+  function fbReady() {
+    return typeof firebase !== "undefined" && firebase.database;
+  }
+  function fbDb() {
+    return firebase.database();
+  }
+  async function ensureAuth() {
+    if (!fbReady()) throw new Error("Firebase 未載入");
+    if (!firebase.auth) throw new Error("Firebase Auth 未載入");
+    const u = firebase.auth().currentUser;
+    if (u) return u;
+    const r = await firebase.auth().signInAnonymously();
+    return r.user;
+  }
+  function getMyDisplayName(isAnonymous) {
+    if (isAnonymous) {
+      const u = firebase.auth().currentUser;
+      const uid = (u && u.uid) || "guest";
+      return "匿名 " + uid.slice(-4);
+    }
+    // 屬名 → 用 CUR_USER (mnemonics 系統) 或 DentalSync
+    if (typeof CUR_USER !== "undefined" && CUR_USER && CUR_USER.name)
+      return CUR_USER.name;
+    if (typeof DentalSync !== "undefined" && DentalSync.getUserName)
+      return DentalSync.getUserName() || "使用者";
+    return "使用者";
+  }
+
+  // ─────────────────────────────────────────
+  // 圖片壓縮 (客戶端 canvas)
+  // ─────────────────────────────────────────
+  async function compressImageBlob(fileOrBlob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const scale =
+            img.width > IMG_MAX_WIDTH ? IMG_MAX_WIDTH / img.width : 1;
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff"; // 移除透明背景 (JPG 不支援)
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) return reject(new Error("壓縮失敗"));
+              resolve({
+                blob,
+                width: w,
+                height: h,
+                originalSize: fileOrBlob.size,
+              });
+            },
+            "image/jpeg",
+            IMG_QUALITY,
+          );
+        };
+        img.onerror = () => reject(new Error("讀圖失敗"));
+        img.src = reader.result;
+      };
+      reader.onerror = () => reject(new Error("檔案讀取失敗"));
+      reader.readAsDataURL(fileOrBlob);
+    });
+  }
+
+  // ─────────────────────────────────────────
+  // GitHub 圖片上傳 (跟現有 mnemonics 同 token / 同架構)
+  // ─────────────────────────────────────────
+  async function getGithubToken() {
+    // 讀 GitHub Token — 從 localStorage / DentalSync 拿
+    try {
+      const t = localStorage.getItem("github_token_dental");
+      if (t) return t;
+    } catch (e) {}
+    if (typeof DentalSync !== "undefined" && DentalSync.getGithubToken)
+      return DentalSync.getGithubToken();
+    return null;
+  }
+  async function uploadImageToGithub(blob, qid) {
+    const token = await getGithubToken();
+    if (!token) throw new Error("沒有 GitHub Token, 請去筆記本 → 設定貼上");
+    const ym = new Date().toISOString().slice(0, 7); // "2026-08"
+    const ts = Date.now();
+    const rand = Math.random().toString(36).slice(2, 6);
+    const path = `${IMG_DIR}/${ym}/${qid}-${ts}-${rand}.jpg`;
+    const b64 = await blobToBase64(blob);
+    const res = await fetch(
+      `https://api.github.com/repos/${IMG_REPO}/contents/${path}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `token ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: `[q-comment] upload ${qid} ${ts}`,
+          content: b64,
+        }),
+      },
+    );
+    if (!res.ok) throw new Error("GitHub 上傳失敗 " + res.status);
+    return `https://raw.githubusercontent.com/${IMG_REPO}/main/${path}`;
+  }
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onloadend = () => {
+        const b64 = String(r.result).split(",")[1];
+        resolve(b64);
+      };
+      r.onerror = () => reject(new Error("blob 讀取失敗"));
+      r.readAsDataURL(blob);
+    });
+  }
+  async function checkAndIncQuota() {
+    const u = await ensureAuth();
+    const today = new Date().toISOString().slice(0, 10);
+    const ref = fbDb().ref(`users/${u.uid}/${FB_USER_QUOTA}/${today}`);
+    const snap = await ref.once("value");
+    const used = snap.val() || 0;
+    if (used >= IMG_DAILY_QUOTA)
+      throw new Error(
+        `已達今日上傳配額 ${IMG_DAILY_QUOTA} 張, 明天再試或用文字補充`,
+      );
+    await ref.set(used + 1);
+  }
+  async function handleImageUpload(fileOrBlob, qid) {
+    await checkAndIncQuota();
+    const compressed = await compressImageBlob(fileOrBlob);
+    if (compressed.blob.size > IMG_HARD_MAX_MB * 1024 * 1024) {
+      if (
+        !confirm(
+          `壓縮後仍有 ${(compressed.blob.size / 1024 / 1024).toFixed(1)} MB, 要繼續嗎?`,
+        )
+      )
+        throw new Error("使用者取消");
+    }
+    const url = await uploadImageToGithub(compressed.blob, qid);
+    return { url, ...compressed };
+  }
+  // Export helper (內部用 + 外部可用)
+  window._compressImage = compressImageBlob;
+  window._uploadCommentImage = handleImageUpload;
+
+  // ─────────────────────────────────────────
+  // 隱藏清單 (登入者 → Firebase, 訪客 → localStorage)
+  // ─────────────────────────────────────────
+  const _hiddenCache = { set: new Set(), loaded: false, uid: null };
+  async function loadHiddenSet() {
+    const u = firebase.auth().currentUser;
+    if (u) {
+      if (_hiddenCache.loaded && _hiddenCache.uid === u.uid)
+        return _hiddenCache.set;
+      const snap = await fbDb()
+        .ref(`users/${u.uid}/${FB_USER_HIDDEN}`)
+        .once("value");
+      const obj = snap.val() || {};
+      _hiddenCache.set = new Set(Object.keys(obj));
+      _hiddenCache.uid = u.uid;
+      _hiddenCache.loaded = true;
+      return _hiddenCache.set;
+    }
+    // guest → localStorage
+    try {
+      const raw = localStorage.getItem(HIDDEN_GUEST_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      _hiddenCache.set = new Set(arr);
+      _hiddenCache.loaded = true;
+      _hiddenCache.uid = null;
+      return _hiddenCache.set;
+    } catch (e) {
+      return new Set();
+    }
+  }
+  async function hideComment(cid) {
+    _hiddenCache.set.add(cid);
+    const u = firebase.auth().currentUser;
+    if (u) {
+      await fbDb().ref(`users/${u.uid}/${FB_USER_HIDDEN}/${cid}`).set(true);
+    } else {
+      localStorage.setItem(
+        HIDDEN_GUEST_KEY,
+        JSON.stringify(Array.from(_hiddenCache.set)),
+      );
+    }
+  }
+  async function unhideComment(cid) {
+    _hiddenCache.set.delete(cid);
+    const u = firebase.auth().currentUser;
+    if (u) {
+      await fbDb().ref(`users/${u.uid}/${FB_USER_HIDDEN}/${cid}`).remove();
+    } else {
+      localStorage.setItem(
+        HIDDEN_GUEST_KEY,
+        JSON.stringify(Array.from(_hiddenCache.set)),
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────
+  // 留言 CRUD + Vote
+  // ─────────────────────────────────────────
+  async function fetchComments(qid) {
+    const snap = await fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}`).once("value");
+    const obj = snap.val() || {};
+    return Object.entries(obj).map(([cid, v]) => ({ cid, ...v }));
+  }
+  async function fetchCount(qid) {
+    const snap = await fbDb().ref(`${FB_ROOT_COUNTS}/${qid}`).once("value");
+    return snap.val() || 0;
+  }
+  async function postComment(qid, htmlContent, isAnonymous) {
+    const u = await ensureAuth();
+    if (!htmlContent || htmlContent.length > COMMENT_MAX_LEN)
+      throw new Error(`留言字數超過上限 ${COMMENT_MAX_LEN}`);
+    if (!checkRateLimit(u.uid))
+      throw new Error("你發文太快了, 60 秒內最多 3 則");
+    const now = Date.now();
+    const name = getMyDisplayName(isAnonymous);
+    const record = {
+      author_uid: u.uid,
+      author_name: name,
+      is_anonymous: !!isAnonymous,
+      content_html: htmlContent,
+      images: extractImgUrls(htmlContent),
+      created_ts: now,
+      updated_ts: now,
+      score: 0,
+      likes_by: {},
+      dislikes_by: {},
+    };
+    const ref = fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}`).push();
+    await ref.set(record);
+    // 更新 count
+    try {
+      await fbDb()
+        .ref(`${FB_ROOT_COUNTS}/${qid}`)
+        .transaction((v) => (v || 0) + 1);
+    } catch (e) {}
+    recordRateLimit(u.uid);
+    return { cid: ref.key, ...record };
+  }
+  async function updateComment(qid, cid, htmlContent) {
+    const u = await ensureAuth();
+    await fbDb()
+      .ref(`${FB_ROOT_COMMENTS}/${qid}/${cid}`)
+      .update({
+        content_html: htmlContent,
+        images: extractImgUrls(htmlContent),
+        updated_ts: Date.now(),
+      });
+  }
+  async function deleteComment(qid, cid) {
+    const u = await ensureAuth();
+    await fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}/${cid}`).remove();
+    try {
+      await fbDb()
+        .ref(`${FB_ROOT_COUNTS}/${qid}`)
+        .transaction((v) => Math.max(0, (v || 1) - 1));
+    } catch (e) {}
+  }
+  async function toggleVote(qid, cid, wantLike) {
+    const u = await ensureAuth();
+    const uid = u.uid;
+    const base = fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}/${cid}`);
+    // 讀當下狀態再決定操作
+    const snap = await base.once("value");
+    const c = snap.val();
+    if (!c) return null;
+    const likedNow = !!(c.likes_by && c.likes_by[uid]);
+    const dislikedNow = !!(c.dislikes_by && c.dislikes_by[uid]);
+    let dScore = 0;
+    const updates = {};
+    if (wantLike) {
+      if (likedNow) {
+        // 撤讚
+        updates[`likes_by/${uid}`] = null;
+        dScore = -1;
+      } else {
+        updates[`likes_by/${uid}`] = true;
+        dScore = dislikedNow ? 2 : 1; // 從倒讚 → 讚 = +2
+        if (dislikedNow) updates[`dislikes_by/${uid}`] = null;
+      }
+    } else {
+      if (dislikedNow) {
+        updates[`dislikes_by/${uid}`] = null;
+        dScore = 1;
+      } else {
+        updates[`dislikes_by/${uid}`] = true;
+        dScore = likedNow ? -2 : -1;
+        if (likedNow) updates[`likes_by/${uid}`] = null;
+      }
+    }
+    await base.update(updates);
+    await base.child("score").transaction((v) => (v || 0) + dScore);
+    // 回傳新狀態給 UI
+    const after = await base.once("value");
+    return after.val();
+  }
+  function extractImgUrls(html) {
+    if (!html) return [];
+    const urls = [];
+    const re = /<img[^>]+src="([^"]+)"/g;
+    let m;
+    while ((m = re.exec(html)) !== null) urls.push(m[1]);
+    return urls;
+  }
+
+  // 客戶端 rate limit (存 memory + localStorage 混合)
+  const _postTimes = {};
+  function checkRateLimit(uid) {
+    const now = Date.now();
+    const arr = _postTimes[uid] || [];
+    const recent = arr.filter((t) => now - t < RATE_LIMIT_WINDOW_SEC * 1000);
+    _postTimes[uid] = recent;
+    return recent.length < RATE_LIMIT_MAX_POSTS;
+  }
+  function recordRateLimit(uid) {
+    if (!_postTimes[uid]) _postTimes[uid] = [];
+    _postTimes[uid].push(Date.now());
+  }
+
+  // ─────────────────────────────────────────
+  // 排序 (score desc, 同分 created_ts desc)
+  // ─────────────────────────────────────────
+  function sortComments(list) {
+    return list.slice().sort((a, b) => {
+      const sa = a.score || 0;
+      const sb = b.score || 0;
+      if (sa !== sb) return sb - sa;
+      return (b.created_ts || 0) - (a.created_ts || 0);
+    });
+  }
+
+  // ─────────────────────────────────────────
+  // Sanitize HTML (基本擋 script/iframe/on* handler)
+  // ─────────────────────────────────────────
+  function sanitizeHtml(html) {
+    if (!html) return "";
+    let s = String(html);
+    // 移除 script tag
+    s = s.replace(/<script[\s\S]*?<\/script>/gi, "");
+    // 移除 iframe
+    s = s.replace(/<iframe[\s\S]*?<\/iframe>/gi, "");
+    // 移除 on* attribute (onclick / onerror etc)
+    s = s.replace(/\s+on\w+\s*=\s*"[^"]*"/gi, "");
+    s = s.replace(/\s+on\w+\s*=\s*'[^']*'/gi, "");
+    // 移除 javascript: URL
+    s = s.replace(/href\s*=\s*"javascript:[^"]*"/gi, 'href="#"');
+    s = s.replace(/href\s*=\s*'javascript:[^']*'/gi, 'href="#"');
+    return s;
+  }
+
+  // ─────────────────────────────────────────
+  // UI Rendering
+  // ─────────────────────────────────────────
+  function fmtTs(ts) {
+    if (!ts) return "";
+    const d = new Date(ts);
+    const diff = Date.now() - ts;
+    if (diff < 60 * 1000) return "剛剛";
+    if (diff < 3600 * 1000) return Math.floor(diff / 60 / 1000) + " 分鐘前";
+    if (diff < 86400 * 1000) return Math.floor(diff / 3600 / 1000) + " 小時前";
+    if (diff < 30 * 86400 * 1000)
+      return Math.floor(diff / 86400 / 1000) + " 天前";
+    return d.toLocaleDateString();
+  }
+  function escapeHtml(s) {
+    if (!s) return "";
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function commentItemHtml(c, myUid, isHidden) {
+    if (isHidden) {
+      return `<div class="qc-item qc-hidden" data-cid="${c.cid}">
+        <div class="qc-hidden-meta">
+          🙈 已隱藏 <button onclick="QuestionComments.unhide('${c.cid}', this)" class="qc-btn-mini">顯示</button>
+        </div>
+      </div>`;
+    }
+    const isMine = myUid && c.author_uid === myUid;
+    const editedTag =
+      c.updated_ts && c.updated_ts > c.created_ts
+        ? `<span class="qc-edited-tag">(已編輯)</span>`
+        : "";
+    const myLike = c.likes_by && c.likes_by[myUid];
+    const myDislike = c.dislikes_by && c.dislikes_by[myUid];
+    const likeCnt = Object.keys(c.likes_by || {}).length;
+    const dislikeCnt = Object.keys(c.dislikes_by || {}).length;
+    const clean = sanitizeHtml(c.content_html || "");
+    return `<div class="qc-item" data-cid="${c.cid}" data-mine="${isMine ? 1 : 0}">
+      <div class="qc-meta">
+        <span class="qc-who ${c.is_anonymous ? "qc-anon" : ""}">${escapeHtml(c.author_name || "使用者")}</span>
+        <span class="qc-time">${fmtTs(c.created_ts)}</span>
+        ${editedTag}
+        ${isMine ? '<span class="qc-mine-tag">我的</span>' : ""}
+      </div>
+      <div class="qc-body">${clean}</div>
+      <div class="qc-actions">
+        <button class="qc-vote ${myLike ? "qc-active" : ""}" onclick="QuestionComments.vote('${c.qid_ref}','${c.cid}',true,this)">👍 <span>${likeCnt}</span></button>
+        <button class="qc-vote ${myDislike ? "qc-active-neg" : ""}" onclick="QuestionComments.vote('${c.qid_ref}','${c.cid}',false,this)">👎 <span>${dislikeCnt}</span></button>
+        ${isMine ? `<button class="qc-btn-mini" onclick="QuestionComments.edit('${c.qid_ref}','${c.cid}')">🖊 編輯</button>` : ""}
+        ${isMine ? `<button class="qc-btn-mini qc-del" onclick="QuestionComments.remove('${c.qid_ref}','${c.cid}')">🗑 刪</button>` : ""}
+        ${!isMine ? `<button class="qc-btn-mini" onclick="QuestionComments.hide('${c.cid}', this)">🙈 隱藏</button>` : ""}
+      </div>
+    </div>`;
+  }
+
+  function renderCommentSection(qid, container, comments, hiddenSet) {
+    const u = firebase.auth().currentUser;
+    const myUid = u ? u.uid : null;
+    const total = comments.length;
+    const visible = comments.filter((c) => !hiddenSet.has(c.cid));
+    const hiddenCount = total - visible.length;
+    const sorted = sortComments(visible);
+    for (const c of sorted) c.qid_ref = qid;
+
+    const editorId = "qc-editor-" + qid;
+    const anonId = "qc-anon-" + qid;
+    let html = `<div class="qc-editor-wrap">
+      <div class="qc-editor" id="${editorId}" contenteditable="true" placeholder="寫下你的解答/心得..."></div>
+      <div class="qc-editor-toolbar">
+        <button onclick="QuestionComments.tbCmd('bold')" title="粗體 Ctrl+B"><b>B</b></button>
+        <button onclick="QuestionComments.tbCmd('italic')" title="斜體 Ctrl+I"><i>I</i></button>
+        <button onclick="QuestionComments.tbCmd('insertUnorderedList')">•</button>
+        <button onclick="QuestionComments.tbCmd('insertOrderedList')">1.</button>
+        <button onclick="QuestionComments.insertLink()">🔗</button>
+        <button onclick="QuestionComments.pickImage('${qid}')">🖼 圖片</button>
+        <label class="qc-anon-toggle"><input type="checkbox" id="${anonId}"> 匿名</label>
+        <button class="qc-post-btn" onclick="QuestionComments.post('${qid}')">發表</button>
+      </div>
+    </div>`;
+    if (hiddenCount > 0) {
+      html += `<div class="qc-hidden-summary">${hiddenCount} 則已隱藏 <button onclick="QuestionComments.showHiddenInSection('${qid}', this)" class="qc-btn-mini">顯示</button></div>`;
+    }
+    html += `<div class="qc-list">`;
+    if (sorted.length === 0)
+      html += `<div class="qc-empty">還沒有留言, 你可以第一個發言</div>`;
+    else for (const c of sorted) html += commentItemHtml(c, myUid, false);
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  // ─────────────────────────────────────────
+  // 展開 / 收合
+  // ─────────────────────────────────────────
+  async function toggleSection(qid, wrapEl) {
+    const body = wrapEl.querySelector(".qc-body-pane");
+    if (wrapEl.classList.contains("qc-expanded")) {
+      wrapEl.classList.remove("qc-expanded");
+      return;
+    }
+    wrapEl.classList.add("qc-expanded");
+    body.innerHTML = '<div class="qc-loading">⏳ 載入中...</div>';
+    try {
+      await ensureAuth();
+      const [comments, hiddenSet] = await Promise.all([
+        fetchComments(qid),
+        loadHiddenSet(),
+      ]);
+      renderCommentSection(qid, body, comments, hiddenSet);
+      // 聽 realtime 變化 (只有第一次展開才綁)
+      const ref = fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}`);
+      ref.off();
+      ref.on("value", async (snap) => {
+        const obj = snap.val() || {};
+        const list = Object.entries(obj).map(([cid, v]) => ({ cid, ...v }));
+        const hs = await loadHiddenSet();
+        renderCommentSection(qid, body, list, hs);
+      });
+    } catch (e) {
+      body.innerHTML = `<div class="qc-error">載入失敗: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+
+  // ─────────────────────────────────────────
+  // 對外 API (掛 window.QuestionComments)
+  // ─────────────────────────────────────────
+  window.QuestionComments = {
+    // Renders 摺疊條 (由 exam/index.html 呼叫)
+    renderCollapsed: function (qid) {
+      return `<div class="qc-wrap" id="qc-${qid}" data-qid="${qid}">
+        <button class="qc-toggle" onclick="QuestionComments.toggle('${qid}', this.parentElement)">
+          <span class="qc-toggle-icon">▼</span> 💬 留言 <span class="qc-count" id="qc-count-${qid}">…</span>
+        </button>
+        <div class="qc-body-pane"></div>
+      </div>`;
+    },
+    // 展開 + 抓 count 更新
+    toggle: async function (qid, wrapEl) {
+      await toggleSection(qid, wrapEl);
+      // 更新 count badge
+      try {
+        const cnt = await fetchCount(qid);
+        const badge = document.getElementById("qc-count-" + qid);
+        if (badge) badge.textContent = "(" + cnt + ")";
+      } catch (e) {}
+    },
+    // 頁面第一次 render 題目時可批次抓 counts (可選 optimization)
+    prefetchCounts: async function (qids) {
+      if (!fbReady()) return;
+      for (const qid of qids) {
+        try {
+          const cnt = await fetchCount(qid);
+          const badge = document.getElementById("qc-count-" + qid);
+          if (badge) badge.textContent = cnt > 0 ? "(" + cnt + ")" : "(0)";
+        } catch (e) {}
+      }
+    },
+    // Toolbar 命令
+    tbCmd: function (cmd) {
+      document.execCommand(cmd, false, null);
+    },
+    insertLink: function () {
+      const url = prompt("貼上連結 URL:");
+      if (url && /^https?:\/\//.test(url))
+        document.execCommand("createLink", false, url);
+    },
+    // 圖片選取 (檔案 or 貼上)
+    pickImage: function (qid) {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async () => {
+        const f = input.files[0];
+        if (!f) return;
+        try {
+          const editor = document.getElementById("qc-editor-" + qid);
+          if (!editor) return;
+          editor.contentEditable = "false";
+          editor.setAttribute("data-uploading", "1");
+          const r = await handleImageUpload(f, qid);
+          editor.contentEditable = "true";
+          editor.removeAttribute("data-uploading");
+          editor.focus();
+          document.execCommand(
+            "insertHTML",
+            false,
+            `<img src="${r.url}" alt="">`,
+          );
+        } catch (e) {
+          const editor = document.getElementById("qc-editor-" + qid);
+          if (editor) {
+            editor.contentEditable = "true";
+            editor.removeAttribute("data-uploading");
+          }
+          alert("上傳失敗: " + e.message);
+        }
+      };
+      input.click();
+    },
+    // 發表
+    post: async function (qid) {
+      const editor = document.getElementById("qc-editor-" + qid);
+      const anon = document.getElementById("qc-anon-" + qid);
+      if (!editor) return;
+      const html = editor.innerHTML.trim();
+      const text = (editor.textContent || "").trim();
+      if (!text && !html.includes("<img")) {
+        alert("留言不能是空的");
+        return;
+      }
+      try {
+        await postComment(qid, html, !!(anon && anon.checked));
+        editor.innerHTML = "";
+        if (anon) anon.checked = false;
+        // 更新 badge
+        const badge = document.getElementById("qc-count-" + qid);
+        if (badge) {
+          const cur =
+            parseInt((badge.textContent || "").replace(/\D/g, "")) || 0;
+          badge.textContent = "(" + (cur + 1) + ")";
+        }
+      } catch (e) {
+        alert("發表失敗: " + e.message);
+      }
+    },
+    // 投票
+    vote: async function (qid, cid, wantLike, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        await toggleVote(qid, cid, wantLike);
+      } catch (e) {
+        alert("投票失敗: " + e.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    },
+    // 隱藏
+    hide: async function (cid, btn) {
+      try {
+        await hideComment(cid);
+        // 從畫面移除該 item (簡單版: 找到 parent 移掉)
+        const item = btn.closest(".qc-item");
+        if (item) item.style.display = "none";
+      } catch (e) {
+        alert("隱藏失敗: " + e.message);
+      }
+    },
+    unhide: async function (cid, btn) {
+      try {
+        await unhideComment(cid);
+        // Re-render 該區
+        const wrap = btn.closest(".qc-wrap");
+        if (wrap) {
+          const qid = wrap.getAttribute("data-qid");
+          if (qid) await toggleSection(qid, wrap); // 收
+          if (qid) await toggleSection(qid, wrap); // 開
+        }
+      } catch (e) {
+        alert("復原失敗: " + e.message);
+      }
+    },
+    showHiddenInSection: async function (qid, btn) {
+      // 一次顯示所有被隱藏的 → 清該 qid 的所有 hide (慎重: 提示)
+      if (!confirm("要顯示所有被你隱藏的留言?(下次可以再一則一則隱藏)")) return;
+      const comments = await fetchComments(qid);
+      for (const c of comments) {
+        if (_hiddenCache.set.has(c.cid)) await unhideComment(c.cid);
+      }
+      const wrap = document.getElementById("qc-" + qid);
+      if (wrap) {
+        wrap.classList.remove("qc-expanded");
+        await toggleSection(qid, wrap);
+      }
+    },
+    // 編輯: 塞舊內容進 editor, 改「發表」為「更新」
+    edit: async function (qid, cid) {
+      const list = await fetchComments(qid);
+      const c = list.find((x) => x.cid === cid);
+      if (!c) return;
+      const editor = document.getElementById("qc-editor-" + qid);
+      const postBtn = editor.parentElement.querySelector(".qc-post-btn");
+      if (!editor || !postBtn) return;
+      editor.innerHTML = c.content_html || "";
+      editor.focus();
+      postBtn.textContent = "更新";
+      postBtn.setAttribute(
+        "onclick",
+        `QuestionComments.saveEdit('${qid}','${cid}')`,
+      );
+    },
+    saveEdit: async function (qid, cid) {
+      const editor = document.getElementById("qc-editor-" + qid);
+      if (!editor) return;
+      const html = editor.innerHTML.trim();
+      try {
+        await updateComment(qid, cid, html);
+        editor.innerHTML = "";
+        const btn = editor.parentElement.querySelector(".qc-post-btn");
+        if (btn) {
+          btn.textContent = "發表";
+          btn.setAttribute("onclick", `QuestionComments.post('${qid}')`);
+        }
+      } catch (e) {
+        alert("更新失敗: " + e.message);
+      }
+    },
+    // 刪除
+    remove: async function (qid, cid) {
+      if (!confirm("刪除這則留言?")) return;
+      try {
+        await deleteComment(qid, cid);
+        const badge = document.getElementById("qc-count-" + qid);
+        if (badge) {
+          const cur =
+            parseInt((badge.textContent || "").replace(/\D/g, "")) || 1;
+          badge.textContent = "(" + Math.max(0, cur - 1) + ")";
+        }
+      } catch (e) {
+        alert("刪除失敗: " + e.message);
+      }
+    },
+    // 對外 helper (測試/debug)
+    _internal: {
+      sortComments,
+      sanitizeHtml,
+      compressImageBlob,
+      fetchComments,
+      loadHiddenSet,
+    },
+  };
+
+  // ─────────────────────────────────────────
+  // CSS 注入
+  // ─────────────────────────────────────────
+  const CSS = `
+.qc-wrap { margin-top: .8rem; border-top: 1px solid #e5e7eb; padding-top: .5rem; }
+.qc-toggle { background: none; border: none; padding: .5rem .7rem; cursor: pointer; font-size: .9rem; color: #6b7280; font-weight: 600; display: flex; align-items: center; gap: .4rem; border-radius: 8px; }
+.qc-toggle:hover { background: #f3f4f6; color: #111827; }
+.qc-toggle-icon { transition: transform .2s; display: inline-block; }
+.qc-wrap.qc-expanded .qc-toggle-icon { transform: rotate(180deg); }
+.qc-count { color: #9ca3af; font-weight: 500; }
+.qc-body-pane { display: none; padding: .6rem 0 .3rem; }
+.qc-wrap.qc-expanded .qc-body-pane { display: block; }
+
+.qc-loading, .qc-error, .qc-empty { padding: 1rem; text-align: center; color: #6b7280; font-size: .88rem; }
+.qc-error { color: #b91c1c; background: #fef2f2; border-radius: 8px; }
+
+/* 編輯區 */
+.qc-editor-wrap { background: #fafaf5; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: .6rem; margin-bottom: .8rem; }
+.qc-editor { min-height: 5rem; padding: .6rem .8rem; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: .9rem; line-height: 1.6; outline: none; }
+.qc-editor:empty::before { content: attr(placeholder); color: #9ca3af; }
+.qc-editor img { max-width: 100%; border-radius: 6px; margin: .3rem 0; }
+.qc-editor[data-uploading="1"] { opacity: .5; pointer-events: none; }
+.qc-editor-toolbar { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
+.qc-editor-toolbar button { background: white; border: 1px solid #d1d5db; border-radius: 5px; padding: .25rem .55rem; font-size: .82rem; cursor: pointer; color: #374151; }
+.qc-editor-toolbar button:hover { background: #f3f4f6; }
+.qc-editor-toolbar .qc-post-btn { background: #7c3aed; color: white; border-color: #7c3aed; font-weight: 700; padding: .35rem 1rem; margin-left: auto; }
+.qc-editor-toolbar .qc-post-btn:hover { background: #6d28d9; }
+.qc-anon-toggle { font-size: .82rem; color: #6b7280; cursor: pointer; display: flex; align-items: center; gap: .3rem; }
+
+/* 留言列表 */
+.qc-hidden-summary { padding: .4rem .8rem; background: #f9fafb; border-radius: 6px; font-size: .82rem; color: #6b7280; margin-bottom: .6rem; text-align: center; }
+.qc-list { display: flex; flex-direction: column; gap: .6rem; }
+.qc-item { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: .7rem .9rem; }
+.qc-item[data-mine="1"] { border-color: #c4b5fd; background: #faf7ff; }
+.qc-meta { display: flex; align-items: center; gap: .5rem; font-size: .78rem; color: #6b7280; margin-bottom: .35rem; flex-wrap: wrap; }
+.qc-who { font-weight: 700; color: #7c3aed; }
+.qc-who.qc-anon { color: #6b7280; font-weight: 600; }
+.qc-mine-tag { background: #ede9fe; color: #6d28d9; padding: .05rem .4rem; border-radius: 999px; font-size: .68rem; font-weight: 700; }
+.qc-edited-tag { color: #9ca3af; font-size: .72rem; }
+.qc-body { font-size: .9rem; line-height: 1.65; color: #1f2937; word-break: break-word; }
+.qc-body img { max-width: 100%; border-radius: 6px; margin: .4rem 0; cursor: pointer; }
+.qc-body a { color: #7c3aed; text-decoration: underline; word-break: break-all; }
+.qc-actions { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
+.qc-vote { background: white; border: 1px solid #e5e7eb; border-radius: 999px; padding: .2rem .7rem; font-size: .78rem; cursor: pointer; color: #374151; }
+.qc-vote:hover { background: #f3f4f6; }
+.qc-vote.qc-active { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+.qc-vote.qc-active-neg { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+.qc-btn-mini { background: transparent; border: none; color: #6b7280; font-size: .78rem; cursor: pointer; padding: .2rem .5rem; }
+.qc-btn-mini:hover { color: #111827; background: #f3f4f6; border-radius: 4px; }
+.qc-btn-mini.qc-del:hover { color: #b91c1c; }
+
+.qc-item.qc-hidden { padding: .35rem .8rem; background: #fafafa; border-style: dashed; }
+.qc-hidden-meta { font-size: .78rem; color: #9ca3af; display: flex; align-items: center; gap: .5rem; }
+
+@media (max-width: 640px) {
+  .qc-editor-toolbar { gap: .3rem; }
+  .qc-editor-toolbar button { padding: .25rem .5rem; font-size: .78rem; }
+  .qc-item { padding: .6rem .7rem; }
+}
+`;
+  function injectCss() {
+    if (document.getElementById("qc-styles")) return;
+    const s = document.createElement("style");
+    s.id = "qc-styles";
+    s.textContent = CSS;
+    document.head.appendChild(s);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", injectCss);
+  } else {
+    injectCss();
+  }
+
+  // 貼上圖片 (paste) handler — 掛在 document, 只處理 focus 在 qc-editor 內的 paste
+  document.addEventListener("paste", async function (e) {
+    const active = document.activeElement;
+    if (!active || !active.classList || !active.classList.contains("qc-editor"))
+      return;
+    const items = (e.clipboardData || {}).items || [];
+    for (const it of items) {
+      if (it.type && it.type.startsWith("image/")) {
+        e.preventDefault();
+        const blob = it.getAsFile();
+        if (!blob) continue;
+        const qid = active.id.replace("qc-editor-", "");
+        try {
+          active.setAttribute("data-uploading", "1");
+          const r = await handleImageUpload(blob, qid);
+          active.removeAttribute("data-uploading");
+          document.execCommand(
+            "insertHTML",
+            false,
+            `<img src="${r.url}" alt="">`,
+          );
+        } catch (err) {
+          active.removeAttribute("data-uploading");
+          alert("圖片上傳失敗: " + err.message);
+        }
+        break;
+      }
+    }
+  });
+
+  console.log("[QuestionComments] loaded v476");
+})();

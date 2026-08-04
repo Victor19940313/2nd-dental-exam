@@ -108,13 +108,25 @@
   // GitHub 圖片上傳 (跟現有 mnemonics 同 token / 同架構)
   // ─────────────────────────────────────────
   async function getGithubToken() {
-    // 讀 GitHub Token — 從 localStorage / DentalSync 拿
+    // 讀 GitHub Token — 跟 exam page + mnemonics 用相同的 key
+    // 1) exam page 本身有 window.getGithubToken() (最準)
+    if (typeof window.getGithubToken === "function") {
+      try {
+        const t = window.getGithubToken();
+        if (t) return t;
+      } catch (e) {}
+    }
+    // 2) fallback: {curUserId}_github_token (exam page 格式, 如 "hua_github_token")
     try {
-      const t = localStorage.getItem("github_token_dental");
-      if (t) return t;
+      const uid = localStorage.getItem("dental_cur_user") || "default";
+      const t1 = localStorage.getItem(uid + "_github_token");
+      if (t1) return t1;
     } catch (e) {}
-    if (typeof DentalSync !== "undefined" && DentalSync.getGithubToken)
-      return DentalSync.getGithubToken();
+    // 3) fallback: mnemonics 的舊 key
+    try {
+      const t2 = localStorage.getItem("github_token");
+      if (t2) return t2;
+    } catch (e) {}
     return null;
   }
   async function uploadImageToGithub(blob, qid) {
@@ -462,18 +474,53 @@
 
     const editorId = "qc-editor-" + qid;
     const anonId = "qc-anon-" + qid;
+    // 富工具列: B I U | 文字色 螢光筆 字級 | 段落 | 列表 引用 | 連結 圖片
     let html = `<div class="qc-editor-wrap">
-      <div class="qc-editor" id="${editorId}" contenteditable="true" placeholder="寫下你的解答/心得..."></div>
       <div class="qc-editor-toolbar">
-        <button onclick="QuestionComments.tbCmd('bold')" title="粗體 Ctrl+B"><b>B</b></button>
-        <button onclick="QuestionComments.tbCmd('italic')" title="斜體 Ctrl+I"><i>I</i></button>
-        <button onclick="QuestionComments.tbCmd('insertUnorderedList')">•</button>
-        <button onclick="QuestionComments.tbCmd('insertOrderedList')">1.</button>
-        <button onclick="QuestionComments.insertLink()">🔗</button>
-        <button onclick="QuestionComments.pickImage('${qid}')">🖼 圖片</button>
+        <button onclick="QuestionComments.tbCmd('bold')" title="粗體 Ctrl+B" class="qc-tb"><b>B</b></button>
+        <button onclick="QuestionComments.tbCmd('italic')" title="斜體 Ctrl+I" class="qc-tb"><i>I</i></button>
+        <button onclick="QuestionComments.tbCmd('underline')" title="底線 Ctrl+U" class="qc-tb"><u>U</u></button>
+        <span class="qc-sep"></span>
+        <div class="qc-color-menu qc-tb-group" title="文字顏色">
+          <button class="qc-tb qc-color-toggle" onclick="QuestionComments.toggleColorMenu(this)"><span style="color:#ef4444;font-weight:900">A</span>▾</button>
+          <div class="qc-color-pop">
+            <button onclick="QuestionComments.setColor('#000000')" style="background:#000000" title="黑"></button>
+            <button onclick="QuestionComments.setColor('#ef4444')" style="background:#ef4444" title="紅"></button>
+            <button onclick="QuestionComments.setColor('#f97316')" style="background:#f97316" title="橘"></button>
+            <button onclick="QuestionComments.setColor('#eab308')" style="background:#eab308" title="黃"></button>
+            <button onclick="QuestionComments.setColor('#16a34a')" style="background:#16a34a" title="綠"></button>
+            <button onclick="QuestionComments.setColor('#0ea5e9')" style="background:#0ea5e9" title="藍"></button>
+            <button onclick="QuestionComments.setColor('#7c3aed')" style="background:#7c3aed" title="紫"></button>
+            <button onclick="QuestionComments.setColor('#6b7280')" style="background:#6b7280" title="灰"></button>
+          </div>
+        </div>
+        <div class="qc-color-menu qc-tb-group" title="螢光筆">
+          <button class="qc-tb qc-color-toggle" onclick="QuestionComments.toggleColorMenu(this)"><span style="background:#fde68a;padding:0 3px">🖍</span>▾</button>
+          <div class="qc-color-pop">
+            <button onclick="QuestionComments.setHighlight('transparent')" style="background:white;border:1px dashed #d1d5db" title="無底"></button>
+            <button onclick="QuestionComments.setHighlight('#fef3c7')" style="background:#fef3c7" title="黃"></button>
+            <button onclick="QuestionComments.setHighlight('#dcfce7')" style="background:#dcfce7" title="綠"></button>
+            <button onclick="QuestionComments.setHighlight('#dbeafe')" style="background:#dbeafe" title="藍"></button>
+            <button onclick="QuestionComments.setHighlight('#fce7f3')" style="background:#fce7f3" title="粉"></button>
+            <button onclick="QuestionComments.setHighlight('#ede9fe')" style="background:#ede9fe" title="紫"></button>
+          </div>
+        </div>
+        <button onclick="QuestionComments.setSize('small')" title="小字" class="qc-tb qc-size-sm">A</button>
+        <button onclick="QuestionComments.setSize('normal')" title="一般" class="qc-tb qc-size-md">A</button>
+        <button onclick="QuestionComments.setSize('large')" title="大字" class="qc-tb qc-size-lg">A</button>
+        <span class="qc-sep"></span>
+        <button onclick="QuestionComments.setHeading()" title="標題" class="qc-tb">H</button>
+        <button onclick="QuestionComments.tbCmd('formatBlock', 'blockquote')" title="引用" class="qc-tb">❝</button>
+        <button onclick="QuestionComments.tbCmd('insertUnorderedList')" title="項目符號" class="qc-tb">•</button>
+        <button onclick="QuestionComments.tbCmd('insertOrderedList')" title="編號列表" class="qc-tb">1.</button>
+        <span class="qc-sep"></span>
+        <button onclick="QuestionComments.insertLink()" title="連結" class="qc-tb">🔗</button>
+        <button onclick="QuestionComments.pickImage('${qid}')" title="貼圖" class="qc-tb">🖼</button>
+        <button onclick="QuestionComments.tbCmd('removeFormat')" title="清除格式" class="qc-tb">✕</button>
         <label class="qc-anon-toggle"><input type="checkbox" id="${anonId}"> 匿名</label>
         <button class="qc-post-btn" onclick="QuestionComments.post('${qid}')">發表</button>
       </div>
+      <div class="qc-editor" id="${editorId}" contenteditable="true" placeholder="寫下你的解答/心得..."></div>
     </div>`;
     if (hiddenCount > 0) {
       html += `<div class="qc-hidden-summary">${hiddenCount} 則已隱藏 <button onclick="QuestionComments.showHiddenInSection('${qid}', this)" class="qc-btn-mini">顯示</button></div>`;
@@ -552,14 +599,88 @@
         } catch (e) {}
       }
     },
-    // Toolbar 命令
-    tbCmd: function (cmd) {
-      document.execCommand(cmd, false, null);
+    // Toolbar 命令 (支援第二參數如 formatBlock)
+    tbCmd: function (cmd, arg) {
+      document.execCommand(cmd, false, arg || null);
     },
     insertLink: function () {
       const url = prompt("貼上連結 URL:");
       if (url && /^https?:\/\//.test(url))
         document.execCommand("createLink", false, url);
+    },
+    // 文字顏色
+    setColor: function (color) {
+      document.execCommand("foreColor", false, color);
+      // 關閉 popup
+      document
+        .querySelectorAll(".qc-color-menu.qc-open")
+        .forEach((el) => el.classList.remove("qc-open"));
+    },
+    // 螢光筆 (背景色)
+    setHighlight: function (color) {
+      // hiliteColor 在 Firefox 是這個, Chrome 是 backColor - 兩個都試
+      const cmd = document.queryCommandSupported("hiliteColor")
+        ? "hiliteColor"
+        : "backColor";
+      try {
+        document.execCommand("styleWithCSS", false, true);
+      } catch (e) {}
+      document.execCommand(
+        cmd,
+        false,
+        color === "transparent" ? "inherit" : color,
+      );
+      document
+        .querySelectorAll(".qc-color-menu.qc-open")
+        .forEach((el) => el.classList.remove("qc-open"));
+    },
+    // 字級 (用 execCommand fontSize + CSS class)
+    setSize: function (size) {
+      // execCommand fontSize 只支援 1-7, 我們用 span 包 CSS class 才好看
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      if (range.collapsed) return; // 沒選字就跳過
+      const span = document.createElement("span");
+      if (size === "small") span.style.fontSize = "0.85rem";
+      else if (size === "large") span.style.fontSize = "1.15rem";
+      else span.style.fontSize = "1rem";
+      try {
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+        sel.removeAllRanges();
+      } catch (e) {}
+    },
+    // 標題 (h3, 循環切換 h3 ↔ 一般段落)
+    setHeading: function () {
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      const node = sel.anchorNode;
+      let parent = node && (node.nodeType === 3 ? node.parentNode : node);
+      // 檢查有沒有已經在 h3 內
+      let inH3 = false;
+      while (
+        parent &&
+        parent.classList &&
+        !parent.classList.contains("qc-editor")
+      ) {
+        if (parent.tagName === "H3") {
+          inH3 = true;
+          break;
+        }
+        parent = parent.parentNode;
+      }
+      document.execCommand("formatBlock", false, inH3 ? "p" : "h3");
+    },
+    // 顏色選單 popup toggle
+    toggleColorMenu: function (btn) {
+      const menu = btn.parentElement;
+      const wasOpen = menu.classList.contains("qc-open");
+      // 關掉所有其他 popup
+      document
+        .querySelectorAll(".qc-color-menu.qc-open")
+        .forEach((el) => el.classList.remove("qc-open"));
+      if (!wasOpen) menu.classList.add("qc-open");
     },
     // 圖片選取 (檔案 or 貼上)
     pickImage: function (qid) {
@@ -747,13 +868,32 @@
 .qc-editor { min-height: 5rem; padding: .6rem .8rem; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: .9rem; line-height: 1.6; outline: none; }
 .qc-editor:empty::before { content: attr(placeholder); color: #9ca3af; }
 .qc-editor img { max-width: 100%; border-radius: 6px; margin: .3rem 0; }
+.qc-editor h3 { font-size: 1.15rem; font-weight: 700; color: #6b21a8; margin: .5rem 0 .3rem; }
+.qc-editor blockquote { border-left: 3px solid #fbbf24; background: #fef3c7; padding: .4rem .7rem; margin: .5rem 0; border-radius: 4px; color: #78350f; }
+.qc-editor ul, .qc-editor ol { margin: .3rem 0 .3rem 1.5rem; }
+.qc-editor a { color: #7c3aed; text-decoration: underline; }
 .qc-editor[data-uploading="1"] { opacity: .5; pointer-events: none; }
-.qc-editor-toolbar { display: flex; align-items: center; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
-.qc-editor-toolbar button { background: white; border: 1px solid #d1d5db; border-radius: 5px; padding: .25rem .55rem; font-size: .82rem; cursor: pointer; color: #374151; }
-.qc-editor-toolbar button:hover { background: #f3f4f6; }
-.qc-editor-toolbar .qc-post-btn { background: #7c3aed; color: white; border-color: #7c3aed; font-weight: 700; padding: .35rem 1rem; margin-left: auto; }
+
+.qc-editor-toolbar { display: flex; align-items: center; gap: .3rem; margin-bottom: .5rem; flex-wrap: wrap; padding: .3rem; background: #f9fafb; border-radius: 8px; }
+.qc-editor-toolbar .qc-tb { background: white; border: 1px solid #d1d5db; border-radius: 5px; padding: .2rem .5rem; font-size: .85rem; cursor: pointer; color: #374151; min-width: 1.9rem; height: 1.9rem; display: inline-flex; align-items: center; justify-content: center; }
+.qc-editor-toolbar .qc-tb:hover { background: #f3f4f6; border-color: #9ca3af; }
+.qc-editor-toolbar .qc-tb:active { background: #e5e7eb; }
+.qc-editor-toolbar .qc-sep { width: 1px; height: 1.3rem; background: #e5e7eb; margin: 0 .1rem; }
+.qc-editor-toolbar .qc-size-sm { font-size: .7rem; }
+.qc-editor-toolbar .qc-size-md { font-size: .9rem; }
+.qc-editor-toolbar .qc-size-lg { font-size: 1.05rem; font-weight: 700; }
+
+/* 顏色選單 popup */
+.qc-color-menu { position: relative; display: inline-block; }
+.qc-color-menu .qc-color-toggle { padding: .2rem .35rem; }
+.qc-color-menu .qc-color-pop { display: none; position: absolute; top: calc(100% + 3px); left: 0; background: white; border: 1px solid #d1d5db; border-radius: 6px; padding: .3rem; box-shadow: 0 4px 12px rgba(0,0,0,.1); z-index: 100; gap: .25rem; flex-wrap: wrap; width: 8rem; }
+.qc-color-menu.qc-open .qc-color-pop { display: flex; }
+.qc-color-menu .qc-color-pop button { width: 1.4rem; height: 1.4rem; min-width: unset; padding: 0; border: 1px solid #d1d5db; border-radius: 3px; cursor: pointer; }
+.qc-color-menu .qc-color-pop button:hover { transform: scale(1.15); border-color: #6b7280; }
+
+.qc-editor-toolbar .qc-post-btn { background: #7c3aed; color: white; border-color: #7c3aed; font-weight: 700; padding: .35rem 1rem; margin-left: auto; min-width: 3.5rem; }
 .qc-editor-toolbar .qc-post-btn:hover { background: #6d28d9; }
-.qc-anon-toggle { font-size: .82rem; color: #6b7280; cursor: pointer; display: flex; align-items: center; gap: .3rem; }
+.qc-anon-toggle { font-size: .82rem; color: #6b7280; cursor: pointer; display: flex; align-items: center; gap: .3rem; padding: 0 .3rem; }
 
 /* 留言列表 */
 .qc-hidden-summary { padding: .4rem .8rem; background: #f9fafb; border-radius: 6px; font-size: .82rem; color: #6b7280; margin-bottom: .6rem; text-align: center; }
@@ -798,6 +938,15 @@
   } else {
     injectCss();
   }
+
+  // 點外面關閉顏色選單 popup
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest || !e.target.closest(".qc-color-menu")) {
+      document
+        .querySelectorAll(".qc-color-menu.qc-open")
+        .forEach((el) => el.classList.remove("qc-open"));
+    }
+  });
 
   // 貼上圖片 (paste) handler — 掛在 document, 只處理 focus 在 qc-editor 內的 paste
   document.addEventListener("paste", async function (e) {

@@ -262,6 +262,13 @@
     const snap = await fbDb().ref(`${FB_ROOT_COUNTS}/${qid}`).once("value");
     return snap.val() || 0;
   }
+  function getCurrentLocalUser() {
+    try {
+      return localStorage.getItem("dental_cur_user") || "default";
+    } catch (e) {
+      return "default";
+    }
+  }
   async function postComment(qid, htmlContent, isAnonymous) {
     const u = await ensureAuth();
     if (!htmlContent || htmlContent.length > COMMENT_MAX_LEN)
@@ -272,6 +279,7 @@
     const name = getMyDisplayName(isAnonymous);
     const record = {
       author_uid: u.uid,
+      author_local_user: getCurrentLocalUser(), // v478: 同瀏覽器切帳號時區分作者
       author_name: name,
       is_anonymous: !!isAnonymous,
       content_html: htmlContent,
@@ -293,8 +301,23 @@
     recordRateLimit(u.uid);
     return { cid: ref.key, ...record };
   }
-  async function updateComment(qid, cid, htmlContent) {
+  async function assertOwnership(qid, cid) {
     const u = await ensureAuth();
+    const snap = await fbDb()
+      .ref(`${FB_ROOT_COMMENTS}/${qid}/${cid}`)
+      .once("value");
+    const c = snap.val();
+    if (!c) throw new Error("留言不存在或已被刪除");
+    const myLocal = getCurrentLocalUser();
+    if (c.author_uid !== u.uid) throw new Error("這不是妳的留言,不能改");
+    if (c.author_local_user && myLocal && c.author_local_user !== myLocal)
+      throw new Error(
+        `這是「${c.author_local_user}」的留言,妳現在是「${myLocal}」,不能改`,
+      );
+    return { u, c };
+  }
+  async function updateComment(qid, cid, htmlContent) {
+    await assertOwnership(qid, cid);
     await fbDb()
       .ref(`${FB_ROOT_COMMENTS}/${qid}/${cid}`)
       .update({
@@ -304,7 +327,7 @@
       });
   }
   async function deleteComment(qid, cid) {
-    const u = await ensureAuth();
+    await assertOwnership(qid, cid);
     await fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}/${cid}`).remove();
     try {
       await fbDb()
@@ -427,7 +450,7 @@
       .replace(/"/g, "&quot;");
   }
 
-  function commentItemHtml(c, myUid, isHidden) {
+  function commentItemHtml(c, myUid, isHidden, myLocalUser) {
     if (isHidden) {
       return `<div class="qc-item qc-hidden" data-cid="${c.cid}">
         <div class="qc-hidden-meta">
@@ -435,7 +458,12 @@
         </div>
       </div>`;
     }
-    const isMine = myUid && c.author_uid === myUid;
+    // v478: 同瀏覽器切帳號時, Firebase anon uid 相同但 local user 不同 → 不算 mine
+    const localUserMatch =
+      !c.author_local_user || // 舊留言沒 local_user → 只看 uid
+      !myLocalUser ||
+      c.author_local_user === myLocalUser;
+    const isMine = myUid && c.author_uid === myUid && localUserMatch;
     const editedTag =
       c.updated_ts && c.updated_ts > c.created_ts
         ? `<span class="qc-edited-tag">(已編輯)</span>`
@@ -466,6 +494,7 @@
   function renderCommentSection(qid, container, comments, hiddenSet) {
     const u = firebase.auth().currentUser;
     const myUid = u ? u.uid : null;
+    const myLocalUser = getCurrentLocalUser();
     const total = comments.length;
     const visible = comments.filter((c) => !hiddenSet.has(c.cid));
     const hiddenCount = total - visible.length;
@@ -474,8 +503,10 @@
 
     const editorId = "qc-editor-" + qid;
     const anonId = "qc-anon-" + qid;
+
     // 富工具列: B I U | 文字色 螢光筆 字級 | 段落 | 列表 引用 | 連結 圖片
-    let html = `<div class="qc-editor-wrap">
+    const editorHtml = `<div class="qc-editor-wrap">
+      <div class="qc-editor-header">✍️ 寫留言</div>
       <div class="qc-editor-toolbar">
         <button onclick="QuestionComments.tbCmd('bold')" title="粗體 Ctrl+B" class="qc-tb"><b>B</b></button>
         <button onclick="QuestionComments.tbCmd('italic')" title="斜體 Ctrl+I" class="qc-tb"><i>I</i></button>
@@ -522,14 +553,20 @@
       </div>
       <div class="qc-editor" id="${editorId}" contenteditable="true" placeholder="寫下你的解答/心得..."></div>
     </div>`;
+
+    // 順序: 隱藏摘要 → 留言列表 → 編輯區 (在最底下)
+    let html = "";
     if (hiddenCount > 0) {
       html += `<div class="qc-hidden-summary">${hiddenCount} 則已隱藏 <button onclick="QuestionComments.showHiddenInSection('${qid}', this)" class="qc-btn-mini">顯示</button></div>`;
     }
     html += `<div class="qc-list">`;
     if (sorted.length === 0)
       html += `<div class="qc-empty">還沒有留言, 你可以第一個發言</div>`;
-    else for (const c of sorted) html += commentItemHtml(c, myUid, false);
+    else
+      for (const c of sorted)
+        html += commentItemHtml(c, myUid, false, myLocalUser);
     html += `</div>`;
+    html += editorHtml;
     container.innerHTML = html;
   }
 
@@ -864,7 +901,8 @@
 .qc-error { color: #b91c1c; background: #fef2f2; border-radius: 8px; }
 
 /* 編輯區 */
-.qc-editor-wrap { background: #fafaf5; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: .6rem; margin-bottom: .8rem; }
+.qc-editor-wrap { background: #fafaf5; border: 1.5px solid #e5e7eb; border-radius: 10px; padding: .6rem; margin-top: 1rem; }
+.qc-editor-header { font-weight: 700; color: #4b5563; font-size: .9rem; margin-bottom: .4rem; padding: 0 .2rem; display: flex; align-items: center; gap: .3rem; }
 .qc-editor { min-height: 5rem; padding: .6rem .8rem; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: .9rem; line-height: 1.6; outline: none; }
 .qc-editor:empty::before { content: attr(placeholder); color: #9ca3af; }
 .qc-editor img { max-width: 100%; border-radius: 6px; margin: .3rem 0; }

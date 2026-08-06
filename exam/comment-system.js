@@ -1051,25 +1051,59 @@
     // 預設載入「我發的」
     _renderMdTab("mine");
   }
+  // v481: 按科目分組
+  const SUBJ_ORDER = ["ya3", "ya4", "ya5", "ya6", "other"];
+  const SUBJ_LABEL = {
+    ya3: "🦷 牙三",
+    ya4: "💉 牙四",
+    ya5: "👑 牙五",
+    ya6: "🌱 牙六",
+    other: "📦 其他",
+  };
+  function _subjOfQid(qid) {
+    const m = String(qid).match(/^(ya[3-6])-/);
+    return m ? m[1] : "other";
+  }
+  function _renderMdListBySubject(list, showBookmarkedTs) {
+    if (list.length === 0) return "";
+    // group
+    const groups = {};
+    for (const c of list) {
+      const s = _subjOfQid(c.qid);
+      (groups[s] || (groups[s] = [])).push(c);
+    }
+    let html = "";
+    for (const s of SUBJ_ORDER) {
+      const arr = groups[s];
+      if (!arr || arr.length === 0) continue;
+      html += `<div class="qc-md-subj-group" data-subj="${s}">
+        <div class="qc-md-subj-header" onclick="QuestionComments._toggleMdGroup(this)">
+          <span class="qc-md-subj-name">${SUBJ_LABEL[s] || s}</span>
+          <span class="qc-md-subj-count">${arr.length}</span>
+          <span class="qc-md-subj-toggle">▾</span>
+        </div>
+        <div class="qc-md-subj-body">
+          ${arr.map((c) => _mdItemHtml(c, showBookmarkedTs)).join("")}
+        </div>
+      </div>`;
+    }
+    return html;
+  }
   async function _renderMdTab(tab) {
     const body = document.getElementById("qc-md-body");
     if (!body) return;
     body.innerHTML =
       '<div class="qc-loading">⏳ 載入中...(掃全部有留言的題,略慢)</div>';
     try {
-      if (tab === "mine") {
-        const list = await fetchMyComments();
-        body.innerHTML =
-          list.length === 0
-            ? '<div class="qc-empty">你還沒有發表過留言</div>'
-            : list.map((c) => _mdItemHtml(c, false)).join("");
-      } else {
-        const list = await fetchBookmarkedComments();
-        body.innerHTML =
-          list.length === 0
-            ? '<div class="qc-empty">你還沒有珍藏任何留言</div>'
-            : list.map((c) => _mdItemHtml(c, true)).join("");
+      const list =
+        tab === "mine"
+          ? await fetchMyComments()
+          : await fetchBookmarkedComments();
+      if (list.length === 0) {
+        body.innerHTML = `<div class="qc-empty">${tab === "mine" ? "你還沒有發表過留言" : "你還沒有珍藏任何留言"}</div>`;
+        return;
       }
+      body.innerHTML = _renderMdListBySubject(list, tab !== "mine");
     } catch (e) {
       body.innerHTML = `<div class="qc-error">載入失敗: ${escapeHtml(e.message)}</div>`;
     }
@@ -1089,18 +1123,27 @@
       const m = document.getElementById("qc-md-modal");
       if (m) m.classList.remove("qc-md-open");
     };
+    // v481: 展開/收合科目群組
+    window.QuestionComments._toggleMdGroup = function (headerEl) {
+      const group = headerEl.parentElement;
+      if (!group) return;
+      group.classList.toggle("qc-md-collapsed");
+    };
     window.QuestionComments.jumpToQuestion = function (qid) {
-      // 關 modal + 觸發網站內建的「跳到題目」 (如果有);沒有就複製 qid 到 clipboard 提醒
+      // 關 modal + 觸發網站內建的 jumpToQ (exam page 定義在 index.html)
       window.QuestionComments._closeMd();
-      // 網站 exam 內是否有 gotoQuestion?
-      if (typeof window.gotoQuestionById === "function") {
-        window.gotoQuestionById(qid);
-      } else if (typeof window.jumpToQuestion === "function") {
-        window.jumpToQuestion(qid);
+      // v481: 修跳轉 — 實際的 function 是 `jumpToQ` 不是 `jumpToQuestion`
+      const fn =
+        window.jumpToQ || window.gotoQuestionById || window.jumpToQuestion;
+      if (typeof fn === "function") {
+        try {
+          fn(qid);
+        } catch (e) {
+          console.warn("[QC] jump failed:", e);
+        }
       } else {
-        // fallback: URL hash
         location.hash = "q-" + qid;
-        alert("已跳題號 " + qid + " (URL hash 已更新)");
+        alert("找不到跳題函式 (window.jumpToQ), 已更新 URL hash: " + qid);
       }
     };
   }
@@ -1196,6 +1239,25 @@
 .qc-md-close { background: transparent; border: none; font-size: 1.3rem; cursor: pointer; color: #6b7280; padding: 0 .5rem; }
 .qc-md-close:hover { color: #ef4444; }
 .qc-md-body-pane { flex: 1; overflow-y: auto; padding: .8rem 1rem; display: flex; flex-direction: column; gap: .7rem; }
+/* 科目群組 (v481) */
+.qc-md-subj-group { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; margin-bottom: .3rem; }
+.qc-md-subj-group[data-subj="ya3"] { border-color: #7dd3fc; }
+.qc-md-subj-group[data-subj="ya4"] { border-color: #c4b5fd; }
+.qc-md-subj-group[data-subj="ya5"] { border-color: #93c5fd; }
+.qc-md-subj-group[data-subj="ya6"] { border-color: #86efac; }
+.qc-md-subj-header { display: flex; align-items: center; gap: .5rem; padding: .55rem .8rem; background: #f9fafb; cursor: pointer; user-select: none; font-weight: 700; }
+.qc-md-subj-header:hover { background: #f3f4f6; }
+.qc-md-subj-group[data-subj="ya3"] .qc-md-subj-header { background: #e0f2fe; color: #0369a1; }
+.qc-md-subj-group[data-subj="ya4"] .qc-md-subj-header { background: #ede9fe; color: #6d28d9; }
+.qc-md-subj-group[data-subj="ya5"] .qc-md-subj-header { background: #dbeafe; color: #1e40af; }
+.qc-md-subj-group[data-subj="ya6"] .qc-md-subj-header { background: #dcfce7; color: #166534; }
+.qc-md-subj-name { flex: 1; font-size: .95rem; }
+.qc-md-subj-count { background: white; padding: .1rem .55rem; border-radius: 999px; font-size: .75rem; font-weight: 700; color: #4b5563; }
+.qc-md-subj-toggle { font-size: .8rem; transition: transform .2s; }
+.qc-md-subj-group.qc-md-collapsed .qc-md-subj-toggle { transform: rotate(-90deg); }
+.qc-md-subj-body { padding: .6rem .7rem; display: flex; flex-direction: column; gap: .5rem; background: white; }
+.qc-md-subj-group.qc-md-collapsed .qc-md-subj-body { display: none; }
+
 .qc-md-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: .7rem .9rem; }
 .qc-md-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .3rem; flex-wrap: wrap; gap: .4rem; }
 .qc-md-qtag { display: inline-block; background: #ede9fe; color: #5b21b6; padding: .15rem .55rem; border-radius: 999px; font-size: .78rem; font-weight: 700; cursor: pointer; }

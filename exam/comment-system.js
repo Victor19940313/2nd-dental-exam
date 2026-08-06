@@ -536,6 +536,13 @@
       .replace(/"/g, "&quot;");
   }
 
+  // v482: 舊留言 author_name 存成「使用者」的 fallback — 用 author_local_user 補
+  function _displayAuthorName(c) {
+    const raw = (c.author_name || "").trim();
+    if (raw && raw !== "使用者") return raw;
+    if (c.author_local_user) return String(c.author_local_user).toUpperCase();
+    return "使用者";
+  }
   function commentItemHtml(c, myUid, isHidden, myLocalUser, bookmarkSet) {
     if (isHidden) {
       return `<div class="qc-item qc-hidden" data-cid="${c.cid}">
@@ -561,7 +568,7 @@
     const clean = sanitizeHtml(c.content_html || "");
     return `<div class="qc-item" data-cid="${c.cid}" data-mine="${isMine ? 1 : 0}">
       <div class="qc-meta">
-        <span class="qc-who ${c.is_anonymous ? "qc-anon" : ""}">${escapeHtml(c.author_name || "使用者")}</span>
+        <span class="qc-who ${c.is_anonymous ? "qc-anon" : ""}">${escapeHtml(_displayAuthorName(c))}</span>
         <span class="qc-time">${fmtTs(c.created_ts)}</span>
         ${editedTag}
         ${isMine ? '<span class="qc-mine-tag">我的</span>' : ""}
@@ -1023,7 +1030,7 @@
         <span class="qc-md-qtag" onclick="QuestionComments.jumpToQuestion('${c.qid}')">📄 ${_fmtQid(c.qid)}</span>
         <span class="qc-md-when">${showBookmarkedTs ? "🔖 " + fmtTs(c.bookmarked_ts) : fmtTs(c.created_ts)}</span>
       </div>
-      <div class="qc-md-who">${escapeHtml(c.author_name || "使用者")}${c.is_anonymous ? " (匿名)" : ""}</div>
+      <div class="qc-md-who">${escapeHtml(_displayAuthorName(c))}${c.is_anonymous ? " (匿名)" : ""}</div>
       <div class="qc-md-body">${clean}</div>
     </div>`;
   }

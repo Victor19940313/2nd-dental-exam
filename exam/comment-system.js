@@ -15,6 +15,7 @@
   const FB_ROOT_COMMENTS = "question_comments";
   const FB_ROOT_COUNTS = "comment_counts";
   const FB_USER_HIDDEN = "hidden_comments";
+  const FB_USER_BOOKMARKS = "comment_bookmarks"; // v479: 珍藏別人的留言
   const FB_USER_QUOTA = "daily_upload_count";
 
   const IMG_REPO = "Victor19940313/2nd-dental-exam";
@@ -54,7 +55,18 @@
       const uid = (u && u.uid) || "guest";
       return "匿名 " + uid.slice(-4);
     }
-    // 屬名 → 用 CUR_USER (mnemonics 系統) 或 DentalSync
+    // 屬名: 從 localStorage dental_users 對照 dental_cur_user 拿 name
+    try {
+      const curId = localStorage.getItem("dental_cur_user");
+      if (curId) {
+        const users = JSON.parse(localStorage.getItem("dental_users") || "[]");
+        const me = users.find((u) => u.id === curId);
+        if (me && me.name) return me.name;
+        // fallback: 用 id 本身當名 (e.g. "hua" → "HUA")
+        return curId.toUpperCase();
+      }
+    } catch (e) {}
+    // 舊 fallback (mnemonics 系統)
     if (typeof CUR_USER !== "undefined" && CUR_USER && CUR_USER.name)
       return CUR_USER.name;
     if (typeof DentalSync !== "undefined" && DentalSync.getUserName)
@@ -248,6 +260,80 @@
         JSON.stringify(Array.from(_hiddenCache.set)),
       );
     }
+  }
+
+  // ─────────────────────────────────────────
+  // 珍藏清單 (v479) — 收藏別人的留言, 之後可從「我的討論」開回
+  // ─────────────────────────────────────────
+  const _bookmarkCache = { set: new Set(), meta: {}, loaded: false, uid: null };
+  async function loadBookmarkSet() {
+    const u = await ensureAuth();
+    if (_bookmarkCache.loaded && _bookmarkCache.uid === u.uid)
+      return _bookmarkCache;
+    const snap = await fbDb()
+      .ref(`users/${u.uid}/${FB_USER_BOOKMARKS}`)
+      .once("value");
+    const obj = snap.val() || {};
+    _bookmarkCache.set = new Set(Object.keys(obj));
+    _bookmarkCache.meta = obj; // {cid: {qid, ts}}
+    _bookmarkCache.uid = u.uid;
+    _bookmarkCache.loaded = true;
+    return _bookmarkCache;
+  }
+  async function bookmarkComment(qid, cid) {
+    const u = await ensureAuth();
+    _bookmarkCache.set.add(cid);
+    const record = { qid, ts: Date.now() };
+    _bookmarkCache.meta[cid] = record;
+    await fbDb().ref(`users/${u.uid}/${FB_USER_BOOKMARKS}/${cid}`).set(record);
+  }
+  async function unbookmarkComment(cid) {
+    const u = await ensureAuth();
+    _bookmarkCache.set.delete(cid);
+    delete _bookmarkCache.meta[cid];
+    await fbDb().ref(`users/${u.uid}/${FB_USER_BOOKMARKS}/${cid}`).remove();
+  }
+  // 抓所有「我發的」留言 (用 dental_cur_user + firebase uid 雙比對)
+  async function fetchMyComments(qidsToScan) {
+    const u = await ensureAuth();
+    const myLocal = getCurrentLocalUser();
+    // 掃全部 question_comments 太慢 (7040 題)
+    // 策略: 走 comment_counts 拿有留言的題,一題一題抓
+    const cntSnap = await fbDb().ref(FB_ROOT_COUNTS).once("value");
+    const counts = cntSnap.val() || {};
+    const qids = Object.keys(counts).filter((k) => counts[k] > 0);
+    const results = [];
+    for (const qid of qids) {
+      const s = await fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}`).once("value");
+      const obj = s.val() || {};
+      for (const [cid, c] of Object.entries(obj)) {
+        if (
+          c.author_uid === u.uid &&
+          (!c.author_local_user || c.author_local_user === myLocal)
+        )
+          results.push({ qid, cid, ...c });
+      }
+    }
+    // 由新到舊
+    results.sort((a, b) => (b.created_ts || 0) - (a.created_ts || 0));
+    return results;
+  }
+  // 抓所有珍藏的留言 (根據 bookmark meta 直接抓)
+  async function fetchBookmarkedComments() {
+    const bm = await loadBookmarkSet();
+    const results = [];
+    for (const cid of bm.set) {
+      const meta = bm.meta[cid];
+      if (!meta || !meta.qid) continue;
+      const s = await fbDb()
+        .ref(`${FB_ROOT_COMMENTS}/${meta.qid}/${cid}`)
+        .once("value");
+      const c = s.val();
+      if (c) results.push({ qid: meta.qid, cid, bookmarked_ts: meta.ts, ...c });
+    }
+    // 由新到舊 (按珍藏時間)
+    results.sort((a, b) => (b.bookmarked_ts || 0) - (a.bookmarked_ts || 0));
+    return results;
   }
 
   // ─────────────────────────────────────────
@@ -450,7 +536,7 @@
       .replace(/"/g, "&quot;");
   }
 
-  function commentItemHtml(c, myUid, isHidden, myLocalUser) {
+  function commentItemHtml(c, myUid, isHidden, myLocalUser, bookmarkSet) {
     if (isHidden) {
       return `<div class="qc-item qc-hidden" data-cid="${c.cid}">
         <div class="qc-hidden-meta">
@@ -486,12 +572,19 @@
         <button class="qc-vote ${myDislike ? "qc-active-neg" : ""}" onclick="QuestionComments.vote('${c.qid_ref}','${c.cid}',false,this)">👎 <span>${dislikeCnt}</span></button>
         ${isMine ? `<button class="qc-btn-mini" onclick="QuestionComments.edit('${c.qid_ref}','${c.cid}')">🖊 編輯</button>` : ""}
         ${isMine ? `<button class="qc-btn-mini qc-del" onclick="QuestionComments.remove('${c.qid_ref}','${c.cid}')">🗑 刪</button>` : ""}
+        ${!isMine ? `<button class="qc-btn-mini qc-bookmark ${bookmarkSet && bookmarkSet.has(c.cid) ? "qc-bookmarked" : ""}" onclick="QuestionComments.toggleBookmark('${c.qid_ref}','${c.cid}', this)">${bookmarkSet && bookmarkSet.has(c.cid) ? "⭐ 已珍藏" : "🔖 珍藏"}</button>` : ""}
         ${!isMine ? `<button class="qc-btn-mini" onclick="QuestionComments.hide('${c.cid}', this)">🙈 隱藏</button>` : ""}
       </div>
     </div>`;
   }
 
-  function renderCommentSection(qid, container, comments, hiddenSet) {
+  function renderCommentSection(
+    qid,
+    container,
+    comments,
+    hiddenSet,
+    bookmarkSet,
+  ) {
     const u = firebase.auth().currentUser;
     const myUid = u ? u.uid : null;
     const myLocalUser = getCurrentLocalUser();
@@ -564,7 +657,7 @@
       html += `<div class="qc-empty">還沒有留言, 你可以第一個發言</div>`;
     else
       for (const c of sorted)
-        html += commentItemHtml(c, myUid, false, myLocalUser);
+        html += commentItemHtml(c, myUid, false, myLocalUser, bookmarkSet);
     html += `</div>`;
     html += editorHtml;
     container.innerHTML = html;
@@ -583,11 +676,12 @@
     body.innerHTML = '<div class="qc-loading">⏳ 載入中...</div>';
     try {
       await ensureAuth();
-      const [comments, hiddenSet] = await Promise.all([
+      const [comments, hiddenSet, bm] = await Promise.all([
         fetchComments(qid),
         loadHiddenSet(),
+        loadBookmarkSet(),
       ]);
-      renderCommentSection(qid, body, comments, hiddenSet);
+      renderCommentSection(qid, body, comments, hiddenSet, bm.set);
       // 聽 realtime 變化 (只有第一次展開才綁)
       const ref = fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}`);
       ref.off();
@@ -595,7 +689,8 @@
         const obj = snap.val() || {};
         const list = Object.entries(obj).map(([cid, v]) => ({ cid, ...v }));
         const hs = await loadHiddenSet();
-        renderCommentSection(qid, body, list, hs);
+        const bm2 = await loadBookmarkSet();
+        renderCommentSection(qid, body, list, hs, bm2.set);
       });
     } catch (e) {
       body.innerHTML = `<div class="qc-error">載入失敗: ${escapeHtml(e.message)}</div>`;
@@ -789,6 +884,31 @@
         if (btn) btn.disabled = false;
       }
     },
+    // 珍藏 / 取消珍藏 toggle
+    toggleBookmark: async function (qid, cid, btn) {
+      try {
+        const bm = await loadBookmarkSet();
+        if (bm.set.has(cid)) {
+          await unbookmarkComment(cid);
+          if (btn) {
+            btn.textContent = "🔖 珍藏";
+            btn.classList.remove("qc-bookmarked");
+          }
+        } else {
+          await bookmarkComment(qid, cid);
+          if (btn) {
+            btn.textContent = "⭐ 已珍藏";
+            btn.classList.add("qc-bookmarked");
+          }
+        }
+      } catch (e) {
+        alert("珍藏失敗: " + e.message);
+      }
+    },
+    // 開「我的討論」modal
+    openMyDiscussions: async function () {
+      openMyDiscussionsModal();
+    },
     // 隱藏
     hide: async function (cid, btn) {
       try {
@@ -885,6 +1005,106 @@
   };
 
   // ─────────────────────────────────────────
+  // ─────────────────────────────────────────
+  // 我的討論 Modal — 「我發的」+「珍藏的」2 tabs
+  // ─────────────────────────────────────────
+  function _fmtQid(qid) {
+    // ya3-115-2-4 → 「牙三 115-2 第 4 題」
+    const m = qid.match(/^(ya[3-6])-(\d+)-(\d+)-(\d+)$/);
+    if (!m) return qid;
+    const subj =
+      { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" }[m[1]] || m[1];
+    return `${subj} ${m[2]}-${m[3]} 第 ${m[4]} 題`;
+  }
+  function _mdItemHtml(c, showBookmarkedTs) {
+    const clean = sanitizeHtml(c.content_html || "");
+    return `<div class="qc-md-item">
+      <div class="qc-md-head">
+        <span class="qc-md-qtag" onclick="QuestionComments.jumpToQuestion('${c.qid}')">📄 ${_fmtQid(c.qid)}</span>
+        <span class="qc-md-when">${showBookmarkedTs ? "🔖 " + fmtTs(c.bookmarked_ts) : fmtTs(c.created_ts)}</span>
+      </div>
+      <div class="qc-md-who">${escapeHtml(c.author_name || "使用者")}${c.is_anonymous ? " (匿名)" : ""}</div>
+      <div class="qc-md-body">${clean}</div>
+    </div>`;
+  }
+  async function openMyDiscussionsModal() {
+    // 建 modal DOM (若不存在)
+    let modal = document.getElementById("qc-md-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "qc-md-modal";
+      modal.className = "qc-md-modal";
+      modal.innerHTML = `<div class="qc-md-backdrop" onclick="QuestionComments._closeMd()"></div>
+        <div class="qc-md-panel">
+          <div class="qc-md-header">
+            <div class="qc-md-tabs">
+              <button class="qc-md-tab qc-active" data-tab="mine" onclick="QuestionComments._switchMdTab('mine')">💬 我發的</button>
+              <button class="qc-md-tab" data-tab="bookmarks" onclick="QuestionComments._switchMdTab('bookmarks')">🔖 珍藏的</button>
+            </div>
+            <button class="qc-md-close" onclick="QuestionComments._closeMd()">✕</button>
+          </div>
+          <div class="qc-md-body-pane" id="qc-md-body"></div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+    modal.classList.add("qc-md-open");
+    // 預設載入「我發的」
+    _renderMdTab("mine");
+  }
+  async function _renderMdTab(tab) {
+    const body = document.getElementById("qc-md-body");
+    if (!body) return;
+    body.innerHTML =
+      '<div class="qc-loading">⏳ 載入中...(掃全部有留言的題,略慢)</div>';
+    try {
+      if (tab === "mine") {
+        const list = await fetchMyComments();
+        body.innerHTML =
+          list.length === 0
+            ? '<div class="qc-empty">你還沒有發表過留言</div>'
+            : list.map((c) => _mdItemHtml(c, false)).join("");
+      } else {
+        const list = await fetchBookmarkedComments();
+        body.innerHTML =
+          list.length === 0
+            ? '<div class="qc-empty">你還沒有珍藏任何留言</div>'
+            : list.map((c) => _mdItemHtml(c, true)).join("");
+      }
+    } catch (e) {
+      body.innerHTML = `<div class="qc-error">載入失敗: ${escapeHtml(e.message)}</div>`;
+    }
+  }
+  // 補進 API (在 QuestionComments 物件已建好之後掛)
+  function _installMdHelpers() {
+    if (!window.QuestionComments) return;
+    window.QuestionComments._switchMdTab = function (tab) {
+      document
+        .querySelectorAll(".qc-md-tab")
+        .forEach((el) =>
+          el.classList.toggle("qc-active", el.getAttribute("data-tab") === tab),
+        );
+      _renderMdTab(tab);
+    };
+    window.QuestionComments._closeMd = function () {
+      const m = document.getElementById("qc-md-modal");
+      if (m) m.classList.remove("qc-md-open");
+    };
+    window.QuestionComments.jumpToQuestion = function (qid) {
+      // 關 modal + 觸發網站內建的「跳到題目」 (如果有);沒有就複製 qid 到 clipboard 提醒
+      window.QuestionComments._closeMd();
+      // 網站 exam 內是否有 gotoQuestion?
+      if (typeof window.gotoQuestionById === "function") {
+        window.gotoQuestionById(qid);
+      } else if (typeof window.jumpToQuestion === "function") {
+        window.jumpToQuestion(qid);
+      } else {
+        // fallback: URL hash
+        location.hash = "q-" + qid;
+        alert("已跳題號 " + qid + " (URL hash 已更新)");
+      }
+    };
+  }
+
   // CSS 注入
   // ─────────────────────────────────────────
   const CSS = `
@@ -958,10 +1178,39 @@
 .qc-item.qc-hidden { padding: .35rem .8rem; background: #fafafa; border-style: dashed; }
 .qc-hidden-meta { font-size: .78rem; color: #9ca3af; display: flex; align-items: center; gap: .5rem; }
 
+/* 珍藏按鈕 */
+.qc-btn-mini.qc-bookmark { color: #a16207; }
+.qc-btn-mini.qc-bookmark:hover { background: #fef3c7; color: #78350f; }
+.qc-btn-mini.qc-bookmark.qc-bookmarked { color: #78350f; background: #fef3c7; font-weight: 700; }
+
+/* 我的討論 Modal */
+.qc-md-modal { display: none; position: fixed; inset: 0; z-index: 9999; }
+.qc-md-modal.qc-md-open { display: flex; align-items: center; justify-content: center; }
+.qc-md-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+.qc-md-panel { position: relative; background: white; border-radius: 14px; width: 92%; max-width: 720px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,.25); overflow: hidden; }
+.qc-md-header { display: flex; align-items: center; padding: .8rem 1rem; border-bottom: 1px solid #e5e7eb; background: #fafafa; gap: .8rem; }
+.qc-md-tabs { display: flex; gap: .3rem; flex: 1; }
+.qc-md-tab { background: transparent; border: none; padding: .5rem .9rem; font-size: .92rem; cursor: pointer; color: #6b7280; border-radius: 8px; font-weight: 600; }
+.qc-md-tab:hover { background: #f3f4f6; color: #111827; }
+.qc-md-tab.qc-active { background: #ede9fe; color: #6d28d9; font-weight: 700; }
+.qc-md-close { background: transparent; border: none; font-size: 1.3rem; cursor: pointer; color: #6b7280; padding: 0 .5rem; }
+.qc-md-close:hover { color: #ef4444; }
+.qc-md-body-pane { flex: 1; overflow-y: auto; padding: .8rem 1rem; display: flex; flex-direction: column; gap: .7rem; }
+.qc-md-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: .7rem .9rem; }
+.qc-md-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .3rem; flex-wrap: wrap; gap: .4rem; }
+.qc-md-qtag { display: inline-block; background: #ede9fe; color: #5b21b6; padding: .15rem .55rem; border-radius: 999px; font-size: .78rem; font-weight: 700; cursor: pointer; }
+.qc-md-qtag:hover { background: #ddd6fe; }
+.qc-md-when { font-size: .75rem; color: #6b7280; }
+.qc-md-who { font-size: .78rem; color: #7c3aed; font-weight: 700; margin-bottom: .3rem; }
+.qc-md-body { font-size: .88rem; color: #1f2937; line-height: 1.6; }
+.qc-md-body img { max-width: 100%; border-radius: 6px; }
+
 @media (max-width: 640px) {
   .qc-editor-toolbar { gap: .3rem; }
   .qc-editor-toolbar button { padding: .25rem .5rem; font-size: .78rem; }
   .qc-item { padding: .6rem .7rem; }
+  .qc-md-panel { width: 96%; max-height: 92vh; }
+  .qc-md-tab { padding: .4rem .5rem; font-size: .85rem; }
 }
 `;
   function injectCss() {
@@ -1016,5 +1265,6 @@
     }
   });
 
-  console.log("[QuestionComments] loaded v476");
+  _installMdHelpers();
+  console.log("[QuestionComments] loaded v479");
 })();

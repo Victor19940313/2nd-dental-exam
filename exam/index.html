@@ -5345,6 +5345,17 @@
         <button class="btn-mode" id="btn-wrongbook" onclick="showWrongbook()">
           錯題本
         </button>
+        <button
+          class="btn-mode"
+          id="btn-my-discussions"
+          onclick="
+            if (window.QuestionComments) QuestionComments.openMyDiscussions();
+            else alert('留言系統未載入');
+          "
+          title="看我發過的留言 + 珍藏別人的留言"
+        >
+          💬 我的討論
+        </button>
         <button class="btn-mode" id="btn-notebook" onclick="showNotebook()">
           🗂 筆記本
         </button>

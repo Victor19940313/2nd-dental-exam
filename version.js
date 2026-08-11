@@ -1,7 +1,7 @@
 // 全站版本號集中管理
 // sw.js 用 importScripts('./version.js') 讀,index.html / mnemonics.html 用 <script src="version.js"></script> 讀
 // 每次部署只要改這一行
-const APP_VERSION = "v487";
-const APP_VERSION_TAG = "anti-crawl-robots-and-noindex";
+const APP_VERSION = "v488";
+const APP_VERSION_TAG = "visitor-log-bot-detection";
 if (typeof self !== "undefined") self.APP_VERSION = APP_VERSION;
 if (typeof window !== "undefined") window.APP_VERSION = APP_VERSION;

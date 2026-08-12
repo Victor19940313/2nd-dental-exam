@@ -1073,28 +1073,36 @@
   }
   function _renderMdListBySubject(list, showBookmarkedTs) {
     if (list.length === 0) return "";
-    // group
+    // v493: 改用「上方科目 tab」— 一次只看一科, 不再垂直堆疊
     const groups = {};
     for (const c of list) {
       const s = _subjOfQid(c.qid);
       (groups[s] || (groups[s] = [])).push(c);
     }
-    let html = "";
-    for (const s of SUBJ_ORDER) {
-      const arr = groups[s];
-      if (!arr || arr.length === 0) continue;
-      html += `<div class="qc-md-subj-group" data-subj="${s}">
-        <div class="qc-md-subj-header" onclick="QuestionComments._toggleMdGroup(this)">
-          <span class="qc-md-subj-name">${SUBJ_LABEL[s] || s}</span>
-          <span class="qc-md-subj-count">${arr.length}</span>
-          <span class="qc-md-subj-toggle">▾</span>
-        </div>
-        <div class="qc-md-subj-body">
-          ${arr.map((c) => _mdItemHtml(c, showBookmarkedTs)).join("")}
-        </div>
-      </div>`;
+    const available = SUBJ_ORDER.filter(
+      (s) => groups[s] && groups[s].length > 0,
+    );
+    if (available.length === 0) return "";
+    // 上方科目 tab bar
+    let tabs = '<div class="qc-md-subj-tabs">';
+    for (const s of available) {
+      tabs += `<button class="qc-md-subj-tab" data-subj="${s}" onclick="QuestionComments._switchMdSubj('${s}')">${SUBJ_LABEL[s] || s} <span class="qc-md-subj-tab-count">${groups[s].length}</span></button>`;
     }
-    return html;
+    tabs += "</div>";
+    // 每個科目一個 pane, 只顯示 active 那個
+    let panes = '<div class="qc-md-subj-panes">';
+    for (const s of available) {
+      panes += `<div class="qc-md-subj-pane" data-subj="${s}">${groups[s].map((c) => _mdItemHtml(c, showBookmarkedTs)).join("")}</div>`;
+    }
+    panes += "</div>";
+    // 預設 activate 第一個 subj (下次 microtask 執行, 等 DOM insert 完)
+    setTimeout(() => {
+      const first = available[0];
+      if (window.QuestionComments && window.QuestionComments._switchMdSubj) {
+        window.QuestionComments._switchMdSubj(first);
+      }
+    }, 0);
+    return tabs + panes;
   }
   async function _renderMdTab(tab) {
     const body = document.getElementById("qc-md-body");
@@ -1130,11 +1138,23 @@
       const m = document.getElementById("qc-md-modal");
       if (m) m.classList.remove("qc-md-open");
     };
-    // v481: 展開/收合科目群組
+    // v481: 展開/收合科目群組 (v493 已不用, 保留 backward compat)
     window.QuestionComments._toggleMdGroup = function (headerEl) {
       const group = headerEl.parentElement;
       if (!group) return;
       group.classList.toggle("qc-md-collapsed");
+    };
+    // v493: 切換科目 tab (一次只顯示一科)
+    window.QuestionComments._switchMdSubj = function (subj) {
+      document.querySelectorAll(".qc-md-subj-tab").forEach((el) => {
+        el.classList.toggle("qc-active", el.getAttribute("data-subj") === subj);
+      });
+      document.querySelectorAll(".qc-md-subj-pane").forEach((el) => {
+        el.classList.toggle("qc-active", el.getAttribute("data-subj") === subj);
+      });
+      // 切 tab 順便把 body 捲回頂
+      const body = document.getElementById("qc-md-body");
+      if (body) body.scrollTop = 0;
     };
     window.QuestionComments.jumpToQuestion = function (qid) {
       // 關 modal + 觸發網站內建的 jumpToQ (exam page 定義在 index.html)
@@ -1264,6 +1284,16 @@
 .qc-md-subj-group.qc-md-collapsed .qc-md-subj-toggle { transform: rotate(-90deg); }
 .qc-md-subj-body { padding: .6rem .7rem; display: flex; flex-direction: column; gap: .5rem; background: white; }
 .qc-md-subj-group.qc-md-collapsed .qc-md-subj-body { display: none; }
+/* v493: 科目子分頁 (上方 tab) — 取代舊的垂直堆疊 */
+.qc-md-subj-tabs { display: flex; gap: .35rem; padding: .55rem .8rem; border-bottom: 1px solid #e5e7eb; background: #fafafa; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-shrink: 0; position: sticky; top: -.8rem; margin: -.8rem -1rem .6rem -1rem; z-index: 3; }
+.qc-md-subj-tab { background: #fff; border: 1px solid #e5e7eb; border-radius: 999px; padding: .35rem .8rem; font-size: .84rem; cursor: pointer; white-space: nowrap; color: #4b5563; font-weight: 600; display: inline-flex; align-items: center; gap: .35rem; }
+.qc-md-subj-tab:hover { background: #f3f4f6; color: #111827; }
+.qc-md-subj-tab.qc-active { background: #7c3aed; border-color: #6d28d9; color: #fff; }
+.qc-md-subj-tab-count { background: rgba(0,0,0,.08); padding: 0 .45rem; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.qc-md-subj-tab.qc-active .qc-md-subj-tab-count { background: rgba(255,255,255,.25); }
+.qc-md-subj-panes { display: flex; flex-direction: column; gap: .7rem; }
+.qc-md-subj-pane { display: none; flex-direction: column; gap: .7rem; }
+.qc-md-subj-pane.qc-active { display: flex; }
 
 .qc-md-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: .7rem .9rem; }
 .qc-md-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .3rem; flex-wrap: wrap; gap: .4rem; }

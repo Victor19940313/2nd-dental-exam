@@ -11158,6 +11158,20 @@
       }
 
       function jumpToQ(qid) {
+        // v491: 從首頁按「我的討論」進來時 filteredQs 還沒初始化
+        // 先自動填 filter (依題目所屬科目) + 跑 applyFilters
+        if (
+          typeof filteredQs === "undefined" ||
+          !filteredQs ||
+          filteredQs.length === 0
+        ) {
+          const q0 = QS.find((qq) => qq.id === qid);
+          if (q0) {
+            const subjEl = document.getElementById("filter-subj");
+            if (subjEl) subjEl.value = q0.subject;
+            applyFilters();
+          }
+        }
         const idx = filteredQs.findIndex((q) => q.id === qid);
         if (idx >= 0) {
           currentIdx = idx;

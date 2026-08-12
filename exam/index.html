@@ -11157,41 +11157,32 @@
         renderBrowse();
       }
 
+      // v492: 完整重寫 — 原本 jumpToQ 引用 filteredQs/applyFilters/showQuestion/currentIdx
+      // 這些名字全都不存在 (orphan code)。真實 API 是 practiceList/practiceIdx/loadPracticeQ
       function jumpToQ(qid) {
-        // v491: 從首頁按「我的討論」進來時 filteredQs 還沒初始化
-        // 先自動填 filter (依題目所屬科目) + 跑 applyFilters
-        if (
-          typeof filteredQs === "undefined" ||
-          !filteredQs ||
-          filteredQs.length === 0
-        ) {
-          const q0 = QS.find((qq) => qq.id === qid);
-          if (q0) {
-            const subjEl = document.getElementById("filter-subj");
-            if (subjEl) subjEl.value = q0.subject;
-            applyFilters();
-          }
+        const q = QS.find((qq) => qq.id === qid);
+        if (!q) {
+          alert("找不到題目: " + qid);
+          return;
         }
-        const idx = filteredQs.findIndex((q) => q.id === qid);
-        if (idx >= 0) {
-          currentIdx = idx;
-          showQuestion();
-          showPractice();
-        } else {
-          const q = QS.find((q) => q.id === qid);
-          if (q) {
-            document.getElementById("filter-subj").value = q.subject;
-            applyFilters();
-            const idx2 = filteredQs.findIndex((qq) => qq.id === qid);
-            if (idx2 >= 0) {
-              currentIdx = idx2;
-              showQuestion();
-              showPractice();
-            }
-          }
-        }
+        // 單題 practiceList — 從我的討論跳過去看那一題
+        practiceList = [q];
+        practiceIdx = 0;
+        activeTopic = null;
+        examMode = false;
+        examAnswers = {};
+        try {
+          resetPracticeScore && resetPracticeScore();
+        } catch (e) {}
+        try {
+          clearLastPos && clearLastPos();
+        } catch (e) {}
+        showPractice();
+        try {
+          updatePracticeScoreUI && updatePracticeScoreUI();
+        } catch (e) {}
+        loadPracticeQ();
       }
-      // 讓外部 script (comment-system.js「我的討論」跳題) 拿得到
       window.jumpToQ = jumpToQ;
 
       function showPractice() {

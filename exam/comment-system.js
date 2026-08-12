@@ -1054,6 +1054,11 @@
         </div>`;
       document.body.appendChild(modal);
     }
+    // v494: exam/index.html 的 closeAllOverlays() 會對 id 結尾 -modal 的 element 設 inline style.display="none"
+    //       這個 inline style 會蓋掉 CSS class rule (.qc-md-modal.qc-md-open { display: flex })
+    //       導致「開過→點題號→回來按我的討論」再按就開不了
+    //       解法: 加 class 之前先清 inline display, 讓 CSS class rule 生效
+    modal.style.removeProperty("display");
     modal.classList.add("qc-md-open");
     // 預設載入「我發的」
     _renderMdTab("mine");

@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="robots"
+      content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+    />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>訂閱方案 - 牙醫國考互動筆記</title>
+    <link rel="icon" href="icons/icon-192.png" />
+    <script src="version.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Noto Sans TC",
+          -apple-system,
+          sans-serif;
+        background: #f8f7f0;
+        color: #2d2a22;
+        min-height: 100vh;
+        padding: 1.5rem 1rem 3rem;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+      }
+      .back {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        color: #4b5563;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .back:hover {
+        background: #f3f4f6;
+      }
+      h1 {
+        font-size: 1.6rem;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        color: #1f2937;
+      }
+      .sub-title {
+        text-align: center;
+        color: #6b7280;
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+      }
+
+      /* Status card (if already subscribed / trial) */
+      .status-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem 1.3rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+      }
+      .status-card.trial {
+        border-color: #93c5fd;
+        background: #eff6ff;
+      }
+      .status-card.paid {
+        border-color: #fbbf24;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+      }
+      .status-card.expired {
+        border-color: #fca5a5;
+        background: #fef2f2;
+      }
+      .status-icon {
+        font-size: 1.6rem;
+      }
+      .status-text {
+        flex: 1;
+      }
+      .status-text b {
+        display: block;
+        font-size: 1rem;
+        margin-bottom: 0.1rem;
+        color: #1f2937;
+      }
+      .status-text .sm {
+        font-size: 0.82rem;
+        color: #6b7280;
+      }
+
+      /* Plans */
+      .plans {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        margin-bottom: 1.5rem;
+      }
+      @media (max-width: 640px) {
+        .plans {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plan {
+        background: #fff;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.2rem 1rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-align: center;
+        position: relative;
+      }
+      .plan:hover {
+        border-color: #a78bfa;
+        transform: translateY(-2px);
+      }
+      .plan.selected {
+        border-color: #7c3aed;
+        background: linear-gradient(135deg, #faf5ff, #ede9fe);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+      }
+      .plan.recommend::before {
+        content: "🔥 推薦";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #dc2626;
+        color: #fff;
+        font-size: 0.7rem;
+        padding: 0.15rem 0.6rem;
+        border-radius: 999px;
+        font-weight: 700;
+      }
+      .plan .name {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.5rem;
+      }
+      .plan .price {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #7c3aed;
+        line-height: 1;
+      }
+      .plan .price .unit {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #6b7280;
+      }
+      .plan .save {
+        font-size: 0.78rem;
+        color: #059669;
+        margin-top: 0.4rem;
+        font-weight: 600;
+        min-height: 1.1rem;
+      }
+      .plan .per {
+        font-size: 0.72rem;
+        color: #9ca3af;
+        margin-top: 0.2rem;
+      }
+
+      /* Bank info */
+      .bank-info {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.3rem;
+        margin-bottom: 1.2rem;
+        display: none;
+      }
+      .bank-info.show {
+        display: block;
+      }
+      .bank-info h3 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        color: #1f2937;
+      }
+      .bank-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0;
+        border-bottom: 1px dashed #e5e7eb;
+        font-size: 0.95rem;
+      }
+      .bank-row:last-child {
+        border-bottom: none;
+      }
+      .bank-row .k {
+        color: #6b7280;
+      }
+      .bank-row .v {
+        font-weight: 700;
+        color: #1f2937;
+        font-family: monospace;
+        letter-spacing: 0.5px;
+      }
+      .bank-row .v.big {
+        font-size: 1.15rem;
+        color: #7c3aed;
+      }
+      .copy-btn {
+        background: none;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        padding: 0.15rem 0.4rem;
+        font-size: 0.7rem;
+        margin-left: 0.4rem;
+        cursor: pointer;
+        color: #6b7280;
+      }
+      .copy-btn:hover {
+        background: #f3f4f6;
+        color: #1f2937;
+      }
+
+      /* Form */
+      .form {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1.3rem;
+        margin-bottom: 1.2rem;
+        display: none;
+      }
+      .form.show {
+        display: block;
+      }
+      .form h3 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        color: #1f2937;
+      }
+      .field {
+        margin-bottom: 1rem;
+      }
+      .field label {
+        display: block;
+        font-size: 0.85rem;
+        color: #4b5563;
+        margin-bottom: 0.35rem;
+        font-weight: 600;
+      }
+      .field input {
+        width: 100%;
+        padding: 0.6rem 0.8rem;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-family: inherit;
+      }
+      .field input:focus {
+        outline: none;
+        border-color: #7c3aed;
+      }
+      .field .hint {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 0.3rem;
+      }
+      .submit-btn {
+        width: 100%;
+        padding: 0.85rem;
+        background: #7c3aed;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .submit-btn:hover {
+        background: #6d28d9;
+      }
+      .submit-btn:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+
+      /* Success */
+      .success {
+        background: #d1fae5;
+        border: 1.5px solid #6ee7b7;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        display: none;
+        margin-bottom: 1.2rem;
+      }
+      .success.show {
+        display: block;
+      }
+      .success-icon {
+        font-size: 3rem;
+        margin-bottom: 0.8rem;
+      }
+      .success h2 {
+        font-size: 1.15rem;
+        color: #065f46;
+        margin-bottom: 0.6rem;
+      }
+      .success p {
+        color: #047857;
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+      .success .order-id {
+        display: inline-block;
+        margin-top: 0.8rem;
+        padding: 0.3rem 0.8rem;
+        background: #fff;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.82rem;
+        color: #065f46;
+      }
+
+      /* Not logged in */
+      .not-logged {
+        background: #fef3c7;
+        border: 1.5px solid #fbbf24;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1.2rem;
+        display: none;
+      }
+      .not-logged.show {
+        display: block;
+      }
+      .not-logged h3 {
+        color: #92400e;
+        margin-bottom: 0.6rem;
+      }
+      .not-logged p {
+        color: #78350f;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
+      .not-logged .go-login {
+        display: inline-block;
+        padding: 0.6rem 1.2rem;
+        background: #7c3aed;
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      /* Notes */
+      .notes {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 1rem 1.2rem;
+        margin-top: 1.5rem;
+        font-size: 0.82rem;
+        color: #6b7280;
+        line-height: 1.7;
+      }
+      .notes b {
+        color: #1f2937;
+      }
+      .notes ul {
+        margin: 0.4rem 0 0.4rem 1.2rem;
+      }
+
+      footer {
+        margin-top: 3rem;
+        text-align: center;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <a class="back" href="./">← 回主頁</a>
+        <span id="auth-widget"></span>
+      </div>
+
+      <h1>訂閱方案</h1>
+      <p class="sub-title">選一個方案 · 匯款後我們 24 小時內對帳開通</p>
+
+      <div id="not-logged" class="not-logged">
+        <h3>🔑 請先 Google 登入</h3>
+        <p>訂閱綁定妳的 Google 帳號 · 跨裝置自動同步</p>
+        <a class="go-login" href="./">前往登入</a>
+      </div>
+
+      <div id="status-card"></div>
+
+      <div class="plans" id="plans">
+        <div class="plan" data-plan="monthly" data-amount="400">
+          <div class="name">月費</div>
+          <div class="price">$400<span class="unit"> / 月</span></div>
+          <div class="save"></div>
+          <div class="per">短期衝刺</div>
+        </div>
+        <div class="plan recommend" data-plan="quarterly" data-amount="1000">
+          <div class="name">季費</div>
+          <div class="price">$1000<span class="unit"> / 3 月</span></div>
+          <div class="save">省 $200 (17% off)</div>
+          <div class="per">$333 / 月</div>
+        </div>
+        <div class="plan" data-plan="semi" data-amount="1500">
+          <div class="name">半年</div>
+          <div class="price">$1500<span class="unit"> / 6 月</span></div>
+          <div class="save">省 $900 (38% off)</div>
+          <div class="per">$250 / 月</div>
+        </div>
+      </div>
+
+      <div class="bank-info" id="bank-info">
+        <h3>💳 匯款資訊</h3>
+        <div class="bank-row">
+          <span class="k">銀行</span>
+          <span class="v">富邦銀行 (012)</span>
+        </div>
+        <div class="bank-row">
+          <span class="k">帳號</span>
+          <span class="v">
+            0081680008708963
+            <button class="copy-btn" onclick="copyAcc()">複製</button>
+          </span>
+        </div>
+        <div class="bank-row">
+          <span class="k">金額</span>
+          <span class="v big" id="show-amount">$400</span>
+        </div>
+      </div>
+
+      <div class="form" id="form">
+        <h3>📝 匯款完填這裡 (幫我們對帳)</h3>
+        <div class="field">
+          <label for="payer-name">匯款人姓名</label>
+          <input id="payer-name" type="text" placeholder="例:王小明" />
+          <div class="hint">要跟妳銀行 App 上顯示的一致</div>
+        </div>
+        <div class="field">
+          <label for="atm-last5">匯款帳號末 5 碼</label>
+          <input
+            id="atm-last5"
+            type="text"
+            placeholder="例:12345"
+            maxlength="5"
+            pattern="[0-9]{5}"
+            inputmode="numeric"
+          />
+          <div class="hint">妳自己銀行帳號的最後 5 碼 (不是我們的)</div>
+        </div>
+        <button class="submit-btn" id="submit-btn" onclick="submitOrder()">
+          ✓ 我已匯款,送出對帳
+        </button>
+      </div>
+
+      <div class="success" id="success">
+        <div class="success-icon">✅</div>
+        <h2>已收到妳的匯款通知!</h2>
+        <p>
+          我們會在
+          <b>24 小時內</b>對帳並開通妳的訂閱<br />開通後徽章會變成金色「✨會員」
+        </p>
+        <div class="order-id" id="order-id"></div>
+      </div>
+
+      <div class="notes">
+        <b>注意事項</b>
+        <ul>
+          <li>訂閱綁定妳的 Google 帳號,自動跨裝置同步</li>
+          <li>試用 7 天期間可完整使用,期滿必須訂閱才能繼續看詳解</li>
+          <li>已訂閱後恕不退費 (試用期間可隨時退出不扣款)</li>
+          <li>對帳靠妳輸入的「末 5 碼」+「匯款人姓名」,填錯會延遲對帳</li>
+          <li>有問題請 email: hua.dental.exam@gmail.com</li>
+        </ul>
+      </div>
+
+      <footer>© 2026 HUA 牙醫國考互動筆記 · 版權所有翻印必究</footer>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="auth.js"></script>
+    <script src="subscription.js"></script>
+
+    <script>
+      let selectedPlan = null;
+      let selectedAmount = 0;
+
+      document.querySelectorAll(".plan").forEach((el) => {
+        el.addEventListener("click", () => {
+          document
+            .querySelectorAll(".plan")
+            .forEach((p) => p.classList.remove("selected"));
+          el.classList.add("selected");
+          selectedPlan = el.dataset.plan;
+          selectedAmount = parseInt(el.dataset.amount, 10);
+          document.getElementById("show-amount").textContent =
+            "$" + selectedAmount;
+          document.getElementById("bank-info").classList.add("show");
+          document.getElementById("form").classList.add("show");
+          document
+            .getElementById("form")
+            .scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
+
+      function copyAcc() {
+        navigator.clipboard.writeText("0081680008708963").then(() => {
+          alert("帳號已複製到剪貼簿");
+        });
+      }
+
+      async function submitOrder() {
+        const user = window.Auth && window.Auth.getUser();
+        if (!user) {
+          alert("請先 Google 登入");
+          document.getElementById("not-logged").classList.add("show");
+          return;
+        }
+        if (!selectedPlan) {
+          alert("請先選一個方案");
+          return;
+        }
+        const payerName = document.getElementById("payer-name").value.trim();
+        const last5 = document.getElementById("atm-last5").value.trim();
+        if (!payerName) {
+          alert("請填匯款人姓名");
+          return;
+        }
+        if (!/^[0-9]{5}$/.test(last5)) {
+          alert("末 5 碼要填 5 個數字");
+          return;
+        }
+        const btn = document.getElementById("submit-btn");
+        btn.disabled = true;
+        btn.textContent = "送出中...";
+        try {
+          const db = firebase.database();
+          const ref = db.ref("pending_orders").push();
+          await ref.set({
+            uid: user.uid,
+            email: user.email || "",
+            name: user.displayName || "",
+            payer_name: payerName,
+            plan: selectedPlan,
+            amount: selectedAmount,
+            atm_last5: last5,
+            status: "waiting",
+            created_ts: firebase.database.ServerValue.TIMESTAMP,
+          });
+          // 顯示成功
+          document.getElementById("plans").style.display = "none";
+          document.getElementById("bank-info").classList.remove("show");
+          document.getElementById("form").classList.remove("show");
+          document.getElementById("order-id").textContent =
+            "訂單編號: " + ref.key;
+          document.getElementById("success").classList.add("show");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch (e) {
+          alert("送出失敗:" + e.message + "\n\n請重試或聯絡我們");
+          btn.disabled = false;
+          btn.textContent = "✓ 我已匯款,送出對帳";
+        }
+      }
+
+      // 顯示訂閱狀態卡
+      function renderStatus() {
+        if (!window.Subscription) return;
+        window.Subscription.getStatus().then((s) => {
+          const card = document.getElementById("status-card");
+          if (!s || s.reason === "not_logged_in") {
+            document.getElementById("not-logged").classList.add("show");
+            card.innerHTML = "";
+            return;
+          }
+          document.getElementById("not-logged").classList.remove("show");
+          if (s.reason === "trial") {
+            card.innerHTML = `<div class="status-card trial">
+              <div class="status-icon">🎁</div>
+              <div class="status-text"><b>免費試用中 · 剩 ${s.days_left} 天</b><div class="sm">試用結束前訂閱,無縫接軌繼續學習</div></div>
+            </div>`;
+          } else if (s.reason === "paid") {
+            const planName =
+              { monthly: "月費", quarterly: "季費", semi: "半年" }[s.plan] ||
+              s.plan;
+            card.innerHTML = `<div class="status-card paid">
+              <div class="status-icon">✨</div>
+              <div class="status-text"><b>會員中 · ${planName} · 剩 ${s.days_left} 天</b><div class="sm">感謝訂閱 · 續訂送 3 個月優惠即將推出</div></div>
+            </div>`;
+          } else if (
+            s.reason === "trial_expired" ||
+            s.reason === "subscription_expired"
+          ) {
+            const label =
+              s.reason === "trial_expired" ? "試用已結束" : "訂閱已過期";
+            card.innerHTML = `<div class="status-card expired">
+              <div class="status-icon">🔒</div>
+              <div class="status-text"><b>${label}</b><div class="sm">選一個方案,立即恢復完整功能</div></div>
+            </div>`;
+          }
+        });
+      }
+
+      // 等 Auth ready 再 render
+      function waitAuth() {
+        if (window.Auth && window.Auth.onChange) {
+          window.Auth.onChange(function () {
+            setTimeout(renderStatus, 300);
+          });
+          renderStatus();
+        } else {
+          setTimeout(waitAuth, 300);
+        }
+      }
+      waitAuth();
+    </script>
+
+    <footer
+      style="
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+        background: #fafafa;
+      "
+    >
+      © 2026 HUA 牙醫國考互動筆記 · <strong>版權所有翻印必究</strong> ·
+      未經授權禁止轉載、複製、爬取內容
+    </footer>
+  </body>
+</html>

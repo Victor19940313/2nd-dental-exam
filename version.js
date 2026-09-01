@@ -1,7 +1,7 @@
 // 全站版本號集中管理
 // sw.js 用 importScripts('./version.js') 讀,index.html / mnemonics.html 用 <script src="version.js"></script> 讀
 // 每次部署只要改這一行
-const APP_VERSION = "v517";
-const APP_VERSION_TAG = "telegram-notify-orders-feedback";
+const APP_VERSION = "v518";
+const APP_VERSION_TAG = "telegram-one-tap-approve-remove-fake-copy";
 if (typeof self !== "undefined") self.APP_VERSION = APP_VERSION;
 if (typeof window !== "undefined") window.APP_VERSION = APP_VERSION;

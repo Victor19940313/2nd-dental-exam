@@ -451,7 +451,22 @@
     <!-- User selection overlay -->
     <div class="user-overlay" id="user-overlay">
       <h2>歡迎回來</h2>
-      <p class="sub2">選擇你的帳號，開始學習</p>
+      <p class="sub2">用 Google 登入,自動搬舊資料 + 跨裝置同步</p>
+      <div
+        style="margin: 1rem 0 1.5rem; display: flex; justify-content: center"
+      >
+        <span id="auth-widget"></span>
+      </div>
+      <div
+        style="
+          text-align: center;
+          color: #9ca3af;
+          font-size: 0.78rem;
+          margin: 0.5rem 0 1rem;
+        "
+      >
+        — 或使用舊的訪客模式 —
+      </div>
       <div class="user-list" id="user-list"></div>
     </div>
 
@@ -520,8 +535,11 @@
     <script src="version.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="sync.js"></script>
     <script src="visitor-log.js"></script>
+    <script src="auth.js"></script>
+    <script src="migration.js"></script>
     <script>
       // ════════════════════════════════════════════
       //  User Management
@@ -753,6 +771,34 @@
         }
       })();
 
+      // v502: Google 登入 + migration 完成 → auto selectUser 對應 nickname
+      window.addEventListener("dental-migration-done", function (e) {
+        const detail = (e && e.detail) || {};
+        const nickname = detail.nickname;
+        if (!nickname) return;
+        // 轉小寫對應 id (addNewUser 邏輯: id = name.toLowerCase())
+        const id = String(nickname).toLowerCase();
+        // 若使用者已在清單 → auto select
+        const users = getUsers();
+        if (!users.find((x) => x.id === id)) {
+          // 若清單沒這 nickname (可能 localStorage 被清), 補建一個
+          const USER_COLORS_ = [
+            "#7c3aed",
+            "#0ea5e9",
+            "#22c55e",
+            "#eab308",
+            "#ef4444",
+          ];
+          users.push({
+            id: id,
+            name: nickname,
+            color: USER_COLORS_[users.length % 5],
+          });
+          saveUsers(users);
+        }
+        selectUser(id);
+      });
+
       // Countdown to exam (2026-07-19)
       const examDate = new Date("2026-07-19T00:00:00+08:00");
       function updateCountdown() {
@@ -792,9 +838,20 @@
         DentalSync.renderUI("#sync-bar");
       }
     </script>
-  
-  <footer style="text-align:center;padding:1rem;font-size:.75rem;color:#94a3b8;border-top:1px solid #e5e7eb;margin-top:2rem;background:#fafafa;">
-    © 2026 HUA 牙醫國考互動筆記 · <strong>版權所有翻印必究</strong> · 未經授權禁止轉載、複製、爬取內容
-  </footer>
-</body>
+
+    <footer
+      style="
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+        background: #fafafa;
+      "
+    >
+      © 2026 HUA 牙醫國考互動筆記 · <strong>版權所有翻印必究</strong> ·
+      未經授權禁止轉載、複製、爬取內容
+    </footer>
+  </body>
 </html>

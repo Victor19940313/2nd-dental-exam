@@ -121,10 +121,21 @@
           showToast(
             `已把「${autoNickname}」的資料綁到你的 Google 帳號 (章節 ${summary.chapters}、錯題 ${summary.wrongbook})`,
           );
+          window.dispatchEvent(
+            new CustomEvent("dental-migration-done", {
+              detail: { nickname: autoNickname, googleUid: uid },
+            }),
+          );
         }
       } else {
         // 沒舊資料, mark migrated 免下次再檢查
         localStorage.setItem(LS_FLAG, String(Date.now()));
+        // 也 emit event 讓 index.html 知道可以 skip select-nickname 直接進主頁 (若使用者 Google 登入但沒舊 data)
+        window.dispatchEvent(
+          new CustomEvent("dental-migration-done", {
+            detail: { nickname: null, googleUid: uid, newUser: true },
+          }),
+        );
       }
       return;
     }

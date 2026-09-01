@@ -802,6 +802,38 @@
         showMain();
       });
 
+      // v505: 保險 fallback — 直接 subscribe Auth (不依賴 event race)
+      (function autoSelectOnGoogleLogin() {
+        const AUTO_MAP_LOCAL = {
+          "wing2004piten@gmail.com": "HUA",
+          "wen84224@gmail.com": "Shirley",
+        };
+        function trySubscribe() {
+          if (!window.Auth || !window.Auth.onChange) {
+            return setTimeout(trySubscribe, 300);
+          }
+          window.Auth.onChange(function (user) {
+            if (!user) return;
+            if (getCurUser()) return; // 已選 nickname
+            const email = (user.email || "").toLowerCase();
+            const nick =
+              AUTO_MAP_LOCAL[email] ||
+              localStorage.getItem("migrated_nickname");
+            if (!nick) return;
+            const id = String(nick).toLowerCase();
+            const users = getUsers();
+            if (!users.find((x) => x.id === id)) {
+              users.push({ id: id, name: nick, color: "#7c3aed" });
+              saveUsers(users);
+            }
+            setCurUser(id);
+            if (typeof DentalSync !== "undefined") DentalSync.switchUser(id);
+            showMain();
+          });
+        }
+        trySubscribe();
+      })();
+
       // Countdown to exam (2026-07-19)
       const examDate = new Date("2026-07-19T00:00:00+08:00");
       function updateCountdown() {

@@ -114,7 +114,7 @@
     }
     if (s.reason === "trial") {
       const cls = s.days_left <= 2 ? "sub-b-warn" : "sub-b-trial";
-      el.innerHTML = `<span class="sub-b ${cls}" title="試用中,還剩 ${s.days_left} 天"><span>試用</span><b>剩 ${s.days_left} 天</b>${s.days_left <= 3 ? '<a href="/subscribe.html" class="sub-b-btn">訂閱</a>' : ""}</span>`;
+      el.innerHTML = `<span class="sub-b ${cls}" title="試用中,還剩 ${s.days_left} 天"><span>試用</span><b>剩 ${s.days_left} 天</b><a href="/subscribe.html" class="sub-b-btn">訂閱</a></span>`;
     } else if (s.reason === "paid") {
       const cls = s.days_left <= 5 ? "sub-b-warn" : "sub-b-paid";
       const planName =

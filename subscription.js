@@ -127,9 +127,28 @@
     }
   }
 
+  function applyBodyClass() {
+    if (!cachedStatus) return;
+    const locked =
+      cachedStatus.ok === false &&
+      (cachedStatus.reason === "trial_expired" ||
+        cachedStatus.reason === "subscription_expired");
+    document.body.classList.toggle("sub-locked", locked);
+  }
+
+  function isLocked() {
+    if (!cachedStatus) return false;
+    return (
+      cachedStatus.ok === false &&
+      (cachedStatus.reason === "trial_expired" ||
+        cachedStatus.reason === "subscription_expired")
+    );
+  }
+
   async function refreshAndRender() {
     await getStatus();
     renderBadge();
+    applyBodyClass();
     changeCbs.forEach((cb) => {
       try {
         cb(cachedStatus);
@@ -140,6 +159,7 @@
   window.Subscription = {
     getStatus: getStatus,
     canSee: canSee,
+    isLocked: isLocked,
     renderBadge: renderBadge,
     refresh: refreshAndRender,
     onChange: function (cb) {
@@ -174,6 +194,51 @@
 .sub-b-btn { display: inline-block; margin-left: .3rem; padding: .1rem .5rem; background: #dc2626; color: #fff !important; border-radius: 999px; font-size: .7rem; text-decoration: none !important; font-weight: 700; }
 .sub-b-btn:hover { background: #b91c1c; }
 .sub-b-paid .sub-b-btn { background: #7c2d12; }
+
+/* v512: 詳解 gate — 試用/訂閱過期時鎖詳解 */
+body.sub-locked details.gemini-expl > div,
+body.sub-locked details.nb-expl > div,
+body.sub-locked details.expl-block > div {
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+  max-height: 200px;
+}
+body.sub-locked details.gemini-expl > div > *,
+body.sub-locked details.nb-expl > div > *,
+body.sub-locked details.expl-block > div > * {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+}
+body.sub-locked details.gemini-expl > div::after,
+body.sub-locked details.nb-expl > div::after,
+body.sub-locked details.expl-block > div::after {
+  content: "🔒 訂閱後看完整詳解 (試用已結束)";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.4) 0%, rgba(255,255,255,.96) 40%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .95rem;
+  font-weight: 700;
+  color: #7c3aed;
+  z-index: 10;
+  padding: 1rem;
+  text-align: center;
+}
+body.sub-locked .sub-unlock-btn {
+  display: inline-block;
+  margin: .5rem auto;
+  padding: .6rem 1.2rem;
+  background: #7c3aed;
+  color: #fff !important;
+  border-radius: 999px;
+  text-decoration: none !important;
+  font-weight: 700;
+  font-size: .9rem;
+}
 `;
   if (!document.getElementById("sub-css")) {
     const s = document.createElement("style");

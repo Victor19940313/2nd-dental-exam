@@ -535,8 +535,8 @@
           <span class="emoji">💎</span>
           <div class="info">
             <span class="name">訂閱方案</span>
-            <span class="topics"
-              >月 $400 · 季 $1000（省 $200）· 半年 $1500（省 $900）</span
+            <span class="topics" id="subscribe-card-topic"
+              >已經改了第 -- 版了 😭 我想支持作者</span
             >
           </div>
         </a>
@@ -899,6 +899,15 @@
         DentalSync.init();
         DentalSync.renderUI("#sync-bar");
       }
+
+      // 訂閱卡文案帶版本號
+      (function () {
+        const el = document.getElementById("subscribe-card-topic");
+        const v = (window.APP_VERSION || "").replace(/^v/, "");
+        if (el && v) {
+          el.textContent = "已經改了第 " + v + " 版了 😭 我想支持作者";
+        }
+      })();
     </script>
 
     <footer

@@ -101,8 +101,37 @@
   // 主流程: 登入後呼叫
   async function check(googleUser) {
     if (!googleUser || !googleUser.uid) return;
-    // 已 migrate 過
-    if (localStorage.getItem(LS_FLAG)) return;
+    // 已 migrate 過 → 依然 dispatch event 讓 UI (index.html) auto selectUser
+    if (localStorage.getItem(LS_FLAG)) {
+      const nick = localStorage.getItem("migrated_nickname");
+      if (nick) {
+        window.dispatchEvent(
+          new CustomEvent("dental-migration-done", {
+            detail: {
+              nickname: nick,
+              googleUid: googleUser.uid,
+              alreadyMigrated: true,
+            },
+          }),
+        );
+      } else {
+        // 沒 nickname 記錄 (可能之前是 new user) → 用 email map 找一次
+        const nickFromMap =
+          AUTO_MIGRATE_MAP[(googleUser.email || "").toLowerCase()];
+        if (nickFromMap) {
+          window.dispatchEvent(
+            new CustomEvent("dental-migration-done", {
+              detail: {
+                nickname: nickFromMap,
+                googleUid: googleUser.uid,
+                alreadyMigrated: true,
+              },
+            }),
+          );
+        }
+      }
+      return;
+    }
     // 使用者 defer 過 7 天內, 不再問
     const defer = parseInt(localStorage.getItem(LS_DEFER) || "0");
     if (defer && Date.now() - defer < DEFER_DAYS * 86400_000) return;

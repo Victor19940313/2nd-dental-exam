@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>我的獎勵 - 牙醫國考互動筆記</title>
+    <link rel="icon" href="icons/icon-192.png" />
+    <script src="version.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          "Noto Sans TC",
+          -apple-system,
+          sans-serif;
+        background: #f8f7f0;
+        color: #2d2a22;
+        min-height: 100vh;
+        padding: 1.5rem 1rem 3rem;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+      }
+      .back {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        text-decoration: none;
+        color: #4b5563;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      h1 {
+        font-size: 1.5rem;
+        text-align: center;
+        margin-bottom: 0.4rem;
+      }
+      .sub-title {
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+      }
+      .hint {
+        background: #eff6ff;
+        border: 1px solid #93c5fd;
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        color: #1e40af;
+        margin-bottom: 1.2rem;
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+      .hint b {
+        color: #1e3a8a;
+      }
+      .reward-row {
+        background: #fff;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.7rem;
+      }
+      .reward-row.used {
+        opacity: 0.55;
+        background: #fafafa;
+      }
+      .reward-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.4rem;
+      }
+      .reward-code {
+        font-family: monospace;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #7c3aed;
+        letter-spacing: 0.05em;
+      }
+      .used .reward-code {
+        color: #9ca3af;
+        text-decoration: line-through;
+      }
+      .reward-tag {
+        display: inline-block;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+      }
+      .reward-tag.avail {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .reward-tag.used {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+      .reward-meta {
+        font-size: 0.75rem;
+        color: #9ca3af;
+      }
+      .copy-btn {
+        background: #7c3aed;
+        color: #fff;
+        border: 0;
+        border-radius: 6px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .copy-btn:hover {
+        filter: brightness(1.1);
+      }
+      .empty {
+        text-align: center;
+        color: #9ca3af;
+        padding: 3rem 1rem;
+        font-size: 0.95rem;
+      }
+      .empty .big {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+      }
+      #need-login {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #6b7280;
+      }
+      #need-login a {
+        color: #3b82f6;
+        font-weight: 700;
+      }
+      .foot {
+        text-align: center;
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <a href="index.html" class="back">← 回首頁</a>
+        <span style="font-size: 0.75rem; color: #9ca3af" id="ver"></span>
+      </div>
+      <h1>🎁 我的獎勵</h1>
+      <p class="sub-title">推薦朋友訂閱,自動收到 30 天免費序號</p>
+
+      <div class="hint">
+        💡 <b>怎麼拿到獎勵?</b><br />
+        告訴朋友妳的 Google email,他訂閱時填「推薦人 email」→
+        他被開通後妳自動收到序號。<br />
+        序號可以自己兌換 (subscribe 頁的兌換碼欄),或送給別人用。
+      </div>
+
+      <div id="need-login" style="display: none">
+        請先<a href="index.html">回首頁</a>用 Google 登入才能看獎勵
+      </div>
+
+      <div id="rewards-list"></div>
+
+      <p class="foot">© 2026 HUA 牙醫國考互動筆記 · v<span id="v"></span></p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="auth.js"></script>
+    <script>
+      document.getElementById("v").textContent = (
+        window.APP_VERSION || ""
+      ).replace(/^v/, "");
+      document.getElementById("ver").textContent = window.APP_VERSION || "";
+
+      function fmtDate(ts) {
+        if (!ts) return "-";
+        const d = new Date(ts);
+        return (
+          d.getFullYear() +
+          "/" +
+          String(d.getMonth() + 1).padStart(2, "0") +
+          "/" +
+          String(d.getDate()).padStart(2, "0")
+        );
+      }
+
+      function escape(s) {
+        return String(s || "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+
+      async function loadRewards() {
+        const user = window.Auth && window.Auth.getUser();
+        if (!user) {
+          document.getElementById("need-login").style.display = "block";
+          document.getElementById("rewards-list").innerHTML = "";
+          return;
+        }
+        document.getElementById("need-login").style.display = "none";
+        const db = firebase.database();
+        const snap = await db
+          .ref("users/" + user.uid + "/rewards")
+          .once("value");
+        const arr = [];
+        snap.forEach((c) => {
+          const v = c.val() || {};
+          v._id = c.key;
+          arr.push(v);
+        });
+        arr.sort((a, b) => (b.issued_ts || 0) - (a.issued_ts || 0));
+
+        // 每筆去 redeem_codes 查是否已被用 (自己或別人都算)
+        for (const r of arr) {
+          try {
+            const codeSnap = await db
+              .ref("redeem_codes/" + r.code)
+              .once("value");
+            const cd = codeSnap.val();
+            r.used = !!(cd && cd.used);
+            r.used_by_email = cd?.used_by_email || null;
+          } catch (e) {
+            r.used = false;
+          }
+        }
+
+        const list = document.getElementById("rewards-list");
+        if (!arr.length) {
+          list.innerHTML = `<div class="empty"><div class="big">🎁</div>還沒有獎勵<br><small>推薦朋友訂閱就能收到 30 天免費序號</small></div>`;
+          return;
+        }
+
+        list.innerHTML = arr
+          .map((r) => {
+            const cls = r.used ? "reward-row used" : "reward-row";
+            const tag = r.used
+              ? '<span class="reward-tag used">已使用</span>'
+              : '<span class="reward-tag avail">✨ 可用</span>';
+            const reason =
+              r.reason === "referral"
+                ? `推薦獎勵 · 來自 ${escape(r.from_email_masked || "?")}`
+                : escape(r.reason || "獎勵");
+            const usedByLine = r.used
+              ? `<div class="reward-meta" style="margin-top:.3rem">被 ${escape(r.used_by_email || "?")} 兌換</div>`
+              : "";
+            const copyBtn = r.used
+              ? ""
+              : `<button class="copy-btn" onclick="copyCode('${r.code}')">複製</button>`;
+            return `<div class="${cls}">
+            <div class="reward-head">
+              <span class="reward-code">${escape(r.code)}</span>
+              ${copyBtn}
+            </div>
+            <div class="reward-meta">${tag} · 30 天 · ${reason}</div>
+            <div class="reward-meta" style="margin-top:.2rem">收到於 ${fmtDate(r.issued_ts)}</div>
+            ${usedByLine}
+          </div>`;
+          })
+          .join("");
+      }
+
+      window.copyCode = (code) => {
+        navigator.clipboard
+          .writeText(code)
+          .then(() => alert("已複製: " + code));
+      };
+
+      if (window.Auth && window.Auth.onChange) {
+        window.Auth.onChange(loadRewards);
+      }
+      setTimeout(loadRewards, 800);
+    </script>
+  </body>
+</html>

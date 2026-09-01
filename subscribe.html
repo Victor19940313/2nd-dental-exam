@@ -413,6 +413,57 @@
 
       <div id="status-card"></div>
 
+      <div
+        id="redeem-box"
+        style="
+          display: none;
+          background: linear-gradient(135deg, #fef3c7, #fef9c3);
+          border: 1.5px solid #fbbf24;
+          border-radius: 12px;
+          padding: 1rem 1.2rem;
+          margin-bottom: 1.2rem;
+        "
+      >
+        <div style="font-weight: 700; color: #78350f; margin-bottom: 0.5rem">
+          🎁 有兌換碼? (30 天免費)
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center">
+          <input
+            id="redeem-input"
+            type="text"
+            placeholder="EZPASS-XXXX-XXXX"
+            style="
+              flex: 1;
+              padding: 0.55rem 0.8rem;
+              border: 1.5px solid #fcd34d;
+              border-radius: 8px;
+              font-family: monospace;
+              font-size: 0.95rem;
+              text-transform: uppercase;
+            "
+          />
+          <button
+            onclick="redeemCode()"
+            id="redeem-btn"
+            style="
+              padding: 0.55rem 1.2rem;
+              background: #f59e0b;
+              color: #fff;
+              border: 0;
+              border-radius: 8px;
+              font-weight: 700;
+              cursor: pointer;
+            "
+          >
+            兌換
+          </button>
+        </div>
+        <div
+          id="redeem-msg"
+          style="font-size: 0.78rem; color: #78350f; margin-top: 0.35rem"
+        ></div>
+      </div>
+
       <div class="plans" id="plans">
         <div class="plan" data-plan="monthly" data-amount="400">
           <div class="name">月費</div>
@@ -471,6 +522,15 @@
             inputmode="numeric"
           />
           <div class="hint">妳自己銀行帳號的最後 5 碼 (不是我們的)</div>
+        </div>
+        <div class="field">
+          <label for="referrer-email">推薦人 email (選填)</label>
+          <input
+            id="referrer-email"
+            type="email"
+            placeholder="填了推薦人會收到 30 天免費序號"
+          />
+          <div class="hint">誰介紹妳來的?留他 Google email,他會收到獎勵</div>
         </div>
         <button class="submit-btn" id="submit-btn" onclick="submitOrder()">
           ✓ 我已匯款,送出對帳
@@ -559,10 +619,15 @@
         const btn = document.getElementById("submit-btn");
         btn.disabled = true;
         btn.textContent = "送出中...";
+        const referrerEmail = (
+          document.getElementById("referrer-email").value || ""
+        )
+          .trim()
+          .toLowerCase();
         try {
           const db = firebase.database();
           const ref = db.ref("pending_orders").push();
-          await ref.set({
+          const payload = {
             uid: user.uid,
             email: user.email || "",
             name: user.displayName || "",
@@ -572,7 +637,9 @@
             atm_last5: last5,
             status: "waiting",
             created_ts: firebase.database.ServerValue.TIMESTAMP,
-          });
+          };
+          if (referrerEmail) payload.referrer_email = referrerEmail;
+          await ref.set(payload);
           // 通知 HUA (Telegram, 失敗不 fatal)
           try {
             fetch(
@@ -639,13 +706,83 @@
         if (window.Auth && window.Auth.onChange) {
           window.Auth.onChange(function () {
             setTimeout(renderStatus, 300);
+            setTimeout(toggleRedeemBox, 300);
           });
           renderStatus();
+          toggleRedeemBox();
         } else {
           setTimeout(waitAuth, 300);
         }
       }
       waitAuth();
+
+      // 兌換碼 (只在 Google 登入後才顯示)
+      function toggleRedeemBox() {
+        const user = window.Auth && window.Auth.getUser();
+        document.getElementById("redeem-box").style.display = user
+          ? ""
+          : "none";
+      }
+
+      async function redeemCode() {
+        const user = window.Auth && window.Auth.getUser();
+        if (!user) return alert("請先 Google 登入");
+        const code = document
+          .getElementById("redeem-input")
+          .value.trim()
+          .toUpperCase();
+        const msgEl = document.getElementById("redeem-msg");
+        const btn = document.getElementById("redeem-btn");
+        if (!/^EZPASS-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+          msgEl.textContent = "格式錯,應該是 EZPASS-XXXX-XXXX";
+          msgEl.style.color = "#b91c1c";
+          return;
+        }
+        btn.disabled = true;
+        btn.textContent = "兌換中...";
+        try {
+          const db = firebase.database();
+          const ref = db.ref("redeem_codes/" + code);
+          const snap = await ref.once("value");
+          const data = snap.val();
+          if (!data) throw new Error("查無此序號");
+          if (data.used) throw new Error("序號已被使用");
+          const days = data.gift_days || 30;
+          const now = Date.now();
+          const expires = now + days * 86400_000;
+          // 用 transaction 防競爭 (兩人同時兌換)
+          const tx = await ref.transaction((cur) => {
+            if (!cur) return; // abort
+            if (cur.used) return; // abort
+            cur.used = true;
+            cur.used_by = user.uid;
+            cur.used_by_email = user.email || "";
+            cur.used_ts = now;
+            return cur;
+          });
+          if (!tx.committed) throw new Error("兌換失敗 (可能被別人搶先)");
+          // 寫 subscription (直接覆蓋,和 Telegram 一鍵開通一致)
+          await db.ref("users/" + user.uid + "/subscription").set({
+            plan: "monthly",
+            started_at: now,
+            expires_at: expires,
+            activated_by: "redeem-" + (data.type || "code"),
+            payment_ref: "序號 " + code,
+            redeem_code: code,
+          });
+          msgEl.innerHTML = `✅ 兌換成功! 開通 ${days} 天,到期 ${new Date(expires).toISOString().slice(0, 10)}`;
+          msgEl.style.color = "#16a34a";
+          btn.textContent = "已兌換";
+          document.getElementById("redeem-input").disabled = true;
+          setTimeout(() => location.reload(), 2000);
+        } catch (e) {
+          msgEl.textContent = "❌ " + e.message;
+          msgEl.style.color = "#b91c1c";
+          btn.disabled = false;
+          btn.textContent = "兌換";
+        }
+      }
+      window.redeemCode = redeemCode;
     </script>
 
     <footer

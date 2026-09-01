@@ -5327,6 +5327,7 @@
       <div class="header-right">
         <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
         <span class="header-user" id="header-user" title="目前使用者"></span>
+        <span id="sub-badge" style="margin-right: 0.4rem"></span>
         <span id="auth-widget" style="margin-right: 0.5rem"></span>
         <button
           class="btn-mode"
@@ -28186,6 +28187,7 @@
     <script src="comment-system.js"></script>
     <script src="../auth.js"></script>
     <script src="../migration.js"></script>
+    <script src="../subscription.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉

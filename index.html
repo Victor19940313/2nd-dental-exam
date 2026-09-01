@@ -572,7 +572,14 @@
       }
 
       function renderUserOverlay() {
-        const users = getUsers();
+        // v506: 已綁 Google 的 nickname 從訪客模式隱藏 (避免登出後別人點進去)
+        const allUsers = getUsers();
+        const migratedNick = (
+          localStorage.getItem("migrated_nickname") || ""
+        ).toLowerCase();
+        const users = migratedNick
+          ? allUsers.filter((u) => u.id.toLowerCase() !== migratedNick)
+          : allUsers;
         const list = document.getElementById("user-list");
         list.innerHTML =
           users

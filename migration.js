@@ -17,9 +17,10 @@
   }
 
   // 預設綁定: Google email → 舊 nickname (免彈窗自動搬)
+  // v521: 修正大小寫,Firebase 實際 key 是小寫 hua / shirley
   const AUTO_MIGRATE_MAP = {
-    "wing2004piten@gmail.com": "HUA",
-    "wen84224@gmail.com": "Shirley",
+    "wing2004piten@gmail.com": "hua",
+    "wen84224@gmail.com": "shirley",
   };
 
   const db = firebase.database();
@@ -101,6 +102,23 @@
   // 主流程: 登入後呼叫
   async function check(googleUser) {
     if (!googleUser || !googleUser.uid) return;
+    const email = (googleUser.email || "").toLowerCase();
+
+    // v521: 若在 AUTO map 且 dst 沒 notebook 資料 → 清 LS_FLAG 強制重搬
+    // (修 v520 前 map 大小寫錯誤導致的空搬問題)
+    const autoNickForceCheck = AUTO_MIGRATE_MAP[email];
+    if (autoNickForceCheck) {
+      try {
+        const dstSnap = await db
+          .ref("users/" + googleUser.uid + "/notebook")
+          .once("value");
+        if (!dstSnap.exists()) {
+          localStorage.removeItem(LS_FLAG);
+          localStorage.removeItem(LS_DEFER);
+        }
+      } catch (e) {}
+    }
+
     // 已 migrate 過 → 依然 dispatch event 讓 UI (index.html) auto selectUser
     if (localStorage.getItem(LS_FLAG)) {
       const nick = localStorage.getItem("migrated_nickname");
@@ -136,7 +154,6 @@
     const defer = parseInt(localStorage.getItem(LS_DEFER) || "0");
     if (defer && Date.now() - defer < DEFER_DAYS * 86400_000) return;
 
-    const email = (googleUser.email || "").toLowerCase();
     const uid = googleUser.uid;
 
     // 1. Auto-migrate: email 在預設 map
@@ -169,27 +186,15 @@
       return;
     }
 
-    // 2. 非 auto: 檢查 localStorage 有沒有 dental_users
-    let nicknames = [];
-    try {
-      const users = JSON.parse(localStorage.getItem("dental_users") || "[]");
-      nicknames = users.map((u) => u.id || u.name).filter(Boolean);
-    } catch (e) {}
-    if (nicknames.length === 0) {
-      localStorage.setItem(LS_FLAG, String(Date.now()));
-      return;
-    }
-
-    // 拿每個 nickname 的資料量
-    const summaries = await Promise.all(nicknames.map(getSummary));
-    const withData = summaries.filter((s) => s && s.hasData);
-    if (withData.length === 0) {
-      localStorage.setItem(LS_FLAG, String(Date.now()));
-      return;
-    }
-
-    // 3. 顯示彈窗選擇
-    showModal(withData, uid);
+    // 2. 非 auto: 一律當新使用者,不再彈窗詢問合併
+    //    (v521 起 HUA 決定只留 wing2004piten@gmail.com + wen84224@gmail.com,
+    //     其他舊 nickname 通通不合併)
+    localStorage.setItem(LS_FLAG, String(Date.now()));
+    window.dispatchEvent(
+      new CustomEvent("dental-migration-done", {
+        detail: { nickname: null, googleUid: uid, newUser: true },
+      }),
+    );
   }
 
   function showToast(msg) {

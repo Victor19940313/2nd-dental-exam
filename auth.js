@@ -17,6 +17,21 @@
     return;
   }
 
+  // v498: 自己 initializeApp (幂等), 不依賴 sync.js 的執行順序
+  // 之前 auth.js 在 sync.js.init() 前就跑 → firebase.auth() 因 App 沒 init 而 throw
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      apiKey: "AIzaSyACFnTGWEuhUp0htnMWe8i7XbHiAWjgoAc",
+      authDomain: "dental-exam-sync.firebaseapp.com",
+      databaseURL:
+        "https://dental-exam-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "dental-exam-sync",
+      storageBucket: "dental-exam-sync.firebasestorage.app",
+      messagingSenderId: "136556858599",
+      appId: "1:136556858599:web:de382cbbef5099d63e2642",
+    });
+  }
+
   const auth = firebase.auth();
   const db = firebase.database();
   const provider = new firebase.auth.GoogleAuthProvider();

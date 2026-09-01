@@ -19,7 +19,7 @@
   // 預設綁定: Google email → 舊 nickname (免彈窗自動搬)
   const AUTO_MIGRATE_MAP = {
     "wing2004piten@gmail.com": "HUA",
-    // 未來擴充: 'shirley@gmail.com': 'Shirley'
+    "wen84224@gmail.com": "Shirley",
   };
 
   const db = firebase.database();

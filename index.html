@@ -448,26 +448,25 @@
     </style>
   </head>
   <body>
-    <!-- User selection overlay -->
+    <!-- User selection overlay (v507: 只留 Google 登入, 移除訪客模式) -->
     <div class="user-overlay" id="user-overlay">
       <h2>歡迎回來</h2>
-      <p class="sub2">用 Google 登入,自動搬舊資料 + 跨裝置同步</p>
-      <div
-        style="margin: 1rem 0 1.5rem; display: flex; justify-content: center"
-      >
+      <p class="sub2">用 Google 帳號登入,資料跨裝置同步</p>
+      <div style="margin: 2rem 0 1rem; display: flex; justify-content: center">
         <span id="auth-widget"></span>
       </div>
-      <div
+      <p
         style="
           text-align: center;
           color: #9ca3af;
           font-size: 0.78rem;
-          margin: 0.5rem 0 1rem;
+          margin-top: 1.5rem;
+          line-height: 1.6;
         "
       >
-        — 或使用舊的訪客模式 —
-      </div>
-      <div class="user-list" id="user-list"></div>
+        首次登入自動搬舊資料 · 免費 7 天體驗
+      </p>
+      <div class="user-list" id="user-list" style="display: none"></div>
     </div>
 
     <!-- Main content (hidden until user selected) -->

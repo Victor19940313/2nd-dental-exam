@@ -13,7 +13,7 @@
       // 避免閃一下「考試首頁」再跳到筆記本
       if (location.hash === "#notebook") {
         document.write(
-          "<style>#screen-home,#screen-practice,#screen-scroll-exam,#screen-exam-results,#screen-wrongbook{display:none!important}</style>",
+          '<style id="boot-hide-screens">#screen-home,#screen-practice,#screen-scroll-exam,#screen-exam-results,#screen-wrongbook{display:none!important}</style>',
         );
       }
     </script>
@@ -11111,6 +11111,9 @@
       }
       function showHome() {
         closeAllOverlays();
+        // v509: 移除 boot 時注入的 !important hide (避免 showHome 被蓋)
+        const _boot = document.getElementById("boot-hide-screens");
+        if (_boot) _boot.remove();
         document.getElementById("screen-home").style.display = "block";
         document.getElementById("screen-practice").style.display = "none";
         document.getElementById("screen-browse").style.display = "none";

@@ -822,11 +822,14 @@
             if (!user) return;
             if (getCurUser()) return; // 已選 nickname
             const email = (user.email || "").toLowerCase();
-            const nick =
+            // v508: 沒對應 map → 用 Google 顯示名或 email 前綴當 nickname
+            let nick =
               AUTO_MAP_LOCAL[email] ||
               localStorage.getItem("migrated_nickname");
-            if (!nick) return;
-            const id = String(nick).toLowerCase();
+            if (!nick) {
+              nick = user.displayName || email.split("@")[0] || "user";
+            }
+            const id = String(nick).toLowerCase().replace(/\s+/g, "_");
             const users = getUsers();
             if (!users.find((x) => x.id === id)) {
               users.push({ id: id, name: nick, color: "#7c3aed" });

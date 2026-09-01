@@ -796,7 +796,10 @@
           });
           saveUsers(users);
         }
-        selectUser(id);
+        // v503: 跳過 selectUser 內的 PIN 驗證 (Google 登入已算身份驗證)
+        setCurUser(id);
+        if (typeof DentalSync !== "undefined") DentalSync.switchUser(id);
+        showMain();
       });
 
       // Countdown to exam (2026-07-19)

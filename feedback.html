@@ -353,6 +353,14 @@
               status: "new",
               created_ts: firebase.database.ServerValue.TIMESTAMP,
             });
+            // 通知 HUA (Telegram, 失敗不 fatal)
+            try {
+              fetch(
+                "https://island-watch.seat-watch.workers.dev/notify/feedback?fid=" +
+                  encodeURIComponent(ref.key),
+                { method: "GET", mode: "cors" },
+              ).catch(() => {});
+            } catch (e) {}
             document.getElementById("ok-id").textContent = ref.key.slice(-8);
             document.getElementById("fb-form").style.display = "none";
             document.getElementById("ok-card").style.display = "block";

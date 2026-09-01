@@ -573,6 +573,14 @@
             status: "waiting",
             created_ts: firebase.database.ServerValue.TIMESTAMP,
           });
+          // 通知 HUA (Telegram, 失敗不 fatal)
+          try {
+            fetch(
+              "https://island-watch.seat-watch.workers.dev/notify/dental?oid=" +
+                encodeURIComponent(ref.key),
+              { method: "GET", mode: "cors" },
+            ).catch(() => {});
+          } catch (e) {}
           // 顯示成功
           document.getElementById("plans").style.display = "none";
           document.getElementById("bank-info").classList.remove("show");

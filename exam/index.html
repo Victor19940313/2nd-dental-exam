@@ -5327,6 +5327,7 @@
       <div class="header-right">
         <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
         <span class="header-user" id="header-user" title="目前使用者"></span>
+        <span id="auth-widget" style="margin-right: 0.5rem"></span>
         <button
           class="btn-mode"
           id="btn-notes"
@@ -28180,6 +28181,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="../sync.js"></script>
     <script src="comment-system.js"></script>
+    <script src="../auth.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -28680,9 +28682,20 @@
         });
       }
     </script>
-  
-  <footer style="text-align:center;padding:1rem;font-size:.75rem;color:#94a3b8;border-top:1px solid #e5e7eb;margin-top:2rem;background:#fafafa;">
-    © 2026 HUA 牙醫國考互動筆記 · <strong>版權所有,翻印必究</strong> · 未經授權禁止轉載、複製、爬取內容
-  </footer>
-</body>
+
+    <footer
+      style="
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+        background: #fafafa;
+      "
+    >
+      © 2026 HUA 牙醫國考互動筆記 · <strong>版權所有,翻印必究</strong> ·
+      未經授權禁止轉載、複製、爬取內容
+    </footer>
+  </body>
 </html>

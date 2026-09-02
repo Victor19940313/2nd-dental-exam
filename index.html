@@ -859,36 +859,10 @@
         }
       })();
 
-      // v502: Google 登入 + migration 完成 → auto selectUser 對應 nickname
-      window.addEventListener("dental-migration-done", function (e) {
-        const detail = (e && e.detail) || {};
-        const nickname = detail.nickname;
-        if (!nickname) return;
-        // 轉小寫對應 id (addNewUser 邏輯: id = name.toLowerCase())
-        const id = String(nickname).toLowerCase();
-        // 若使用者已在清單 → auto select
-        const users = getUsers();
-        if (!users.find((x) => x.id === id)) {
-          // 若清單沒這 nickname (可能 localStorage 被清), 補建一個
-          const USER_COLORS_ = [
-            "#7c3aed",
-            "#0ea5e9",
-            "#22c55e",
-            "#eab308",
-            "#ef4444",
-          ];
-          users.push({
-            id: id,
-            name: nickname,
-            color: USER_COLORS_[users.length % 5],
-          });
-          saveUsers(users);
-        }
-        // v503: 跳過 selectUser 內的 PIN 驗證 (Google 登入已算身份驗證)
-        setCurUser(id);
-        if (typeof DentalSync !== "undefined") DentalSync.switchUser(id);
-        showMain();
-      });
+      // v534: 舊的 dental-migration-done listener 已移除
+      //   它會把 dental_cur_user 設回 nickname (hua/shirley),跟下面
+      //   autoSelectOnGoogleLogin (用 Google uid) 打架 → Firebase 多一份 users/hua
+      //   現在 migration.js 只負責搬資料,身份一律由 autoSelectOnGoogleLogin 決定
 
       // v532: Google email = 唯一使用者身份,拿掉舊 nickname 邏輯
       //   - wing2004piten@gmail.com → 顯示 HUA
@@ -912,17 +886,30 @@
               user.displayName ||
               email.split("@")[0] ||
               "user";
-            const id = String(displayName).toLowerCase().replace(/\s+/g, "_");
-            // 若當前 curUser 對不上這個 email → 強制重設 (避免帳號切換污染)
+            // v534: id 直接用 Google uid (不再用顯示名轉小寫)
+            //   → sync.js / exam / mnemonics 的 localStorage 前綴 + Firebase 路徑
+            //     全部變 users/{google_uid},一個帳號一份資料,後台不再冒出 hua/hua_hsu
+            //   顯示名 (HUA / Shirley / Google 名) 只放在 users[].name 給 UI 用
+            const id = user.uid;
             const curNow = getCurUser();
             if (curNow !== id) {
               const users = getUsers();
-              // 移掉舊的同名 (可能不同 email 生出的),重建
-              const filtered = users.filter((x) => x.id !== id);
+              // 只保留 Google uid 格式的項目,舊 nickname 項目一律清掉
+              const filtered = users.filter(
+                (x) => x.id !== id && /^[A-Za-z0-9]{20,}$/.test(x.id),
+              );
               filtered.push({ id: id, name: displayName, color: "#7c3aed" });
               saveUsers(filtered);
               setCurUser(id);
               if (typeof DentalSync !== "undefined") DentalSync.switchUser(id);
+            } else {
+              // 同一帳號但顯示名可能變 (例如剛加進 EMAIL_DISPLAY) → 同步 name
+              const users = getUsers();
+              const me = users.find((x) => x.id === id);
+              if (me && me.name !== displayName) {
+                me.name = displayName;
+                saveUsers(users);
+              }
             }
             showMain();
           });

@@ -401,6 +401,13 @@ tr:hover td { background: #e8f0fe !important; }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- v537: 訂閱全鎖 (過期蓋 overlay),auth.js 會自己 init Firebase -->
+    <script src="../version.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="../auth.js"></script>
+    <script src="../subscription.js"></script>
 </head>
 <body>
 

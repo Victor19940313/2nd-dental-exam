@@ -145,10 +145,97 @@
     );
   }
 
+  // v537: 全鎖 (方案 A) — 過期就蓋全螢幕 overlay,什麼都不能用
+  //   白名單 (不鎖,過期的人要能去訂閱/兌換/回報): 首頁、訂閱、獎勵、回饋、裝置
+  //   其他頁 (練習本、筆記本、口訣、牙三四五六、故事、遊戲) 一律鎖
+  //   資料不動: 只是蓋一層,users/{uid} 的筆記/標記/紀錄都在,付費後拿掉 overlay 即恢復
+  const UNLOCKED_PAGES = [
+    "/",
+    "/index.html",
+    "/subscribe.html",
+    "/rewards.html",
+    "/feedback.html",
+    "/devices.html",
+  ];
+  function isUnlockedPage() {
+    const p = location.pathname.replace(/\/+$/, "") || "/";
+    return UNLOCKED_PAGES.some(
+      (u) => p === u || p === u.replace(/\/$/, "") || p.endsWith(u),
+    );
+  }
+
+  function renderBlockOverlay() {
+    const id = "sub-block-overlay";
+    let el = document.getElementById(id);
+    const locked = isLocked();
+    if (!locked || isUnlockedPage()) {
+      if (el) el.remove();
+      return;
+    }
+    if (el) return;
+    const s = cachedStatus || {};
+    const isTrial = s.reason === "trial_expired";
+    const title = isTrial ? "免費試用已結束" : "訂閱已到期";
+    const desc = isTrial
+      ? "7 天試用期滿,訂閱後即可繼續使用全部功能。"
+      : "續訂後即可繼續使用全部功能。";
+    // 首頁相對路徑: 從子目錄 (exam/、ya3/) 要回上一層
+    const depth = (location.pathname.match(/\//g) || []).length - 1;
+    const base = depth > 0 ? "../".repeat(depth) : "./";
+    el = document.createElement("div");
+    el.id = id;
+    el.innerHTML = `
+      <div class="sbo-card">
+        <div class="sbo-emoji">🔒</div>
+        <h2>${title}</h2>
+        <p>${desc}<br><b>妳的筆記本、標記題、做題紀錄都保留著</b>,開通後原樣恢復。</p>
+        <a href="${base}subscribe.html" class="sbo-btn">前往訂閱</a>
+        <p class="sbo-sub"><a href="${base}rewards.html">有兌換序號?</a> · <a href="${base}index.html">回首頁</a></p>
+      </div>`;
+    document.body.appendChild(el);
+  }
+
+  // 首頁: 過期時把練習本 / 筆記本 / 口訣入口卡標 🔒 並導去訂閱
+  function markHomeCards() {
+    if (!isUnlockedPage()) return;
+    const locked = isLocked();
+    document
+      .querySelectorAll(
+        'a.card[href^="exam/"], a.card[href="mnemonics.html"], a.card[href^="ya"]',
+      )
+      .forEach((a) => {
+        const nameEl = a.querySelector(".name");
+        if (!nameEl) return;
+        let tag = nameEl.querySelector(".sub-lock-tag");
+        if (locked) {
+          if (!tag) {
+            tag = document.createElement("span");
+            tag.className = "sub-lock-tag";
+            tag.textContent = "🔒 需訂閱";
+            nameEl.appendChild(tag);
+          }
+          if (!a.dataset.subLockBound) {
+            a.dataset.subLockBound = "1";
+            a.addEventListener("click", (e) => {
+              if (!isLocked()) return;
+              e.preventDefault();
+              location.href = "subscribe.html";
+            });
+          }
+          a.classList.add("sub-card-locked");
+        } else {
+          if (tag) tag.remove();
+          a.classList.remove("sub-card-locked");
+        }
+      });
+  }
+
   async function refreshAndRender() {
     await getStatus();
     renderBadge();
     applyBodyClass();
+    renderBlockOverlay();
+    markHomeCards();
     changeCbs.forEach((cb) => {
       try {
         cb(cachedStatus);
@@ -228,6 +315,36 @@ body.sub-locked details.expl-block > div::after {
   padding: 1rem;
   text-align: center;
 }
+/* v537: 全鎖 overlay */
+#sub-block-overlay {
+  position: fixed; inset: 0; z-index: 99998;
+  background: rgba(30, 20, 10, .78); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+}
+#sub-block-overlay .sbo-card {
+  background: #fff; border-radius: 14px; padding: 2rem 1.5rem; max-width: 440px;
+  text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+#sub-block-overlay .sbo-emoji { font-size: 3rem; margin-bottom: .5rem; }
+#sub-block-overlay h2 { font-size: 1.3rem; color: #dc2626; margin-bottom: .8rem; }
+#sub-block-overlay p { color: #4b5563; line-height: 1.7; margin-bottom: 1rem; font-size: .93rem; }
+#sub-block-overlay p b { color: #16a34a; }
+#sub-block-overlay .sbo-btn {
+  display: inline-block; padding: .8rem 1.6rem;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff !important;
+  border-radius: 999px; text-decoration: none !important; font-weight: 700; font-size: .95rem;
+  margin: .5rem 0 1rem;
+}
+#sub-block-overlay .sbo-sub { font-size: .78rem; color: #9ca3af; margin: 0; }
+#sub-block-overlay .sbo-sub a { color: #7c3aed; text-decoration: underline; }
+/* 首頁入口卡 🔒 標記 */
+.sub-lock-tag {
+  display: inline-block; margin-left: .45rem; padding: .12rem .5rem;
+  background: #fee2e2; color: #991b1b; border-radius: 999px;
+  font-size: .68rem; font-weight: 700; vertical-align: middle;
+}
+a.card.sub-card-locked { opacity: .7; filter: grayscale(.35); }
+
 body.sub-locked .sub-unlock-btn {
   display: inline-block;
   margin: .5rem auto;

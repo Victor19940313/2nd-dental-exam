@@ -523,14 +523,16 @@
           />
           <div class="hint">妳自己銀行帳號的最後 5 碼 (不是我們的)</div>
         </div>
-        <div class="field">
+        <div class="field" id="referrer-field">
           <label for="referrer-email">推薦人 email (選填)</label>
           <input
             id="referrer-email"
             type="email"
             placeholder="填了推薦人會收到 30 天免費序號"
           />
-          <div class="hint">誰介紹妳來的?留他 Google email,他會收到獎勵</div>
+          <div class="hint">
+            誰介紹妳來的?留他 Google email,他會收到獎勵 (只有第一次訂閱有效)
+          </div>
         </div>
         <button class="submit-btn" id="submit-btn" onclick="submitOrder()">
           ✓ 我已匯款,送出對帳
@@ -722,6 +724,29 @@
         document.getElementById("redeem-box").style.display = user
           ? ""
           : "none";
+        // 順便判斷推薦人欄位: 曾被開通過訂閱 → 隱藏 (續訂不再送推薦獎勵)
+        if (user) {
+          firebase
+            .database()
+            .ref("referrals/" + user.uid)
+            .once("value")
+            .then((snap) => {
+              const alreadyReferred = snap.exists();
+              // 或曾有 subscription 記錄 → 也視為續訂
+              return firebase
+                .database()
+                .ref("users/" + user.uid + "/subscription")
+                .once("value")
+                .then((s) => ({ alreadyReferred, hasSub: s.exists() }));
+            })
+            .then(({ alreadyReferred, hasSub }) => {
+              const field = document.getElementById("referrer-field");
+              if (field) {
+                field.style.display = alreadyReferred || hasSub ? "none" : "";
+              }
+            })
+            .catch(() => {});
+        }
       }
 
       async function redeemCode() {

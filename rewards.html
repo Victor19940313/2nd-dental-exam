@@ -249,6 +249,18 @@
           }
         }
 
+        // 打開就把未讀 mark 成 seen=true (首頁紅點清掉)
+        const unseen = arr.filter((r) => !r.seen);
+        if (unseen.length) {
+          const updates = {};
+          unseen.forEach((r) => {
+            updates[r._id + "/seen"] = true;
+          });
+          db.ref("users/" + user.uid + "/rewards")
+            .update(updates)
+            .catch(() => {});
+        }
+
         const list = document.getElementById("rewards-list");
         if (!arr.length) {
           list.innerHTML = `<div class="empty"><div class="big">🎁</div>還沒有獎勵<br><small>推薦朋友訂閱就能收到 30 天免費序號</small></div>`;

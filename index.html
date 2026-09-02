@@ -466,6 +466,22 @@
       >
         首次登入自動搬舊資料 · 免費 7 天體驗
       </p>
+      <p
+        style="
+          text-align: center;
+          color: #9ca3af;
+          font-size: 0.78rem;
+          margin-top: 1.5rem;
+          line-height: 1.6;
+        "
+      >
+        畫面若沒自動跳轉,請按
+        <a
+          href="javascript:location.reload()"
+          style="color: #7c3aed; font-weight: 700; text-decoration: underline"
+          >重新整理</a
+        >
+      </p>
       <div class="user-list" id="user-list" style="display: none"></div>
     </div>
 
@@ -555,15 +571,34 @@
         </a>
         <a
           class="card exam wide"
+          id="rewards-card"
           href="rewards.html"
           style="
             border-top: 4px solid #16a34a;
             background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            position: relative;
           "
         >
           <span class="emoji">🎁</span>
           <div class="info">
-            <span class="name">我的獎勵</span>
+            <span class="name"
+              >我的獎勵
+              <span
+                id="rewards-dot"
+                style="
+                  display: none;
+                  background: #dc2626;
+                  color: #fff;
+                  font-size: 0.7rem;
+                  font-weight: 700;
+                  padding: 0.15rem 0.5rem;
+                  border-radius: 999px;
+                  margin-left: 0.4rem;
+                  vertical-align: middle;
+                  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+                "
+              ></span
+            ></span>
             <span class="topics">推薦朋友訂閱 · 自動收到 30 天免費序號</span>
           </div>
         </a>
@@ -936,6 +971,38 @@
           el.textContent = "已經改了第 " + v + " 版了 😭 我想支持作者";
         }
       })();
+
+      // 獎勵未讀紅點 (讀 users/{uid}/rewards 找 seen=false 的)
+      function loadRewardsBadge() {
+        try {
+          const user = window.Auth && window.Auth.getUser();
+          if (!user || typeof firebase === "undefined") return;
+          firebase
+            .database()
+            .ref("users/" + user.uid + "/rewards")
+            .once("value")
+            .then((snap) => {
+              let unseen = 0;
+              snap.forEach((c) => {
+                const v = c.val() || {};
+                if (v.seen !== true) unseen++;
+              });
+              const dot = document.getElementById("rewards-dot");
+              if (!dot) return;
+              if (unseen > 0) {
+                dot.textContent = unseen + " 個新獎勵!";
+                dot.style.display = "inline-block";
+              } else {
+                dot.style.display = "none";
+              }
+            })
+            .catch(() => {});
+        } catch (e) {}
+      }
+      if (window.Auth && window.Auth.onChange) {
+        window.Auth.onChange(() => setTimeout(loadRewardsBadge, 800));
+      }
+      setTimeout(loadRewardsBadge, 1500);
     </script>
 
     <footer

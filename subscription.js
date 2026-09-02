@@ -21,6 +21,7 @@
   if (typeof firebase === "undefined" || !firebase.database) return;
 
   const TRIAL_DAYS = 7;
+  const STATUS_CACHE_KEY = "sub_status_cache"; // v538: {uid, reason, ts}
   const db = firebase.database();
   let cachedStatus = null;
   const changeCbs = [];
@@ -83,6 +84,9 @@
     if (!user) {
       const s = { ok: false, reason: "not_logged_in" };
       cachedStatus = s;
+      try {
+        localStorage.removeItem(STATUS_CACHE_KEY);
+      } catch (e) {}
       if (cb) cb(s);
       return s;
     }
@@ -90,6 +94,13 @@
       const data = await loadUserData(user.uid);
       const s = computeStatus(user, data);
       cachedStatus = s;
+      // v538: 記住這個 uid 的狀態,下次進站 0 秒先套用 (過期的人不會有空窗可以點進去)
+      try {
+        localStorage.setItem(
+          STATUS_CACHE_KEY,
+          JSON.stringify({ uid: user.uid, reason: s.reason, ts: Date.now() }),
+        );
+      } catch (e) {}
       if (cb) cb(s);
       return s;
     } catch (e) {
@@ -207,6 +218,31 @@
         const nameEl = a.querySelector(".name");
         if (!nameEl) return;
         let tag = nameEl.querySelector(".sub-lock-tag");
+        // v538: click 一律攔,不只 locked 時才綁 —
+        //   狀態還沒回來 (cachedStatus null) → 先擋住,等回來再決定放行或導去訂閱
+        //   這樣 Firebase 1-3 秒的空窗期也點不進去
+        if (!a.dataset.subLockBound) {
+          a.dataset.subLockBound = "1";
+          a.addEventListener("click", (e) => {
+            if (cachedStatus && !isLocked()) return; // 已確認沒鎖 → 放行
+            e.preventDefault();
+            if (isLocked()) {
+              location.href = "subscribe.html";
+              return;
+            }
+            // 還沒回來: 顯示提示,等狀態回來再走
+            showWaitToast();
+            const target = a.getAttribute("href");
+            const once = (s) => {
+              const i = changeCbs.indexOf(once);
+              if (i >= 0) changeCbs.splice(i, 1);
+              hideWaitToast();
+              if (s && s.ok) location.href = target;
+              else if (isLocked()) location.href = "subscribe.html";
+            };
+            changeCbs.push(once);
+          });
+        }
         if (locked) {
           if (!tag) {
             tag = document.createElement("span");
@@ -214,20 +250,27 @@
             tag.textContent = "🔒 需訂閱";
             nameEl.appendChild(tag);
           }
-          if (!a.dataset.subLockBound) {
-            a.dataset.subLockBound = "1";
-            a.addEventListener("click", (e) => {
-              if (!isLocked()) return;
-              e.preventDefault();
-              location.href = "subscribe.html";
-            });
-          }
           a.classList.add("sub-card-locked");
         } else {
           if (tag) tag.remove();
           a.classList.remove("sub-card-locked");
         }
       });
+  }
+
+  function showWaitToast() {
+    let t = document.getElementById("sub-wait-toast");
+    if (!t) {
+      t = document.createElement("div");
+      t.id = "sub-wait-toast";
+      t.textContent = "⏳ 確認訂閱狀態中…";
+      document.body.appendChild(t);
+    }
+    t.classList.add("show");
+  }
+  function hideWaitToast() {
+    const t = document.getElementById("sub-wait-toast");
+    if (t) t.classList.remove("show");
   }
 
   async function refreshAndRender() {
@@ -256,6 +299,29 @@
       return cachedStatus;
     },
   };
+
+  // v538: 樂觀鎖 — DOM ready 就先讀上次快取,過期的人 0 秒先鎖住,
+  //       等 Firebase 真值回來再由 refreshAndRender 覆蓋 (已續訂就自動解鎖)
+  function applyOptimisticLock() {
+    try {
+      const raw = localStorage.getItem(STATUS_CACHE_KEY);
+      if (!raw) return;
+      const c = JSON.parse(raw);
+      const curUid = localStorage.getItem("dental_cur_user");
+      if (!c || !c.uid || c.uid !== curUid) return;
+      if (c.reason !== "trial_expired" && c.reason !== "subscription_expired")
+        return;
+      cachedStatus = { ok: false, reason: c.reason, _optimistic: true };
+      applyBodyClass();
+      renderBlockOverlay();
+      markHomeCards();
+    } catch (e) {}
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyOptimisticLock);
+  } else {
+    applyOptimisticLock();
+  }
 
   // Subscribe Auth changes → auto refresh
   function subscribe() {
@@ -337,6 +403,14 @@ body.sub-locked details.expl-block > div::after {
 }
 #sub-block-overlay .sbo-sub { font-size: .78rem; color: #9ca3af; margin: 0; }
 #sub-block-overlay .sbo-sub a { color: #7c3aed; text-decoration: underline; }
+/* v538: 等待狀態 toast */
+#sub-wait-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #1f2937; color: #fff; padding: .7rem 1.3rem; border-radius: 999px;
+  font-size: .88rem; font-weight: 600; z-index: 99997; opacity: 0; pointer-events: none;
+  transition: opacity .2s; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+}
+#sub-wait-toast.show { opacity: 1; }
 /* 首頁入口卡 🔒 標記 */
 .sub-lock-tag {
   display: inline-block; margin-left: .45rem; padding: .12rem .5rem;

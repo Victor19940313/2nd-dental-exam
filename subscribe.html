@@ -569,7 +569,9 @@
         </ul>
       </div>
 
-      <footer style="position: sticky; top: 100vh">© 2026 ezpass 牙醫二階國考互動筆記 · 版權所有翻印必究</footer>
+      <footer style="position: sticky; top: 100vh">
+        © 2026 ezpass 牙醫二階國考互動筆記 · 版權所有翻印必究
+      </footer>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -677,6 +679,9 @@
       // 顯示訂閱狀態卡
       function renderStatus() {
         if (!window.Subscription) return;
+        // v539: 登入狀態還沒確定就不畫 (避免已登入者先看到「請先登入」閃一下)
+        if (window.Auth && window.Auth.isReady && !window.Auth.isReady())
+          return;
         window.Subscription.getStatus().then((s) => {
           const card = document.getElementById("status-card");
           if (!s || s.reason === "not_logged_in") {
@@ -715,12 +720,12 @@
       // 等 Auth ready 再 render
       function waitAuth() {
         if (window.Auth && window.Auth.onChange) {
+          // v539: 只靠 onChange (已 ready 會立刻補呼一次),不再一進來就 render
+          //       — 那時 Auth 還沒回,會先畫成「未登入」再閃掉
           window.Auth.onChange(function () {
             setTimeout(renderStatus, 300);
             setTimeout(toggleRedeemBox, 300);
           });
-          renderStatus();
-          toggleRedeemBox();
         } else {
           setTimeout(waitAuth, 300);
         }

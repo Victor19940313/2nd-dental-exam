@@ -318,10 +318,11 @@
           submit.textContent = "送出";
         }
       }
+      // v539: 只靠 onChange (已 ready 會立刻補呼),不再 800ms 硬 render
+      //       — 那時 Auth 可能還沒回,會先閃「請先登入」
       if (window.Auth && window.Auth.onChange) {
         window.Auth.onChange(refreshLoginUI);
       }
-      setTimeout(refreshLoginUI, 800);
 
       document
         .getElementById("fb-form")

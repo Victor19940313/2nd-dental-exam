@@ -359,7 +359,7 @@
           return;
         }
 
-        const now = Date.now();
+        // (now 已在函式開頭宣告,v530 誤加第二個 const now 造成 SyntaxError,v539 修)
         list.innerHTML = arr
           .map((r) => {
             const expired = !!(r.expires_ts && now > r.expires_ts);
@@ -481,10 +481,10 @@
         }
       };
 
+      // v539: 只靠 onChange (已 ready 會立刻補呼),不再 800ms 硬 render
       if (window.Auth && window.Auth.onChange) {
         window.Auth.onChange(loadRewards);
       }
-      setTimeout(loadRewards, 800);
     </script>
   </body>
 </html>

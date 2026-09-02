@@ -38,6 +38,13 @@
   provider.setCustomParameters({ prompt: "select_account" });
 
   let currentUser = null;
+  // v539: 「登入狀態已確定」旗標 — Firebase 第一次回呼 (不管有沒有 user) 才算確定
+  //   各頁在 isReady() 為 false 時不要顯示「請先登入」,避免已登入者看到閃一下
+  let authReady = false;
+  let _readyResolve;
+  const readyPromise = new Promise(function (r) {
+    _readyResolve = r;
+  });
   const changeCallbacks = [];
 
   // 儲存/更新使用者 profile 到 Firebase users/{uid}/profile
@@ -81,6 +88,10 @@
       }
     } else {
       currentUser = null;
+    }
+    if (!authReady) {
+      authReady = true;
+      _readyResolve(currentUser);
     }
     renderWidget();
     changeCallbacks.forEach(function (cb) {
@@ -176,8 +187,19 @@
       return currentUser;
     },
     onChange: function (cb) {
-      if (typeof cb === "function") changeCallbacks.push(cb);
+      if (typeof cb !== "function") return;
+      changeCallbacks.push(cb);
+      // v539: 若狀態已確定,晚註冊的 listener 立刻補呼一次 (不然永遠等不到第一次)
+      if (authReady) {
+        try {
+          cb(currentUser);
+        } catch (e) {}
+      }
     },
+    isReady: function () {
+      return authReady;
+    },
+    ready: readyPromise, // await Auth.ready → 拿到 user 或 null,但「確定了」
     _toggleMenu: function (el) {
       if (el && el.classList) el.classList.toggle("open");
     },

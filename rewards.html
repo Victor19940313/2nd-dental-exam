@@ -178,6 +178,7 @@
           <li>用<b>兌換碼免費開通</b>的不算贊助,不會發獎勵</li>
           <li>推薦人 email 必須是<b>已 Google 登入過</b>的帳號</li>
           <li>不能推薦自己</li>
+          <li>每個序號有效期<b>產出後 90 天</b> · 逾期自動失效</li>
         </ul>
       </div>
 
@@ -325,7 +326,7 @@
         });
         arr.sort((a, b) => (b.issued_ts || 0) - (a.issued_ts || 0));
 
-        // 每筆去 redeem_codes 查是否已被用 (自己或別人都算)
+        // 每筆去 redeem_codes 查是否已被用 (自己或別人都算) 和 expires_ts
         for (const r of arr) {
           try {
             const codeSnap = await db
@@ -334,6 +335,7 @@
             const cd = codeSnap.val();
             r.used = !!(cd && cd.used);
             r.used_by_email = cd?.used_by_email || null;
+            r.expires_ts = cd?.expires_ts || r.expires_ts || null;
           } catch (e) {
             r.used = false;
           }
@@ -357,12 +359,32 @@
           return;
         }
 
+        const now = Date.now();
         list.innerHTML = arr
           .map((r) => {
-            const cls = r.used ? "reward-row used" : "reward-row";
+            const expired = !!(r.expires_ts && now > r.expires_ts);
+            const daysToExp = r.expires_ts
+              ? Math.ceil((r.expires_ts - now) / 86400_000)
+              : null;
+            const urgent =
+              !r.used && !expired && daysToExp !== null && daysToExp <= 7;
+            let cls = "reward-row";
+            let extraStyle = "";
+            if (r.used) cls += " used";
+            else if (expired) {
+              cls += " used";
+              extraStyle = "opacity:.4;";
+            } else if (urgent) {
+              extraStyle =
+                "border-color:#f87171;background:linear-gradient(135deg,#fef2f2,#ffffff);";
+            }
             const tag = r.used
               ? '<span class="reward-tag used">已使用</span>'
-              : '<span class="reward-tag avail">✨ 可用</span>';
+              : expired
+                ? '<span class="reward-tag used" style="background:#fecaca;color:#991b1b">⏰ 已過期</span>'
+                : urgent
+                  ? `<span class="reward-tag" style="background:#fee2e2;color:#991b1b;font-weight:700">⏰ 剩 ${daysToExp} 天到期</span>`
+                  : '<span class="reward-tag avail">✨ 可用</span>';
             const reason =
               r.reason === "referral"
                 ? `推薦獎勵 · 來自 ${escape(r.from_email_masked || "?")}`
@@ -370,19 +392,25 @@
             const usedByLine = r.used
               ? `<div class="reward-meta" style="margin-top:.3rem">被 ${escape(r.used_by_email || "?")} 兌換</div>`
               : "";
-            const actionBtns = r.used
-              ? ""
-              : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 30 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製</button>`;
-            const preview = r.used
-              ? ""
-              : `<div class="reward-meta" style="margin-top:.2rem;color:#16a34a">按「續命 30 天」→ 訂閱會延到 ${fmtDate((window._currentExpires || Date.now()) + 30 * 86400_000)}</div>`;
-            return `<div class="${cls}">
+            const actionBtns =
+              r.used || expired
+                ? ""
+                : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 30 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製</button>`;
+            const preview =
+              r.used || expired
+                ? ""
+                : `<div class="reward-meta" style="margin-top:.2rem;color:#16a34a">按「續命 30 天」→ 訂閱會延到 ${fmtDate((window._currentExpires || Date.now()) + 30 * 86400_000)}</div>`;
+            const expLine = r.expires_ts
+              ? `<div class="reward-meta" style="margin-top:.15rem">序號到期: ${fmtDate(r.expires_ts)}${expired ? " (已過期)" : daysToExp !== null ? ` · 還剩 ${Math.max(0, daysToExp)} 天` : ""}</div>`
+              : "";
+            return `<div class="${cls}" style="${extraStyle}">
             <div class="reward-head">
               <span class="reward-code">${escape(r.code)}</span>
               <div>${actionBtns}</div>
             </div>
             <div class="reward-meta">${tag} · 30 天 · ${reason}</div>
             <div class="reward-meta" style="margin-top:.2rem">收到於 ${fmtDate(r.issued_ts)}</div>
+            ${expLine}
             ${preview}
             ${usedByLine}
           </div>`;
@@ -400,6 +428,16 @@
         const user = window.Auth && window.Auth.getUser();
         if (!user) return alert("請先 Google 登入");
         const now = Date.now();
+        // 先讀 code 檢查有效期
+        try {
+          const cSnap = await firebase
+            .database()
+            .ref("redeem_codes/" + code)
+            .once("value");
+          const cd = cSnap.val();
+          if (cd && cd.expires_ts && now > cd.expires_ts)
+            return alert("❌ 此序號已過期 (產出後 90 天內須使用)");
+        } catch (e) {}
         const startFrom =
           window._currentExpires && window._currentExpires > now
             ? window._currentExpires

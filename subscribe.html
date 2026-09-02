@@ -781,6 +781,8 @@
           const data = snap.val();
           if (!data) throw new Error("查無此序號");
           if (data.used) throw new Error("序號已被使用");
+          if (data.expires_ts && Date.now() > data.expires_ts)
+            throw new Error("序號已過期 (產出後 90 天內須使用)");
           const days = data.gift_days || 30;
           const now = Date.now();
           const expires = now + days * 86400_000;

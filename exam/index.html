@@ -10255,7 +10255,7 @@
         }
         if (
           !confirm(
-            `用「老師教學」新風格重生「${q.meta || q.id}」的 Gemini 詳解?\n\n會覆寫舊版,並同步到 GitHub(所有使用者下次載入會看到新詳解)。NotebookLM 詳解不動。`,
+            `用「老師教學」新風格重生「${q.meta || q.id}」的 Gemini 詳解?\n\n只會存到妳自己的帳號,不影響其他使用者。NotebookLM 詳解不動。`,
           )
         )
           return;
@@ -10272,37 +10272,16 @@
         _silentResetCooldowns();
         try {
           const cleaned = await _generateExplWithCheck(q);
-          // 1. 覆寫題庫(本機 + 全使用者)
-          q.explanation = cleaned;
-          q.explanation_source = getBgRegenModel
+          // v531: 改成 per-user override, 不再覆寫全站題庫也不推 GitHub
+          // 只寫 qState[qid].expl_override + src_override → 存到 users/{uid}/wrongbook_state
+          if (!qState[qid]) qState[qid] = { status: "none", count: 0 };
+          qState[qid].expl_override = cleaned;
+          qState[qid].src_override = getBgRegenModel
             ? getBgRegenModel()
             : "gemini-3.5-flash";
-          // 2. 清掉 pending 旗標
-          q.explanation_pending = false;
-          // 3. 同步到 patches(本機 + GitHub)
-          if (typeof recordPatch === "function") {
-            recordPatch(qid, cleaned, q.explanation_source);
-          }
-          // 4. 清掉個人 override(讓全使用者版顯示)
-          const st = getS(qid);
-          delete st.expl_override;
-          delete st.src_override;
           await persist(qid);
-          showToast("✓ 已重生,正在同步到 GitHub...");
-          // 5. push 到 GitHub(讓所有使用者看到)
-          if (typeof pushPatchesToGithub === "function") {
-            pushPatchesToGithub()
-              .then(() => {
-                showToast("✅ 已同步到 GitHub,所有使用者下次載入會看到新詳解");
-              })
-              .catch((err) => {
-                console.warn("push patches failed", err);
-                showToast(
-                  "⚠️ 本機已更新,但同步 GitHub 失敗:" +
-                    (err.message || "").slice(0, 60),
-                );
-              });
-          }
+          const st = getS(qid);
+          showToast("✓ 已重生 (只存到妳自己的帳號)");
           // 重新渲染當前畫面的 expl 區
           const curQ =
             (typeof practiceList !== "undefined" &&

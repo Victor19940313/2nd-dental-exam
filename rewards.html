@@ -185,9 +185,31 @@
         請先<a href="index.html">回首頁</a>用 Google 登入才能看獎勵
       </div>
 
+      <div
+        id="sub-status"
+        style="
+          display: none;
+          background: #fff;
+          border: 1.5px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 1rem 1.2rem;
+          margin-bottom: 1.2rem;
+        "
+      >
+        <div style="font-size: 0.8rem; color: #6b7280; margin-bottom: 0.3rem">
+          妳目前的訂閱
+        </div>
+        <div
+          id="sub-status-body"
+          style="font-size: 1.05rem; font-weight: 700"
+        ></div>
+      </div>
+
       <div id="rewards-list"></div>
 
-      <p class="foot">© 2026 ezpass 牙醫二階國考互動筆記 · v<span id="v"></span></p>
+      <p class="foot">
+        © 2026 ezpass 牙醫二階國考互動筆記 · v<span id="v"></span>
+      </p>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -226,15 +248,72 @@
         );
       }
 
+      const TRIAL_DAYS = 7;
       async function loadRewards() {
         const user = window.Auth && window.Auth.getUser();
         if (!user) {
           document.getElementById("need-login").style.display = "block";
           document.getElementById("rewards-list").innerHTML = "";
+          document.getElementById("sub-status").style.display = "none";
           return;
         }
         document.getElementById("need-login").style.display = "none";
         const db = firebase.database();
+
+        // 讀當前訂閱狀態 (顯示在頂部 + 續命按鈕會用到)
+        const now = Date.now();
+        const subSnap = await db
+          .ref("users/" + user.uid + "/subscription")
+          .once("value");
+        const profSnap = await db
+          .ref("users/" + user.uid + "/profile")
+          .once("value");
+        const sub = subSnap.val();
+        const profile = profSnap.val() || {};
+        let subStatus, currentExpires;
+        if (sub && sub.expires_at && now < sub.expires_at) {
+          subStatus = "paid";
+          currentExpires = sub.expires_at;
+        } else if (sub && sub.expires_at) {
+          subStatus = "expired";
+          currentExpires = sub.expires_at;
+        } else {
+          const trialStart = profile.trial_started_at || profile.created_ts;
+          if (trialStart) {
+            const trialEnd = trialStart + TRIAL_DAYS * 86400_000;
+            if (now < trialEnd) {
+              subStatus = "trial";
+              currentExpires = trialEnd;
+            } else {
+              subStatus = "expired";
+              currentExpires = trialEnd;
+            }
+          } else {
+            subStatus = "trial";
+            currentExpires = now + TRIAL_DAYS * 86400_000;
+          }
+        }
+        window._currentExpires = currentExpires;
+        window._subStatus = subStatus;
+
+        const daysLeft = Math.max(
+          0,
+          Math.ceil((currentExpires - now) / 86400_000),
+        );
+        const statusBox = document.getElementById("sub-status");
+        const statusBody = document.getElementById("sub-status-body");
+        statusBox.style.display = "block";
+        if (subStatus === "paid") {
+          statusBox.style.borderColor = "#fbbf24";
+          statusBody.innerHTML = `✨ <span style="color:#92400e">會員 · 剩 ${daysLeft} 天</span> <span style="color:#9ca3af;font-weight:400;font-size:.85rem">(到期 ${fmtDate(currentExpires)})</span>`;
+        } else if (subStatus === "trial") {
+          statusBox.style.borderColor = "#93c5fd";
+          statusBody.innerHTML = `🎁 <span style="color:#1e40af">試用中 · 剩 ${daysLeft} 天</span> <span style="color:#9ca3af;font-weight:400;font-size:.85rem">(到期 ${fmtDate(currentExpires)})</span>`;
+        } else {
+          statusBox.style.borderColor = "#fca5a5";
+          statusBody.innerHTML = `🔒 <span style="color:#991b1b">已過期</span> <span style="color:#9ca3af;font-weight:400;font-size:.85rem">(到期於 ${fmtDate(currentExpires)})</span>`;
+        }
+
         const snap = await db
           .ref("users/" + user.uid + "/rewards")
           .once("value");
@@ -291,16 +370,20 @@
             const usedByLine = r.used
               ? `<div class="reward-meta" style="margin-top:.3rem">被 ${escape(r.used_by_email || "?")} 兌換</div>`
               : "";
-            const copyBtn = r.used
+            const actionBtns = r.used
               ? ""
-              : `<button class="copy-btn" onclick="copyCode('${r.code}')">複製</button>`;
+              : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 30 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製</button>`;
+            const preview = r.used
+              ? ""
+              : `<div class="reward-meta" style="margin-top:.2rem;color:#16a34a">按「續命 30 天」→ 訂閱會延到 ${fmtDate((window._currentExpires || Date.now()) + 30 * 86400_000)}</div>`;
             return `<div class="${cls}">
             <div class="reward-head">
               <span class="reward-code">${escape(r.code)}</span>
-              ${copyBtn}
+              <div>${actionBtns}</div>
             </div>
             <div class="reward-meta">${tag} · 30 天 · ${reason}</div>
             <div class="reward-meta" style="margin-top:.2rem">收到於 ${fmtDate(r.issued_ts)}</div>
+            ${preview}
             ${usedByLine}
           </div>`;
           })
@@ -311,6 +394,53 @@
         navigator.clipboard
           .writeText(code)
           .then(() => alert("已複製: " + code));
+      };
+
+      window.useCode = async (code) => {
+        const user = window.Auth && window.Auth.getUser();
+        if (!user) return alert("請先 Google 登入");
+        const now = Date.now();
+        const startFrom =
+          window._currentExpires && window._currentExpires > now
+            ? window._currentExpires
+            : now;
+        const newExpires = startFrom + 30 * 86400_000;
+        if (
+          !confirm(
+            `確定使用序號 ${code} 續命?\n\n目前訂閱到期: ${fmtDate(window._currentExpires)}\n續命後到期: ${fmtDate(newExpires)}\n(等於 +30 天,原本剩下的天數不會被吃掉)`,
+          )
+        )
+          return;
+        try {
+          const db = firebase.database();
+          const ref = db.ref("redeem_codes/" + code);
+          const tx = await ref.transaction((cur) => {
+            if (!cur) return;
+            if (cur.used) return;
+            cur.used = true;
+            cur.used_by = user.uid;
+            cur.used_by_email = user.email || "";
+            cur.used_ts = now;
+            return cur;
+          });
+          if (!tx.committed) throw new Error("序號無效或已被搶先");
+          await db.ref("users/" + user.uid + "/subscription").set({
+            plan: "monthly",
+            started_at: now,
+            expires_at: newExpires,
+            activated_by: "redeem-referral-selfuse",
+            payment_ref: "序號 " + code,
+            redeem_code: code,
+            prev_expires_at:
+              window._currentExpires && window._currentExpires > now
+                ? window._currentExpires
+                : null,
+          });
+          alert(`✅ 續命成功!\n訂閱到期: ${fmtDate(newExpires)}`);
+          loadRewards();
+        } catch (e) {
+          alert("❌ 失敗: " + e.message);
+        }
       };
 
       if (window.Auth && window.Auth.onChange) {

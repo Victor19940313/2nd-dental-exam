@@ -501,7 +501,10 @@
 
       <div class="countdown" id="countdown">
         <div class="days" id="days">--</div>
-        <div class="label">天後考試</div>
+        <div class="label">距下次國考</div>
+        <div style="font-size: 0.68rem; color: #a8a08a; margin-top: 0.3rem">
+          ※ 粗估 (2027 年 2 月中) · 精確日期以考選部公告為準
+        </div>
       </div>
 
       <div class="grid">
@@ -566,7 +569,7 @@
           <span class="emoji">💬</span>
           <div class="info">
             <span class="name">許願 / Bug 回報</span>
-            <span class="topics">想要新功能? 哪裡壞掉? 直接跟 HUA 說</span>
+            <span class="topics">想要新功能? 哪裡壞掉? 直接跟作者說</span>
           </div>
         </a>
         <a
@@ -922,12 +925,14 @@
         trySubscribe();
       })();
 
-      // Countdown to exam (2026-07-19)
-      const examDate = new Date("2026-07-19T00:00:00+08:00");
+      // 下次國考粗估 (2027-02-15,實際日期以考選部公告為準)
+      // 考選部通常前一年 11 月公佈期程表 → 到時改這行 + 拿掉「粗估」小字
+      const examDate = new Date("2027-02-15T00:00:00+08:00");
       function updateCountdown() {
         const now = new Date();
         const diff = Math.ceil((examDate - now) / (1000 * 60 * 60 * 24));
-        document.getElementById("days").textContent = diff > 0 ? diff : 0;
+        document.getElementById("days").textContent =
+          (diff > 0 ? diff : 0) + " 天";
       }
       updateCountdown();
 

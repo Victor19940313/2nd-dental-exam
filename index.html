@@ -890,9 +890,13 @@
         showMain();
       });
 
-      // v505: 保險 fallback — 直接 subscribe Auth (不依賴 event race)
+      // v532: Google email = 唯一使用者身份,拿掉舊 nickname 邏輯
+      //   - wing2004piten@gmail.com → 顯示 HUA
+      //   - wen84224@gmail.com → 顯示 Shirley
+      //   - 其他 email → 顯示 Google displayName 或 email 前綴
+      //   每次 Auth onChange 都依當前 email 重設 (不再讀 localStorage.migrated_nickname)
       (function autoSelectOnGoogleLogin() {
-        const AUTO_MAP_LOCAL = {
+        const EMAIL_DISPLAY = {
           "wing2004piten@gmail.com": "HUA",
           "wen84224@gmail.com": "Shirley",
         };
@@ -902,23 +906,24 @@
           }
           window.Auth.onChange(function (user) {
             if (!user) return;
-            if (getCurUser()) return; // 已選 nickname
             const email = (user.email || "").toLowerCase();
-            // v508: 沒對應 map → 用 Google 顯示名或 email 前綴當 nickname
-            let nick =
-              AUTO_MAP_LOCAL[email] ||
-              localStorage.getItem("migrated_nickname");
-            if (!nick) {
-              nick = user.displayName || email.split("@")[0] || "user";
+            const displayName =
+              EMAIL_DISPLAY[email] ||
+              user.displayName ||
+              email.split("@")[0] ||
+              "user";
+            const id = String(displayName).toLowerCase().replace(/\s+/g, "_");
+            // 若當前 curUser 對不上這個 email → 強制重設 (避免帳號切換污染)
+            const curNow = getCurUser();
+            if (curNow !== id) {
+              const users = getUsers();
+              // 移掉舊的同名 (可能不同 email 生出的),重建
+              const filtered = users.filter((x) => x.id !== id);
+              filtered.push({ id: id, name: displayName, color: "#7c3aed" });
+              saveUsers(filtered);
+              setCurUser(id);
+              if (typeof DentalSync !== "undefined") DentalSync.switchUser(id);
             }
-            const id = String(nick).toLowerCase().replace(/\s+/g, "_");
-            const users = getUsers();
-            if (!users.find((x) => x.id === id)) {
-              users.push({ id: id, name: nick, color: "#7c3aed" });
-              saveUsers(users);
-            }
-            setCurUser(id);
-            if (typeof DentalSync !== "undefined") DentalSync.switchUser(id);
             showMain();
           });
         }

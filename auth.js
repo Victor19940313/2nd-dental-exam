@@ -109,6 +109,12 @@
   async function signOutFn() {
     try {
       await auth.signOut();
+      // v532: 清 nickname/curUser 避免下次登入其他帳號時被舊值污染
+      try {
+        localStorage.removeItem("dental_cur_user");
+        localStorage.removeItem("migrated_nickname");
+        localStorage.removeItem("migrated_google_uid");
+      } catch (e) {}
     } catch (e) {
       console.warn("[Auth] signOut failed:", e.message);
     }

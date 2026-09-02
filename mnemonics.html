@@ -18,6 +18,8 @@
     <script src="version.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="auth.js"></script>
     <script src="visitor-log.js"></script>
     <style>
       :root {
@@ -1562,8 +1564,14 @@
         腦洞大開: "腦洞大開",
       };
       // v329:每個 namespace 只有對應的人能編輯內容
-      //       (HUA 區只有 hua 能編;腦洞大開區只有 shirley 能編。
-      //        其他人/對方都能看 + 能留言)
+      // v532: 改用 email 判斷 owner (不再靠 nickname):
+      //       HUA namespace → wing2004piten@gmail.com 可編
+      //       腦洞大開 namespace → wen84224@gmail.com 可編
+      const NS_OWNER_EMAIL = {
+        HUA: "wing2004piten@gmail.com",
+        腦洞大開: "wen84224@gmail.com",
+      };
+      // 舊版仍留 (fallback,某些頁面 dental_cur_user 判斷用)
       const NS_OWNER = { HUA: "hua", 腦洞大開: "shirley" };
 
       const SUBJECT_NAME = {
@@ -1605,10 +1613,16 @@
       );
       const CAN_EDIT = CAN_COMMENT; // 暫留舊變數做最小破壞性改動,真正控制「能否改章節」改用 canEditCurrent()
       // 是否能編輯目前 namespace 的內容(章節)— 只有 namespace owner 可以
+      // v532: 一律用 Google email 判斷,不再 fallback 舊 nickname
+      //       (nickname 存在 localStorage 可被竄改,email 來自 Firebase Auth 無法偽造)
       function canEditCurrent() {
-        const owner = NS_OWNER[_curUser];
-        if (!owner) return false; // 未知 namespace 一律唯讀
-        return (CUR_USER.name || "").trim().toLowerCase() === owner;
+        const ownerEmail = NS_OWNER_EMAIL[_curUser];
+        if (!ownerEmail) return false; // 未知 namespace 一律唯讀
+        const myEmail =
+          window.Auth && window.Auth.getUser
+            ? (window.Auth.getUser()?.email || "").toLowerCase()
+            : "";
+        return !!myEmail && myEmail === ownerEmail;
       }
 
       // 🎨 套用使用者的筆記本背景設定(每個使用者各自獨立)
@@ -1668,7 +1682,9 @@
         if (e.key.startsWith(CUR_USER.id + "_nb_")) applyUserTheme();
       });
 
-      (function setupUserUI() {
+      // v532: 改成具名函式,由 waitAuthThenInit 在 Auth ready 後呼叫
+      //       (太早跑會因為拿不到 email 而誤顯示「唯讀模式」)
+      function setupUserUI() {
         const tag = document.getElementById("user-tag");
         tag.textContent = CUR_USER.name || "Guest";
         if (!CAN_EDIT) tag.classList.add("readonly");
@@ -1688,29 +1704,31 @@
           const imgNote = hasToken
             ? ""
             : '<br><span style="font-size:.78rem;color:#92400e">(沒設 GitHub token → 不能貼圖,文字共筆照常)</span>';
-          const lowerName = (CUR_USER.name || "").trim().toLowerCase();
-          const ownNs =
-            lowerName === "hua"
-              ? "HUA"
-              : lowerName === "shirley"
-                ? "腦洞大開"
-                : "";
+          // v532: 用 Google email 判斷自己的 namespace (不再靠 nickname)
+          const myEmail =
+            window.Auth && window.Auth.getUser
+              ? (window.Auth.getUser()?.email || "").toLowerCase()
+              : "";
+          let ownNs = "";
+          for (const ns in NS_OWNER_EMAIL) {
+            if (NS_OWNER_EMAIL[ns] === myEmail) {
+              ownNs = ns;
+              break;
+            }
+          }
           const rule = ownNs
             ? `你只能改「${ownNs}」的章節,其他人的可看可留言不能改。`
             : "";
           slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>。${rule}文字即時同步,版本歷史在「📜 歷史」。${imgNote}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
         } else {
           slot.innerHTML = `<div class="info-banner readonly">
-      🔒 唯讀模式 — 你的登入名稱是「<strong>${escapeHtml(CUR_USER.name || "Guest")}</strong>」,只有 HUA / Shirley 能編輯。
-      <br>
-      <span style="font-size:.78rem;color:#92400e">如果你就是 Shirley(或 HUA),按下面按鈕直接開通,不用回去改設定</span>
-      <br>
-      <button onclick="claimEditor('Shirley')" style="margin-top:.5rem;background:#16a34a;color:white;border:none;padding:.4rem .9rem;border-radius:7px;font-weight:700;cursor:pointer;margin-right:.4rem">我是 Shirley</button>
-      <button onclick="claimEditor('HUA')" style="margin-top:.5rem;background:#7c3aed;color:white;border:none;padding:.4rem .9rem;border-radius:7px;font-weight:700;cursor:pointer">我是 HUA</button>
-      <button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button>
-    </div>`;
+          🔒 唯讀模式 — 只有各區的擁有者能編輯自己的章節,其他人可看、可留言。
+          <br>
+          <span style="font-size:.78rem;color:#92400e">若這是你的區,請確認已用對應的 Google 帳號登入(回首頁登入)</span>
+          <button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button>
+        </div>`;
         }
-      })();
+      }
       function dismissBanner() {
         try {
           localStorage.setItem(
@@ -2337,10 +2355,10 @@
                 ? `<button class="del-c" onclick="deleteComment('${c.key}')" title="刪除這則留言">✕</button>`
                 : "";
             return `<div class="comment-item">
-      ${delBtn}
-      <div class="meta"><span class="who">${escapeHtml(c.by || "?")}</span> · ${dt}</div>
-      <div class="text">${linkifyCommentText(c.text || "")}</div>
-    </div>`;
+          ${delBtn}
+          <div class="meta"><span class="who">${escapeHtml(c.by || "?")}</span> · ${dt}</div>
+          <div class="text">${linkifyCommentText(c.text || "")}</div>
+        </div>`;
           })
           .join("");
         // 自動捲到最底
@@ -2579,14 +2597,14 @@
                 ? ""
                 : `<span style="background:#7c3aed;color:white;font-size:.62rem;padding:.05rem .35rem;border-radius:8px;font-weight:700;margin-right:.2rem">${escapeHtml(h.ns)}</span>`;
               return `<div class="ch-item" style="border-left:3px solid var(--ya5);padding-left:.5rem" onclick="gotoSearchHit('${escapeHtml(h.ns)}','${h.subj}','${h.ch.id}')">
-      <div style="display:flex;flex-direction:column;gap:.15rem;width:100%">
-        <div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">
-          ${nsBadge}<span style="background:var(--ya5);color:white;font-size:.65rem;padding:.05rem .35rem;border-radius:8px;font-weight:700">${subjLbl}</span>
-          <span class="ch-title" style="font-weight:700">${escapeHtml(h.ch.title || "(無標題)")}</span>
-        </div>
-        ${h.snippet ? `<div style="font-size:.74rem;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(h.snippet)}</div>` : ""}
-      </div>
-    </div>`;
+          <div style="display:flex;flex-direction:column;gap:.15rem;width:100%">
+            <div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">
+              ${nsBadge}<span style="background:var(--ya5);color:white;font-size:.65rem;padding:.05rem .35rem;border-radius:8px;font-weight:700">${subjLbl}</span>
+              <span class="ch-title" style="font-weight:700">${escapeHtml(h.ch.title || "(無標題)")}</span>
+            </div>
+            ${h.snippet ? `<div style="font-size:.74rem;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(h.snippet)}</div>` : ""}
+          </div>
+        </div>`;
             })
             .join("");
       }
@@ -2621,10 +2639,10 @@
               ? `draggable="true" data-ch-id="${ch.id}" ondragstart="_dragChStart(event,'${ch.id}')" ondragover="_dragChOver(event)" ondragleave="_dragChLeave(event)" ondrop="_dragChDrop(event,'${ch.id}')" ondragend="_dragChEnd(event)"`
               : "";
             return `<div class="ch-item ${active ? "active" : ""}" ${dragAttrs} onclick="pickChapter('${ch.id}')">
-      ${editable ? '<span class="ch-grip" title="拖曳排序">⋮⋮</span>' : ""}
-      <span class="ch-title">${escapeHtml(ch.title || "(無標題)")}</span>
-      ${editable ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ""}
-    </div>`;
+          ${editable ? '<span class="ch-grip" title="拖曳排序">⋮⋮</span>' : ""}
+          <span class="ch-title">${escapeHtml(ch.title || "(無標題)")}</span>
+          ${editable ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ""}
+        </div>`;
           })
           .join("");
       }
@@ -3446,15 +3464,15 @@
               const dt = v.ts ? new Date(v.ts).toLocaleString("zh-TW") : "";
               const action = v.action || "更新";
               return `<div class="version-row">
-        <div class="v-info">
-          <div class="v-title">${escapeHtml(action)}</div>
-          <div class="v-meta">${escapeHtml(v.by || "?")} · ${dt}</div>
-        </div>
-        <div class="v-action">
-          <button onclick="previewVersion(${i})">👁 預覽</button>
-          ${canEditCurrent() ? `<button class="restore" onclick="restoreFromVersion(${i})">↶ 還原</button>` : ""}
-        </div>
-      </div>`;
+            <div class="v-info">
+              <div class="v-title">${escapeHtml(action)}</div>
+              <div class="v-meta">${escapeHtml(v.by || "?")} · ${dt}</div>
+            </div>
+            <div class="v-action">
+              <button onclick="previewVersion(${i})">👁 預覽</button>
+              ${canEditCurrent() ? `<button class="restore" onclick="restoreFromVersion(${i})">↶ 還原</button>` : ""}
+            </div>
+          </div>`;
             })
             .join("");
           showVersionModalContent(
@@ -3553,10 +3571,10 @@
           document.body.appendChild(overlay);
         }
         overlay.innerHTML = `<div class="modal">
-    <button class="close-x" onclick="closeVersionModal()">✕</button>
-    <h2>📜 ${_curUser} · ${SUBJECT_NAME[_curSubject]} 編輯歷史</h2>
-    <div id="version-body">${html}</div>
-  </div>`;
+        <button class="close-x" onclick="closeVersionModal()">✕</button>
+        <h2>📜 ${_curUser} · ${SUBJECT_NAME[_curSubject]} 編輯歷史</h2>
+        <div id="version-body">${html}</div>
+      </div>`;
         overlay.onclick = (e) => {
           if (e.target === overlay) closeVersionModal();
         };
@@ -4041,11 +4059,24 @@
             toolbar.appendChild(b);
           });
           await loadUsersList();
-          // 預設選「自己對應的 namespace」(HUA → HUA、Shirley → 腦動大開)
-          // v315:小寫 lookup,大小寫差異不影響
-          const selfName = CUR_USER.name || "";
-          const selfNs =
-            NAME_TO_NAMESPACE[selfName.trim().toLowerCase()] || selfName;
+          // 預設選「自己對應的 namespace」
+          // v532: 先用 Google email 對應,拿不到才 fallback 舊 nickname
+          const myEmail =
+            window.Auth && window.Auth.getUser
+              ? (window.Auth.getUser()?.email || "").toLowerCase()
+              : "";
+          let selfNs = "";
+          for (const ns in NS_OWNER_EMAIL) {
+            if (NS_OWNER_EMAIL[ns] === myEmail) {
+              selfNs = ns;
+              break;
+            }
+          }
+          if (!selfNs) {
+            const selfName = CUR_USER.name || "";
+            selfNs =
+              NAME_TO_NAMESPACE[selfName.trim().toLowerCase()] || selfName;
+          }
           _curUser = _users.includes(selfNs)
             ? selfNs
             : _users[0] || DEFAULT_USERS[0];
@@ -4061,7 +4092,22 @@
             "<br><br>網路問題,刷新重試</div>";
         }
       }
-      init();
+      // v532: 等 Firebase Auth 拿到使用者才 init
+      //       (namespace 預設 + 編輯權限都靠 email,太早跑會判成唯讀)
+      (function waitAuthThenInit() {
+        let waited = 0;
+        (function tick() {
+          const authReady =
+            window.Auth && typeof window.Auth.getUser === "function";
+          if ((authReady && window.Auth.getUser()) || waited >= 2500) {
+            setupUserUI();
+            init();
+            return;
+          }
+          waited += 200;
+          setTimeout(tick, 200);
+        })();
+      })();
 
       window.addEventListener("beforeunload", (e) => {
         // 🛡 v309:只在「真的在編輯模式 + 有改動 + 有選章節」才擋,避免閒置時也跳
@@ -4138,9 +4184,20 @@
         }
       })();
     </script>
-  
-  <footer style="text-align:center;padding:1rem;font-size:.75rem;color:#94a3b8;border-top:1px solid #e5e7eb;margin-top:2rem;background:#fafafa;">
-    © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> · 未經授權禁止轉載、複製、爬取內容
-  </footer>
-</body>
+
+    <footer
+      style="
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 2rem;
+        background: #fafafa;
+      "
+    >
+      © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
+      未經授權禁止轉載、複製、爬取內容
+    </footer>
+  </body>
 </html>

@@ -480,9 +480,11 @@
     } catch (e) {
       el.scrollIntoView();
     }
-    setTimeout(place, 320);
     place();
+    // 平滑捲動、字型載入、頁面自己重排 都會讓位置跑掉 → 前 1.2 秒多對幾次,之後每 400ms 再校正一次 (只有教學開著時)
+    [120, 320, 600, 900, 1200].forEach(function (ms) { setTimeout(place, ms); });
   }
+  setInterval(function () { if (active) place(); }, 400);
   function place() {
     if (!active || !active.el) return;
     var r = active.el.getBoundingClientRect();

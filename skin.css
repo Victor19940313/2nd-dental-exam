@@ -470,3 +470,7 @@ html[data-skin] .stat .n, html[data-skin] .vnote .vtag { color: var(--sk-accent)
 html[data-skin] .story b { color: var(--sk-accent); }
 html[data-skin] .btn.main { background: var(--sk-accent) !important; color: var(--sk-accent-ink) !important; border: var(--sk-bw) solid var(--sk-accent-d) !important; box-shadow: var(--sk-btn-shadow) !important; }
 html[data-skin] .btn.sub { background: var(--sk-card) !important; color: var(--sk-ink) !important; border: var(--sk-bw) solid var(--sk-line) !important; }
+
+/* v562: 標題旁的「使用網站前先來看這邊！」 */
+html[data-skin] .hero { text-align: left; }
+html[data-skin] .hero-cta { margin: -0.6rem 0 1rem; background: var(--sk-accent) !important; color: var(--sk-accent-ink) !important; border: var(--sk-bw) solid var(--sk-accent-d) !important; box-shadow: var(--sk-btn-shadow) !important; border-radius: 999px !important; }

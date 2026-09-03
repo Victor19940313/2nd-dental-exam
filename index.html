@@ -220,6 +220,28 @@
         flex-direction: column;
         gap: 0.25rem;
       }
+      /* v562: 網站特色入口放在標題旁 (HUA 指定) */
+      .hero-cta {
+        display: inline-block;
+        margin: -1.6rem 0 2rem;
+        background: #fff;
+        border: 1.5px solid #c8c3b0;
+        color: #5b21b6;
+        font-weight: 800;
+        font-size: 0.9rem;
+        padding: 0.45rem 1rem;
+        border-radius: 999px;
+        text-decoration: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .hero-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 14px rgba(0, 0, 0, 0.12);
+      }
+      .hero {
+        text-align: center;
+      }
       /* v560: hero 新元素在經典模式不顯示 (skin.css 才打開) */
       .hero-eyebrow,
       .hero-art,
@@ -530,6 +552,7 @@
           <span class="hero-eyebrow">EZPASS DENTAL</span>
           <h1>牙醫國考互動筆記</h1>
           <p class="sub">選擇科目，開始複習</p>
+          <a class="hero-cta" href="features.html">✨ 使用網站前先來看這邊！</a>
         </div>
         <div class="hero-art" id="hero-art" aria-hidden="true"></div>
       </div>
@@ -628,21 +651,7 @@
           </div>
         </a>
         <a
-          class="card exam wide half"
-          href="features.html"
-          style="
-            border-top: 4px solid #0e7490;
-            background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
-          "
-        >
-          <span class="emoji">✨</span>
-          <div class="info">
-            <span class="name">網站特色</span>
-            <span class="topics">一個半月、平均 80 分，作者怎麼辦到的</span>
-          </div>
-        </a>
-        <a
-          class="card exam wide half"
+          class="card exam wide"
           href="feedback.html"
           style="
             border-top: 4px solid #3b82f6;

@@ -1,0 +1,343 @@
+/* ═══════════════════════════════════════════════════════════════
+   skin.css — 全站「風格」(v550)
+   所有規則都以 html[data-skin] 開頭 → 沒選風格時整個檔案不生效。
+   六種風格只改「變數」+ 少量裝飾; 各頁元件的對應寫在下面「共用對應」。
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ───────── 變數: 六種風格 ───────── */
+html[data-skin="kawaii"] {
+  --sk-bg: #fff8f1; --sk-bg-img: radial-gradient(#ffd3de 1.6px, transparent 1.7px); --sk-bg-size: 22px 22px;
+  --sk-card: #ffffff; --sk-ink: #4a3b4b; --sk-ink2: #7a6a7b; --sk-mute: #a899a9; --sk-line: #4a3b4b;
+  --sk-accent: #ee5a8a; --sk-accent-d: #4a3b4b; --sk-accent-soft: #ffd3de; --sk-accent-ink: #ffffff;
+  --sk-radius: 20px; --sk-radius-s: 14px; --sk-bw: 2.5px;
+  --sk-shadow: 4px 4px 0 #4a3b4b; --sk-shadow-lift: 6px 6px 0 #4a3b4b; --sk-btn-shadow: 3px 3px 0 #4a3b4b;
+  --sk-font: "Noto Sans TC", system-ui, sans-serif; --sk-font-display: "Noto Sans TC", system-ui, sans-serif; --sk-font-num: "Baloo 2", "Noto Sans TC", sans-serif;
+}
+html[data-skin="toon"] {
+  --sk-bg: #eaf6ff; --sk-bg-img: linear-gradient(#bfe3ff, #eaf6ff 40%); --sk-bg-size: auto;
+  --sk-card: #ffffff; --sk-ink: #1e2a47; --sk-ink2: #4e5b7a; --sk-mute: #8a96b3; --sk-line: #dce6f5;
+  --sk-accent: #2f8ef5; --sk-accent-d: #1c63b8; --sk-accent-soft: #ddeeff; --sk-accent-ink: #ffffff;
+  --sk-radius: 22px; --sk-radius-s: 14px; --sk-bw: 0px;
+  --sk-shadow: 0 6px 0 #c9d6ea, 0 10px 24px rgba(30, 42, 71, 0.1); --sk-shadow-lift: 0 9px 0 #c9d6ea, 0 16px 30px rgba(30, 42, 71, 0.16); --sk-btn-shadow: 0 4px 0 #1c63b8;
+  --sk-font: "Noto Sans TC", system-ui, sans-serif; --sk-font-display: "Noto Sans TC", system-ui, sans-serif; --sk-font-num: Fredoka, "Noto Sans TC", sans-serif;
+}
+html[data-skin="notebook"] {
+  --sk-bg: #fbf8f0; --sk-bg-img: repeating-linear-gradient(transparent 0 27px, rgba(70, 110, 180, 0.22) 27px 28px); --sk-bg-size: auto;
+  --sk-card: #ffffff; --sk-ink: #2b2b33; --sk-ink2: #5b5b66; --sk-mute: #8a8a95; --sk-line: #2b2b33;
+  --sk-accent: #d64545; --sk-accent-d: #2b2b33; --sk-accent-soft: #ffe86b; --sk-accent-ink: #ffffff;
+  --sk-radius: 12px 14px 10px 16px / 14px 10px 16px 12px; --sk-radius-s: 8px 10px 7px 11px / 10px 7px 11px 8px; --sk-bw: 2px;
+  --sk-shadow: 3px 3px 0 rgba(43, 43, 51, 0.2); --sk-shadow-lift: 4px 4px 0 rgba(43, 43, 51, 0.3); --sk-btn-shadow: 3px 3px 0 rgba(43, 43, 51, 0.3);
+  --sk-font: "LXGW WenKai TC", "Noto Sans TC", serif; --sk-font-display: "LXGW WenKai TC", "Noto Sans TC", serif; --sk-font-num: "LXGW WenKai TC", serif;
+}
+html[data-skin="stationery"] {
+  --sk-bg: #f4eee6; --sk-bg-img: none; --sk-bg-size: auto;
+  --sk-card: #ffffff; --sk-ink: #4b3f39; --sk-ink2: #8c7b72; --sk-mute: #a69a91; --sk-line: #e7dcd1;
+  --sk-accent: #a67c6d; --sk-accent-d: #8a6455; --sk-accent-soft: #f3e4da; --sk-accent-ink: #ffffff;
+  --sk-radius: 18px; --sk-radius-s: 12px; --sk-bw: 1px;
+  --sk-shadow: none; --sk-shadow-lift: 0 6px 16px rgba(75, 63, 57, 0.1); --sk-btn-shadow: none;
+  --sk-font: "Noto Sans TC", system-ui, sans-serif; --sk-font-display: "Noto Sans TC", system-ui, sans-serif; --sk-font-num: "Gowun Dodum", "Noto Sans TC", sans-serif;
+}
+html[data-skin="clinic"] {
+  --sk-bg: #f4f9fc; --sk-bg-img: linear-gradient(rgba(27, 127, 196, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(27, 127, 196, 0.06) 1px, transparent 1px); --sk-bg-size: 28px 28px;
+  --sk-card: #ffffff; --sk-ink: #123b5c; --sk-ink2: #5a6b7a; --sk-mute: #8a9aa8; --sk-line: #e3edf5;
+  --sk-accent: #1b7fc4; --sk-accent-d: #12588a; --sk-accent-soft: #e1f0fa; --sk-accent-ink: #ffffff;
+  --sk-radius: 16px; --sk-radius-s: 12px; --sk-bw: 1px;
+  --sk-shadow: 0 2px 10px rgba(27, 127, 196, 0.1); --sk-shadow-lift: 0 8px 22px rgba(27, 127, 196, 0.18); --sk-btn-shadow: none;
+  --sk-font: "Noto Sans TC", system-ui, sans-serif; --sk-font-display: "Noto Sans TC", system-ui, sans-serif; --sk-font-num: "Noto Sans TC", sans-serif;
+}
+html[data-skin="watercolor"] {
+  --sk-bg: #fcfbf8; --sk-bg-img: none; --sk-bg-size: auto;
+  --sk-card: rgba(255, 255, 255, 0.72); --sk-ink: #3a3a45; --sk-ink2: #7a7a88; --sk-mute: #9a9aa8; --sk-line: rgba(58, 58, 69, 0.12);
+  --sk-accent: #c48a9b; --sk-accent-d: #a66c7e; --sk-accent-soft: #f9e1e7; --sk-accent-ink: #ffffff;
+  --sk-radius: 20px; --sk-radius-s: 14px; --sk-bw: 1px;
+  --sk-shadow: 0 1px 3px rgba(58, 58, 69, 0.05); --sk-shadow-lift: 0 8px 20px rgba(58, 58, 69, 0.1); --sk-btn-shadow: none;
+  --sk-font: "Noto Sans TC", system-ui, sans-serif; --sk-font-display: "Noto Serif TC", "Noto Sans TC", serif; --sk-font-num: "Noto Serif TC", serif;
+}
+
+/* ───────── 蓋掉各頁自己的變數 (html[data-skin] 比 :root 強) ───────── */
+html[data-skin] {
+  /* index / mnemonics / ya5 */
+  --bg: var(--sk-bg); --bg-card: var(--sk-card); --bg-sidebar: var(--sk-card);
+  --text: var(--sk-ink); --text-sub: var(--sk-ink2); --border: var(--sk-line); --border-dk: var(--sk-line);
+  --shadow: var(--sk-shadow); --shadow-hover: var(--sk-shadow-lift); --grid-color: transparent;
+  /* ya3 / ya4 / ya6 */
+  --nb-bg: var(--sk-bg); --nb-card: var(--sk-card); --nb-text: var(--sk-ink); --nb-sub: var(--sk-ink2); --nb-bd: var(--sk-line); --nb-bdk: var(--sk-line); --nb-gc: transparent;
+  /* game */
+  --card: var(--sk-card);
+  /* exam 主色 (body.theme-xxx 舊配色若有設會蓋回去, 可接受) */
+  --purple: var(--sk-accent); --purple-dark: var(--sk-accent-d); --purple-light: var(--sk-accent-soft);
+}
+
+/* ───────── 共用對應: 背景 / 字型 ───────── */
+html[data-skin] body {
+  background: var(--sk-bg) !important;
+  background-image: var(--sk-bg-img) !important;
+  background-size: var(--sk-bg-size) !important;
+  background-attachment: fixed !important;
+  color: var(--sk-ink);
+  font-family: var(--sk-font) !important;
+}
+html[data-skin] h1,
+html[data-skin] h2,
+html[data-skin] h3 {
+  font-family: var(--sk-font-display);
+}
+html[data-skin] .countdown .days,
+html[data-skin] .stats-card .num,
+html[data-skin] .exam-res-score,
+html[data-skin] .plan .price {
+  font-family: var(--sk-font-num);
+}
+
+/* ───────── 共用對應: 卡片類 ───────── */
+html[data-skin] a.card,
+html[data-skin] .countdown,
+html[data-skin] .user-bar,
+html[data-skin] .status-card,
+html[data-skin] .plan,
+html[data-skin] .bank-info,
+html[data-skin] .form,
+html[data-skin] .success,
+html[data-skin] .not-logged,
+html[data-skin] .notes,
+html[data-skin] .reward-row,
+html[data-skin] .hint:not(.field .hint),
+html[data-skin] .empty,
+html[data-skin] .card,
+html[data-skin] .ok-card,
+html[data-skin] .device-row,
+html[data-skin] .warn,
+html[data-skin] .book,
+html[data-skin] .intro,
+html[data-skin] .editor-card,
+html[data-skin] .chapter-list,
+html[data-skin] .comment-pane,
+html[data-skin] .info-banner,
+html[data-skin] .home-card,
+html[data-skin] .content-panel,
+html[data-skin] .sidebar,
+html[data-skin] .qr-card,
+html[data-skin] .stats-card,
+html[data-skin] .filter-card,
+html[data-skin] .topic-sidebar,
+html[data-skin] .home-how,
+html[data-skin] .home-start,
+html[data-skin] .home-mode,
+html[data-skin] .home-top .daily-log-section,
+html[data-skin] .q-card,
+html[data-skin] .expl-box,
+html[data-skin] .modal,
+html[data-skin] .exam-res-card,
+html[data-skin] .scroll-q-card,
+html[data-skin] .practice-progress,
+html[data-skin] .qgrid-panel,
+html[data-skin] .daily-hist-list,
+html[data-skin] .terms-box {
+  background: var(--sk-card) !important;
+  border: var(--sk-bw) solid var(--sk-line) !important;
+  border-radius: var(--sk-radius) !important;
+  box-shadow: var(--sk-shadow) !important;
+  color: var(--sk-ink);
+}
+html[data-skin] a.card::before { display: none; } /* 首頁卡片頂端色條 */
+html[data-skin] a.card:hover,
+html[data-skin] .home-card:hover,
+html[data-skin] .book:hover,
+html[data-skin] .plan:hover {
+  box-shadow: var(--sk-shadow-lift) !important;
+  transform: translateY(-2px);
+}
+html[data-skin] .plan.selected,
+html[data-skin] .device-row.current,
+html[data-skin] .home-mode[aria-selected="true"],
+html[data-skin] .type-btn.active {
+  border-color: var(--sk-accent) !important;
+  background: var(--sk-accent-soft) !important;
+  color: var(--sk-ink) !important;
+  box-shadow: 0 0 0 4px var(--sk-accent-soft) !important;
+}
+html[data-skin] .home-mode[aria-selected="true"] b { color: var(--sk-accent) !important; }
+html[data-skin] .topic-sidebar-title { background: var(--sk-card) !important; color: var(--sk-mute) !important; }
+html[data-skin] .topic-item.active { background: var(--sk-accent-soft) !important; color: var(--sk-accent-d) !important; border-left-color: var(--sk-accent) !important; }
+html[data-skin] .topic-item:hover { background: var(--sk-accent-soft) !important; }
+
+/* ───────── 共用對應: 頁首列 ───────── */
+html[data-skin] .header,
+html[data-skin] .topbar,
+html[data-skin] .top-bar,
+html[data-skin] .qr-bar,
+html[data-skin] .scroll-exam-topbar {
+  background: var(--sk-card) !important;
+  border-bottom: var(--sk-bw) solid var(--sk-line) !important;
+  color: var(--sk-ink) !important;
+  box-shadow: var(--sk-shadow) !important;
+}
+html[data-skin] .header h1,
+html[data-skin] .topbar h1,
+html[data-skin] .top-bar h1,
+html[data-skin] .bar-title,
+html[data-skin] .header .btn-back { color: var(--sk-ink) !important; }
+html[data-skin] .header .btn-back { border-color: var(--sk-line) !important; }
+
+/* ───────── 共用對應: 主要按鈕 ───────── */
+html[data-skin] .submit-btn:not(.locked),
+html[data-skin] .copy-btn,
+html[data-skin] .home-start-btn,
+html[data-skin] .start-btn,
+html[data-skin] .btn-next,
+html[data-skin] .btn-mode.active,
+html[data-skin] .scroll-exam-submit,
+html[data-skin] .save-btn,
+html[data-skin] .topbar-add,
+html[data-skin] .subject-tabs button.active,
+html[data-skin] .back-btn,
+html[data-skin] .review-btn.done,
+html[data-skin] .qr-btn,
+html[data-skin] .ok-card .btn2,
+html[data-skin] .go-login,
+html[data-skin] .user-switch,
+html[data-skin] .sync-btn,
+html[data-skin] .comment-send,
+html[data-skin] .cur-btn {
+  background: var(--sk-accent) !important;
+  color: var(--sk-accent-ink) !important;
+  border: var(--sk-bw) solid var(--sk-accent-d) !important;
+  border-radius: var(--sk-radius-s) !important;
+  box-shadow: var(--sk-btn-shadow) !important;
+  font-family: var(--sk-font);
+}
+html[data-skin] .btn-mode {
+  background: var(--sk-card) !important;
+  color: var(--sk-ink) !important;
+  border: var(--sk-bw) solid var(--sk-line) !important;
+  border-radius: 999px !important;
+}
+html[data-skin] .btn-mode.active { border-radius: 999px !important; }
+html[data-skin] .btn-prev,
+html[data-skin] .btn-skip,
+html[data-skin] .btn-flag,
+html[data-skin] .btn-mark,
+html[data-skin] .btn-count,
+html[data-skin] .qgrid-toggle,
+html[data-skin] .daily-hist-toggle,
+html[data-skin] .menu-btn,
+html[data-skin] .kick-btn,
+html[data-skin] .btn-edit-expl,
+html[data-skin] .btn-add-notebook {
+  background: var(--sk-card) !important;
+  color: var(--sk-ink) !important;
+  border: var(--sk-bw) solid var(--sk-line) !important;
+  border-radius: var(--sk-radius-s) !important;
+  box-shadow: none !important;
+}
+html[data-skin] .kick-btn { color: #dc2626 !important; }
+
+/* ───────── 共用對應: chips / 篩選鈕 ───────── */
+html[data-skin] .chip,
+html[data-skin] .ts-chip,
+html[data-skin] .type-btn,
+html[data-skin] .qr-filter-btn,
+html[data-skin] .subject-tabs button,
+html[data-skin] .nav-link {
+  background: var(--sk-card) !important;
+  color: var(--sk-ink) !important;
+  border: var(--sk-bw) solid var(--sk-line) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+html[data-skin] .chip.sel,
+html[data-skin] .ts-chip.sel,
+html[data-skin] .qr-filter-btn.active,
+html[data-skin] .nav-link:hover {
+  background: var(--sk-accent-soft) !important;
+  color: var(--sk-accent-d) !important;
+  border-color: var(--sk-accent) !important;
+}
+
+/* ───────── 練習本作答畫面 ───────── */
+html[data-skin] .opt-row,
+html[data-skin] .scroll-opt,
+html[data-skin] .exam-res-opt {
+  background: var(--sk-card) !important;
+  border: var(--sk-bw) solid var(--sk-line) !important;
+  border-radius: var(--sk-radius-s) !important;
+  color: var(--sk-ink);
+}
+html[data-skin] .ans-btn {
+  background: var(--sk-card) !important;
+  border: var(--sk-bw) solid var(--sk-line) !important;
+  border-radius: var(--sk-radius-s) !important;
+  color: var(--sk-ink) !important;
+  box-shadow: none !important;
+}
+html[data-skin] .ans-btn.sel { background: var(--sk-accent-soft) !important; border-color: var(--sk-accent) !important; color: var(--sk-accent-d) !important; }
+html[data-skin] .ans-btn.show-correct,
+html[data-skin] .scroll-opt.show-correct { background: #22c55e !important; border-color: #16a34a !important; color: #fff !important; }
+html[data-skin] .ans-btn.show-wrong,
+html[data-skin] .scroll-opt.show-wrong { background: #ef4444 !important; border-color: #dc2626 !important; color: #fff !important; }
+html[data-skin] .progress-bar { background: var(--sk-line) !important; }
+html[data-skin] .progress-fill { background: var(--sk-accent) !important; }
+
+/* ───────── 輸入框 ───────── */
+html[data-skin] input[type="text"],
+html[data-skin] input[type="email"],
+html[data-skin] textarea,
+html[data-skin] .search-box,
+html[data-skin] .comment-input {
+  background: var(--sk-card);
+  color: var(--sk-ink);
+  border: var(--sk-bw) solid var(--sk-line) !important;
+  border-radius: var(--sk-radius-s) !important;
+  font-family: var(--sk-font);
+}
+html[data-skin] input:focus,
+html[data-skin] textarea:focus { border-color: var(--sk-accent) !important; outline: none; }
+
+/* ───────── 頁尾 / 小字 ───────── */
+html[data-skin] footer,
+html[data-skin] .foot { color: var(--sk-mute) !important; background: transparent !important; }
+
+/* ───────── 風格專屬小裝飾 ───────── */
+#skin-deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+#skin-deco .sk-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; display: block; }
+#skin-deco .sk-b1 { width: 420px; height: 420px; background: #f9c5d1; top: -120px; left: -120px; }
+#skin-deco .sk-b2 { width: 380px; height: 380px; background: #bfe3f2; top: 30%; right: -140px; }
+#skin-deco .sk-b3 { width: 360px; height: 360px; background: #fff0b3; bottom: -120px; left: 20%; }
+#skin-deco .sk-cloud { position: absolute; display: block; background: #fff; border-radius: 999px; opacity: 0.85; width: 120px; height: 38px; top: 90px; right: 2%; }
+#skin-deco .sk-cloud::before,
+#skin-deco .sk-cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
+#skin-deco .sk-cloud::before { width: 52px; height: 52px; top: -26px; left: 22px; }
+#skin-deco .sk-cloud::after { width: 38px; height: 38px; top: -16px; left: 66px; }
+html[data-skin="watercolor"] .card,
+html[data-skin="watercolor"] a.card,
+html[data-skin="watercolor"] .home-card,
+html[data-skin="watercolor"] .q-card,
+html[data-skin="watercolor"] .expl-box { backdrop-filter: blur(8px); }
+html[data-skin="toon"] h1 { color: var(--sk-accent); text-shadow: 0 3px 0 var(--sk-accent-d); }
+html[data-skin="notebook"] body { font-size: 16px; }
+html[data-skin="kawaii"] .chip,
+html[data-skin="kawaii"] .ts-chip { box-shadow: 2px 2px 0 #4a3b4b !important; }
+
+/* ───────── 左下角風格選單 (所有風格、含經典都顯示) ───────── */
+#skin-picker { position: fixed; left: 12px; bottom: 14px; z-index: 12000; font-family: "Noto Sans TC", system-ui, sans-serif; }
+#skin-picker-btn {
+  width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(0, 0, 0, 0.12); background: #fff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); cursor: pointer; font-size: 1.15rem; line-height: 1; display: grid; place-items: center; padding: 0;
+  transition: transform 0.15s;
+}
+#skin-picker-btn:hover { transform: scale(1.06); }
+#skin-picker-btn:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+#skin-menu {
+  position: absolute; left: 0; bottom: 48px; min-width: 180px; background: #fff; border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18); padding: 0.35rem; display: grid; gap: 2px;
+}
+#skin-menu[hidden] { display: none; }
+#skin-menu .sk-menu-title { font-size: 0.7rem; color: #9ca3af; letter-spacing: 0.1em; padding: 0.3rem 0.6rem 0.15rem; }
+#skin-menu button {
+  display: flex; align-items: center; gap: 0.55rem; width: 100%; text-align: left; font: inherit; font-size: 0.86rem; color: #1f2937;
+  background: none; border: 0; border-radius: 9px; padding: 0.45rem 0.6rem; cursor: pointer;
+}
+#skin-menu button:hover { background: #f3f4f6; }
+#skin-menu button[aria-checked="true"] { background: #ede9fe; color: #5b21b6; font-weight: 700; }
+#skin-menu .sk-em { width: 1.4em; text-align: center; }
+@media print { #skin-picker, #skin-deco { display: none !important; } }

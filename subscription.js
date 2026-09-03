@@ -169,10 +169,11 @@
     "/devices.html",
   ];
   function isUnlockedPage() {
+    // v542: 只做「完全相等」比對。v537 用 endsWith("/index.html") 會把 /exam/index.html、
+    //       /ya3/index.html 全部誤判成首頁而不鎖 → 全鎖從沒在練習本/筆記生效過。
+    //       白名單只有根目錄那幾頁,子目錄的 index.html 一律要鎖。
     const p = location.pathname.replace(/\/+$/, "") || "/";
-    return UNLOCKED_PAGES.some(
-      (u) => p === u || p === u.replace(/\/$/, "") || p.endsWith(u),
-    );
+    return UNLOCKED_PAGES.some((u) => p === u || p === u.replace(/\/$/, ""));
   }
 
   function renderBlockOverlay() {

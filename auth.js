@@ -93,6 +93,37 @@
       authReady = true;
       _readyResolve(currentUser);
     }
+    // v540: 身份校正搬到這裡 (每頁都載 auth.js) — 不管從哪頁進 (書籤直開練習本、手機捷徑),
+    //   dental_cur_user 都必須 = Google uid。v534 只放在首頁,直開練習本會用舊暱稱寫 Firebase (hua_hsu 復活)
+    if (currentUser) {
+      try {
+        const want = currentUser.uid;
+        if (localStorage.getItem("dental_cur_user") !== want) {
+          const EMAIL_DISPLAY = {
+            "wing2004piten@gmail.com": "HUA",
+            "wen84224@gmail.com": "Shirley",
+          };
+          const email = (currentUser.email || "").toLowerCase();
+          const name =
+            EMAIL_DISPLAY[email] ||
+            currentUser.displayName ||
+            email.split("@")[0] ||
+            "user";
+          let list = [];
+          try {
+            list = JSON.parse(localStorage.getItem("dental_users") || "[]");
+          } catch (e) {}
+          list = list.filter(
+            (x) => /^[A-Za-z0-9]{20,}$/.test(x.id) && x.id !== want,
+          );
+          list.push({ id: want, name: name, color: "#7c3aed" });
+          localStorage.setItem("dental_users", JSON.stringify(list));
+          localStorage.setItem("dental_cur_user", want);
+          if (window.DentalSync && window.DentalSync.switchUser)
+            window.DentalSync.switchUser(want);
+        }
+      } catch (e) {}
+    }
     renderWidget();
     changeCallbacks.forEach(function (cb) {
       try {

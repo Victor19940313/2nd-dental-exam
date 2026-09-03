@@ -1139,6 +1139,21 @@
         background: #2a2c3e;
         border-bottom-color: #3a3a4c;
       }
+          /* v557: 手機版口訣區 — 唯讀提示縮小、章節列表矮一點,內容不要被推到太下面 */
+      @media (max-width: 720px) {
+        .info-banner {
+          font-size: 0.72rem;
+          line-height: 1.45;
+          padding: 0.4rem 2.2rem 0.4rem 0.6rem;
+          margin-bottom: 0.6rem;
+        }
+        .chapter-list {
+          max-height: 30vh;
+        }
+        .editor-card {
+          scroll-margin-top: 0.5rem;
+        }
+      }
     </style>
       <link rel="stylesheet" href="skin.css" />
   </head>
@@ -2923,6 +2938,13 @@
           showEmptyEditor();
           return;
         }
+        // v557: 手機單欄時,點章節後內容在下面看不到 → 自動捲到內容卡
+        if (window.innerWidth <= 720) {
+          setTimeout(() => {
+            const ec = document.querySelector(".editor-card");
+            if (ec) ec.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 120);
+        }
         // v311:閱覽模式直接渲染章節內容,不再因為 IDB 有舊草稿就跳 toast
         //       (草稿仍保留,按「✏ 編輯」時會自動載入)
         const titleInput = document.getElementById("title-input");
@@ -4127,7 +4149,7 @@
             const t = document.createElement("div");
             t.className = "toast";
             t.style.cssText =
-              "background:#7c3aed;cursor:pointer;padding:.7rem 1.2rem";
+              "background:#7c3aed;cursor:pointer;padding:.7rem 1.2rem;bottom:4.8rem"; // v557: 往上放,別壓到右下「留言」鈕
             t.innerHTML = "✨ 新版本已就緒,點這裡刷新";
             t.onclick = () => location.reload();
             document.body.appendChild(t);
@@ -4137,7 +4159,11 @@
         navigator.serviceWorker
           .register("./sw.js")
           .then((reg) => {
-            setInterval(() => reg.update(), 60000); // 每分鐘檢查新版
+            // v557: 每分鐘 → 每 30 分鐘 + 亂數 (萬人審計 #8)
+            setInterval(
+              () => reg.update(),
+              30 * 60 * 1000 + Math.floor(Math.random() * 5 * 60 * 1000),
+            );
           })
           .catch(() => {});
       }

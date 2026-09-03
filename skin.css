@@ -479,3 +479,6 @@ html[data-skin] .hero-cta { margin: -0.6rem 0 1rem; background: var(--sk-accent)
 html[data-skin] .hl { background: var(--sk-card) !important; border: var(--sk-bw) solid var(--sk-line) !important; border-radius: var(--sk-radius-s) !important; box-shadow: var(--sk-shadow) !important; }
 html[data-skin] .hl .body b, html[data-skin] .hl summary::after { color: var(--sk-accent); }
 html[data-skin] .hl[open] summary { background: var(--sk-accent-soft); }
+
+/* v569: 答完後工具列在風格下也一致 */
+html[data-skin] .expl-actions > button, html[data-skin] .mark-row > button { border-radius: 999px !important; }

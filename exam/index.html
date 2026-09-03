@@ -2131,6 +2131,38 @@
       }
 
       /* Mark row */
+      /* v569: 答完後的工具列 — 三顆鈕一排、標記列一排,尺寸一致 (HUA: 排版怪) */
+      .expl-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        margin: 0.7rem 0 0.5rem;
+      }
+      .expl-actions > button {
+        margin: 0 !important;
+        padding: 0.42rem 0.9rem !important;
+        font-size: 0.84rem !important;
+        border-radius: 999px !important;
+        line-height: 1.3;
+      }
+      .mark-row {
+        gap: 0.45rem;
+        row-gap: 0.5rem;
+      }
+      .mark-row > button {
+        padding: 0.42rem 0.85rem;
+        font-size: 0.82rem;
+        border-radius: 999px;
+        line-height: 1.3;
+      }
+      .mark-row .mark-label {
+        align-self: center;
+      }
+      .btn-count {
+        margin-left: auto;
+      }
+
       .mark-row {
         display: flex;
         gap: 0.45rem;
@@ -6381,6 +6413,8 @@
       <div class="result-area" id="result-area">
         <div class="result-banner" id="result-banner"></div>
         <div class="expl-box" id="pq-expl"></div>
+        <!-- v569: 三顆工具鈕排成一列 -->
+        <div class="expl-actions">
         <button
           class="btn-edit-expl"
           id="btn-edit-expl"
@@ -6428,6 +6462,7 @@
         >
           📖 偷看筆記
         </button>
+        </div>
         <div class="mark-row">
           <button
             class="btn-flag"

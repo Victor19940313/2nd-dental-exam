@@ -196,6 +196,30 @@
           </li>
           <li>序號效期為<b>產出後 90 天</b>,逾期自動失效。</li>
         </ul>
+        <hr
+          style="border: 0; border-top: 1px solid #93c5fd; margin: 0.7rem 0"
+        />
+        <b>📖 舉例說明</b>
+        <ul style="margin: 0.3rem 0 0 1.2rem; line-height: 1.8">
+          <li>
+            帳號 A 已是會員。帳號 B <b>首次付費訂閱</b>時,填入 A 的 email
+            作為推薦人。B 開通後,A 的獎勵區即收到一張 <b>30 天序號</b>。
+          </li>
+          <li>
+            A 可點選「續命 30 天」自行延長會籍;亦可點選「複製(可送人)」,將序號轉贈帳號
+            C。C 於訂閱頁輸入序號,即開通 30 天。
+          </li>
+          <li>
+            C 以序號開通,亦屬首次開通,因此 C 日後付費續訂時<b>不可再填推薦人</b>;且 C
+            並非付費開通,A 不會因此再獲得序號。
+          </li>
+          <li>
+            B 日後續訂時同樣不可再填推薦人,A 亦不會再因 B 獲得序號。
+          </li>
+          <li>
+            A 另行推薦帳號 D、E 首次付費訂閱,每成功一位即再獲得一張序號,<b>不設上限</b>。
+          </li>
+        </ul>
       </div>
 
       <div id="need-login" style="display: none">
@@ -411,7 +435,7 @@
             const actionBtns =
               r.used || expired
                 ? ""
-                : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 30 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製</button>`;
+                : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 30 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製(可送人)</button>`;
             const preview =
               r.used || expired
                 ? ""

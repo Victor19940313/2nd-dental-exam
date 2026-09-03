@@ -243,6 +243,21 @@
           font-size: 1.6rem;
         }
       }
+      /* 收合式重點 */
+      .hl-list { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+      .hl { background: #fff; border: 1.5px solid #e4e0d4; border-radius: 14px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); overflow: hidden; }
+      .hl summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 0.7rem; padding: 0.9rem 1rem; font-weight: 900; font-size: 1rem; }
+      .hl summary::-webkit-details-marker { display: none; }
+      .hl summary::after { content: "＋"; margin-left: auto; color: #9ca3af; font-weight: 400; }
+      .hl[open] summary::after { content: "－"; }
+      .hl summary .ic { font-size: 1.3rem; line-height: 1; }
+      .hl .body { padding: 0 1rem 1rem 3rem; font-size: 0.93rem; color: #4b4636; line-height: 1.8; }
+      .hl .body b { color: #7c3aed; }
+      .more { margin-bottom: 1.2rem; }
+      .more > summary { cursor: pointer; font-weight: 800; color: #7a7060; font-size: 0.92rem; padding: 0.4rem 0.2rem; list-style: none; }
+      .more > summary::-webkit-details-marker { display: none; }
+      .more .feats { margin-top: 0.6rem; }
+      @media (max-width: 520px) { .hl .body { padding-left: 1rem; } }
     </style>
     <link rel="stylesheet" href="skin.css" />
   </head>
@@ -274,124 +289,63 @@
       <div class="card story">
         <h2>✍️ 作者的話</h2>
         <p>
-          我用了大約<b>一個半月</b>準備牙醫二階國考。一邊念、一邊把這個網站架起來，
-          <b>九成的時間</b
-          >都花在架設和使用這個網站上。課本和共筆幾乎沒翻，阿摩也幾乎沒用。
+          我是在<b>醫院實習結束之後</b>才開始準備牙醫二階國考的，前後大約<b>一個半月</b>。
+          一邊念、一邊把這個網站架起來，<b>九成的時間</b>都花在架設和使用這個網站上。
+          課本和共筆幾乎沒翻，阿摩也幾乎沒用。
         </p>
         <p>最後，國考各科<b>平均 80 分</b>。</p>
         <p>
           本網站由作者以<b>考生的第一視角</b>獨立架設。它可能還有一些小 bug，
           但它一定非常能應付國考，因為裡面每一個功能，都是我自己念書時真的需要、真的在用的。
         </p>
+        <p>這個網站，是作者一題一題、一版一版，用心血做出來的。</p>
         <div class="sig">— ezpass 作者</div>
       </div>
 
-      <h2 style="font-size: 1.15rem; font-weight: 900; margin: 0 0 0.7rem">
-        🧰 這裡有什麼
-      </h2>
-      <div class="feats">
-        <div class="feat">
-          <span class="ic">📝</span>
-          <div>
-            <b>6720 題歷屆試題</b
-            ><span
-              >105 到 115
-              年全收，每題標記「簡單／猜的／再努力／送他吧」，做過的都記得。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">🎯</span>
-          <div>
-            <b>照試卷練、照考點練</b
-            ><span
-              >整份試卷模擬考，或挑一個考點集中打。每個考點做過幾題、錯誤率多少一眼看到。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">🤖</span>
-          <div>
-            <b>每題都有 AI 詳解</b
-            ><span
-              >為什麼選這個、其他選項為什麼錯、臨床上代表什麼。看不懂還能重生一份。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">🔗</span>
-          <div>
-            <b>找 10 題最像的</b
-            ><span
-              >一題卡住，馬上拉出同一個觀念的相似題，一次把這個洞補起來。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">✏️</span>
-          <div>
-            <b>選項劃線、螢光筆</b
-            ><span
-              >像在紙本上寫字一樣，刪去錯的、標起關鍵的，下次回來還在。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">📒</span>
-          <div>
-            <b>AI 筆記本</b
-            ><span>做題時順手加進筆記，AI 自動整理成章節，跨科搜尋。</span>
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">🧠</span>
-          <div>
-            <b>口訣共筆</b
-            ><span>牙三到牙六分科，大家一起寫，有版本歷史不怕改壞。</span>
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">📅</span>
-          <div>
-            <b>每日練習紀錄</b
-            ><span
-              >今天做了幾題、昨天錯的自動整理成複習清單、歷次試卷成績走勢。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">📚</span>
-          <div>
-            <b>故事書學習法</b
-            ><span>用醫師和學生的對話把難懂的觀念講成故事，先懂再背。</span>
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">☁️</span>
-          <div>
-            <b>跨裝置同步</b
-            ><span
-              >手機、平板、電腦最多三台，Google 登入就接得上，進度不會斷。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">🎨</span>
-          <div>
-            <b>六種風格任選</b
-            ><span
-              >可愛風、動畫風、手繪筆記本、文具、診所、水彩，念書心情自己決定。</span
-            >
-          </div>
-        </div>
-        <div class="feat">
-          <span class="ic">💬</span>
-          <div>
-            <b>題目留言區</b
-            ><span>對某一題有想法、有補充，直接留在題目底下，大家一起看。</span>
-          </div>
-        </div>
+      <h2 style="font-size: 1.15rem; font-weight: 900; margin: 0 0 0.4rem">🔥 一定要知道的七件事</h2>
+      <p class="lead" style="margin-bottom: 0.8rem; font-size: 0.9rem">點開每一項看說明。</p>
+      <div class="hl-list">
+        <details class="hl" open>
+          <summary><span class="ic">📝</span><span class="t">10 年歷屆試題，絕對夠用</span></summary>
+          <div class="body">105 到 115 年、<b>6720 題</b>全部收齊。每一題都能標記「簡單／猜的／再努力／送他吧」，標了就記住，讓你可以<b>一次又一次回來重做</b>不熟的題，直到它變成送分題。</div>
+        </details>
+        <details class="hl">
+          <summary><span class="ic">🎯</span><span class="t">照考題類型練習：最厲害的功能之一</span></summary>
+          <div class="body">不是一份一份試卷亂寫，而是挑一個考點，把十年來同一個觀念的題目<b>一次寫到滾瓜爛熟</b>。每個考點做過幾題、錯誤率多少一眼看到，<b>不會今天寫、明天忘</b>。</div>
+        </details>
+        <details class="hl">
+          <summary><span class="ic">🤖</span><span class="t">每題兩套 AI 詳解，越看越放心</span></summary>
+          <div class="body"><b>Gemini 詳解</b>：為什麼選這個、其他選項為什麼錯，正確率九成以上。<br />還不夠放心？每題還有 <b>NotebookLM 詳解</b>，它是完全依據<b>考選部公布的最新牙科國考參考書</b>做出來的，正確率更高。兩套對照著看，觀念一次釐清。</div>
+        </details>
+        <details class="hl">
+          <summary><span class="ic">📒</span><span class="t">AI 幫你做筆記：最厲害的功能之一</span></summary>
+          <div class="body">點進筆記本，照步驟設定好 Gemini API 或 GitHub，之後<b>每一題都能幫你做出共筆等級的筆記</b>，而且<b>不同的類似題會自動串進同一篇筆記</b>，越做越完整。<br />生成筆記<b>不會打斷作答</b>，它在背景默默處理，你可以繼續寫下一題；寫一寫想偷看筆記，隨時點開。</div>
+        </details>
+        <details class="hl">
+          <summary><span class="ic">💬</span><span class="t">每題底下都有留言區</span></summary>
+          <div class="body">卡在同一題的考生可以<b>互相取暖</b>；學霸級的好同學也可以<b>寫寫詳解幫助大家</b>。一題一個小教室。</div>
+        </details>
+        <details class="hl">
+          <summary><span class="ic">🧠</span><span class="t">口訣區：大家的口訣一起分享</span></summary>
+          <div class="body">牙三到牙六分科，把你自己好記的口訣寫上來，也拿別人的來用。有版本歷史，改壞了隨時救回來。</div>
+        </details>
+        <details class="hl">
+          <summary><span class="ic">✍️</span><span class="t">作者親自用過的，才放進來</span></summary>
+          <div class="body">這個網站是作者<b>醫院實習結束後、一個半月備考期間</b>一邊念一邊架出來的，每個功能都是自己真的需要、真的在用的，最後國考各科<b>平均 80 分</b>。</div>
+        </details>
       </div>
+
+      <details class="more">
+        <summary>➕ 還有這些貼心功能</summary>
+        <div class="feats">
+          <div class="feat"><span class="ic">🔗</span><div><b>找 10 題最像的</b><span>一題卡住，馬上拉出同一個觀念的相似題。</span></div></div>
+          <div class="feat"><span class="ic">✏️</span><div><b>選項劃線、螢光筆</b><span>刪去錯的、標起關鍵的，下次回來還在。</span></div></div>
+          <div class="feat"><span class="ic">📅</span><div><b>每日練習紀錄</b><span>昨天錯的自動整理成複習清單、歷次試卷成績走勢。</span></div></div>
+          <div class="feat"><span class="ic">📚</span><div><b>故事書學習法</b><span>用對話把難懂的觀念講成故事，先懂再背。</span></div></div>
+          <div class="feat"><span class="ic">☁️</span><div><b>跨裝置同步</b><span>手機、平板、電腦最多三台，進度不會斷。</span></div></div>
+          <div class="feat"><span class="ic">🎨</span><div><b>六種風格任選</b><span>可愛、動畫、手繪、文具、診所、水彩，念書心情自己決定。</span></div></div>
+        </div>
+      </details>
 
       <div class="vnote">
         <div class="vtag" id="vtag">v---</div>

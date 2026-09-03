@@ -474,3 +474,8 @@ html[data-skin] .btn.sub { background: var(--sk-card) !important; color: var(--s
 /* v562: 標題旁的「使用網站前先來看這邊！」 */
 html[data-skin] .hero { text-align: left; }
 html[data-skin] .hero-cta { margin: -0.6rem 0 1rem; background: var(--sk-accent) !important; color: var(--sk-accent-ink) !important; border: var(--sk-bw) solid var(--sk-accent-d) !important; box-shadow: var(--sk-btn-shadow) !important; border-radius: 999px !important; }
+
+/* v563: features 頁收合式重點 */
+html[data-skin] .hl { background: var(--sk-card) !important; border: var(--sk-bw) solid var(--sk-line) !important; border-radius: var(--sk-radius-s) !important; box-shadow: var(--sk-shadow) !important; }
+html[data-skin] .hl .body b, html[data-skin] .hl summary::after { color: var(--sk-accent); }
+html[data-skin] .hl[open] summary { background: var(--sk-accent-soft); }

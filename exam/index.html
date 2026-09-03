@@ -1069,7 +1069,11 @@
         white-space: nowrap;
         font-size: 0.88rem;
       }
+      /* v564: HUA 說「過去紀錄」可以刪 → 首頁橫條不顯示 (功能保留, 歷次試卷成績 modal 內看得到) */
       .home-top .daily-hist-wrap {
+        display: none !important;
+      }
+      .home-top .daily-hist-wrap-unused {
         margin: 0;
         display: flex !important;
         align-items: center;

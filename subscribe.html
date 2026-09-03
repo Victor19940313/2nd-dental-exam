@@ -741,16 +741,31 @@
         document.getElementById("redeem-box").style.display = user
           ? ""
           : "none";
-        // 推薦人欄位: HUA 規則「一個帳號只能成功填一次」→ 只看 referrals/{uid} 有沒有紀錄
-        // (v540: 拿掉 v523 的「有 subscription 就藏」— 那會把「付過但沒填過」的人擋掉,規則錯)
+        // 推薦人欄位 — HUA 最終規則 (v541): 只有「第一次開通」能填
+        //   曾付費 (pending_orders 有 approved) OR 曾用序號開通 (redeem_codes.used_by == 我) → 藏
+        //   (跟 Worker 的 hasSpentReferralEligibility 同一判準)
         if (user) {
-          firebase
-            .database()
-            .ref("referrals/" + user.uid)
-            .once("value")
-            .then((snap) => {
+          const db = firebase.database();
+          Promise.all([
+            db
+              .ref("pending_orders")
+              .orderByChild("uid")
+              .equalTo(user.uid)
+              .once("value"),
+            db
+              .ref("redeem_codes")
+              .orderByChild("used_by")
+              .equalTo(user.uid)
+              .once("value"),
+          ])
+            .then(([oSnap, cSnap]) => {
+              let paid = false;
+              oSnap.forEach((c) => {
+                if ((c.val() || {}).status === "approved") paid = true;
+              });
+              const redeemed = cSnap.exists();
               const field = document.getElementById("referrer-field");
-              if (field) field.style.display = snap.exists() ? "none" : "";
+              if (field) field.style.display = paid || redeemed ? "none" : "";
             })
             .catch(() => {});
         }

@@ -310,7 +310,42 @@
         cb(cachedStatus);
       } catch (e) {}
     });
+    scheduleExpiry();
   }
+
+  // v558: 頁面一直開著,到期那一刻自動重查一次並蓋鎖 (HUA: 剩兩天的人一直在考試頁)
+  //   ─ 只設一個 setTimeout,到期前零 CPU、零流量;到期時只多讀一次 profile+subscription 兩小欄位
+  //   ─ 手機切到背景計時器可能被暫停 → 切回來 (visibilitychange) 若已過到期時刻就補查
+  let _expiryTimer = null;
+  let _expiryAt = 0;
+  const MAX_TIMER = 2147483000; // setTimeout 上限 ~24.8 天,超過就先排到上限再接力
+  function scheduleExpiry(untilOverride) {
+    if (_expiryTimer) {
+      clearTimeout(_expiryTimer);
+      _expiryTimer = null;
+    }
+    let until = untilOverride || 0;
+    if (!until && cachedStatus && cachedStatus.ok) {
+      until = cachedStatus.expires_at || cachedStatus.trial_end || 0;
+    }
+    _expiryAt = until;
+    if (!until) return;
+    const ms = until - Date.now() + 1500; // 多 1.5 秒,確保重查時已經過期
+    if (ms <= 0) return;
+    _expiryTimer = setTimeout(
+      () => {
+        _expiryTimer = null;
+        if (Date.now() < until) return scheduleExpiry(until); // 接力 (超過 24 天的情況)
+        refreshAndRender();
+      },
+      Math.min(ms, MAX_TIMER),
+    );
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (_expiryAt && Date.now() >= _expiryAt && cachedStatus && cachedStatus.ok)
+      refreshAndRender();
+  });
 
   window.Subscription = {
     getStatus: getStatus,
@@ -321,6 +356,7 @@
     onChange: function (cb) {
       if (typeof cb === "function") changeCbs.push(cb);
     },
+    _scheduleForTest: scheduleExpiry, // 只給回測用
     _cache: function () {
       return cachedStatus;
     },

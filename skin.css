@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   skin.css — 全站「風格」(v550)
+   skin.css — 全站「風格」(v550, 最後改 v558)
    所有規則都以 html[data-skin] 開頭 → 沒選風格時整個檔案不生效。
    六種風格只改「變數」+ 少量裝飾; 各頁元件的對應寫在下面「共用對應」。
    ═══════════════════════════════════════════════════════════════ */
@@ -389,5 +389,8 @@ html[data-skin] .nav-row button { white-space: nowrap; padding-left: 0.75rem !im
 /* v556: 動畫風 header 按鈕 (btn-mode) 沒邊框看起來像純文字 → 給底部立體陰影 */
 html[data-skin="toon"] .btn-mode,
 html[data-skin="toon"] .chip,
-html[data-skin="toon"] .ts-chip { box-shadow: 0 2px 0 #c9d6ea !important; }
+html[data-skin="toon"] .ts-chip,
+html[data-skin="toon"] .daily-hist-toggle,
+html[data-skin="toon"] .btn-prev,
+html[data-skin="toon"] .btn-skip { box-shadow: 0 2px 0 #c9d6ea !important; }
 html[data-skin="toon"] .btn-mode.active { box-shadow: 0 3px 0 var(--sk-accent-d) !important; }

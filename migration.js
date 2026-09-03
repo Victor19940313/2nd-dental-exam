@@ -72,17 +72,27 @@
         console.warn("[Migration] 舊資料為空:", nickname);
         return { ok: false, reason: "empty" };
       }
-      // 讀目前 dst 資料 (可能已有 profile), merge (dst.profile 保留, 其他從 src copy)
+      // v558: 以前是 dstRef.set(merged) → 把 dst 整個節點蓋掉,連 subscription/devices 都被清掉
+      //       (2026-09-03 HUA 手機登入重跑 migration,終身會員被清成試用)。
+      //       現在: 只補 dst「沒有」的 key,用 update;profile/subscription/devices/_meta 一律不碰。
       const dstSnap = await dstRef.once("value");
       const dstData = dstSnap.val() || {};
-      // 合併: src 覆蓋 dst 底層欄位, 但保留 dst.profile
-      const merged = Object.assign({}, srcData, {
-        profile: dstData.profile || {},
+      const NEVER_TOUCH = new Set([
+        "profile", "subscription", "devices", "_meta",
+        "_migrated_to", "_migrated_ts", "auth",
+      ]);
+      const patch = {};
+      let added = 0;
+      Object.keys(srcData).forEach((k) => {
+        if (NEVER_TOUCH.has(k)) return;
+        if (dstData[k] !== undefined && dstData[k] !== null) return; // dst 已有 → 保留 dst
+        patch[k] = srcData[k];
+        added++;
       });
-      // 補上 migrated info 到 profile
-      merged.profile.migrated_from = nickname;
-      merged.profile.migrated_ts = Date.now();
-      await dstRef.set(merged);
+      patch["profile/migrated_from"] = nickname;
+      patch["profile/migrated_ts"] = Date.now();
+      await dstRef.update(patch);
+      console.log("[Migration] v558 只補缺的 key:", added, "個");
       // 標記舊資料
       await srcRef.child("_migrated_to").set(googleUid);
       await srcRef.child("_migrated_ts").set(Date.now());
@@ -104,20 +114,22 @@
     if (!googleUser || !googleUser.uid) return;
     const email = (googleUser.email || "").toLowerCase();
 
-    // v521: 若在 AUTO map 且 dst 沒 notebook 資料 → 清 LS_FLAG 強制重搬
-    // (修 v520 前 map 大小寫錯誤導致的空搬問題)
-    const autoNickForceCheck = AUTO_MIGRATE_MAP[email];
-    if (autoNickForceCheck) {
-      try {
-        const dstSnap = await db
-          .ref("users/" + googleUser.uid + "/notebook")
-          .once("value");
-        if (!dstSnap.exists()) {
-          localStorage.removeItem(LS_FLAG);
-          localStorage.removeItem(LS_DEFER);
-        }
-      } catch (e) {}
-    }
+    // v558: 以 Firebase 的 profile.migrated_from 為準 — 搬過就永遠不再搬 (換手機/清快取也一樣)。
+    //       v521 的「dst 沒 notebook 就強制重搬」拿掉:那條讓 HUA 換裝置登入時整個帳號被舊資料蓋掉。
+    try {
+      const mf = await db
+        .ref("users/" + googleUser.uid + "/profile/migrated_from")
+        .once("value");
+      if (mf.exists()) {
+        window.Migration._lastDecision = "already-migrated(firebase)";
+        try {
+          if (!localStorage.getItem(LS_FLAG))
+            localStorage.setItem(LS_FLAG, String(Date.now()));
+          if (!localStorage.getItem("migrated_nickname"))
+            localStorage.setItem("migrated_nickname", String(mf.val()));
+        } catch (e) {}
+      }
+    } catch (e) {}
 
     // 已 migrate 過 → 依然 dispatch event 讓 UI (index.html) auto selectUser
     if (localStorage.getItem(LS_FLAG)) {

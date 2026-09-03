@@ -1055,11 +1055,63 @@
       .home-top .daily-log-title {
         margin-bottom: 0;
       }
+      /* v558: 每日練習橫條重排 — 左: 標題+14 天長條圖+今日題數;右: 三顆一致的小圓鈕;展開的紀錄佔整排 */
+      .home-top .daily-log-title {
+        margin: 0;
+        white-space: nowrap;
+      }
       .home-top .daily-bars {
         margin: 0;
+        width: 150px;
+        flex: none;
+        height: 30px;
+      }
+      .home-top .daily-bar-wrap {
+        min-width: 6px;
+      }
+      .home-top .daily-today-count {
+        margin: 0;
+        white-space: nowrap;
+      }
+      .home-top .daily-hist-wrap {
+        margin: 0;
+        display: flex !important;
+        align-items: center;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+      .home-top .daily-hist-list {
+        flex-basis: 100%;
       }
       .home-top .daily-hist-toggle {
         margin-top: 0 !important;
+        text-decoration: none;
+        background: #f5f3ff;
+        border: 1px solid #ddd6fe;
+        color: var(--purple-dark);
+        border-radius: 999px;
+        padding: 0.22rem 0.7rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .home-top .daily-hist-toggle:hover {
+        background: #ede9fe;
+      }
+      .home-top .daily-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 560px) {
+        .home-top .daily-actions {
+          margin-left: 0;
+          flex-basis: 100%;
+        }
+        .home-top .daily-bars {
+          width: 120px;
+        }
       }
       .home-modes {
         display: grid;
@@ -5741,20 +5793,14 @@
                 style="display: none"
               ></div>
             </div>
-            <button
-              class="daily-hist-toggle"
-              style="margin-top: 0.5rem"
-              onclick="openExamHistModal()"
-            >
-              📊 歷次試卷成績
-            </button>
-            <button
-              class="daily-hist-toggle"
-              style="margin-top: 0.4rem"
-              onclick="openExamCountModal()"
-            >
-              📚 試卷次數統計
-            </button>
+            <div class="daily-actions">
+              <button class="daily-hist-toggle" onclick="openExamHistModal()">
+                📊 歷次試卷成績
+              </button>
+              <button class="daily-hist-toggle" onclick="openExamCountModal()">
+                📚 試卷次數統計
+              </button>
+            </div>
           </div>
       </div>
       <div class="stats-card" id="stats-card">

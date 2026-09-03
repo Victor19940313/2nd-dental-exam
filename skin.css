@@ -47,7 +47,7 @@ html[data-skin="clinic"] {
 }
 html[data-skin="watercolor"] {
   --sk-bg: #fcfbf8; --sk-bg-img: none; --sk-bg-size: auto;
-  --sk-card: rgba(255, 255, 255, 0.72); --sk-ink: #3a3a45; --sk-ink2: #7a7a88; --sk-mute: #9a9aa8; --sk-line: rgba(58, 58, 69, 0.12);
+  --sk-card: rgba(255, 255, 255, 0.9); --sk-ink: #3a3a45; --sk-ink2: #7a7a88; --sk-mute: #9a9aa8; --sk-line: rgba(58, 58, 69, 0.12);
   --sk-accent: #c48a9b; --sk-accent-d: #a66c7e; --sk-accent-soft: #f9e1e7; --sk-accent-ink: #ffffff;
   --sk-radius: 20px; --sk-radius-s: 14px; --sk-bw: 1px;
   --sk-shadow: 0 1px 3px rgba(58, 58, 69, 0.05); --sk-shadow-lift: 0 8px 20px rgba(58, 58, 69, 0.1); --sk-btn-shadow: none;
@@ -147,9 +147,23 @@ html[data-skin] .plan:hover {
   box-shadow: var(--sk-shadow-lift) !important;
   transform: translateY(-2px);
 }
+html[data-skin] .home-mode { position: relative; }
+html[data-skin] .home-mode[aria-selected="true"] {
+  background: var(--sk-card) !important;
+  border: 3px solid var(--sk-accent) !important;
+  box-shadow: 0 0 0 4px var(--sk-accent-soft), var(--sk-shadow) !important;
+}
+html[data-skin] .home-mode[aria-selected="true"]::after {
+  content: "✓ 已選";
+  position: absolute; top: -0.65rem; right: 0.8rem;
+  background: var(--sk-accent); color: var(--sk-accent-ink);
+  font-size: 0.68rem; font-weight: 900; letter-spacing: 0.05em;
+  padding: 0.1rem 0.55rem; border-radius: 999px; line-height: 1.5;
+}
+html[data-skin] .home-mode[aria-selected="false"] { opacity: 0.78; }
+html[data-skin] .home-mode[aria-selected="false"]:hover { opacity: 1; }
 html[data-skin] .plan.selected,
 html[data-skin] .device-row.current,
-html[data-skin] .home-mode[aria-selected="true"],
 html[data-skin] .type-btn.active {
   border-color: var(--sk-accent) !important;
   background: var(--sk-accent-soft) !important;
@@ -157,6 +171,7 @@ html[data-skin] .type-btn.active {
   box-shadow: 0 0 0 4px var(--sk-accent-soft) !important;
 }
 html[data-skin] .home-mode[aria-selected="true"] b { color: var(--sk-accent) !important; }
+html[data-skin] .plan.selected { border-width: 3px !important; }
 html[data-skin] .topic-sidebar-title { background: var(--sk-card) !important; color: var(--sk-mute) !important; }
 html[data-skin] .topic-item.active { background: var(--sk-accent-soft) !important; color: var(--sk-accent-d) !important; border-left-color: var(--sk-accent) !important; }
 html[data-skin] .topic-item:hover { background: var(--sk-accent-soft) !important; }
@@ -299,10 +314,11 @@ html[data-skin] .foot { color: var(--sk-mute) !important; background: transparen
 
 /* ───────── 風格專屬小裝飾 ───────── */
 #skin-deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-#skin-deco .sk-blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; display: block; }
-#skin-deco .sk-b1 { width: 420px; height: 420px; background: #f9c5d1; top: -120px; left: -120px; }
-#skin-deco .sk-b2 { width: 380px; height: 380px; background: #bfe3f2; top: 30%; right: -140px; }
-#skin-deco .sk-b3 { width: 360px; height: 360px; background: #fff0b3; bottom: -120px; left: 20%; }
+/* v552: 暈染只留在四個角落、變淡,不能壓到內容區 (HUA 回報影響閱讀) */
+#skin-deco .sk-blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.32; display: block; }
+#skin-deco .sk-b1 { width: 380px; height: 380px; background: #f9c5d1; top: -220px; left: -220px; }
+#skin-deco .sk-b2 { width: 360px; height: 360px; background: #bfe3f2; top: -200px; right: -220px; }
+#skin-deco .sk-b3 { width: 340px; height: 340px; background: #fff0b3; bottom: -220px; right: -200px; }
 #skin-deco .sk-cloud { position: absolute; display: block; background: #fff; border-radius: 999px; opacity: 0.85; width: 120px; height: 38px; top: 90px; right: 2%; }
 #skin-deco .sk-cloud::before,
 #skin-deco .sk-cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }

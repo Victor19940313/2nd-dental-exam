@@ -372,3 +372,22 @@ html[data-skin="kawaii"] .ts-chip { box-shadow: 2px 2px 0 #4a3b4b !important; }
 #skin-menu button[aria-checked="true"] { background: #ede9fe; color: #5b21b6; font-weight: 700; }
 #skin-menu .sk-em { width: 1.4em; text-align: center; }
 @media print { #skin-picker, #skin-deco { display: none !important; } }
+
+/* v556: 作答畫面底下那排 (考試首頁/跳過/下一題/交卷) 在手機上擠到直排 → 不換行文字、縮 padding,太窄就讓「下一題」自己一排 */
+html[data-skin] .nav-row { flex-wrap: wrap; gap: 0.5rem; }
+html[data-skin] .nav-row button { white-space: nowrap; padding-left: 0.75rem !important; padding-right: 0.75rem !important; font-size: 0.86rem !important; }
+@media (max-width: 480px) {
+  html[data-skin] .nav-row .btn-next { flex: 1 1 100%; order: 9; }
+}
+
+/* v556: 手機上 🎨 鈕不能壓到底部 sticky 的「下一題」列 → 改貼在左邊緣中間,小一點半透明 */
+@media (max-width: 899px) {
+  #skin-picker { left: 0; bottom: auto; top: 46vh; }
+  #skin-picker-btn { width: 30px; height: 36px; border-radius: 0 12px 12px 0; border-left: 0; font-size: 0.95rem; opacity: 0.85; box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15); }
+  #skin-menu { bottom: auto; top: 0; left: 34px; }
+}
+/* v556: 動畫風 header 按鈕 (btn-mode) 沒邊框看起來像純文字 → 給底部立體陰影 */
+html[data-skin="toon"] .btn-mode,
+html[data-skin="toon"] .chip,
+html[data-skin="toon"] .ts-chip { box-shadow: 0 2px 0 #c9d6ea !important; }
+html[data-skin="toon"] .btn-mode.active { box-shadow: 0 3px 0 var(--sk-accent-d) !important; }

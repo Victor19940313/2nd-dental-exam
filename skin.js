@@ -32,13 +32,61 @@
     byId[s.id] = s;
   });
 
+  // v551: 每個帳號各自記。key = dental_skin:{uid};沒登入用 dental_skin (裝置層級)
+  function uid() {
+    try {
+      var u = localStorage.getItem("dental_cur_user");
+      return u && /^[A-Za-z0-9]{20,}$/.test(u) ? u : "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function storageKey() {
+    var u = uid();
+    return u ? KEY + ":" + u : KEY;
+  }
   function read() {
     try {
-      var v = localStorage.getItem(KEY);
+      var v = localStorage.getItem(storageKey());
+      if (!v && uid()) v = localStorage.getItem(KEY); // 剛登入第一次: 沿用裝置的
       return v && byId[v] ? v : "classic";
     } catch (e) {
       return "classic";
     }
+  }
+  // 存到雲端 users/{uid}/profile/skin (小欄位),換裝置登入也跟著
+  function saveRemote(id) {
+    try {
+      var u = uid();
+      if (!u || !window.firebase || !firebase.apps || !firebase.apps.length) return;
+      var user = firebase.auth && firebase.auth().currentUser;
+      if (!user || user.uid !== u) return;
+      firebase
+        .database()
+        .ref("users/" + u + "/profile/skin")
+        .set(id)
+        .catch(function () {});
+    } catch (e) {}
+  }
+  function loadRemote() {
+    try {
+      var u = uid();
+      if (!u || !window.firebase || !firebase.apps || !firebase.apps.length) return;
+      firebase
+        .database()
+        .ref("users/" + u + "/profile/skin")
+        .once("value")
+        .then(function (snap) {
+          var v = snap.val();
+          if (v && byId[v] && v !== read()) {
+            apply(v, false);
+            try {
+              localStorage.setItem(storageKey(), v);
+            } catch (e) {}
+          }
+        })
+        .catch(function () {});
+    } catch (e) {}
   }
 
   function ensureFont(id) {
@@ -81,8 +129,10 @@
     }
     if (save) {
       try {
-        localStorage.setItem(KEY, id);
+        localStorage.setItem(storageKey(), id);
+        localStorage.setItem(KEY, id); // 裝置預設也更新 (未登入/新帳號第一次用)
       } catch (e) {}
+      saveRemote(id);
     }
     ensureDeco(id);
     var cur = document.getElementById("skin-picker-cur");
@@ -151,13 +201,30 @@
   function onReady() {
     buildPicker();
     ensureDeco(read());
+    // 登入狀態確定後: 換帳號要重讀該帳號的風格 + 拉雲端
+    var hooked = false;
+    function hookAuth() {
+      if (hooked || !window.Auth || !window.Auth.onChange) return false;
+      hooked = true;
+      window.Auth.onChange(function () {
+        apply(read(), false);
+        loadRemote();
+      });
+      return true;
+    }
+    if (!hookAuth()) {
+      var tries = 0;
+      var t = setInterval(function () {
+        if (hookAuth() || ++tries > 40) clearInterval(t);
+      }, 250);
+    }
   }
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", onReady);
   else onReady();
   // 3. 別的分頁改了 → 跟著換
   window.addEventListener("storage", function (e) {
-    if (e.key === KEY) apply(read(), false);
+    if (e.key && e.key.indexOf(KEY) === 0) apply(read(), false);
   });
 
   window.Skin = { apply: apply, current: read, list: SKINS };

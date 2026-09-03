@@ -340,12 +340,26 @@
       const c = JSON.parse(raw);
       const curUid = localStorage.getItem("dental_cur_user");
       if (!c || !c.uid || c.uid !== curUid) return;
-      if (c.reason !== "trial_expired" && c.reason !== "subscription_expired")
+      if (c.reason === "trial_expired" || c.reason === "subscription_expired") {
+        cachedStatus = { ok: false, reason: c.reason, _optimistic: true };
+        applyBodyClass();
+        renderBlockOverlay();
+        markHomeCards();
         return;
-      cachedStatus = { ok: false, reason: c.reason, _optimistic: true };
-      applyBodyClass();
-      renderBlockOverlay();
-      markHomeCards();
+      }
+      // v555: 最近 3 天內確認過是會員/試用中 → 先放行 (不蓋「確認中」、點卡片不等),
+      //       Firebase 真值回來若已過期,refreshAndRender 會再蓋鎖。HUA: 「不要一直頻繁出現確認訂閱狀態」
+      const FRESH_MS = 3 * 86400_000;
+      if (
+        (c.reason === "paid" || c.reason === "trial") &&
+        c.ts &&
+        Date.now() - c.ts < FRESH_MS
+      ) {
+        cachedStatus = { ok: true, reason: c.reason, _optimistic: true };
+        applyBodyClass();
+        renderBlockOverlay();
+        markHomeCards();
+      }
     } catch (e) {}
   }
   if (document.readyState === "loading") {

@@ -1060,18 +1060,14 @@
         margin: 0;
         white-space: nowrap;
       }
+      /* v561: HUA 要簡單 — 首頁橫條不放 14 天長條圖 (會凸出卡片),只留「今天做了 N 題」+ 三顆鈕 */
       .home-top .daily-bars {
-        margin: 0;
-        width: 150px;
-        flex: none;
-        height: 30px;
-      }
-      .home-top .daily-bar-wrap {
-        min-width: 6px;
+        display: none;
       }
       .home-top .daily-today-count {
         margin: 0;
         white-space: nowrap;
+        font-size: 0.88rem;
       }
       .home-top .daily-hist-wrap {
         margin: 0;
@@ -1109,9 +1105,7 @@
           margin-left: 0;
           flex-basis: 100%;
         }
-        .home-top .daily-bars {
-          width: 120px;
-        }
+
       }
       .home-modes {
         display: grid;

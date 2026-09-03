@@ -458,3 +458,15 @@ html[data-skin] a.card { overflow: visible !important; }
   html[data-skin] .hero-art { width: 84px; height: 84px; }
   html[data-skin] .countdown .days { font-size: 2.4rem; }
 }
+
+/* v561: 網站特色卡 + 許願卡 (現在是半寬一對) 的圖示格顏色 */
+html[data-skin="kawaii"] a.card[href="features.html"] .emoji { background: #fff1b8; }
+html[data-skin="toon"] a.card[href="features.html"] .emoji { background: #ffc63a; }
+html[data-skin="stationery"] a.card[href="features.html"] .emoji { background: #fff1c9; }
+html[data-skin="clinic"] a.card[href="features.html"] .emoji { background: #e6f6ea; }
+html[data-skin="watercolor"] a.card[href="features.html"] .emoji { background: radial-gradient(circle at 35% 30%, #fff, #fff0b3); }
+html[data-skin] .feat, html[data-skin] .stat, html[data-skin] .vnote, html[data-skin] .bug { background: var(--sk-card) !important; border: var(--sk-bw) solid var(--sk-line) !important; border-radius: var(--sk-radius-s) !important; box-shadow: var(--sk-shadow) !important; color: var(--sk-ink); }
+html[data-skin] .stat .n, html[data-skin] .vnote .vtag { color: var(--sk-accent) !important; font-family: var(--sk-font-num); }
+html[data-skin] .story b { color: var(--sk-accent); }
+html[data-skin] .btn.main { background: var(--sk-accent) !important; color: var(--sk-accent-ink) !important; border: var(--sk-bw) solid var(--sk-accent-d) !important; box-shadow: var(--sk-btn-shadow) !important; }
+html[data-skin] .btn.sub { background: var(--sk-card) !important; color: var(--sk-ink) !important; border: var(--sk-bw) solid var(--sk-line) !important; }

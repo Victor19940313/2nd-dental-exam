@@ -220,6 +220,12 @@
         flex-direction: column;
         gap: 0.25rem;
       }
+      /* v560: hero 新元素在經典模式不顯示 (skin.css 才打開) */
+      .hero-eyebrow,
+      .hero-art,
+      .card-badge {
+        display: none;
+      }
       /* v551: 半寬卡 (兩張一排), 排法照 HUA 選的可愛風 demo */
       a.card.wide.half {
         grid-column: auto;
@@ -518,8 +524,15 @@
         <button class="user-switch" onclick="switchUser()">切換</button>
       </div>
 
-      <h1>牙醫國考互動筆記</h1>
-      <p class="sub">選擇科目，開始複習</p>
+      <!-- v560: hero (風格模式才會左對齊+插圖; 經典模式 eyebrow/hero-art 都隱藏, 長相不變) -->
+      <div class="hero">
+        <div class="hero-text">
+          <span class="hero-eyebrow">EZPASS DENTAL</span>
+          <h1>牙醫國考互動筆記</h1>
+          <p class="sub">選擇科目，開始複習</p>
+        </div>
+        <div class="hero-art" id="hero-art" aria-hidden="true"></div>
+      </div>
 
       <div class="countdown" id="countdown">
         <div class="days" id="days">--</div>
@@ -572,6 +585,7 @@
             background: linear-gradient(135deg, #fff7ed, #fee2e2);
           "
         >
+          <span class="card-badge">支持作者</span>
           <span class="emoji">💎</span>
           <div class="info">
             <span class="name">訂閱方案</span>

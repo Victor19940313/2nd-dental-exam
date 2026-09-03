@@ -120,6 +120,23 @@
     document.body.appendChild(d);
   }
 
+  // v560: 首頁 hero 插圖 (只有首頁有 #hero-art),每種風格一張,SVG 直接畫,不載外部圖
+  var TOOTH =
+    '<svg viewBox="0 0 120 120"><path d="M32 18c14-10 42-10 56 0 14 10 12 34 4 56-4 12-8 34-16 34s-8-22-16-22-8 22-16 22-12-22-16-34C20 52 18 28 32 18z" fill="FILL" stroke="STROKE" stroke-width="3.5" stroke-linejoin="round"/><circle cx="46" cy="52" r="3.5" fill="STROKE"/><circle cx="74" cy="52" r="3.5" fill="STROKE"/><path d="M52 64q8 7 16 0" fill="none" stroke="STROKE" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="62" r="5" fill="CHEEK" opacity=".9"/><circle cx="82" cy="62" r="5" fill="CHEEK" opacity=".9"/></svg>';
+  var ART = {
+    kawaii: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#4a3b4b").replace(/CHEEK/g, "#ffb3c6"),
+    toon: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#1c63b8").replace(/CHEEK/g, "#ffc63a"),
+    clinic: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#1b7fc4").replace(/CHEEK/g, "#bfe3f2"),
+    stationery: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#a67c6d").replace(/CHEEK/g, "#f3c9b8"),
+    watercolor: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#c48a9b").replace(/CHEEK/g, "#f9c5d1"),
+    notebook: "<svg viewBox=\"0 0 120 120\"><g transform=\"rotate(6 60 60)\"><rect x=\"18\" y=\"22\" width=\"84\" height=\"80\" fill=\"#fff3a3\"/><rect x=\"40\" y=\"12\" width=\"40\" height=\"16\" fill=\"rgba(200,220,240,.8)\" transform=\"rotate(-6 60 20)\"/><text x=\"60\" y=\"56\" text-anchor=\"middle\" font-family=\"LXGW WenKai TC, Noto Sans TC, sans-serif\" font-size=\"17\" fill=\"#5b4a00\">今天也要</text><text x=\"60\" y=\"82\" text-anchor=\"middle\" font-family=\"LXGW WenKai TC, Noto Sans TC, sans-serif\" font-size=\"17\" fill=\"#5b4a00\">念一點！</text></g></svg>",
+  };
+  function ensureArt(id) {
+    var el = document.getElementById("hero-art");
+    if (!el) return;
+    el.innerHTML = ART[id] || "";
+  }
+
   function apply(id, save) {
     if (!byId[id]) id = "classic";
     if (id === "classic") document.documentElement.removeAttribute("data-skin");
@@ -135,6 +152,7 @@
       saveRemote(id);
     }
     ensureDeco(id);
+    ensureArt(id);
     var cur = document.getElementById("skin-picker-cur");
     if (cur) cur.textContent = byId[id].em;
     document.querySelectorAll("#skin-menu button").forEach(function (b) {
@@ -201,6 +219,7 @@
   function onReady() {
     buildPicker();
     ensureDeco(read());
+    ensureArt(read());
     // 登入狀態確定後: 換帳號要重讀該帳號的風格 + 拉雲端
     var hooked = false;
     function hookAuth() {

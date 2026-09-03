@@ -181,6 +181,19 @@
         { s: '.nb-tb-btn[onclick="openPrintModal()"]', t: "🖨️ 列印 / 匯出", b: "考前想印出來看，或匯出成 Markdown 帶走，都可以。" },
       ],
     },
+    wrongbook: {
+      match: function (p) {
+        return /\/exam\/(index\.html)?$/.test(p);
+      },
+      trigger: "#screen-wrongbook .wb2-summary",
+      steps: [
+        { s: "#wb2-summary", t: "錯題本一眼看完", b: "全部幾題、幾題還沒答對過、幾題標了再努力、這週新加幾題。點數字可以直接套篩選。" },
+        { s: "#wb-mark-filters", t: "照標記篩", b: "只想練「送他吧」？點一下就只剩那些。" },
+        { s: "#wb2-search", t: "搜尋", b: "記得關鍵字或題號（例如 111-1-3）就直接搜。" },
+        { s: ".wb2-acc", t: "先看考點，點開才看題", b: "幾百題也不用一直滑：每個考點一行，有幾題、幾題還沒答對、一條進度條。點開才列題目，一題一行，「練」直接進那題，「移出」拿掉 🚩。" },
+        { s: "#wb2-start", t: "開始練", b: "順序或隨機、只練還沒答對的、答對就自動移出 🚩，勾好按開始。" },
+      ],
+    },
     mnemonics: {
       match: function (p) {
         return /\/mnemonics\.html$/.test(p);

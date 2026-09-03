@@ -2771,6 +2771,18 @@
         z-index: 300;
         white-space: nowrap;
       }
+      /* v559: toast 往上放 (桌機 6.5rem / 手機 7.5rem),別壓到底部 sticky 的「下一題」列 */
+      .toast {
+        bottom: 6.5rem;
+      }
+      @media (max-width: 720px) {
+        .toast {
+          bottom: 10.5rem; /* 手機底部按鈕列兩排 (~9rem) */
+          white-space: normal;
+          max-width: 86vw;
+          text-align: center;
+        }
+      }
       .toast.show {
         opacity: 1;
       }

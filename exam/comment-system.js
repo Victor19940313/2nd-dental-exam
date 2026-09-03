@@ -38,6 +38,34 @@
   function fbReady() {
     return typeof firebase !== "undefined" && firebase.database;
   }
+  // v575: 讚的規則 (HUA 拍板):只有付費會員能按、不能按自己、每天 3 個 (口訣區 + 留言共用 users/{uid}/like_log)
+  const LIKE_DAILY_MAX = 3;
+  const ADMIN_UIDS = ["BMtTkADnLOQCHocZ5dxoqoLpZCl1"]; // HUA — 可以按「⭐ 精選詳解」
+  const FB_LEDGER = "users/__reward_ledger"; // Worker 每小時掃這裡發序號 (線上 rules 只開放 users/ 底下寫)
+  const FB_FEATURED = "users/__qc_featured"; // {qid}/{cid} = {ts, by, author_uid} — 留言本體的 rules 只讓作者改,精選旗標另存
+  function adminUid() {
+    try {
+      const u = window.Auth && window.Auth.getUser && window.Auth.getUser();
+      return u && ADMIN_UIDS.includes(u.uid) ? u.uid : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function isPaidMember() {
+    try {
+      const c = window.Subscription && window.Subscription._cache();
+      return !!(c && c.ok && c.reason === "paid");
+    } catch (e) {
+      return false;
+    }
+  }
+  function isAdminUser(uid) {
+    return ADMIN_UIDS.includes(uid || "");
+  }
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
   function fbDb() {
     return firebase.database();
   }
@@ -433,15 +461,23 @@
     const dislikedNow = !!(c.dislikes_by && c.dislikes_by[uid]);
     let dScore = 0;
     const updates = {};
+    // v575: 讚 = 獎勵用,規則嚴一點;倒讚照舊 (登入即可)
+    let ledger = null; // {authorUid, delta}
     if (wantLike) {
+      if (c.author_uid === uid) throw new Error("不能給自己的留言按讚");
       if (likedNow) {
-        // 撤讚
+        // 撤讚 (額度不退)
         updates[`likes_by/${uid}`] = null;
         dScore = -1;
+        ledger = { authorUid: c.author_uid, delta: -1 };
       } else {
+        if (!isPaidMember()) throw new Error("付費會員才能按讚 (試用可以珍藏、留言)");
+        const used = (await fbDb().ref(`users/${uid}/like_log/${todayKey()}`).once("value")).val() || 0;
+        if (used >= LIKE_DAILY_MAX) throw new Error(`今天的 ${LIKE_DAILY_MAX} 個讚用完了 (口訣區和留言共用),明天再來`);
         updates[`likes_by/${uid}`] = true;
         dScore = dislikedNow ? 2 : 1; // 從倒讚 → 讚 = +2
         if (dislikedNow) updates[`dislikes_by/${uid}`] = null;
+        ledger = { authorUid: c.author_uid, delta: 1, spend: true };
       }
     } else {
       if (dislikedNow) {
@@ -455,9 +491,53 @@
     }
     await base.update(updates);
     await base.child("score").transaction((v) => (v || 0) + dScore);
+    // v575: 獎勵帳本 (作者累積有效讚) + 今日額度
+    if (ledger && ledger.authorUid && !c.is_anonymous_reward_excluded) {
+      try {
+        const inc = firebase.database.ServerValue.increment;
+        const up = {};
+        up[`${FB_LEDGER}/comments/${ledger.authorUid}/${cid}/n`] = inc(ledger.delta);
+        up[`${FB_LEDGER}/comments/${ledger.authorUid}/${cid}/qid`] = qid;
+        up[`${FB_LEDGER}/comments/${ledger.authorUid}/${cid}/ts`] = Date.now();
+        if (ledger.spend) up[`users/${uid}/like_log/${todayKey()}`] = inc(1);
+        await fbDb().ref().update(up);
+      } catch (e) {
+        console.warn("[qc ledger]", e);
+      }
+    }
     // 回傳新狀態給 UI
     const after = await base.once("value");
     return after.val();
+  }
+  // v575: HUA 精選詳解 — 釘在最上面,作者得 3 天序號 (Worker 發,每人每月最多 3 則)
+  async function toggleFeatured(qid, cid) {
+    const admin = adminUid();
+    if (!admin) throw new Error("只有管理者能精選");
+    const base = fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}/${cid}`);
+    const c = (await base.once("value")).val();
+    if (!c) throw new Error("留言不存在");
+    const cur = (await fbDb().ref(`${FB_FEATURED}/${qid}/${cid}`).once("value")).val();
+    const up = {};
+    if (cur) {
+      up[`${FB_FEATURED}/${qid}/${cid}`] = null;
+      up[`${FB_LEDGER}/featured/${c.author_uid}/${cid}`] = null;
+    } else {
+      const ts = Date.now();
+      up[`${FB_FEATURED}/${qid}/${cid}`] = { ts, by: admin, author_uid: c.author_uid };
+      up[`${FB_LEDGER}/featured/${c.author_uid}/${cid}`] = { qid, ts };
+    }
+    await fbDb().ref().update(up);
+    return !cur;
+  }
+  // 把精選旗標合併進留言清單 (一題一次讀)
+  async function mergeFeatured(qid, list) {
+    try {
+      const f = (await fbDb().ref(`${FB_FEATURED}/${qid}`).once("value")).val() || {};
+      list.forEach((c) => {
+        c.featured = f[c.cid] ? f[c.cid].ts || true : null;
+      });
+    } catch (e) {}
+    return list;
   }
   function extractImgUrls(html) {
     if (!html) return [];
@@ -487,6 +567,8 @@
   // ─────────────────────────────────────────
   function sortComments(list) {
     return list.slice().sort((a, b) => {
+      // v575: 精選詳解永遠在最上面
+      if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
       const sa = a.score || 0;
       const sb = b.score || 0;
       if (sa !== sb) return sb - sa;
@@ -566,16 +648,20 @@
     const likeCnt = Object.keys(c.likes_by || {}).length;
     const dislikeCnt = Object.keys(c.dislikes_by || {}).length;
     const clean = sanitizeHtml(c.content_html || "");
-    return `<div class="qc-item" data-cid="${c.cid}" data-mine="${isMine ? 1 : 0}">
+    const featuredTag = c.featured ? '<span class="qc-featured-tag">⭐ 精選詳解</span>' : "";
+    const likeTitle = isMine ? "不能給自己按讚" : isPaidMember() ? "每天 3 個讚 (口訣區與留言共用)" : "付費會員才能按讚";
+    const adminBtn = adminUid() && !isMine ? `<button class="qc-btn-mini qc-feat-btn ${c.featured ? "qc-featured-on" : ""}" onclick="QuestionComments.feature('${c.qid_ref}','${c.cid}',this)">${c.featured ? "⭐ 取消精選" : "⭐ 精選"}</button>` : "";
+    return `<div class="qc-item ${c.featured ? "qc-featured" : ""}" data-cid="${c.cid}" data-mine="${isMine ? 1 : 0}">
       <div class="qc-meta">
         <span class="qc-who ${c.is_anonymous ? "qc-anon" : ""}">${escapeHtml(_displayAuthorName(c))}</span>
         <span class="qc-time">${fmtTs(c.created_ts)}</span>
         ${editedTag}
+        ${featuredTag}
         ${isMine ? '<span class="qc-mine-tag">我的</span>' : ""}
       </div>
       <div class="qc-body">${clean}</div>
       <div class="qc-actions">
-        <button class="qc-vote ${myLike ? "qc-active" : ""}" onclick="QuestionComments.vote('${c.qid_ref}','${c.cid}',true,this)">👍 <span>${likeCnt}</span></button>
+        <button class="qc-vote ${myLike ? "qc-active" : ""}" title="${likeTitle}" ${isMine ? "disabled" : ""} onclick="QuestionComments.vote('${c.qid_ref}','${c.cid}',true,this)">👍 <span>${likeCnt}</span></button>${adminBtn}
         <button class="qc-vote ${myDislike ? "qc-active-neg" : ""}" onclick="QuestionComments.vote('${c.qid_ref}','${c.cid}',false,this)">👎 <span>${dislikeCnt}</span></button>
         ${isMine ? `<button class="qc-btn-mini" onclick="QuestionComments.edit('${c.qid_ref}','${c.cid}')">🖊 編輯</button>` : ""}
         ${isMine ? `<button class="qc-btn-mini qc-del" onclick="QuestionComments.remove('${c.qid_ref}','${c.cid}')">🗑 刪</button>` : ""}
@@ -688,6 +774,7 @@
         loadHiddenSet(),
         loadBookmarkSet(),
       ]);
+      await mergeFeatured(qid, comments);
       renderCommentSection(qid, body, comments, hiddenSet, bm.set);
       // 聽 realtime 變化 (只有第一次展開才綁)
       const ref = fbDb().ref(`${FB_ROOT_COMMENTS}/${qid}`);
@@ -695,6 +782,17 @@
       ref.on("value", async (snap) => {
         const obj = snap.val() || {};
         const list = Object.entries(obj).map(([cid, v]) => ({ cid, ...v }));
+        const hs = await loadHiddenSet();
+        const bm2 = await loadBookmarkSet();
+        await mergeFeatured(qid, list);
+        renderCommentSection(qid, body, list, hs, bm2.set);
+      });
+      // v575: 精選旗標變了也重畫
+      const fref = fbDb().ref(`${FB_FEATURED}/${qid}`);
+      fref.off();
+      fref.on("value", async () => {
+        const list = await fetchComments(qid);
+        await mergeFeatured(qid, list);
         const hs = await loadHiddenSet();
         const bm2 = await loadBookmarkSet();
         renderCommentSection(qid, body, list, hs, bm2.set);
@@ -886,11 +984,28 @@
       try {
         await toggleVote(qid, cid, wantLike);
       } catch (e) {
-        alert("投票失敗: " + e.message);
+        // v575: 規則性的擋 (付費才能讚 / 額度用完 / 自己) 用 toast 口氣,不用 alert 嚇人
+        if (typeof showToast === "function") showToast(e.message);
+        else alert(e.message);
       } finally {
         if (btn) btn.disabled = false;
       }
     },
+    // v575: HUA 精選
+    feature: async function (qid, cid, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        const on = await toggleFeatured(qid, cid);
+        if (typeof showToast === "function") showToast(on ? "⭐ 已精選,作者會收到 3 天序號" : "已取消精選");
+      } catch (e) {
+        alert("精選失敗: " + e.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    },
+    _isPaid: isPaidMember,
+    _postRaw: postComment, // 測試用
+    _deleteRaw: deleteComment, // 測試用
     // 珍藏 / 取消珍藏 toggle
     toggleBookmark: async function (qid, cid, btn) {
       try {
@@ -1237,6 +1352,11 @@
 .qc-who { font-weight: 700; color: #7c3aed; }
 .qc-who.qc-anon { color: #6b7280; font-weight: 600; }
 .qc-mine-tag { background: #ede9fe; color: #6d28d9; padding: .05rem .4rem; border-radius: 999px; font-size: .68rem; font-weight: 700; }
+.qc-featured-tag { background: #fef3c7; color: #92400e; padding: .05rem .45rem; border-radius: 999px; font-size: .68rem; font-weight: 800; }
+.qc-item.qc-featured { border-color: #f59e0b; background: linear-gradient(180deg, #fffbeb, #fff); }
+.qc-feat-btn { border-color: #f59e0b !important; color: #b45309 !important; }
+.qc-feat-btn.qc-featured-on { background: #f59e0b !important; color: #fff !important; }
+.qc-vote:disabled { opacity: .5; cursor: not-allowed; }
 .qc-edited-tag { color: #9ca3af; font-size: .72rem; }
 .qc-body { font-size: .9rem; line-height: 1.65; color: #1f2937; word-break: break-word; }
 .qc-body img { max-width: 100%; border-radius: 6px; margin: .4rem 0; cursor: pointer; }

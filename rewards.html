@@ -147,6 +147,99 @@
         color: #3b82f6;
         font-weight: 700;
       }
+      /* v576 */
+      .rw-tabs {
+        display: flex;
+        gap: 0.3rem;
+        background: #ece9f5;
+        border-radius: 999px;
+        padding: 0.2rem;
+        margin: 0 auto 0.9rem;
+        max-width: 480px;
+      }
+      .rw-tabs button {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #6b7280;
+        padding: 0.4rem 0.4rem;
+        border-radius: 999px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .rw-tabs button.active {
+        background: #fff;
+        color: #5b21b6;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .rw-month {
+        background: #fff;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 0.7rem 1rem;
+        margin-bottom: 0.9rem;
+        font-size: 0.85rem;
+        display: flex;
+        gap: 0.8rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .rw-month .bar {
+        flex: 1 1 140px;
+        height: 8px;
+        border-radius: 999px;
+        background: #ebe9e3;
+        overflow: hidden;
+      }
+      .rw-month .bar i {
+        display: block;
+        height: 100%;
+        background: #7c3aed;
+      }
+      .rw-prog {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.3rem 0.8rem;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 10px;
+        padding: 0.55rem 0.8rem;
+        margin-top: 0.4rem;
+        font-size: 0.82rem;
+        color: #374151;
+      }
+      .rw-prog .t {
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .rw-prog .bar {
+        grid-column: 1 / -1;
+        height: 7px;
+        border-radius: 999px;
+        background: #ebe9e3;
+        overflow: hidden;
+      }
+      .rw-prog .bar i {
+        display: block;
+        height: 100%;
+        background: #db2777;
+      }
+      .rw-prog .n {
+        font-variant-numeric: tabular-nums;
+        color: #6b7280;
+        white-space: nowrap;
+      }
+      @media (max-width: 480px) {
+        .rw-tabs button {
+          font-size: 0.76rem;
+          padding: 0.35rem 0.2rem;
+        }
+      }
       .foot {
         text-align: center;
         font-size: 0.75rem;
@@ -163,9 +256,17 @@
         <span style="font-size: 0.75rem; color: #9ca3af" id="ver"></span>
       </div>
       <h1>🎁 我的獎勵</h1>
-      <p class="sub-title">推薦朋友訂閱，自動收到 30 天免費序號</p>
+      <p class="sub-title">推薦朋友、分享口訣、寫好詳解，都會自動收到免費序號</p>
 
-      <div class="hint">
+      <!-- v576: 三種獎勵 + 本月額度 -->
+      <div class="rw-tabs" id="rw-tabs">
+        <button class="active" onclick="rwShow('referral', this)">👥 推薦朋友</button>
+        <button onclick="rwShow('mnemonic', this)">🧠 口訣分享</button>
+        <button onclick="rwShow('comment', this)">💬 留言詳解</button>
+      </div>
+      <div class="rw-month" id="rw-month" style="display: none"></div>
+
+      <div class="hint rw-pane" data-pane="referral">
         💡 <b>如何獲得獎勵</b><br />
         邀請朋友訂閱時，請對方於訂閱頁填入您的 Google 帳號 email
         作為推薦人。當該筆訂閱完成開通，系統將自動發送一張
@@ -222,6 +323,37 @@
             A 另行推薦帳號 D、E 首次付費訂閱，每成功一位即再獲得一張序號,<b>不設上限</b>。
           </li>
         </ul>
+      </div>
+
+      <div class="hint rw-pane" data-pane="mnemonic" style="display: none; background: #fdf2f8; border-color: #f9a8d4; color: #831843">
+        🧠 <b>口訣分享獎勵</b><br />
+        在「口訣區」把自己寫的章節選好考點、打開「公開」，大家可以按 👍。同一章的有效讚達到門檻，系統<b>自動</b>把序號發到這裡。
+        <hr style="border: 0; border-top: 1px solid #f9a8d4; margin: 0.7rem 0" />
+        <b>📌 規則</b>
+        <ul style="margin: 0.3rem 0 0 1.2rem; line-height: 1.8" id="rw-mn-rules">
+          <li>目前門檻：同一章 <b><span data-k="likes1">20</span> 讚 → <span data-k="days1">7</span> 天</b>、<b><span data-k="likes2">60</span> 讚 → 再 <span data-k="days2">14</span> 天</b>、<b><span data-k="likes3">150</span> 讚 → 再 <span data-k="days3">30</span> 天</b>；每章最多領三次。</li>
+          <li><b>有效讚 = 付費會員按的</b>。試用會員可以收藏、留言，但讚不算。不能按自己的；每人每天 3 個讚（口訣區與留言共用）。</li>
+          <li>門檻會<b>隨付費會員人數調整</b>（人數越多門檻越高，發出的比例才穩定）。已經領過的不會被追回。</li>
+          <li>複製別人的章節不能公開，也不會有讚；被檢舉下架的章節不發獎勵。</li>
+          <li>每個帳號<b>每月</b>口訣＋留言＋精選合計最多領 <b><span data-k="cap">30</span> 天</b>；推薦朋友的 30 天另計。</li>
+          <li>序號效期為<b>產出後 90 天</b>，可自己續命或送人。</li>
+        </ul>
+        <div id="rw-mn-progress" style="margin-top: 0.7rem"></div>
+      </div>
+
+      <div class="hint rw-pane" data-pane="comment" style="display: none; background: #fffbeb; border-color: #fcd34d; color: #78350f">
+        💬 <b>留言詳解獎勵</b><br />
+        在每一題底下留下比 AI 更好的詳解或心得，付費會員覺得好就會按 👍。你所有留言的有效讚<b>累積</b>達門檻，系統自動發序號。
+        <hr style="border: 0; border-top: 1px solid #fcd34d; margin: 0.7rem 0" />
+        <b>📌 規則</b>
+        <ul style="margin: 0.3rem 0 0 1.2rem; line-height: 1.8" id="rw-cm-rules">
+          <li>目前門檻：留言累積每 <b><span data-k="cm_likes">30</span> 個有效讚 → <span data-k="cm_days">7</span> 天</b>（累積制，不是單則）。</li>
+          <li><b>⭐ 精選詳解</b>：管理者覺得寫得特別好，會按「精選」釘在該題最上面，作者直接得 <b><span data-k="ft_days">3</span> 天</b>；每人每月最多 <span data-k="ft_max">3</span> 則。</li>
+          <li>有效讚同口訣區：只有付費會員按的算、不能按自己、每人每天 3 個讚（與口訣共用）。</li>
+          <li>抄襲書本或網站、被檢舉下架的留言不算，也可能被移除。</li>
+          <li>每個帳號<b>每月</b>口訣＋留言＋精選合計最多領 <b><span data-k="cap">30</span> 天</b>；門檻隨付費會員人數調整。</li>
+        </ul>
+        <div id="rw-cm-progress" style="margin-top: 0.7rem"></div>
       </div>
 
       <div id="need-login" style="display: none">
@@ -292,6 +424,108 @@
       }
 
       const TRIAL_DAYS = 7;
+      // ── v576: 三種獎勵分頁 ──
+      window.rwShow = function (pane, btn) {
+        document.querySelectorAll(".rw-pane").forEach((p) => (p.style.display = p.dataset.pane === pane ? "" : "none"));
+        document.querySelectorAll("#rw-tabs button").forEach((b) => b.classList.toggle("active", b === btn));
+        try {
+          localStorage.setItem("rw_pane", pane);
+        } catch (e) {}
+      };
+      (function restorePane() {
+        try {
+          const p = localStorage.getItem("rw_pane");
+          const btn = p && document.querySelector('#rw-tabs button[onclick*="\'' + p + '\'"]');
+          if (btn) rwShow(p, btn);
+        } catch (e) {}
+      })();
+      const REASON_LABEL = {
+        referral: "推薦獎勵",
+        mnemonic: "口訣分享獎勵",
+        comment: "留言詳解獎勵",
+        featured: "⭐ 精選詳解獎勵",
+      };
+      function rewardReasonText(r) {
+        const d = r.detail || {};
+        if (r.reason === "referral") return `推薦獎勵 · 來自 ${escape(r.from_email_masked || "?")}`;
+        if (r.reason === "mnemonic") return `口訣分享 · 「${escape(d.title || "")}」達 ${d.likes || "?"} 讚 (第 ${d.level || "?"} 階)`;
+        if (r.reason === "comment") return `留言詳解 · 累積 ${d.milestone || d.likes || "?"} 個有效讚`;
+        if (r.reason === "featured") return `⭐ 精選詳解 · ${escape(d.qid || "")}`;
+        return escape(r.reason || "獎勵");
+      }
+      // 門檻設定 (Worker 每小時依付費人數寫進 users/__config/rewards)
+      async function loadRewardConfig(db) {
+        const DEF = { mnemonic: { likes1: 20, days1: 7, likes2: 60, days2: 14, likes3: 150, days3: 30 }, comment: { likes: 30, days: 7 }, featured: { days: 3, max_per_month: 3 }, month_cap_days: 30 };
+        let cfg = DEF;
+        try {
+          const v = (await db.ref("users/__config/rewards").once("value")).val();
+          if (v && v.mnemonic) cfg = Object.assign({}, DEF, v, { mnemonic: Object.assign({}, DEF.mnemonic, v.mnemonic), comment: Object.assign({}, DEF.comment, v.comment), featured: Object.assign({}, DEF.featured, v.featured) });
+        } catch (e) {}
+        const set = (k, val) => document.querySelectorAll(`[data-k="${k}"]`).forEach((el) => (el.textContent = String(val)));
+        set("likes1", cfg.mnemonic.likes1); set("days1", cfg.mnemonic.days1);
+        set("likes2", cfg.mnemonic.likes2); set("days2", cfg.mnemonic.days2);
+        set("likes3", cfg.mnemonic.likes3); set("days3", cfg.mnemonic.days3);
+        set("cm_likes", cfg.comment.likes); set("cm_days", cfg.comment.days);
+        set("ft_days", cfg.featured.days); set("ft_max", cfg.featured.max_per_month);
+        set("cap", cfg.month_cap_days);
+        return cfg;
+      }
+      function monthKeyTW(ts) {
+        const d = new Date((ts || Date.now()) + 8 * 3600 * 1000);
+        return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0");
+      }
+      // 進度:口訣 (我公開的章節的讚) / 留言 (帳本累積) / 本月已領
+      async function renderProgress(db, uid, cfg, rewardsArr) {
+        // 本月
+        const mk = monthKeyTW();
+        let used = 0;
+        rewardsArr.forEach((r) => {
+          if (["mnemonic", "comment", "featured"].includes(r.reason) && monthKeyTW(r.issued_ts) === mk) used += r.gift_days || 0;
+        });
+        const mEl = document.getElementById("rw-month");
+        mEl.style.display = "";
+        const cap = cfg.month_cap_days;
+        mEl.innerHTML = `<b>本月分享獎勵</b> <span class="bar"><i style="width:${Math.min(100, Math.round((used / cap) * 100))}%"></i></span> <span>已領 ${used} / ${cap} 天</span><span style="color:#9ca3af;font-size:.75rem">(推薦朋友的另計)</span>`;
+        // 口訣:掃四科索引找我的
+        const mnEl = document.getElementById("rw-mn-progress");
+        try {
+          const pub = (await db.ref("users/__mnemonics/pub").once("value")).val() || {};
+          const mine = [];
+          for (const subj of Object.keys(pub)) for (const [key, e] of Object.entries(pub[subj] || {})) if (e && e.authorUid === uid && !e.hidden) mine.push({ key, subj, ...e });
+          const th = [cfg.mnemonic.likes1, cfg.mnemonic.likes2, cfg.mnemonic.likes3];
+          if (!mine.length) mnEl.innerHTML = `<div class="rw-prog"><span class="t" style="color:#9ca3af;font-weight:400">你還沒有公開的口訣章節。去口訣區選好考點、打開「公開」就開始累積。</span></div>`;
+          else
+            mnEl.innerHTML =
+              `<b style="font-size:.85rem">我的公開章節（${mine.length}）</b>` +
+              mine
+                .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+                .slice(0, 8)
+                .map((e) => {
+                  const likes = e.likes || 0;
+                  const next = th.find((t) => likes < t) || th[2];
+                  const stage = th.filter((t) => likes >= t).length;
+                  return `<div class="rw-prog"><span class="t">${escape(e.title || "(無標題)")} <span style="color:#9ca3af;font-weight:400">· ${escape(e.topic || "")}</span></span><span class="n">👍 ${likes} / ${next}${stage ? ` · 已達 ${stage} 階` : ""}</span><span class="bar"><i style="width:${Math.min(100, Math.round((likes / next) * 100))}%"></i></span></div>`;
+                })
+                .join("");
+        } catch (e) {
+          mnEl.innerHTML = "";
+        }
+        // 留言:帳本累積 (顯示用;實際發放由系統重新核算有效讚)
+        const cmEl = document.getElementById("rw-cm-progress");
+        try {
+          const led = (await db.ref("users/__reward_ledger/comments/" + uid).once("value")).val() || {};
+          const total = Object.values(led).reduce((s, c) => s + Math.max(0, (c && c.n) || 0), 0);
+          const issued = (await db.ref("users/__reward_ledger/issued/cm/" + uid).once("value")).val();
+          const k = (issued && issued.rewarded) || 0;
+          const per = cfg.comment.likes;
+          const next = (k + 1) * per;
+          const ft = (await db.ref("users/__reward_ledger/featured/" + uid).once("value")).val() || {};
+          cmEl.innerHTML = `<div class="rw-prog"><span class="t">留言累積有效讚</span><span class="n">👍 ${total} / ${next}${k ? ` · 已領 ${k} 次` : ""}</span><span class="bar"><i style="width:${Math.min(100, Math.round(((total - k * per) / per) * 100))}%"></i></span></div>` +
+            (Object.keys(ft).length ? `<div class="rw-prog"><span class="t">⭐ 被精選的留言</span><span class="n">${Object.keys(ft).length} 則</span></div>` : "");
+        } catch (e) {
+          cmEl.innerHTML = "";
+        }
+      }
       async function loadRewards() {
         const user = window.Auth && window.Auth.getUser();
         if (!user) {
@@ -378,10 +612,15 @@
             r.used = !!(cd && cd.used);
             r.used_by_email = cd?.used_by_email || null;
             r.expires_ts = cd?.expires_ts || r.expires_ts || null;
+            // v573: 天數以序號本身為準 (推薦 30 天、口訣/留言獎勵 7/14/30 天、精選 3 天)
+            r.gift_days = cd?.gift_days || r.gift_days || 30;
           } catch (e) {
             r.used = false;
           }
         }
+
+        // v576: 門檻設定 + 進度 (不阻塞列表)
+        loadRewardConfig(db).then((cfg) => renderProgress(db, user.uid, cfg, arr)).catch(() => {});
 
         // 打開就把未讀 mark 成 seen=true (首頁紅點清掉)
         const unseen = arr.filter((r) => !r.seen);
@@ -397,7 +636,7 @@
 
         const list = document.getElementById("rewards-list");
         if (!arr.length) {
-          list.innerHTML = `<div class="empty"><div class="big">🎁</div>還沒有獎勵<br><small>推薦朋友訂閱就能收到 30 天免費序號</small></div>`;
+          list.innerHTML = `<div class="empty"><div class="big">🎁</div>還沒有獎勵<br><small>推薦朋友訂閱、分享口訣被按讚、留言詳解被按讚，序號會自動出現在這裡</small></div>`;
           return;
         }
 
@@ -427,21 +666,18 @@
                 : urgent
                   ? `<span class="reward-tag" style="background:#fee2e2;color:#991b1b;font-weight:700">⏰ 剩 ${daysToExp} 天到期</span>`
                   : '<span class="reward-tag avail">✨ 可用</span>';
-            const reason =
-              r.reason === "referral"
-                ? `推薦獎勵 · 來自 ${escape(r.from_email_masked || "?")}`
-                : escape(r.reason || "獎勵");
+            const reason = rewardReasonText(r);
             const usedByLine = r.used
               ? `<div class="reward-meta" style="margin-top:.3rem">被 ${escape(r.used_by_email || "?")} 兌換</div>`
               : "";
             const actionBtns =
               r.used || expired
                 ? ""
-                : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 30 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製(可送人)</button>`;
+                : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 ${r.gift_days} 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製(可送人)</button>`;
             const preview =
               r.used || expired
                 ? ""
-                : `<div class="reward-meta" style="margin-top:.2rem;color:#16a34a">按「續命 30 天」→ 訂閱會延到 ${fmtDate((window._currentExpires || Date.now()) + 30 * 86400_000)}</div>`;
+                : `<div class="reward-meta" style="margin-top:.2rem;color:#16a34a">按「續命 ${r.gift_days} 天」→ 訂閱會延到 ${fmtDate(Math.max(window._currentExpires || 0, Date.now()) + r.gift_days * 86400_000)}</div>`;
             const expLine = r.expires_ts
               ? `<div class="reward-meta" style="margin-top:.15rem">序號到期: ${fmtDate(r.expires_ts)}${expired ? " (已過期)" : daysToExp !== null ? ` · 還剩 ${Math.max(0, daysToExp)} 天` : ""}</div>`
               : "";
@@ -450,7 +686,7 @@
               <span class="reward-code">${escape(r.code)}</span>
               <div>${actionBtns}</div>
             </div>
-            <div class="reward-meta">${tag} · 30 天 · ${reason}</div>
+            <div class="reward-meta">${tag} · <b>${r.gift_days} 天</b> · ${reason}</div>
             <div class="reward-meta" style="margin-top:.2rem">收到於 ${fmtDate(r.issued_ts)}</div>
             ${expLine}
             ${preview}
@@ -481,14 +717,15 @@
           if (cdBase && cdBase.expires_ts && now > cdBase.expires_ts)
             return alert("❌ 此序號已過期 (產出後 90 天內須使用)");
         } catch (e) {}
+        const days = (cdBase && cdBase.gift_days) || 30; // v573: 序號幾天就加幾天
         const startFrom =
           window._currentExpires && window._currentExpires > now
             ? window._currentExpires
             : now;
-        const newExpires = startFrom + 30 * 86400_000;
+        const newExpires = startFrom + days * 86400_000;
         if (
           !confirm(
-            `確定使用序號 ${code} 續命?\n\n目前訂閱到期: ${fmtDate(window._currentExpires)}\n續命後到期: ${fmtDate(newExpires)}\n(等於 +30 天，原本剩下的天數不會被吃掉)`,
+            `確定使用序號 ${code} 續命?\n\n目前訂閱到期: ${fmtDate(window._currentExpires)}\n續命後到期: ${fmtDate(newExpires)}\n(等於 +${days} 天，原本剩下的天數不會被吃掉)`,
           )
         )
           return;
@@ -507,10 +744,11 @@
           });
           if (!tx.committed) throw new Error("序號無效或已被搶先");
           await db.ref("users/" + user.uid + "/subscription").set({
-            plan: "monthly",
+            plan: cdBase && cdBase.type ? "redeem-" + cdBase.type : "monthly",
+            gift_days: days,
             started_at: now,
             expires_at: newExpires,
-            activated_by: "redeem-referral-selfuse",
+            activated_by: "redeem-selfuse",
             payment_ref: "序號 " + code,
             redeem_code: code,
             prev_expires_at:
@@ -518,7 +756,9 @@
                 ? window._currentExpires
                 : null,
           });
-          alert(`✅ 續命成功!\n訂閱到期: ${fmtDate(newExpires)}`);
+          // v576: 付費會員索引 (獎勵「有效讚」用)
+          db.ref("users/__stats/paid/" + user.uid).set(newExpires).catch(() => {});
+          alert(`✅ 續命成功 (+${days} 天)!\n訂閱到期: ${fmtDate(newExpires)}`);
           loadRewards();
         } catch (e) {
           alert("❌ 失敗: " + e.message);

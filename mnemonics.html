@@ -16,6 +16,7 @@
     />
     <link rel="stylesheet" href="themes.css" />
     <script src="version.js"></script>
+    <script src="topics.js"></script>
     <script src="skin.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -1122,6 +1123,431 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
 
+      /* ═══ v574: 口訣區新版 ═══ */
+      /* 別人的章節按鈕多 (連結/讚/收藏/複製/檢舉) → 允許換行,標題不被擠掉 */
+      .editor-status {
+        flex-wrap: wrap;
+      }
+      .editor-status input.title-input {
+        flex: 1 1 220px;
+        min-width: 160px;
+      }
+      .mn-tabs {
+        display: inline-flex;
+        gap: 0.2rem;
+        background: #ece9f5;
+        border-radius: 999px;
+        padding: 0.2rem;
+      }
+      .mn-tabs button {
+        border: 0;
+        background: transparent;
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--text-sub);
+        padding: 0.35rem 0.85rem;
+        border-radius: 999px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .mn-tabs button.active {
+        background: white;
+        color: #5b21b6;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .chapter-list .topic-group {
+        margin-bottom: 0.25rem;
+      }
+      .chapter-list .topic-group > summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        color: var(--text-sub);
+        padding: 0.4rem 0.45rem 0.25rem;
+      }
+      .chapter-list .topic-group > summary::-webkit-details-marker {
+        display: none;
+      }
+      .chapter-list .topic-group > summary .arr {
+        font-size: 0.65rem;
+        transition: transform 0.15s;
+      }
+      .chapter-list .topic-group[open] > summary .arr {
+        transform: rotate(90deg);
+      }
+      .chapter-list .topic-group > summary .n {
+        margin-left: auto;
+        font-weight: 700;
+        opacity: 0.75;
+      }
+      .chapter-list .topic-group.untagged > summary {
+        color: #b45309;
+      }
+      .chapter-list .ch-item .ch-vis {
+        font-size: 0.7rem;
+        opacity: 0.8;
+        white-space: nowrap;
+      }
+      .chapter-list .ch-item.forked .ch-title {
+        color: var(--text-sub);
+      }
+      .chapter-list .topic-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0.6rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.86rem;
+      }
+      .chapter-list .topic-row:hover {
+        background: #f9fafb;
+      }
+      .chapter-list .topic-row.active {
+        background: #ede9fe;
+        color: #5b21b6;
+        font-weight: 800;
+      }
+      .chapter-list .topic-row .n {
+        margin-left: auto;
+        font-size: 0.72rem;
+        color: var(--text-sub);
+        background: #f3f4f6;
+        border-radius: 999px;
+        padding: 0.05rem 0.5rem;
+      }
+      /* 公開開關 */
+      .pub-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: var(--text-sub);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .pub-switch input {
+        display: none;
+      }
+      .pub-switch i {
+        width: 32px;
+        height: 18px;
+        border-radius: 999px;
+        background: #d1d5db;
+        position: relative;
+        display: inline-block;
+        transition: background 0.15s;
+      }
+      .pub-switch i::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: left 0.15s;
+      }
+      .pub-switch input:checked + i {
+        background: #16a34a;
+      }
+      .pub-switch input:checked + i::after {
+        left: 16px;
+      }
+      .pub-switch.disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .editor-status .topic-btn,
+      .editor-status .like-btn,
+      .editor-status .fav-btn,
+      .editor-status .fork-btn,
+      .editor-status .report-btn,
+      .editor-status .takedown-btn {
+        background: white;
+        border: 1.5px solid var(--border);
+        color: var(--text-sub);
+        font-weight: 800;
+        border-radius: 999px;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.78rem;
+        margin: 0;
+        flex: 0 0 auto;
+        white-space: nowrap;
+        line-height: 1.2;
+      }
+      .editor-status > * {
+        max-width: 100%;
+      }
+      .editor-status .like-btn {
+        border-color: #db2777;
+        color: #db2777;
+      }
+      .editor-status .like-btn.on {
+        background: #db2777;
+        color: white;
+      }
+      .editor-status .like-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .editor-status .fav-btn {
+        border-color: #d97706;
+        color: #d97706;
+      }
+      .editor-status .fav-btn.on {
+        background: #d97706;
+        color: white;
+      }
+      .editor-status .report-btn {
+        border-style: dashed;
+      }
+      .editor-status .takedown-btn {
+        border-color: #dc2626;
+        color: #dc2626;
+      }
+      /* 章節上方資訊列 (考點 / 作者 / 讚 / 收藏) */
+      .ch-meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+        font-size: 0.76rem;
+        color: var(--text-sub);
+        padding: 0.35rem 1rem 0;
+      }
+      .ch-meta .crumb {
+        background: #f3f4f6;
+        border-radius: 6px;
+        padding: 0.05rem 0.5rem;
+        color: var(--text);
+        font-weight: 700;
+      }
+      .ch-meta .fork-tag {
+        color: #b45309;
+        font-weight: 700;
+      }
+      .ch-meta .down-tag {
+        color: #dc2626;
+        font-weight: 800;
+      }
+      /* 大家分享的:章節清單 */
+      .pub-list {
+        padding: 1rem 1.1rem;
+      }
+      .pub-list .pl-head {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        margin-bottom: 0.7rem;
+        flex-wrap: wrap;
+      }
+      .pub-list .pl-head h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 900;
+        flex: 1;
+      }
+      .pub-list select {
+        font: inherit;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        background: white;
+      }
+      .pub-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.3rem 0.8rem;
+        align-items: center;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 0.45rem;
+        cursor: pointer;
+        background: white;
+      }
+      .pub-item:hover {
+        border-color: #a78bfa;
+        background: #faf8ff;
+      }
+      .pub-item.mine {
+        border-color: #c4b5fd;
+        background: #f5f3ff;
+      }
+      .pub-item .t {
+        font-weight: 800;
+        font-size: 0.92rem;
+      }
+      .pub-item .sub {
+        font-size: 0.74rem;
+        color: var(--text-sub);
+        display: flex;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+      .pub-item .sub .cat {
+        background: #f3f4f6;
+        border-radius: 5px;
+        padding: 0 0.4rem;
+      }
+      .pub-item .nums {
+        display: flex;
+        gap: 0.55rem;
+        font-size: 0.8rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .pub-item .nums .l {
+        color: #db2777;
+      }
+      .pub-item .nums .f {
+        color: #d97706;
+      }
+      .pub-empty {
+        text-align: center;
+        color: var(--text-sub);
+        padding: 2.5rem 1rem;
+        font-size: 0.9rem;
+      }
+      /* 公開對話框 */
+      .pub-dialog .fld {
+        margin-bottom: 0.7rem;
+        font-size: 0.85rem;
+      }
+      .pub-dialog .fld label {
+        display: block;
+        font-weight: 700;
+        color: var(--text-sub);
+        margin-bottom: 0.25rem;
+      }
+      .pub-dialog select {
+        width: 100%;
+        font: inherit;
+        font-size: 0.9rem;
+        padding: 0.45rem 0.6rem;
+        border: 1.5px solid var(--border);
+        border-radius: 9px;
+        background: white;
+      }
+      .pub-dialog .req {
+        color: #dc2626;
+      }
+      .pub-dialog .warn {
+        background: #fff4dc;
+        color: #92400e;
+        border-radius: 9px;
+        padding: 0.5rem 0.7rem;
+        font-size: 0.8rem;
+        margin: 0.4rem 0 0.8rem;
+      }
+      .pub-dialog .consent {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-start;
+        font-size: 0.82rem;
+        color: var(--text);
+        margin-bottom: 0.9rem;
+      }
+      .pub-dialog .acts {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+      .pub-dialog .acts button {
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 800;
+        border-radius: 999px;
+        padding: 0.45rem 1rem;
+        cursor: pointer;
+        border: 1.5px solid var(--border);
+        background: white;
+      }
+      .pub-dialog .acts button.go {
+        background: #7c3aed;
+        color: white;
+        border-color: #7c3aed;
+      }
+      .pub-dialog .acts button.go:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      /* 分享獎勵卡 */
+      .mn-reward {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.65rem 0.9rem;
+        margin-bottom: 0.8rem;
+        font-size: 0.8rem;
+        box-shadow: var(--shadow);
+      }
+      .mn-reward .rw-head {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        flex-wrap: wrap;
+        font-weight: 800;
+      }
+      .mn-reward .rw-head .rule {
+        color: var(--text-sub);
+        font-weight: 600;
+        font-size: 0.76rem;
+      }
+      .mn-reward .rw-row {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        margin-top: 0.35rem;
+      }
+      .mn-reward .rw-row .t {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .mn-reward .bar {
+        width: 120px;
+        height: 7px;
+        border-radius: 999px;
+        background: #ebe9e3;
+        overflow: hidden;
+      }
+      .mn-reward .bar i {
+        display: block;
+        height: 100%;
+        background: #db2777;
+      }
+      .mn-reward .cnt {
+        font-variant-numeric: tabular-nums;
+        color: var(--text-sub);
+        white-space: nowrap;
+      }
+      @media (max-width: 720px) {
+        .mn-tabs button {
+          padding: 0.3rem 0.6rem;
+          font-size: 0.78rem;
+        }
+        .mn-reward .bar {
+          width: 70px;
+        }
+        .editor-status .fork-btn {
+          font-size: 0.72rem;
+        }
+      }
+
       /* v313:深色主題的可讀性補丁 — 文字 / 輸入框 / 章節列依 body 主題色 */
       body.theme-dark .editor-status,
       body.theme-dark input.title-input,
@@ -1166,16 +1592,12 @@
       <a href="exam/index.html#notebook" class="nav-link nav-pill nav-notebook"
         >📒 筆記本</a
       >
-      <!-- v334:正在瀏覽 namespace 移到 nav-row 並排 -->
-      <span class="ns-inline"
-        >🧠 正在瀏覽
-        <select
-          id="user-select"
-          class="user-select"
-          onchange="onUserSelectChange(this.value)"
-        ></select>
-        的口訣區
-      </span>
+      <!-- v574: 三分頁取代作者下拉 -->
+      <div class="mn-tabs" id="mn-tabs" role="tablist">
+        <button data-mode="mine" class="active" onclick="switchMode('mine')">🧠 我的口訣</button>
+        <button data-mode="favs" onclick="switchMode('favs')">⭐ 我的最愛</button>
+        <button data-mode="pub" onclick="switchMode('pub')">🌐 大家分享的</button>
+      </div>
       <span class="user-tag" id="user-tag">--</span>
     </div>
     <!-- v335:搜尋改放在下一排，獨佔一列 -->
@@ -1190,6 +1612,8 @@
     </div>
 
     <div id="info-banner-slot"></div>
+    <!-- v574: 分享獎勵進度 (只在「我的口訣」) -->
+    <div id="mn-reward" class="mn-reward" style="display: none"></div>
 
     <div
       id="load-status"
@@ -1249,11 +1673,22 @@
             class="link-btn"
             id="link-btn"
             onclick="copyChapterLink()"
-            title="複製此章節連結，貼到留言可以一鍵跳過去"
+            title="複製此章節連結 (只有公開章節的連結別人打得開)"
             style="display: none"
           >
             🔗 複製連結
           </button>
+          <!-- v574: 公開開關 / 改考點 / 讚 / 收藏 / 複製到我的 / 檢舉 / 下架 -->
+          <label class="pub-switch" id="pub-toggle" style="display: none" title="公開分享給大家 (需先選考點)">
+            <input type="checkbox" id="pub-check" onchange="togglePublish(this.checked)" />
+            <i></i><span id="pub-label">只給自己看</span>
+          </label>
+          <button class="topic-btn" id="topic-btn" onclick="changeTopic()" style="display: none" title="設定這章屬於哪個考點">🏷 考點</button>
+          <button class="like-btn" id="like-btn" onclick="toggleLike()" style="display: none">👍 <span id="like-n">0</span></button>
+          <button class="fav-btn" id="fav-btn" onclick="toggleFav()" style="display: none">⭐ 收藏</button>
+          <button class="fork-btn" id="fork-btn" onclick="forkChapter()" style="display: none" title="複製一份到我的口訣 (只能自己看,不能再公開)">📋 複製到我的</button>
+          <button class="report-btn" id="report-btn" onclick="reportChapter()" style="display: none" title="內容有問題 (抄襲/不當) 通知管理者">⚑ 檢舉</button>
+          <button class="takedown-btn" id="takedown-btn" onclick="adminTakedown()" style="display: none" title="管理者:下架這章">⛔ 下架</button>
           <button
             class="undo-btn"
             id="undo-btn"
@@ -1327,7 +1762,7 @@
           <textarea
             class="comment-input"
             id="comment-input"
-            placeholder="留個言給共筆者…(Enter 送出, Shift+Enter 換行)"
+            placeholder="留言交換意見…(Enter 送出, Shift+Enter 換行)"
             onkeydown="
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -1348,7 +1783,7 @@
           id="comment-readonly"
           style="display: none"
         >
-          🔒 唯讀模式，看得到留言但不能發
+          🔒 登入的會員才能留言
         </div>
       </div>
     </div>
@@ -1557,6 +1992,14 @@
       const FB_USERS = `${FB_BASE}/users`;
       const FB_COMMENTS = (u, s, chId) =>
         `${FB_BASE}/comments/${u}/${s}/${chId}`;
+      // v574: 公開索引 / 讚 / 檢舉 / 下架
+      const FB_PUB = (subj) => `${FB_BASE}/pub/${subj}`;
+      const FB_LIKES = (key) => `${FB_BASE}/likes/${key}`;
+      const FB_REPORTS = `${FB_BASE}/reports`;
+      const FB_TAKEDOWN = `${FB_BASE}/takedown`;
+      const ADMIN_UIDS = ["BMtTkADnLOQCHocZ5dxoqoLpZCl1"]; // HUA
+      const LIKE_DAILY_MAX = 3; // 每人每天 3 個讚 (口訣+留言共用)
+      const pubKey = (ns, chId) => `${ns}__${chId}`;
       const FB_VERSION_KEEP = 30; // 每章節最多保留 30 個歷史版本
 
       const FIREBASE_CONFIG = {
@@ -1624,24 +2067,51 @@
         }
       }
       const CUR_USER = getCurrentUser();
-      // v315:用小寫比對，大小寫差異不再卡她朋友
-      // CAN_EDIT 變成「能不能留言」的判斷(白名單) — 不再控制章節編輯
-      const CAN_COMMENT = ALLOWED_EDITORS.includes(
-        (CUR_USER.name || "").trim().toLowerCase(),
-      );
-      const CAN_EDIT = CAN_COMMENT; // 暫留舊變數做最小破壞性改動，真正控制「能否改章節」改用 canEditCurrent()
-      // 是否能編輯目前 namespace 的內容(章節)— 只有 namespace owner 可以
-      // v532: 一律用 Google email 判斷，不再 fallback 舊 nickname
-      //       (nickname 存在 localStorage 可被竄改,email 來自 Firebase Auth 無法偽造)
-      function canEditCurrent() {
-        const ownerEmail = NS_OWNER_EMAIL[_curUser];
-        if (!ownerEmail) return false; // 未知 namespace 一律唯讀
-        const myEmail =
-          window.Auth && window.Auth.getUser
-            ? (window.Auth.getUser()?.email || "").toLowerCase()
-            : "";
-        return !!myEmail && myEmail === ownerEmail;
+      // v574: 每個登入的人都有自己的口訣區 (namespace = uid;HUA / Shirley 沿用舊 namespace 名稱,內容不用搬)
+      function authUser() {
+        return window.Auth && window.Auth.getUser ? window.Auth.getUser() : null;
       }
+      function myEmail() {
+        const u = authUser();
+        return ((u && u.email) || "").toLowerCase();
+      }
+      function myUid() {
+        const u = authUser();
+        return (u && u.uid) || null;
+      }
+      function myNs() {
+        const em = myEmail();
+        for (const ns in NS_OWNER_EMAIL) if (NS_OWNER_EMAIL[ns] === em) return ns;
+        return myUid();
+      }
+      function myName() {
+        const em = myEmail();
+        const MAP = { "wing2004piten@gmail.com": "HUA", "wen84224@gmail.com": "Shirley" };
+        if (MAP[em]) return MAP[em];
+        const u = authUser();
+        return (u && (u.displayName || (u.email || "").split("@")[0])) || CUR_USER.name || "會員";
+      }
+      function isAdmin() {
+        return ADMIN_UIDS.includes(myUid() || "");
+      }
+      function isPaid() {
+        try {
+          const c = window.Subscription && window.Subscription._cache();
+          return !!(c && c.ok && c.reason === "paid");
+        } catch (e) {
+          return false;
+        }
+      }
+      // 只有自己的 namespace 能編輯
+      function canEditCurrent() {
+        const mine = myNs();
+        return !!mine && _curUser === mine;
+      }
+      // 留言:登入的人 + 章節是公開的 (私人章節沒有留言)
+      function canComment() {
+        return !!myUid();
+      }
+      const CAN_EDIT = true; // 舊變數 (只剩留言區沿用),真正權限看 canEditCurrent()/canComment()
 
       // 🎨 套用使用者的筆記本背景設定(每個使用者各自獨立)
       function _uKey(k) {
@@ -1704,53 +2174,19 @@
       //       (太早跑會因為拿不到 email 而誤顯示「唯讀模式」)
       function setupUserUI() {
         const tag = document.getElementById("user-tag");
-        tag.textContent = CUR_USER.name || "Guest";
-        if (!CAN_EDIT) tag.classList.add("readonly");
-
+        tag.textContent = myName();
         const slot = document.getElementById("info-banner-slot");
-        const BANNER_DISMISS_KEY =
-          "mnemonics_banner_dismissed_" + (CUR_USER.id || "guest");
+        const BANNER_DISMISS_KEY = "mnemonics_banner_dismissed_v574_" + (myUid() || "guest");
         if (localStorage.getItem(BANNER_DISMISS_KEY)) {
           slot.style.display = "none";
-        } else if (CAN_EDIT) {
-          // v322:文字內容走 Firebase 不需 token。只有貼圖功能需要 GitHub token,沒設就只是貼圖會關掉
-          // v329:每個人只能編輯自己的 namespace,別人的可看可留言不能改
-          const hasToken = !!(
-            localStorage.getItem(CUR_USER.id + "_github_token") ||
-            localStorage.getItem("github_token")
-          );
-          const imgNote = hasToken
-            ? ""
-            : '<br><span style="font-size:.78rem;color:#92400e">(沒設 GitHub token → 不能貼圖，文字共筆照常)</span>';
-          // v532: 用 Google email 判斷自己的 namespace (不再靠 nickname)
-          const myEmail =
-            window.Auth && window.Auth.getUser
-              ? (window.Auth.getUser()?.email || "").toLowerCase()
-              : "";
-          let ownNs = "";
-          for (const ns in NS_OWNER_EMAIL) {
-            if (NS_OWNER_EMAIL[ns] === myEmail) {
-              ownNs = ns;
-              break;
-            }
-          }
-          const rule = ownNs
-            ? `你只能改「${ownNs}」的章節，其他人的可看可留言不能改。`
-            : "";
-          slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>。${rule}文字即時同步，版本歷史在「📜 歷史」。${imgNote}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
         } else {
-          slot.innerHTML = `<div class="info-banner readonly">
-          🔒 唯讀模式 — 只有各區的擁有者能編輯自己的章節，其他人可看、可留言。
-          <br>
-          <span style="font-size:.78rem;color:#92400e">若這是你的區，請確認已用對應的 Google 帳號登入(回首頁登入)</span>
-          <button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button>
-        </div>`;
+          slot.innerHTML = `<div class="info-banner editor">💡 這是<strong>你自己的口訣區</strong>,寫的東西預設只有你看得到。想分享給大家,先幫章節選「考點」再打開「公開」;別人的好章節可以 ⭐ 收藏、👍 讚 (付費會員)、📋 複製一份自己改 (複製品不能再公開)。<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
         }
       }
       function dismissBanner() {
         try {
           localStorage.setItem(
-            "mnemonics_banner_dismissed_" + (CUR_USER.id || "guest"),
+            "mnemonics_banner_dismissed_v574_" + (myUid() || "guest"),
             "1",
           );
         } catch (e) {}
@@ -1760,36 +2196,7 @@
 
       // v315:一鍵宣告自己是 Shirley / HUA 來開通編輯權限
       //      作法:確保本地有這個名字的 user → 把 dental_cur_user 設過去 → reload
-      function claimEditor(canonical) {
-        try {
-          const ulist = JSON.parse(
-            localStorage.getItem("dental_users") || "[]",
-          );
-          let u = ulist.find(
-            (x) =>
-              (x.name || "").trim().toLowerCase() === canonical.toLowerCase(),
-          );
-          if (!u) {
-            // 沒有就建一個
-            const id =
-              "u_" +
-              canonical.toLowerCase() +
-              "_" +
-              Math.random().toString(36).slice(2, 8);
-            u = { id, name: canonical };
-            ulist.push(u);
-            localStorage.setItem("dental_users", JSON.stringify(ulist));
-          } else if (u.name !== canonical) {
-            // 拼字修正(把 shirley → Shirley)
-            u.name = canonical;
-            localStorage.setItem("dental_users", JSON.stringify(ulist));
-          }
-          localStorage.setItem("dental_cur_user", u.id);
-          location.reload();
-        } catch (e) {
-          alert("啟用失敗:" + e.message);
-        }
-      }
+      // (v574 移除 claimEditor)
 
       // ──────────────────────────────────────────────────────────
       // IDB
@@ -2072,6 +2479,17 @@
       let _draftTimer = null;
       let _loaded = new Set();
       let _editMode = false; // false = 閱覽(預設),true = 編輯
+      // v574
+      let _mode = "mine"; // mine | favs | pub
+      let _pubIndex = {}; // subj → { key: {ns, ch, title, topic, author, ts, likes, favs, hidden} }
+      let _pubRefs = {}; // subj → firebase ref (value listener)
+      let _favs = {}; // key → {ns, subj, ch, ts, title}
+      let _favRef = null;
+      let _pubTopic = null; // 大家分享的:目前選的考點
+      let _pubSort = "likes"; // likes | new | favs
+      let _myLikeCache = {}; // key → true/false (這個帳號按過沒)
+      let _takedown = {}; // key → ts
+      let _rewardCfg = { likes1: 20, days1: 7, likes2: 60, days2: 14, likes3: 150, days3: 30 };
       const _undoMap = {}; // chId → 上次儲存前的內容快照(in-memory)
       const _redoMap = {}; // chId → 剛回復前的內容快照(in-memory)
       const stateKey = (u, s) => u + "|" + s;
@@ -2111,7 +2529,7 @@
         else _state[sk] = { chapters: [], ts: 0, updatedBy: "" };
         // 2. 掛 Firebase 即時監聽 — 對方任何寫入會自動推來
         detachContent();
-        setLoadStatus(`☁️ 連線 ${user} · ${SUBJECT_LABEL[subject]}…`);
+        setLoadStatus(`☁️ 連線 ${SUBJECT_LABEL[subject]}…`);
         let firstFire = true;
         try {
           _contentRef = _initFb().ref(FB_CONTENT(user, subject));
@@ -2151,14 +2569,14 @@
               }
               if (!remoteHasContent) {
                 setLoadStatus(
-                  `雲端是空的(${user} · ${SUBJECT_LABEL[subject]})`,
+                  `${SUBJECT_LABEL[subject]} 還沒有章節`,
                 );
                 return;
               }
               // 雲端不新於我們(包含剛剛自己存的 echo)→ 不重畫
               if (!force && remoteTs <= curTs) {
                 setLoadStatus(
-                  `✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`,
+                  `✓ ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`,
                 );
                 return;
               }
@@ -2185,7 +2603,7 @@
                 }
               }
               setLoadStatus(
-                `✓ ${user} · ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`,
+                `✓ ${SUBJECT_LABEL[subject]} · ${remote.chapters.length} 章`,
               );
             },
             (err) => {
@@ -2271,22 +2689,26 @@
       function loadComments(chId) {
         detachComments();
         if (!chId) return;
+        const ch = _findCh(_curUser, _curSubject, chId);
+        // v574: 私人章節沒有留言區
+        if (!ch || !isChPublic(_curUser, ch)) {
+          const btn = document.getElementById("comments-open-btn");
+          if (btn) btn.style.display = "none";
+          return;
+        }
+        const btn = document.getElementById("comments-open-btn");
+        if (btn) btn.style.display = "";
         const pane = document.getElementById("comment-pane");
         pane.classList.remove("no-chapter");
-        // 唯讀模式顯示提示
-        document.getElementById("comment-input-row").style.display = CAN_EDIT
-          ? ""
-          : "none";
-        document.getElementById("comment-readonly").style.display = CAN_EDIT
-          ? "none"
-          : "";
+        const can = canComment();
+        document.getElementById("comment-input-row").style.display = can ? "" : "none";
+        document.getElementById("comment-readonly").style.display = can ? "none" : "";
         try {
           _commentRef = _initFb().ref(FB_COMMENTS(_curUser, _curSubject, chId));
           _commentRef.on(
             "value",
             (snap) => {
               const data = snap.val() || {};
-              // data 是 push() 產生的 key:value map → 轉成 array 並按 ts 排序
               const arr = Object.entries(data)
                 .map(([key, v]) => ({ key, ...v }))
                 .sort((a, b) => (a.ts || 0) - (b.ts || 0));
@@ -2356,39 +2778,40 @@
           list.innerHTML = '<div class="comment-empty">還沒有留言 ✏️</div>';
           return;
         }
-        const me = (CUR_USER.name || "").trim().toLowerCase();
+        const me = myUid();
+        const meName = (myName() || "").trim().toLowerCase();
         list.innerHTML = arr
           .map((c) => {
-            const isMine = (c.by || "").trim().toLowerCase() === me;
+            const isMine = (c.uid && c.uid === me) || (!c.uid && (c.by || "").trim().toLowerCase() === meName && canEditCurrent());
             const dt = c.ts
-              ? new Date(c.ts).toLocaleString("zh-TW", {
-                  month: "numeric",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
+              ? new Date(c.ts).toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })
               : "";
             const delBtn =
-              CAN_EDIT && isMine
+              isMine || isAdmin() || canEditCurrent()
                 ? `<button class="del-c" onclick="deleteComment('${c.key}')" title="刪除這則留言">✕</button>`
                 : "";
+            const authorTag = c.uid && c.uid === nsOwnerUid(_curUser) ? ' <span style="color:#5b21b6;font-weight:800">作者</span>' : "";
             return `<div class="comment-item">
           ${delBtn}
-          <div class="meta"><span class="who">${escapeHtml(c.by || "?")}</span> · ${dt}</div>
+          <div class="meta"><span class="who">${escapeHtml(c.by || "?")}</span>${authorTag} · ${dt}</div>
           <div class="text">${linkifyCommentText(c.text || "")}</div>
         </div>`;
           })
           .join("");
-        // 自動捲到最底
         list.scrollTop = list.scrollHeight;
       }
       async function sendComment() {
-        if (!CAN_EDIT) {
-          showToast("沒有編輯權限");
+        if (!canComment()) {
+          showToast("請先登入才能留言");
           return;
         }
         if (!_curChapterId) {
           showToast("請先選一章");
+          return;
+        }
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        if (!ch || !isChPublic(_curUser, ch)) {
+          showToast("只有公開章節才有留言");
           return;
         }
         const inp = document.getElementById("comment-input");
@@ -2402,7 +2825,8 @@
         btn.disabled = true;
         try {
           await fbPush(FB_COMMENTS(_curUser, _curSubject, _curChapterId), {
-            by: CUR_USER.name || "Guest",
+            by: myName(),
+            uid: myUid(),
             ts: Date.now(),
             text,
           });
@@ -2415,7 +2839,7 @@
         }
       }
       async function deleteComment(key) {
-        if (!CAN_EDIT) return;
+        if (!myUid()) return;
         if (!confirm("刪掉這則留言?")) return;
         try {
           await _initFb()
@@ -2429,6 +2853,714 @@
       function curState() {
         return _state[stateKey(_curUser, _curSubject)];
       }
+      // ══════════════════════════════════════════════════════════
+      // v574: 分頁 / 公開索引 / 讚 / 收藏 / 複製 / 檢舉 / 下架 / 獎勵卡
+      // ══════════════════════════════════════════════════════════
+      function _findCh(ns, subj, chId) {
+        const st = _state[stateKey(ns, subj)];
+        return st && st.chapters ? st.chapters.find((c) => c.id === chId) : null;
+      }
+      function nsOwnerUid(ns) {
+        // legacy namespace 沒有 uid 對應 (HUA/腦洞大開),用 email 對應不到 uid;自己的話回自己的 uid
+        if (ns === myNs()) return myUid();
+        return /^[A-Za-z0-9]{20,}$/.test(ns) ? ns : null;
+      }
+      function isChPublic(ns, ch) {
+        if (!ch || !ch.pub || ch.forkFrom) return false;
+        if (_takedown[pubKey(ns, ch.id)]) return false;
+        return true;
+      }
+      function _openTopicGroups() {
+        try {
+          return new Set(JSON.parse(sessionStorage.getItem("mn_open_topics_" + _curSubject) || "[]"));
+        } catch (e) {
+          return new Set();
+        }
+      }
+      function _onTopicToggle(el, key) {
+        try {
+          const set = _openTopicGroups();
+          if (el.open) set.add(key);
+          else set.delete(key);
+          sessionStorage.setItem("mn_open_topics_" + _curSubject, JSON.stringify([...set]));
+        } catch (e) {}
+      }
+      function renderChMeta(ch) {
+        const ns = _curUser;
+        const key = pubKey(ns, ch.id);
+        const idx = (_pubIndex[_curSubject] || {})[key] || {};
+        const parts = [];
+        parts.push(`<span class="crumb">${escapeHtml(SUBJECT_LABEL[_curSubject])} · ${escapeHtml(ch.topic || "還沒分考點")}</span>`);
+        if (!canEditCurrent()) parts.push(`<span>作者 ${escapeHtml(idx.author || ch.updatedBy || "")}</span>`);
+        if (isChPublic(ns, ch)) parts.push(`<span>👍 ${idx.likes || ch.likes || 0}</span><span>⭐ ${idx.favs || 0} 人收藏</span>`);
+        if (ch.forkFrom) parts.push(`<span class="fork-tag">📋 複製自 ${escapeHtml(ch.forkFrom.author || "")} · 不能公開</span>`);
+        if (_takedown[key]) parts.push(`<span class="down-tag">⛔ 已被管理者下架</span>`);
+        if (ch.ts) parts.push(`<span>${new Date(ch.ts).toLocaleDateString("zh-TW")} 更新</span>`);
+        return `<div class="ch-meta">${parts.join("")}</div>`;
+      }
+
+      // ── 分頁 ──
+      async function switchMode(mode, opts) {
+        if (!["mine", "favs", "pub"].includes(mode)) return;
+        if (_dirty && _editMode && !confirm("有未儲存草稿,要切換嗎?(草稿會留在本機)")) return;
+        _mode = mode;
+        _curChapterId = null;
+        _editMode = false;
+        _pubTopic = null;
+        if (_editor) {
+          try {
+            _editor.destroy();
+          } catch (e) {}
+          _editor = null;
+        }
+        document.querySelectorAll("#mn-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+        const inp = document.getElementById("ch-search");
+        if (inp) {
+          inp.value = "";
+          inp.placeholder = mode === "mine" ? "🔍 搜我的口訣 (四科)" : mode === "pub" ? "🔍 搜大家分享的口訣 (標題 / 考點 / 作者)" : "🔍 搜我的最愛";
+        }
+        const rw = document.getElementById("mn-reward");
+        if (rw) rw.style.display = mode === "mine" ? "" : "none";
+        try {
+          localStorage.setItem("mn_mode", mode);
+        } catch (e) {}
+        if (mode === "mine") {
+          const mine = myNs();
+          if (!mine) {
+            showToast("請先登入");
+          } else {
+            _curUser = mine;
+          }
+          await switchSubject(_curSubject);
+        } else {
+          detachContent();
+          detachComments();
+          if (mode === "favs") await ensureFavs();
+          if (mode === "pub") await ensurePubIndex(_curSubject);
+          document.querySelectorAll("#subject-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.subject === _curSubject));
+          renderChapterList();
+          renderPubList();
+          refreshStatusUI();
+        }
+      }
+
+      // ── 公開索引 ──
+      async function ensurePubIndex(subj) {
+        if (_pubRefs[subj]) return;
+        try {
+          const tdSnap = await _initFb().ref(FB_TAKEDOWN).once("value");
+          _takedown = tdSnap.val() || {};
+        } catch (e) {}
+        await new Promise((resolve) => {
+          let first = true;
+          const ref = _initFb().ref(FB_PUB(subj));
+          _pubRefs[subj] = ref;
+          ref.on(
+            "value",
+            (snap) => {
+              _pubIndex[subj] = snap.val() || {};
+              if (first) {
+                first = false;
+                resolve();
+              } else if (_mode !== "mine" && _curSubject === subj) {
+                renderChapterList();
+                if (!_curChapterId) renderPubList();
+                else refreshLikeFavUI();
+              } else if (_mode === "mine" && _curSubject === subj) {
+                renderRewardCard();
+                if (_curChapterId) refreshLikeFavUI();
+              }
+            },
+            () => {
+              _pubIndex[subj] = _pubIndex[subj] || {};
+              if (first) {
+                first = false;
+                resolve();
+              }
+            },
+          );
+        });
+      }
+      function _pubEntries(subj) {
+        const idx = _pubIndex[subj] || {};
+        return Object.entries(idx)
+          .filter(([key, e]) => e && !e.hidden && !_takedown[key])
+          .map(([key, e]) => ({ key, ...e }));
+      }
+      async function upsertPubIndex(ns, subj, ch) {
+        const key = pubKey(ns, ch.id);
+        const prev = (_pubIndex[subj] || {})[key] || {};
+        await _initFb()
+          .ref(`${FB_PUB(subj)}/${key}`)
+          .update({
+            ns,
+            ch: ch.id,
+            title: ch.title || "",
+            topic: ch.topic || "",
+            author: myName(),
+            authorUid: myUid(),
+            ts: ch.ts || Date.now(),
+            pubTs: ch.pubTs || prev.pubTs || Date.now(),
+            likes: prev.likes || 0,
+            favs: prev.favs || 0,
+          });
+      }
+      async function removePubIndex(ns, subj, chId) {
+        await _initFb().ref(`${FB_PUB(subj)}/${pubKey(ns, chId)}`).remove();
+      }
+
+      // ── 公開 / 只給自己看 ──
+      async function togglePublish(checked) {
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        const chk = document.getElementById("pub-check");
+        if (!ch || !canEditCurrent()) {
+          chk.checked = false;
+          return;
+        }
+        if (ch.forkFrom) {
+          chk.checked = false;
+          showToast("複製來的章節不能公開");
+          return;
+        }
+        if (!checked) {
+          ch.pub = false;
+          ch.ts = Date.now();
+          await _persistChapterMeta(ch, "改回只給自己看");
+          try {
+            await removePubIndex(_curUser, _curSubject, ch.id);
+          } catch (e) {}
+          showToast("🔒 已改回只給自己看");
+          refreshStatusUI();
+          renderChapterList();
+          pickChapter(ch.id);
+          renderRewardCard();
+          return;
+        }
+        // 要公開:一定要有考點 + 勾同意
+        const res = await publishDialog(ch);
+        if (!res) {
+          chk.checked = false;
+          return;
+        }
+        ch.topic = res.topic;
+        ch.pub = true;
+        ch.pubTs = ch.pubTs || Date.now();
+        ch.ts = Date.now();
+        await _persistChapterMeta(ch, `公開「${ch.title}」`);
+        await upsertPubIndex(_curUser, _curSubject, ch);
+        showToast("🌐 已公開分享,大家在「大家分享的」→ " + SUBJECT_LABEL[_curSubject] + " → " + ch.topic + " 看得到");
+        refreshStatusUI();
+        renderChapterList();
+        pickChapter(ch.id);
+        renderRewardCard();
+      }
+      async function _persistChapterMeta(ch, action) {
+        const subj = curState();
+        subj.ts = Date.now();
+        subj.updatedBy = myName();
+        await idbSet(k.cloud(_curUser, _curSubject), subj);
+        await fbSet(FB_CONTENT(_curUser, _curSubject), subj);
+        try {
+          await fbAppendVersion(_curUser, _curSubject, { ts: subj.ts, by: myName(), action, snapshot: subj });
+        } catch (e) {}
+      }
+      function publishDialog(ch) {
+        return new Promise((resolve) => {
+          const topics = (window.TOPICS && window.TOPICS[_curSubject]) || [];
+          const overlay = document.createElement("div");
+          overlay.className = "modal-overlay";
+          overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:460px">
+            <button class="close-x" onclick="this.closest('.modal-overlay').remove()">✕</button>
+            <h2>🌐 把「${escapeHtml(ch.title || "")}」公開分享</h2>
+            <div class="fld"><label>科目</label><div style="font-weight:800">${escapeHtml(SUBJECT_LABEL[_curSubject])}</div></div>
+            <div class="fld"><label>考點 <span class="req">*</span></label>
+              <select id="pubd-topic"><option value="">請選擇…</option>${topics.map((t) => `<option value="${escapeHtml(t)}" ${t === ch.topic ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select>
+              <div style="font-size:.74rem;color:var(--text-sub);margin-top:.25rem">和練習本同一份考點清單,大家會在這個考點底下看到它</div></div>
+            <div class="warn" id="pubd-warn">⚠️ 還沒選考點,不能公開。</div>
+            <label class="consent"><input type="checkbox" id="pubd-consent" style="margin-top:.2rem"><span>內容是我自己整理的,或已取得授權;若有侵權由我自行負責,與網站無關 (見訂閱條款第八條)</span></label>
+            <div class="acts"><button type="button" id="pubd-cancel">取消</button><button type="button" class="go" id="pubd-go" disabled>🌐 公開</button></div>
+          </div>`;
+          document.body.appendChild(overlay);
+          const sel = overlay.querySelector("#pubd-topic"), consent = overlay.querySelector("#pubd-consent");
+          const go = overlay.querySelector("#pubd-go"), warn = overlay.querySelector("#pubd-warn");
+          const check = () => {
+            const okTopic = !!sel.value;
+            warn.style.display = okTopic ? "none" : "";
+            go.disabled = !(okTopic && consent.checked);
+          };
+          sel.onchange = check;
+          consent.onchange = check;
+          check();
+          const done = (v) => {
+            overlay.remove();
+            resolve(v);
+          };
+          overlay.querySelector("#pubd-cancel").onclick = () => done(null);
+          overlay.querySelector(".close-x").onclick = () => done(null);
+          overlay.onclick = (e) => {
+            if (e.target === overlay) done(null);
+          };
+          go.onclick = () => done({ topic: sel.value });
+        });
+      }
+      // 選考點 (新增章節 / 改考點 共用)
+      function pickTopicDialog(current, msg, allowSkip) {
+        return new Promise((resolve) => {
+          const topics = (window.TOPICS && window.TOPICS[_curSubject]) || [];
+          const overlay = document.createElement("div");
+          overlay.className = "modal-overlay";
+          overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:420px">
+            <h2>🏷 ${escapeHtml(msg || "這章屬於哪個考點?")}</h2>
+            <div class="fld"><select id="tpd-sel"><option value="">${allowSkip ? "先不選 (放「還沒分考點」)" : "請選擇…"}</option>${topics.map((t) => `<option value="${escapeHtml(t)}" ${t === current ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select></div>
+            <div class="acts"><button type="button" id="tpd-cancel">取消</button><button type="button" class="go" id="tpd-go">確定</button></div>
+          </div>`;
+          document.body.appendChild(overlay);
+          const done = (v) => {
+            overlay.remove();
+            resolve(v);
+          };
+          overlay.querySelector("#tpd-cancel").onclick = () => done(allowSkip ? "" : null);
+          overlay.querySelector("#tpd-go").onclick = () => done(overlay.querySelector("#tpd-sel").value);
+        });
+      }
+      async function changeTopic() {
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        if (!ch || !canEditCurrent()) return;
+        const t = await pickTopicDialog(ch.topic || "", "「" + (ch.title || "") + "」屬於哪個考點?", false);
+        if (t === null || t === undefined) return;
+        if (!t && ch.pub) {
+          showToast("公開中的章節一定要有考點");
+          return;
+        }
+        ch.topic = t;
+        ch.ts = Date.now();
+        await _persistChapterMeta(ch, `改考點「${ch.title}」→ ${t || "未分類"}`);
+        if (ch.pub) await upsertPubIndex(_curUser, _curSubject, ch);
+        showToast(t ? "🏷 已歸到「" + t + "」" : "已移到「還沒分考點」");
+        renderChapterList();
+        pickChapter(ch.id);
+      }
+
+      // ── 大家分享的 ──
+      function renderPubTopics(container, head) {
+        const entries = _pubEntries(_curSubject);
+        head.textContent = `${SUBJECT_LABEL[_curSubject]} · ${entries.length} 篇公開`;
+        const counts = {};
+        entries.forEach((e) => {
+          const t = e.topic || "未分類";
+          counts[t] = (counts[t] || 0) + 1;
+        });
+        const order = (window.TOPICS && window.TOPICS[_curSubject]) || [];
+        const keys = Object.keys(counts).sort((a, b) => {
+          const ia = order.indexOf(a), ib = order.indexOf(b);
+          return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b, "zh-Hant");
+        });
+        if (!keys.length) {
+          container.innerHTML = `<div class="empty">這科還沒有人公開口訣<br>去「我的口訣」寫一篇分享吧</div>`;
+          return;
+        }
+        container.innerHTML =
+          `<div class="topic-row ${_pubTopic === null ? "active" : ""}" onclick="setPubTopic(null)">全部<span class="n">${entries.length}</span></div>` +
+          keys.map((t) => `<div class="topic-row ${_pubTopic === t ? "active" : ""}" onclick="setPubTopic('${escapeHtml(t).replace(/'/g, "&#39;")}')">${escapeHtml(t)}<span class="n">${counts[t]}</span></div>`).join("");
+      }
+      function setPubTopic(t) {
+        _pubTopic = t;
+        _curChapterId = null;
+        detachComments();
+        renderChapterList();
+        renderPubList();
+        refreshStatusUI();
+      }
+      function setPubSort(v) {
+        _pubSort = v;
+        renderPubList();
+      }
+      function renderPubList() {
+        if (_mode === "mine") return;
+        const body = document.getElementById("editor-body");
+        const ti = document.getElementById("title-input");
+        if (ti) {
+          ti.value = "";
+          ti.placeholder = _mode === "pub" ? "大家分享的口訣" : "我的最愛";
+        }
+        let items;
+        let title;
+        if (_mode === "pub") {
+          items = _pubEntries(_curSubject).filter((e) => !_pubTopic || (e.topic || "未分類") === _pubTopic).map((e) => ({ ...e, subj: _curSubject }));
+          title = `${SUBJECT_LABEL[_curSubject]} · ${_pubTopic || "全部考點"}`;
+        } else {
+          items = Object.entries(_favs)
+            .map(([key, fv]) => ({ key, ...fv }))
+            .filter((fv) => fv.subj === _curSubject)
+            .map((fv) => {
+              const idx = (_pubIndex[fv.subj] || {})[fv.key];
+              return { ...fv, ...(idx || {}), gone: !idx || idx.hidden || !!_takedown[fv.key] };
+            });
+          title = `⭐ 我的最愛 · ${SUBJECT_LABEL[_curSubject]}`;
+        }
+        items.sort((a, b) => {
+          if (_pubSort === "new") return (b.pubTs || b.ts || 0) - (a.pubTs || a.ts || 0);
+          if (_pubSort === "favs") return (b.favs || 0) - (a.favs || 0) || (b.likes || 0) - (a.likes || 0);
+          return (b.likes || 0) - (a.likes || 0) || (b.pubTs || 0) - (a.pubTs || 0);
+        });
+        const mine = myNs();
+        body.innerHTML = `<div class="pub-list">
+          <div class="pl-head"><h3>${escapeHtml(title)}</h3>
+            <select onchange="setPubSort(this.value)"><option value="likes" ${_pubSort === "likes" ? "selected" : ""}>最多讚</option><option value="new" ${_pubSort === "new" ? "selected" : ""}>最新</option><option value="favs" ${_pubSort === "favs" ? "selected" : ""}>最多收藏</option></select></div>
+          ${
+            items.length
+              ? items
+                  .map((e) => {
+                    const safeNs = String(e.ns).replace(/['"\\\\]/g, "");
+                    const dt = e.pubTs || e.ts ? new Date(e.pubTs || e.ts).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" }) : "";
+                    return `<div class="pub-item ${e.ns === mine ? "mine" : ""}" onclick="openPubChapter('${safeNs}','${e.subj}','${e.ch}')">
+              <div><div class="t">${escapeHtml(e.title || "(無標題)")}${e.ns === mine ? ' <span style="font-size:.7rem;color:#5b21b6">(你的)</span>' : ""}${e.gone ? ' <span style="font-size:.7rem;color:var(--text-sub)">作者已收回</span>' : ""}</div>
+              <div class="sub"><span class="cat">${escapeHtml(e.topic || "未分類")}</span><span>${escapeHtml(e.author || "")}</span><span>${dt}</span></div></div>
+              <div class="nums"><span class="l">👍 ${e.likes || 0}</span><span class="f">⭐ ${e.favs || 0}</span></div>
+            </div>`;
+                  })
+                  .join("")
+              : `<div class="pub-empty">${_mode === "pub" ? "這個考點還沒有人分享" : "還沒有收藏。去「大家分享的」看到喜歡的按 ⭐"}</div>`
+          }
+        </div>`;
+      }
+      async function openPubChapter(ns, subj, chId) {
+        if (_mode === "mine") await switchMode(ns === myNs() ? "mine" : "pub", { silent: true });
+        if (ns === myNs()) {
+          if (_mode !== "mine") await switchMode("mine", { silent: true });
+          if (_curSubject !== subj) await switchSubject(subj);
+          pickChapter(chId);
+          return;
+        }
+        if (_curSubject !== subj) {
+          _curSubject = subj;
+          document.querySelectorAll("#subject-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.subject === subj));
+          await ensurePubIndex(subj);
+        }
+        await switchUser(ns);
+        // 等內容到 (loadUserSubject 掛了 listener;先看 IDB / 直接抓一次)
+        let st = curState();
+        if (!st || !st.chapters || !st.chapters.find((c) => c.id === chId)) {
+          try {
+            const remote = await fbGet(FB_CONTENT(ns, subj));
+            if (remote && remote.chapters) {
+              _state[stateKey(ns, subj)] = remote;
+              await idbSet(k.cloud(ns, subj), remote);
+            }
+          } catch (e) {}
+        }
+        st = curState();
+        const ch = st && st.chapters ? st.chapters.find((c) => c.id === chId) : null;
+        if (!ch || !isChPublic(ns, ch)) {
+          showToast("這章沒有公開,或已被作者收回");
+          _curChapterId = null;
+          renderChapterList();
+          renderPubList();
+          return;
+        }
+        renderChapterList();
+        pickChapter(chId);
+      }
+
+      // ── 讚 / 收藏 ──
+      async function ensureFavs() {
+        const uid = myUid();
+        if (!uid || _favRef) return;
+        await new Promise((resolve) => {
+          let first = true;
+          _favRef = _initFb().ref(`users/${uid}/mn_favs`);
+          _favRef.on(
+            "value",
+            (snap) => {
+              _favs = snap.val() || {};
+              if (first) {
+                first = false;
+                resolve();
+              } else if (_mode === "favs") {
+                renderChapterList();
+                if (!_curChapterId) renderPubList();
+              }
+            },
+            () => {
+              if (first) {
+                first = false;
+                resolve();
+              }
+            },
+          );
+        });
+        // 最愛需要各科索引來顯示讚數/是否收回
+        await Promise.all(["ya3", "ya4", "ya5", "ya6"].map((s) => ensurePubIndex(s)));
+      }
+      function renderFavList(container, head) {
+        const list = Object.entries(_favs).map(([key, fv]) => ({ key, ...fv }));
+        const bySubj = {};
+        list.forEach((fv) => {
+          bySubj[fv.subj] = (bySubj[fv.subj] || 0) + 1;
+        });
+        head.textContent = `⭐ 我的最愛 · ${list.length} 篇`;
+        const cur = list.filter((fv) => fv.subj === _curSubject);
+        if (!cur.length) {
+          container.innerHTML = `<div class="empty">${SUBJECT_LABEL[_curSubject]} 還沒有收藏<br>${list.length ? "其他科有 " + (list.length - cur.length) + " 篇" : "去「大家分享的」按 ⭐"}</div>`;
+          return;
+        }
+        const groups = {};
+        cur.forEach((fv) => {
+          const idx = (_pubIndex[fv.subj] || {})[fv.key];
+          const t = (idx && idx.topic) || fv.topic || "未分類";
+          (groups[t] = groups[t] || []).push({ ...fv, ...(idx || {}), gone: !idx || idx.hidden || !!_takedown[fv.key] });
+        });
+        container.innerHTML = Object.keys(groups)
+          .map(
+            (t) => `<details class="topic-group" open><summary><span class="arr">▶</span>${escapeHtml(t)}<span class="n">${groups[t].length}</span></summary>${groups[t]
+              .map((e) => {
+                const safeNs = String(e.ns).replace(/['"\\\\]/g, "");
+                const active = _curChapterId === e.ch && _curUser === e.ns;
+                return `<div class="ch-item ${active ? "active" : ""}" onclick="openPubChapter('${safeNs}','${e.subj}','${e.ch}')"><span class="ch-title">${escapeHtml(e.title || "(無標題)")}</span><span class="ch-vis">${e.gone ? "已收回" : "👍" + (e.likes || 0)}</span></div>`;
+              })
+              .join("")}</details>`,
+          )
+          .join("");
+      }
+      async function refreshLikeFavUI() {
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        const likeBtn = document.getElementById("like-btn"), favBtn = document.getElementById("fav-btn"), likeN = document.getElementById("like-n");
+        if (!ch) return;
+        const key = pubKey(_curUser, ch.id);
+        const idx = (_pubIndex[_curSubject] || {})[key] || {};
+        if (likeN) likeN.textContent = String(idx.likes || 0);
+        if (favBtn) {
+          const on = !!_favs[key];
+          favBtn.classList.toggle("on", on);
+          favBtn.textContent = on ? "⭐ 已收藏" : "⭐ 收藏";
+        }
+        if (likeBtn && !canEditCurrent()) {
+          const uid = myUid();
+          if (!uid) {
+            likeBtn.disabled = true;
+            likeBtn.title = "登入後才能按讚";
+          } else if (!isPaid()) {
+            likeBtn.disabled = true;
+            likeBtn.title = "付費會員才能按讚 (試用可以收藏、留言)";
+          } else {
+            likeBtn.disabled = false;
+            likeBtn.title = "";
+            if (_myLikeCache[key] === undefined) {
+              try {
+                const snap = await _initFb().ref(`${FB_LIKES(key)}/${uid}`).once("value");
+                _myLikeCache[key] = snap.exists();
+              } catch (e) {
+                _myLikeCache[key] = false;
+              }
+            }
+          }
+          likeBtn.classList.toggle("on", !!_myLikeCache[key]);
+          likeBtn.innerHTML = (_myLikeCache[key] ? "👍 已讚 " : "👍 ") + `<span id="like-n">${idx.likes || 0}</span>`;
+        }
+        // 章節 meta 列的數字同步
+        const meta = document.querySelector("#editor-body .ch-meta");
+        if (meta) meta.outerHTML = renderChMeta(ch);
+      }
+      function _todayKey() {
+        const d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      }
+      async function toggleLike() {
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        const uid = myUid();
+        if (!ch || !uid) return showToast("請先登入");
+        if (canEditCurrent()) return showToast("不能給自己按讚");
+        if (!isPaid()) return showToast("付費會員才能按讚 (試用可以收藏、留言)");
+        if (!isChPublic(_curUser, ch)) return showToast("這章沒有公開");
+        const key = pubKey(_curUser, ch.id);
+        const db = _initFb();
+        const inc = firebase.database.ServerValue.increment;
+        const likeBtn = document.getElementById("like-btn");
+        likeBtn.disabled = true;
+        try {
+          const mine = await db.ref(`${FB_LIKES(key)}/${uid}`).once("value");
+          if (mine.exists()) {
+            // 取消讚 (額度不退)
+            const up = {};
+            up[`${FB_LIKES(key)}/${uid}`] = null;
+            up[`${FB_PUB(_curSubject)}/${key}/likes`] = inc(-1);
+            await db.ref().update(up);
+            _myLikeCache[key] = false;
+            showToast("已取消讚");
+          } else {
+            // 每天額度 (口訣 + 留言共用)
+            const logRef = db.ref(`users/${uid}/like_log/${_todayKey()}`);
+            const used = (await logRef.once("value")).val() || 0;
+            if (used >= LIKE_DAILY_MAX) {
+              showToast(`今天的 ${LIKE_DAILY_MAX} 個讚用完了,明天再來 👍`);
+              return;
+            }
+            const up = {};
+            up[`${FB_LIKES(key)}/${uid}`] = Date.now();
+            up[`${FB_PUB(_curSubject)}/${key}/likes`] = inc(1);
+            up[`users/${uid}/like_log/${_todayKey()}`] = inc(1);
+            await db.ref().update(up);
+            _myLikeCache[key] = true;
+            showToast(`👍 已讚 (今天還能按 ${LIKE_DAILY_MAX - used - 1} 個)`);
+          }
+        } catch (e) {
+          showToast("失敗:" + (e.message || "").slice(0, 60));
+        } finally {
+          likeBtn.disabled = false;
+          refreshLikeFavUI();
+        }
+      }
+      async function toggleFav() {
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        const uid = myUid();
+        if (!ch || !uid) return showToast("請先登入");
+        if (canEditCurrent()) return showToast("自己的章節不用收藏,它就在「我的口訣」");
+        if (!isChPublic(_curUser, ch)) return showToast("這章沒有公開");
+        const key = pubKey(_curUser, ch.id);
+        const db = _initFb();
+        const inc = firebase.database.ServerValue.increment;
+        try {
+          if (_favs[key]) {
+            const up = {};
+            up[`users/${uid}/mn_favs/${key}`] = null;
+            up[`${FB_PUB(_curSubject)}/${key}/favs`] = inc(-1);
+            await db.ref().update(up);
+            delete _favs[key];
+            showToast("已從最愛移除");
+          } else {
+            const up = {};
+            up[`users/${uid}/mn_favs/${key}`] = { ns: _curUser, subj: _curSubject, ch: ch.id, title: ch.title || "", topic: ch.topic || "", ts: Date.now() };
+            up[`${FB_PUB(_curSubject)}/${key}/favs`] = inc(1);
+            await db.ref().update(up);
+            _favs[key] = up[`users/${uid}/mn_favs/${key}`];
+            showToast("⭐ 已加到我的最愛");
+          }
+        } catch (e) {
+          showToast("失敗:" + (e.message || "").slice(0, 60));
+        }
+        refreshLikeFavUI();
+      }
+
+      // ── 複製到我的 (永遠不能公開) ──
+      async function forkChapter() {
+        const src = _findCh(_curUser, _curSubject, _curChapterId);
+        const mine = myNs();
+        if (!src || !mine) return showToast("請先登入");
+        if (canEditCurrent()) return showToast("這已經是你的章節");
+        if (!confirm(`複製「${src.title}」到我的口訣?\\n\\n複製後可以自己改,但這份複製品「永遠不能公開」,只能自己看。`)) return;
+        const srcNs = _curUser, srcSubj = _curSubject;
+        const idx = (_pubIndex[srcSubj] || {})[pubKey(srcNs, src.id)] || {};
+        // 讀我的該科內容
+        const sk = stateKey(mine, srcSubj);
+        let st = _state[sk];
+        if (!st || !st.chapters) {
+          try {
+            st = (await fbGet(FB_CONTENT(mine, srcSubj))) || (await idbGet(k.cloud(mine, srcSubj))) || { chapters: [], ts: 0, updatedBy: "" };
+          } catch (e) {
+            st = { chapters: [], ts: 0, updatedBy: "" };
+          }
+          if (!st.chapters) st.chapters = [];
+          _state[sk] = st;
+        }
+        const copy = {
+          id: genChId(),
+          title: src.title || "複製的章節",
+          content: src.content || "<p></p>",
+          topic: src.topic || "",
+          pub: false,
+          ts: Date.now(),
+          updatedBy: myName(),
+          forkFrom: { ns: srcNs, subj: srcSubj, ch: src.id, author: idx.author || src.updatedBy || "", ts: Date.now() },
+        };
+        st.chapters.push(copy);
+        st.ts = Date.now();
+        st.updatedBy = myName();
+        try {
+          await fbSet(FB_CONTENT(mine, srcSubj), st);
+          await idbSet(k.cloud(mine, srcSubj), st);
+          try {
+            await fbAppendVersion(mine, srcSubj, { ts: st.ts, by: myName(), action: `複製「${copy.title}」(自 ${copy.forkFrom.author})`, snapshot: st });
+          } catch (e) {}
+          showToast("📋 已複製到我的口訣 (只給自己看)");
+          await switchMode("mine", { silent: true });
+          if (_curSubject !== srcSubj) await switchSubject(srcSubj);
+          pickChapter(copy.id);
+        } catch (e) {
+          showToast("複製失敗:" + (e.message || "").slice(0, 60));
+        }
+      }
+
+      // ── 檢舉 / 下架 ──
+      async function reportChapter() {
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        const uid = myUid();
+        if (!ch || !uid) return showToast("請先登入");
+        const reason = prompt("檢舉原因 (抄襲、不當內容、錯誤資訊…):", "");
+        if (reason === null) return;
+        try {
+          const key = pubKey(_curUser, ch.id);
+          const r = await fbPush(FB_REPORTS, { key, ns: _curUser, subj: _curSubject, ch: ch.id, title: ch.title || "", by: uid, byName: myName(), ts: Date.now(), reason: (reason || "").slice(0, 300) });
+          try {
+            fetch("https://island-watch.seat-watch.workers.dev/notify/mn-report?rid=" + encodeURIComponent(r.key), { mode: "no-cors" }).catch(() => {});
+          } catch (e) {}
+          showToast("⚑ 已送出檢舉,管理者會處理");
+        } catch (e) {
+          showToast("送出失敗:" + (e.message || "").slice(0, 60));
+        }
+      }
+      async function adminTakedown() {
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        if (!ch || !isAdmin()) return;
+        const key = pubKey(_curUser, ch.id);
+        if (_takedown[key]) {
+          if (!confirm("這章已下架,要恢復嗎?")) return;
+          await _initFb().ref(`${FB_TAKEDOWN}/${key}`).remove();
+          await _initFb().ref(`${FB_PUB(_curSubject)}/${key}/hidden`).remove();
+          delete _takedown[key];
+          showToast("已恢復顯示");
+        } else {
+          if (!confirm(`下架「${ch.title}」? 作者的公開開關會鎖住,大家都看不到。`)) return;
+          await _initFb().ref(`${FB_TAKEDOWN}/${key}`).set({ ts: Date.now(), by: myUid(), title: ch.title || "", ns: _curUser, subj: _curSubject });
+          await _initFb().ref(`${FB_PUB(_curSubject)}/${key}/hidden`).set(true);
+          _takedown[key] = { ts: Date.now() };
+          showToast("⛔ 已下架");
+        }
+        renderChapterList();
+        pickChapter(ch.id);
+      }
+
+      // ── 分享獎勵卡 (我的口訣) ──
+      async function loadRewardCfg() {
+        try {
+          const v = (await _initFb().ref("users/__config/rewards").once("value")).val();
+          if (v && v.mnemonic) _rewardCfg = Object.assign({}, _rewardCfg, v.mnemonic);
+        } catch (e) {}
+      }
+      function renderRewardCard() {
+        const el = document.getElementById("mn-reward");
+        if (!el) return;
+        if (_mode !== "mine" || !myUid()) {
+          el.style.display = "none";
+          return;
+        }
+        el.style.display = "";
+        const st = curState();
+        const pubs = st && st.chapters ? st.chapters.filter((c) => isChPublic(_curUser, c)) : [];
+        const idx = _pubIndex[_curSubject] || {};
+        const c = _rewardCfg;
+        const rows = pubs
+          .map((ch) => ({ ch, likes: (idx[pubKey(_curUser, ch.id)] || {}).likes || 0 }))
+          .sort((a, b) => b.likes - a.likes)
+          .slice(0, 3)
+          .map(({ ch, likes }) => {
+            const next = likes < c.likes1 ? c.likes1 : likes < c.likes2 ? c.likes2 : c.likes3;
+            const pct = Math.min(100, Math.round((likes / next) * 100));
+            return `<div class="rw-row"><span class="t">${escapeHtml(ch.title || "")}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="cnt">👍 ${likes} / ${next}</span></div>`;
+          })
+          .join("");
+        el.innerHTML = `<div class="rw-head">🎁 分享獎勵 <span class="rule">同一章 ${c.likes1} 讚 → ${c.days1} 天序號、${c.likes2} 讚 → 再 ${c.days2} 天、${c.likes3} 讚 → 再 ${c.days3} 天 (門檻隨會員人數調整;只有付費會員的讚算;自動發到「我的獎勵」)</span></div>${rows || `<div class="rw-row" style="color:var(--text-sub)">${SUBJECT_LABEL[_curSubject]} 還沒有公開的章節。選好考點、打開「公開」就開始累積 👍</div>`}`;
+      }
+
 
       // ──────────────────────────────────────────────────────────
       // v329:複製章節連結 + 解析 URL hash 深連結
@@ -2439,13 +3571,13 @@
           showToast("請先選一章再複製");
           return;
         }
-        // v330:縮短參數名 ns→n, subj→s, ch→c
+        const ch = _findCh(_curUser, _curSubject, _curChapterId);
+        if (ch && !isChPublic(_curUser, ch) && canEditCurrent()) {
+          if (!confirm("這章目前「只給自己看」,別人打開連結會看不到。\n\n還是要複製連結? (要分享請先打開「公開」)")) return;
+        }
         const hash = `#n=${encodeURIComponent(_curUser)}&s=${_curSubject}&c=${encodeURIComponent(_curChapterId)}`;
         const url = location.origin + location.pathname + hash;
-        const subj = curState();
-        const ch = subj && subj.chapters.find((c) => c.id === _curChapterId);
         const title = ch ? ch.title : "章節";
-        // 嘗試現代 Clipboard API
         const fallback = () => {
           const ta = document.createElement("textarea");
           ta.value = url;
@@ -2486,15 +3618,25 @@
         const subj = params.s || params.subj;
         const ch = params.c || params.ch;
         if (!ns && !subj && !ch) return false;
-        if (ns && _users.includes(ns)) {
-          _curUser = ns;
-          const sel = document.getElementById("user-select");
-          if (sel) sel.value = ns;
-          renderUserTabs();
+        const targetSubj = subj && ["ya3", "ya4", "ya5", "ya6"].includes(subj) ? subj : _curSubject;
+        if (ns && ns !== myNs()) {
+          // 別人的章節 → 走「大家分享的」,而且必須是公開的
+          await switchMode("pub", { silent: true });
+          await ensurePubIndex(targetSubj);
+          if (_curSubject !== targetSubj) await switchSubject(targetSubj);
+          const idx = _pubIndex[targetSubj] || {};
+          const entry = idx[pubKey(ns, ch)];
+          if (!ch || !entry || entry.hidden || _takedown[pubKey(ns, ch)]) {
+            showToast("這章沒有公開,或已被作者收回");
+            renderChapterList();
+            renderPubList();
+            return true;
+          }
+          await openPubChapter(ns, targetSubj, ch);
+          return true;
         }
-        if (subj && ["ya3", "ya4", "ya5", "ya6"].includes(subj)) {
-          await switchSubject(subj);
-        }
+        if (_mode !== "mine") await switchMode("mine", { silent: true });
+        if (_curSubject !== targetSubj) await switchSubject(targetSubj);
         if (ch) {
           let tries = 30;
           const tryPick = () => {
@@ -2539,62 +3681,66 @@
         const inp = document.getElementById("ch-search");
         const q = (inp ? inp.value : "").trim().toLowerCase();
         if (!q) {
-          // 清空 → 還原章節列為當前科目
           renderChapterList();
+          if (_mode !== "mine" && !_curChapterId) renderPubList();
           return;
         }
-        // v334:跨「所有 namespace × 四科」搜尋
         const SUBJECTS = ["ya3", "ya4", "ya5", "ya6"];
-        const NAMESPACES = _users.length ? _users.slice() : ["HUA", "腦洞大開"];
-        // 確保每個 (ns, subject) 至少有 IDB cache(沒 Firebase 即時資料也能搜)
-        const promises = [];
-        for (const ns of NAMESPACES) {
-          for (const s of SUBJECTS) {
-            const sk = stateKey(ns, s);
-            if (_state[sk] && _state[sk].chapters) continue;
-            promises.push(
-              (async () => {
-                const cache = await idbGet(k.cloud(ns, s));
-                if (cache && cache.chapters) _state[sk] = cache;
-                else {
-                  // IDB 沒就拉 Firebase 一次性
-                  try {
-                    const remote = await fbGet(FB_CONTENT(ns, s));
-                    if (remote && remote.chapters) {
-                      _state[sk] = remote;
-                      await idbSet(k.cloud(ns, s), remote);
-                    }
-                  } catch (e) {}
-                }
-              })(),
-            );
-          }
-        }
-        await Promise.all(promises);
-        // 跨所有區搜尋
         const hits = [];
-        for (const ns of NAMESPACES) {
-          for (const s of SUBJECTS) {
-            const sj = _state[stateKey(ns, s)];
+        if (_mode === "mine") {
+          const ns = myNs();
+          if (!ns) return;
+          await Promise.all(
+            SUBJECTS.map(async (sub) => {
+              const sk = stateKey(ns, sub);
+              if (_state[sk] && _state[sk].chapters) return;
+              const cache = await idbGet(k.cloud(ns, sub));
+              if (cache && cache.chapters) _state[sk] = cache;
+              else {
+                try {
+                  const remote = await fbGet(FB_CONTENT(ns, sub));
+                  if (remote && remote.chapters) {
+                    _state[sk] = remote;
+                    await idbSet(k.cloud(ns, sub), remote);
+                  }
+                } catch (e) {}
+              }
+            }),
+          );
+          for (const sub of SUBJECTS) {
+            const sj = _state[stateKey(ns, sub)];
             if (!sj || !sj.chapters) continue;
             sj.chapters.forEach((ch) => {
               const title = (ch.title || "").toLowerCase();
-              const plain = (ch.content || "")
-                .replace(/<[^>]+>/g, " ")
-                .toLowerCase();
-              if (title.includes(q) || plain.includes(q)) {
+              const plain = (ch.content || "").replace(/<[^>]+>/g, " ").toLowerCase();
+              if (title.includes(q) || plain.includes(q) || (ch.topic || "").toLowerCase().includes(q)) {
                 let snippet = "";
                 const idx = plain.indexOf(q);
                 if (idx >= 0) {
                   const start = Math.max(0, idx - 20);
-                  snippet =
-                    (start > 0 ? "…" : "") +
-                    plain.slice(start, idx + q.length + 30).trim();
+                  snippet = (start > 0 ? "…" : "") + plain.slice(start, idx + q.length + 30).trim();
                 }
-                hits.push({ ns, subj: s, ch, snippet });
+                hits.push({ ns, subj: sub, ch, snippet });
               }
             });
           }
+        } else if (_mode === "pub") {
+          await Promise.all(SUBJECTS.map((sub) => ensurePubIndex(sub)));
+          for (const sub of SUBJECTS) {
+            const idx = _pubIndex[sub] || {};
+            Object.entries(idx).forEach(([key, e]) => {
+              if (!e || e.hidden || _takedown[key]) return;
+              if ((e.title || "").toLowerCase().includes(q) || (e.topic || "").toLowerCase().includes(q) || (e.author || "").toLowerCase().includes(q)) {
+                hits.push({ ns: e.ns, subj: sub, ch: { id: e.ch, title: e.title }, snippet: `${e.topic || "未分類"} · ${e.author || ""} · 👍 ${e.likes || 0}`, pub: true });
+              }
+            });
+          }
+        } else {
+          Object.entries(_favs).forEach(([key, fv]) => {
+            if ((fv.title || "").toLowerCase().includes(q) || (fv.topic || "").toLowerCase().includes(q)) {
+              hits.push({ ns: fv.ns, subj: fv.subj, ch: { id: fv.ch, title: fv.title }, snippet: fv.topic || "", pub: true });
+            }
+          });
         }
         renderSearchResults(hits, q);
       }
@@ -2606,18 +3752,15 @@
           return;
         }
         container.innerHTML =
-          `<div style="font-size:.74rem;color:var(--text-sub);padding:.3rem .35rem .55rem">🔍 ${hits.length} 個結果(全區搜尋)</div>` +
+          `<div style="font-size:.74rem;color:var(--text-sub);padding:.3rem .35rem .55rem">🔍 ${hits.length} 個結果</div>` +
           hits
             .map((h) => {
               const subjLbl = SUBJECT_LABEL[h.subj] || h.subj;
-              const sameNs = h.ns === _curUser;
-              const nsBadge = sameNs
-                ? ""
-                : `<span style="background:#7c3aed;color:white;font-size:.62rem;padding:.05rem .35rem;border-radius:8px;font-weight:700;margin-right:.2rem">${escapeHtml(h.ns)}</span>`;
-              return `<div class="ch-item" style="border-left:3px solid var(--ya5);padding-left:.5rem" onclick="gotoSearchHit('${escapeHtml(h.ns)}','${h.subj}','${h.ch.id}')">
+              const safeNs = String(h.ns).replace(/['"\\]/g, "");
+              return `<div class="ch-item" style="border-left:3px solid var(--ya5);padding-left:.5rem" onclick="gotoSearchHit('${safeNs}','${h.subj}','${h.ch.id}',${h.pub ? "true" : "false"})">
           <div style="display:flex;flex-direction:column;gap:.15rem;width:100%">
             <div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap">
-              ${nsBadge}<span style="background:var(--ya5);color:white;font-size:.65rem;padding:.05rem .35rem;border-radius:8px;font-weight:700">${subjLbl}</span>
+              <span style="background:var(--ya5);color:white;font-size:.65rem;padding:.05rem .35rem;border-radius:8px;font-weight:700">${subjLbl}</span>
               <span class="ch-title" style="font-weight:700">${escapeHtml(h.ch.title || "(無標題)")}</span>
             </div>
             ${h.snippet ? `<div style="font-size:.74rem;color:var(--text-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(h.snippet)}</div>` : ""}
@@ -2626,41 +3769,64 @@
             })
             .join("");
       }
-      async function gotoSearchHit(ns, subj, chId) {
+      async function gotoSearchHit(ns, subj, chId, isPub) {
         const inp = document.getElementById("ch-search");
         if (inp) inp.value = "";
-        // v334:跨區搜尋結果可能在別人的 namespace,要先切過去
-        if (ns && ns !== _curUser) {
-          await switchUser(ns);
+        if (isPub || ns !== myNs()) {
+          await openPubChapter(ns, subj, chId);
+          return;
         }
         if (_curSubject !== subj) await switchSubject(subj);
         setTimeout(() => pickChapter(chId), 80);
       }
 
       function renderChapterList() {
-        const subj = curState() || { chapters: [] };
         const container = document.getElementById("ch-items");
         const head = document.getElementById("ch-head-label");
-        head.textContent = `${_curUser} · ${SUBJECT_LABEL[_curSubject]} · ${subj.chapters.length} 章`;
+        const addBtn = document.getElementById("btn-add-ch");
+        if (addBtn) addBtn.classList.toggle("hidden", !(_mode === "mine" && canEditCurrent()));
+        if (_mode === "pub") return renderPubTopics(container, head);
+        if (_mode === "favs") return renderFavList(container, head);
+        const subj = curState() || { chapters: [] };
+        head.textContent = `${SUBJECT_LABEL[_curSubject]} · ${subj.chapters.length} 章`;
         if (subj.chapters.length === 0) {
-          const tip = canEditCurrent()
-            ? "按上方「+ 新增」開始"
-            : `${_curUser} 還沒寫東西`;
-          container.innerHTML = `<div class="empty">還沒有章節<br>${tip}</div>`;
+          container.innerHTML = `<div class="empty">還沒有章節<br>${canEditCurrent() ? "按上方「+ 新增」開始" : "這裡是空的"}</div>`;
           return;
         }
-        const editable = canEditCurrent();
-        container.innerHTML = subj.chapters
-          .map((ch) => {
-            const active = ch.id === _curChapterId;
-            const dragAttrs = editable
-              ? `draggable="true" data-ch-id="${ch.id}" ondragstart="_dragChStart(event,'${ch.id}')" ondragover="_dragChOver(event)" ondragleave="_dragChLeave(event)" ondrop="_dragChDrop(event,'${ch.id}')" ondragend="_dragChEnd(event)"`
-              : "";
-            return `<div class="ch-item ${active ? "active" : ""}" ${dragAttrs} onclick="pickChapter('${ch.id}')">
-          ${editable ? '<span class="ch-grip" title="拖曳排序">⋮⋮</span>' : ""}
-          <span class="ch-title">${escapeHtml(ch.title || "(無標題)")}</span>
-          ${editable ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ""}
-        </div>`;
+        // 依考點分組;沒選考點的放最後「還沒分考點」
+        const groups = new Map();
+        subj.chapters.forEach((ch) => {
+          const key = ch.topic || "";
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(ch);
+        });
+        const order = (window.TOPICS && window.TOPICS[_curSubject]) || [];
+        const keys = [...groups.keys()].filter((x) => x).sort((a, b) => {
+          const ia = order.indexOf(a), ib = order.indexOf(b);
+          return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b, "zh-Hant");
+        });
+        if (groups.has("")) keys.push("");
+        const openSet = _openTopicGroups();
+        container.innerHTML = keys
+          .map((key) => {
+            const list = groups.get(key);
+            const isOpen = openSet.has(key) || keys.length <= 3 || list.some((c) => c.id === _curChapterId);
+            const label = key || "還沒分考點";
+            return `<details class="topic-group ${key ? "" : "untagged"}" ${isOpen ? "open" : ""} ontoggle="_onTopicToggle(this,'${escapeHtml(key).replace(/'/g, "&#39;")}')">
+          <summary><span class="arr">▶</span>${key ? "" : "⚠️ "}${escapeHtml(label)}<span class="n">${list.length}</span></summary>
+          ${list
+            .map((ch) => {
+              const active = ch.id === _curChapterId;
+              const pub = isChPublic(_curUser, ch);
+              const vis = ch.forkFrom ? "📋🔒" : pub ? `🌐${ch.likes ? " 👍" + ch.likes : ""}` : "🔒";
+              return `<div class="ch-item ${active ? "active" : ""} ${ch.forkFrom ? "forked" : ""}" onclick="pickChapter('${ch.id}')" title="${ch.forkFrom ? "複製自 " + escapeHtml(ch.forkFrom.author || "") + ",不能公開" : pub ? "公開中" : "只給自己看"}">
+            <span class="ch-title">${escapeHtml(ch.title || "(無標題)")}</span>
+            <span class="ch-vis">${vis}</span>
+            ${canEditCurrent() ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ""}
+          </div>`;
+            })
+            .join("")}
+        </details>`;
           })
           .join("");
       }
@@ -2726,31 +3892,12 @@
         }
       }
 
-      function renderUserTabs() {
-        const sel = document.getElementById("user-select");
-        if (!sel) return;
-        const opts = _users.map((name) => {
-          const selected = name === _curUser ? " selected" : "";
-          const tag = name === (CUR_USER.name || "") ? "(自己)" : "";
-          return `<option value="${escapeHtml(name)}"${selected}>${escapeHtml(name)} ${tag}</option>`;
-        });
-        if (canEditCurrent())
-          opts.push('<option value="__add__">+ 新增…</option>');
-        sel.innerHTML = opts.join("");
-      }
+      // (v574 移除 renderUserTabs)
 
-      function onUserSelectChange(name) {
-        if (name === "__add__") {
-          addUser();
-          // 還原下拉到原本選擇，等 addUser 完成自己會 switchUser
-          document.getElementById("user-select").value = _curUser;
-          return;
-        }
-        switchUser(name);
-      }
+      // (v574 移除 onUserSelectChange)
 
       async function switchUser(name) {
-        // 🛡 v310:同 switchSubject,閱覽模式下 _editor=null,不能直接 .getHTML()
+        // v574: 內部用 — 切到某個 namespace (自己的或別人的),不再有使用者下拉
         if (_dirty && _curChapterId && _editor) {
           await idbSet(k.draft(_curUser, _curSubject, _curChapterId), {
             content: _editor.getHTML(),
@@ -2763,60 +3910,11 @@
         _editMode = false;
         if (_editor) _editor.setEditable(false);
         await loadUserSubject(_curUser, _curSubject);
-        renderUserTabs();
-        renderChapterList();
-        const ss = curState();
-        if (ss && ss.chapters.length > 0) {
-          pickChapter(ss.chapters[0].id);
-        } else {
-          showEmptyEditor();
-        }
       }
 
-      async function addUser() {
-        if (!canEditCurrent()) {
-          showToast("沒有新增權限");
-          return;
-        }
-        const name = prompt("新使用者名稱:", "");
-        if (!name || !name.trim()) return;
-        const clean = name.trim();
-        if (_users.includes(clean)) {
-          showToast("已存在這個使用者");
-          return;
-        }
-        if (clean.length > 30 || /[\/\\:*?"<>|]/.test(clean)) {
-          showToast("名稱不能太長 / 不能有特殊字元");
-          return;
-        }
-        _users.push(clean);
-        await idbSet(k.usersList, _users);
-        renderUserTabs();
-        // v322:推到 Firebase
-        try {
-          await fbSet(FB_USERS, {
-            users: _users,
-            ts: Date.now(),
-            updatedBy: CUR_USER.name,
-          });
-          showToast("✓ 已新增使用者" + clean);
-        } catch (e) {
-          showToast(
-            "✗ 雲端同步失敗(本機已加):" + (e.message || "").slice(0, 60),
-          );
-        }
-        switchUser(clean);
-      }
+      // (v574 移除 addUser)
 
-      function _migrateUsers(arr) {
-        // v389: 白名單恢復成 2 個 — HUA 跟 腦洞大開，其他(包括之前加的速看表、亂碼)一律過濾
-        const WHITELIST = ["HUA", "腦洞大開"];
-        arr = arr.filter((u) => WHITELIST.includes(u));
-        WHITELIST.forEach((u) => {
-          if (!arr.includes(u)) arr.push(u);
-        });
-        return arr;
-      }
+      // (v574 移除 _migrateUsers)
 
       // v329:把本機 IDB 裡 cloud_腦動大開_* / draft_腦動大開_* 自動搬到 腦洞大開，避免 Shirley 在 Mac 寫的「咬合修磨」丟失
       async function _migrateLocalChineseTypo() {
@@ -2839,33 +3937,8 @@
       _migrateLocalChineseTypo();
 
       async function loadUsersList() {
-        // 1. 本機 IDB
-        const cache = await idbGet(k.usersList);
-        if (cache && Array.isArray(cache) && cache.length)
-          _users = _migrateUsers(cache.slice());
-        else _users = DEFAULT_USERS.slice();
-        // 本機遷移後存回
-        await idbSet(k.usersList, _users);
-        // 2. 背景拉 Firebase
-        fbGet(FB_USERS)
-          .then(async (remote) => {
-            if (!remote || !Array.isArray(remote.users)) return;
-            const cleaned = _migrateUsers(remote.users.slice());
-            const set = new Set(_users);
-            let added = false;
-            cleaned.forEach((u) => {
-              if (!set.has(u)) {
-                _users.push(u);
-                set.add(u);
-                added = true;
-              }
-            });
-            if (added) {
-              await idbSet(k.usersList, _users);
-              renderUserTabs();
-            }
-          })
-          .catch(() => {});
+        // v574: 不再維護使用者清單;保留函式名給舊呼叫
+        _users = [];
       }
 
       function escapeHtml(s) {
@@ -2883,8 +3956,6 @@
       }
 
       async function switchSubject(subj) {
-        // 🛡 v310:閱覽模式下 _editor 已被 destroy,呼叫 .getHTML() 會丟 TypeError
-        //         導致整個 switchSubject 斷掉，後續按其他科目「沒反應」
         if (_dirty && _curChapterId && _editor) {
           await idbSet(k.draft(_curUser, _curSubject, _curChapterId), {
             content: _editor.getHTML(),
@@ -2894,23 +3965,34 @@
         }
         _curSubject = subj;
         _editMode = false;
+        _pubTopic = null;
         if (_editor) _editor.setEditable(false);
         document.querySelectorAll("#subject-tabs button").forEach((b) => {
           b.classList.toggle("active", b.dataset.subject === subj);
         });
-        await loadUserSubject(_curUser, subj);
-        renderChapterList();
-        const subjState = curState();
-        if (subjState && subjState.chapters.length > 0) {
-          pickChapter(subjState.chapters[0].id);
+        if (_mode === "mine") {
+          const mine = myNs();
+          if (mine && _curUser !== mine) _curUser = mine;
+          await loadUserSubject(_curUser, subj);
+          renderChapterList();
+          const subjState = curState();
+          if (subjState && subjState.chapters.length > 0) {
+            pickChapter(subjState.chapters[0].id);
+          } else {
+            _curChapterId = null;
+            showEmptyEditor();
+          }
+          renderRewardCard();
         } else {
           _curChapterId = null;
-          showEmptyEditor();
+          detachContent();
+          if (_mode === "pub") await ensurePubIndex(subj);
+          renderChapterList();
+          renderPubList();
         }
       }
 
       async function pickChapter(chId) {
-        // 🛡 v310:_editor 檢查保留，避免閱覽模式 NPE
         if (_dirty && _curChapterId && _editor) {
           await idbSet(k.draft(_curUser, _curSubject, _curChapterId), {
             content: _editor.getHTML(),
@@ -2919,9 +4001,7 @@
           });
         }
         _curChapterId = chId;
-        // 切章節時自動回閱覽模式
         _editMode = false;
-        // 🚀 v308:閱覽模式不掛 TipTap,直接 innerHTML 渲染。編輯器銷毀省記憶體
         if (_editor) {
           try {
             _editor.destroy();
@@ -2938,18 +4018,16 @@
           showEmptyEditor();
           return;
         }
-        // v557: 手機單欄時，點章節後內容在下面看不到 → 自動捲到內容卡
         if (window.innerWidth <= 720) {
           setTimeout(() => {
             const ec = document.querySelector(".editor-card");
             if (ec) ec.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 120);
         }
-        // v311:閱覽模式直接渲染章節內容，不再因為 IDB 有舊草稿就跳 toast
-        //       (草稿仍保留，按「✏ 編輯」時會自動載入)
         const titleInput = document.getElementById("title-input");
         const body = document.getElementById("editor-body");
         body.innerHTML =
+          renderChMeta(ch) +
           '<div class="view-content">' +
           (ch.content || '<p style="color:#9ca3af">(空)</p>') +
           "</div>";
@@ -2957,8 +4035,8 @@
         _dirty = false;
         refreshStatusUI();
         renderChapterList();
-        // v323:載入該章節的留言
         loadComments(chId);
+        refreshLikeFavUI();
       }
 
       function showEmptyEditor() {
@@ -2968,6 +4046,15 @@
             _editor.destroy();
           } catch (e) {}
           _editor = null;
+        }
+        if (_mode !== "mine") {
+          _curChapterId = null;
+          _dirty = false;
+          _editMode = false;
+          refreshStatusUI();
+          detachComments();
+          renderPubList();
+          return;
         }
         body.innerHTML =
           '<div class="empty-pick"><div class="em">📒</div><div>從左邊選一章開始' +
@@ -2981,87 +4068,55 @@
         _dirty = false;
         _editMode = false;
         refreshStatusUI();
-        // v323:沒選章節時關掉留言區
         detachComments();
       }
 
       function refreshStatusUI() {
         const subj = curState();
-        const ch =
-          subj && _curChapterId
-            ? subj.chapters.find((c) => c.id === _curChapterId)
-            : null;
-        // meta-text 已經移除，不再使用
-        const editBtn = document.getElementById("edit-btn");
-        const saveBtn = document.getElementById("save-btn");
-        const abandonBtn = document.getElementById("abandon-btn");
-        const undoBtn = document.getElementById("undo-btn");
-        const redoBtn = document.getElementById("redo-btn");
-        const histBtn = document.getElementById("history-btn");
-        const tb = document.getElementById("toolbar");
-        const titleInput = document.getElementById("title-input");
-        if (!_curChapterId) {
-          editBtn.style.display = "none";
-          saveBtn.style.display = "none";
-          abandonBtn.style.display = "none";
-          undoBtn.style.display = "none";
-          redoBtn.style.display = "none";
-          histBtn.style.display = "none";
-          tb.style.display = "none";
-          titleInput.disabled = true;
+        const ch = subj && _curChapterId ? subj.chapters.find((c) => c.id === _curChapterId) : null;
+        const $ = (id) => document.getElementById(id);
+        const editBtn = $("edit-btn"), saveBtn = $("save-btn"), abandonBtn = $("abandon-btn");
+        const undoBtn = $("undo-btn"), redoBtn = $("redo-btn"), histBtn = $("history-btn");
+        const linkBtn = $("link-btn"), tb = $("toolbar"), titleInput = $("title-input");
+        const pubT = $("pub-toggle"), topicBtn = $("topic-btn"), likeBtn = $("like-btn"), favBtn = $("fav-btn");
+        const forkBtn = $("fork-btn"), reportBtn = $("report-btn"), tdBtn = $("takedown-btn");
+        const hide = (...els) => els.forEach((e) => e && (e.style.display = "none"));
+        const show = (...els) => els.forEach((e) => e && (e.style.display = ""));
+        hide(editBtn, saveBtn, abandonBtn, undoBtn, redoBtn, histBtn, linkBtn, pubT, topicBtn, likeBtn, favBtn, forkBtn, reportBtn, tdBtn);
+        tb.style.display = "none";
+        titleInput.disabled = true;
+        if (!_curChapterId || !ch) {
+          // nothing
         } else if (!canEditCurrent()) {
-          // v329:不是這個 namespace 的擁有者 → 唯讀，但歷史/複製連結可以看可以用
-          editBtn.style.display = "none";
-          saveBtn.style.display = "none";
-          abandonBtn.style.display = "none";
-          undoBtn.style.display = "none";
-          redoBtn.style.display = "none";
-          histBtn.style.display = "";
-          const linkBtn = document.getElementById("link-btn");
-          if (linkBtn) linkBtn.style.display = "";
-          tb.style.display = "none";
-          titleInput.disabled = true;
+          // 別人的公開章節:讚 / 收藏 / 複製 / 檢舉 / 連結 / 歷史;管理者多一個下架
+          show(linkBtn, likeBtn, favBtn, forkBtn, reportBtn);
+          if (isAdmin()) show(tdBtn);
         } else if (_editMode) {
-          // 編輯模式:只給 儲存 + 放棄儲存
-          editBtn.style.display = "none";
-          saveBtn.style.display = "";
+          show(saveBtn, abandonBtn);
           saveBtn.disabled = !_dirty;
           saveBtn.textContent = _dirty ? "💾 儲存" : "💾 已存";
-          abandonBtn.style.display = "";
-          undoBtn.style.display = "none";
-          redoBtn.style.display = "none";
-          histBtn.style.display = "none";
-          const linkBtn2 = document.getElementById("link-btn");
-          if (linkBtn2) linkBtn2.style.display = "none";
           tb.style.display = "flex";
           titleInput.disabled = false;
         } else {
-          // 閱覽模式:歷史 + 編輯 + 回復 + 取消回復 + 複製連結
-          editBtn.style.display = "";
+          show(editBtn, histBtn, linkBtn, pubT, topicBtn);
           editBtn.textContent = "✏ 編輯";
-          saveBtn.style.display = "none";
-          abandonBtn.style.display = "none";
-          histBtn.style.display = "";
-          const linkBtn3 = document.getElementById("link-btn");
-          if (linkBtn3) linkBtn3.style.display = "";
-          undoBtn.style.display = _undoMap[_curChapterId] ? "" : "none";
-          redoBtn.style.display = _redoMap[_curChapterId] ? "" : "none";
-          tb.style.display = "none";
-          titleInput.disabled = true;
+          if (_undoMap[_curChapterId]) show(undoBtn);
+          if (_redoMap[_curChapterId]) show(redoBtn);
+          // 公開開關狀態
+          const chk = $("pub-check"), lab = $("pub-label");
+          const forked = !!ch.forkFrom;
+          const down = !!_takedown[pubKey(_curUser, ch.id)];
+          chk.checked = !!ch.pub && !forked;
+          chk.disabled = forked || down;
+          pubT.classList.toggle("disabled", forked || down);
+          pubT.title = forked ? "複製來的章節不能公開" : down ? "已被管理者下架" : ch.pub ? "點一下改回只給自己看" : "公開分享給大家 (需先選考點)";
+          lab.textContent = forked ? "複製品 · 不能公開" : down ? "已下架" : ch.pub ? "公開分享中" : "只給自己看";
+          topicBtn.textContent = ch.topic ? "🏷 " + ch.topic : "🏷 選考點";
         }
-        // 沒選章節 → 連結按鈕也隱藏
-        if (!_curChapterId) {
-          const lb = document.getElementById("link-btn");
-          if (lb) lb.style.display = "none";
-        }
-        // 章節列 + 新增按鈕(沒權限就藏)
-        const chAdd = document.getElementById("btn-add-ch");
-        if (chAdd) chAdd.classList.toggle("hidden", !canEditCurrent());
-        // v325:不在編輯模式時強制收掉圖片寬度工具列(之前儲存後它會殘留)
-        const imgTbar = document.getElementById("img-toolbar");
+        const chAdd = $("btn-add-ch");
+        if (chAdd) chAdd.classList.toggle("hidden", !(_mode === "mine" && canEditCurrent()));
+        const imgTbar = $("img-toolbar");
         if (imgTbar && !_editMode) imgTbar.classList.remove("visible");
-        // 🛡 注意:這裡不呼叫 setEditable,避免 setEditable → onUpdate → refreshStatusUI 遞迴
-        //         setEditable 只在 toggleEditMode 顯式呼叫
       }
 
       // v325:圖片放大 lightbox(跟筆記本同樣 UX)
@@ -3297,14 +4352,13 @@
       // ──────────────────────────────────────────────────────────
       async function addChapter() {
         if (!canEditCurrent()) {
-          showToast("你沒有編輯權限");
+          if (!myUid()) showToast("請先登入");
+          else showToast("先切到「我的口訣」再新增");
           return;
         }
-        const title = prompt(
-          `在「${_curUser}・${SUBJECT_LABEL[_curSubject]}」新增章節，標題:`,
-          "新章節",
-        );
+        const title = prompt(`在「${SUBJECT_LABEL[_curSubject]}」新增章節，標題:`, "新章節");
         if (!title || !title.trim()) return;
+        const topic = await pickTopicDialog(null, "這章屬於哪個考點? (之後也能改;不選就先放「還沒分考點」)", true);
         let subj = curState();
         if (!subj) {
           subj = { chapters: [], ts: 0, updatedBy: "" };
@@ -3316,20 +4370,20 @@
           title: title.trim(),
           content: "<p></p>",
           ts: Date.now(),
-          updatedBy: CUR_USER.name || "Guest",
+          updatedBy: myName(),
+          topic: topic || "",
+          pub: false,
         };
         subj.chapters.push(newCh);
         subj.ts = Date.now();
-        subj.updatedBy = CUR_USER.name || "Guest";
-        // v318:立刻持久化到本機，避免關頁就消失
+        subj.updatedBy = myName();
         await idbSet(k.cloud(_curUser, _curSubject), subj);
         _dirty = true;
         await pickChapter(newCh.id);
-        // 新增完自動進編輯模式(lazy load TipTap)
         await toggleEditMode();
         _dirty = true;
         refreshStatusUI();
-        showToast("新章節已建立，寫完按💾儲存(會推到雲端讓其他人看到)");
+        showToast("新章節已建立,寫完按 💾 儲存 (預設只有你看得到)");
       }
 
       async function deleteChapter(chId) {
@@ -3338,16 +4392,10 @@
         if (!subj) return;
         const ch = subj.chapters.find((c) => c.id === chId);
         if (!ch) return;
-        if (
-          !confirm(
-            `刪除「${ch.title}」(${_curUser})?\n\n刪掉後可從「📜 歷史」找回上一次 commit 的版本。`,
-          )
-        )
-          return;
-        // 本機刪除(GitHub commit 自然會記錄這次刪除)
+        if (!confirm(`刪除「${ch.title}」?\n\n刪掉後可從「📜 歷史」找回上一次儲存的版本。`)) return;
         subj.chapters = subj.chapters.filter((c) => c.id !== chId);
         subj.ts = Date.now();
-        subj.updatedBy = CUR_USER.name || "Guest";
+        subj.updatedBy = myName();
         await idbDel(k.draft(_curUser, _curSubject, chId));
         await idbSet(k.cloud(_curUser, _curSubject), subj);
         if (_curChapterId === chId) {
@@ -3358,23 +4406,17 @@
           else showEmptyEditor();
         }
         renderChapterList();
-        // 3. v322:推到 Firebase
         showToast("🗑 刪除中…");
         try {
           await fbSet(FB_CONTENT(_curUser, _curSubject), subj);
-          await fbAppendVersion(_curUser, _curSubject, {
-            ts: subj.ts,
-            by: CUR_USER.name,
-            action: `delete「${ch.title}」`,
-            snapshot: subj,
-          });
+          await fbAppendVersion(_curUser, _curSubject, { ts: subj.ts, by: myName(), action: `delete「${ch.title}」`, snapshot: subj });
+          if (ch.pub) await removePubIndex(_curUser, _curSubject, ch.id);
           showToast("🗑 已刪除(雲端同步完成)");
         } catch (e) {
           console.error("[delete fb] fail", e);
-          showToast(
-            "🗑 本機已刪，雲端同步失敗:" + (e.message || "").slice(0, 60),
-          );
+          showToast("🗑 本機已刪，雲端同步失敗:" + (e.message || "").slice(0, 60));
         }
+        renderRewardCard();
       }
 
       // ──────────────────────────────────────────────────────────
@@ -3409,53 +4451,41 @@
 
       async function saveToCloud() {
         if (!canEditCurrent()) return;
-        // v322:文字內容存 Firebase,不再需要 GitHub token
         const subj = curState();
         if (!subj) {
           showToast("沒有內容");
           return;
         }
+        let curCh = null;
         if (_curChapterId) {
-          const ch = subj.chapters.find((c) => c.id === _curChapterId);
-          if (ch && _editor) {
-            const newTitle =
-              document.getElementById("title-input").value.trim() || ch.title;
-            ch.title = newTitle;
-            ch.content = _editor.getHTML();
-            ch.ts = Date.now();
-            ch.updatedBy = CUR_USER.name || "Guest";
+          curCh = subj.chapters.find((c) => c.id === _curChapterId);
+          if (curCh && _editor) {
+            const newTitle = document.getElementById("title-input").value.trim() || curCh.title;
+            curCh.title = newTitle;
+            curCh.content = _editor.getHTML();
+            curCh.ts = Date.now();
+            curCh.updatedBy = myName();
           }
         }
         subj.ts = Date.now();
-        subj.updatedBy = CUR_USER.name || "Guest";
-
+        subj.updatedBy = myName();
         const btn = document.getElementById("save-btn");
         btn.disabled = true;
         btn.textContent = "⏳ 推送中…";
         try {
-          // 推 Firebase + 留版本快照
           await fbSet(FB_CONTENT(_curUser, _curSubject), subj);
-          const chTitle = _curChapterId
-            ? subj.chapters.find((c) => c.id === _curChapterId)?.title || ""
-            : "";
-          await fbAppendVersion(_curUser, _curSubject, {
-            ts: subj.ts,
-            by: CUR_USER.name || "Guest",
-            action: chTitle ? `編輯「${chTitle}」` : "更新",
-            snapshot: subj,
-          });
+          const chTitle = curCh ? curCh.title || "" : "";
+          await fbAppendVersion(_curUser, _curSubject, { ts: subj.ts, by: myName(), action: chTitle ? `編輯「${chTitle}」` : "更新", snapshot: subj });
           await idbSet(k.cloud(_curUser, _curSubject), subj);
-          if (_curChapterId)
-            await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
+          if (_curChapterId) await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
+          if (curCh && curCh.pub) await upsertPubIndex(_curUser, _curSubject, curCh);
           _dirty = false;
           refreshStatusUI();
           renderChapterList();
-          showToast("✅ 已推到雲端");
+          showToast("✅ 已儲存");
         } catch (e) {
           console.error("[saveToCloud] failed", e);
-          alert(
-            "儲存失敗:" + (e.message || e) + "\n\n本機草稿還在 IDB,不會掉。",
-          );
+          alert("儲存失敗:" + (e.message || e) + "\n\n本機草稿還在 IDB,不會掉。");
           btn.disabled = false;
           btn.textContent = "💾 重試";
         }
@@ -3597,7 +4627,7 @@
         }
         overlay.innerHTML = `<div class="modal">
         <button class="close-x" onclick="closeVersionModal()">✕</button>
-        <h2>📜 ${_curUser} · ${SUBJECT_NAME[_curSubject]} 編輯歷史</h2>
+        <h2>📜 ${SUBJECT_NAME[_curSubject]} 編輯歷史</h2>
         <div id="version-body">${html}</div>
       </div>`;
         overlay.onclick = (e) => {
@@ -4083,33 +5113,26 @@
             };
             toolbar.appendChild(b);
           });
-          await loadUsersList();
-          // 預設選「自己對應的 namespace」
-          // v532: 先用 Google email 對應，拿不到才 fallback 舊 nickname
-          const myEmail =
-            window.Auth && window.Auth.getUser
-              ? (window.Auth.getUser()?.email || "").toLowerCase()
-              : "";
-          let selfNs = "";
-          for (const ns in NS_OWNER_EMAIL) {
-            if (NS_OWNER_EMAIL[ns] === myEmail) {
-              selfNs = ns;
-              break;
-            }
-          }
-          if (!selfNs) {
-            const selfName = CUR_USER.name || "";
-            selfNs =
-              NAME_TO_NAMESPACE[selfName.trim().toLowerCase()] || selfName;
-          }
-          _curUser = _users.includes(selfNs)
-            ? selfNs
-            : _users[0] || DEFAULT_USERS[0];
-          renderUserTabs();
-          await switchSubject("ya3");
+          // v574: 自己的口訣區 = 自己的 namespace (HUA/Shirley 沿用舊名稱,其他人用 uid)
+          const mine = myNs();
+          _curUser = mine || "__guest__";
+          loadRewardCfg();
           startDraftAutoSave();
-          // v329:啟動時若 URL 帶 #ns=&subj=&ch= → 跳到指定位置
-          _applyDeepLinkFromHash();
+          let startMode = "mine";
+          try {
+            const saved = localStorage.getItem("mn_mode");
+            if (saved && ["mine", "favs", "pub"].includes(saved)) startMode = saved;
+          } catch (e) {}
+          if (!mine) startMode = "pub"; // 沒登入只能看大家分享的 (subscription.js 會蓋「請先登入」)
+          if (location.hash && location.hash.length > 1) {
+            await switchMode("mine", { silent: true });
+            const handled = await _applyDeepLinkFromHash();
+            if (!handled) await switchMode(startMode, { silent: true });
+          } else {
+            await switchMode(startMode, { silent: true });
+          }
+          // 自己的公開章節要看讚數 → 這科索引也掛上
+          ensurePubIndex(_curSubject).then(() => renderRewardCard());
         } catch (err) {
           document.getElementById("editor-body").innerHTML =
             '<div style="padding:1.5rem;color:#dc2626;text-align:center">❌ 載入失敗:' +

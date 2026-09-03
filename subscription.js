@@ -18,16 +18,42 @@
 //   加 <span id="sub-badge"></span> 到 header 位置，這邊 auto render
 
 (function () {
-  if (typeof firebase === "undefined" || !firebase.database) return;
+  // v573b: Firebase SDK 載不到 (離線、gstatic 被擋) 也不能整個放棄 —
+  //        以前這裡直接 return,離線開 SW 快取的頁就完全沒有訂閱鎖。
+  //        現在沒有 SDK 就只靠本機快取判斷:快取說到期 → 鎖;沒快取 → 蓋「確認中」等連線。
+  const hasFb = typeof firebase !== "undefined" && !!firebase.database;
 
   const TRIAL_DAYS = 7;
-  const STATUS_CACHE_KEY = "sub_status_cache"; // v538: {uid, reason, ts}
-  const db = firebase.database();
+  const STATUS_CACHE_KEY = "sub_status_cache"; // v538: {uid, reason, ts, until}
+  const db = hasFb ? firebase.database() : null;
   let cachedStatus = null;
   const changeCbs = [];
 
+  // v573: 用 Firebase 伺服器時間算到期,使用者把手機時鐘往回調也沒用
+  //       (.info/serverTimeOffset = 伺服器時間 - 本機時間,SDK 會持續校正)
+  let _srvOffset = 0;
+  let _offsetResolve = null;
+  const _offsetReady = new Promise((r) => (_offsetResolve = r));
+  try {
+    if (db)
+      db.ref(".info/serverTimeOffset").on("value", (s) => {
+        const v = s.val();
+        if (typeof v === "number" && isFinite(v)) _srvOffset = v;
+        if (_offsetResolve) {
+          _offsetResolve();
+          _offsetResolve = null;
+        }
+      });
+  } catch (e) {}
+  function serverNow() {
+    return Date.now() + _srvOffset;
+  }
+
   // v553: 只讀 profile + subscription 兩個小欄位 (萬人審計 #4: 以前整個 users/{uid} 幾 MB 抓下來只為看到期日)
   async function loadUserData(uid) {
+    if (!db) throw new Error("offline");
+    // v573b: 第一次先等伺服器時間差回來 (最多 1.5 秒),不然時鐘被撥過的裝置第一次會算錯
+    await Promise.race([_offsetReady, new Promise((r) => setTimeout(r, 1500))]);
     const [p, sub] = await Promise.all([
       db.ref("users/" + uid + "/profile").once("value"),
       db.ref("users/" + uid + "/subscription").once("value"),
@@ -37,7 +63,7 @@
 
   function computeStatus(user, userData) {
     if (!user || !user.uid) return { ok: false, reason: "not_logged_in" };
-    const now = Date.now();
+    const now = serverNow();
     const profile = (userData && userData.profile) || {};
     const sub = (userData && userData.subscription) || null;
 
@@ -100,15 +126,25 @@
       cachedStatus = s;
       // v538: 記住這個 uid 的狀態，下次進站 0 秒先套用 (過期的人不會有空窗可以點進去)
       try {
+        // v573: 連到期時刻一起記,樂觀放行時也要看它,離線/斷網不會多用到一分鐘
         localStorage.setItem(
           STATUS_CACHE_KEY,
-          JSON.stringify({ uid: user.uid, reason: s.reason, ts: Date.now() }),
+          JSON.stringify({
+            uid: user.uid,
+            reason: s.reason,
+            ts: Date.now(),
+            until: s.expires_at || s.trial_end || 0,
+          }),
         );
       } catch (e) {}
       if (cb) cb(s);
       return s;
     } catch (e) {
       const s = { ok: false, reason: "error", err: e.message };
+      // v573: 查不到 (斷網/Firebase 掛) → 若手上只有樂觀放行,30 秒後再查一次,不能一直放行
+      if (!cachedStatus || cachedStatus._optimistic) {
+        setTimeout(refreshAndRender, 30000);
+      }
       if (cb) cb(s);
       return s;
     }
@@ -133,7 +169,8 @@
     } else if (s.reason === "paid") {
       const cls = s.days_left <= 5 ? "sub-b-warn" : "sub-b-paid";
       const planName =
-        { monthly: "月", quarterly: "季", semi: "半年" }[s.plan] || s.plan;
+        { monthly: "月", quarterly: "季", semi: "半年" }[s.plan] ||
+        (String(s.plan || "").startsWith("redeem") ? "序號" : s.plan);
       el.innerHTML =
         s.plan === "lifetime"
           ? `<span class="sub-b sub-b-paid" title="終身會員"><span>✨終身會員</span></span>`
@@ -359,12 +396,16 @@
     }
     _expiryAt = until;
     if (!until) return;
-    const ms = until - Date.now() + 1500; // 多 1.5 秒，確保重查時已經過期
-    if (ms <= 0) return;
+    const ms = until - serverNow() + 1500; // 多 1.5 秒，確保重查時已經過期
+    if (ms <= 0) {
+      // v573: 已經過了到期時刻卻還是放行狀態 (例如樂觀快取) → 立刻重查
+      if (cachedStatus && cachedStatus.ok) setTimeout(refreshAndRender, 0);
+      return;
+    }
     _expiryTimer = setTimeout(
       () => {
         _expiryTimer = null;
-        if (Date.now() < until) return scheduleExpiry(until); // 接力 (超過 24 天的情況)
+        if (serverNow() < until) return scheduleExpiry(until); // 接力 (超過 24 天的情況)
         refreshAndRender();
       },
       Math.min(ms, MAX_TIMER),
@@ -372,7 +413,7 @@
   }
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
-    if (_expiryAt && Date.now() >= _expiryAt && cachedStatus && cachedStatus.ok)
+    if (_expiryAt && serverNow() >= _expiryAt && cachedStatus && cachedStatus.ok)
       refreshAndRender();
   });
 
@@ -386,6 +427,7 @@
       if (typeof cb === "function") changeCbs.push(cb);
     },
     _scheduleForTest: scheduleExpiry, // 只給回測用
+    _serverNow: serverNow, // v573 回測用
     _cache: function () {
       return cachedStatus;
     },
@@ -415,6 +457,18 @@
       // v555: 最近 3 天內確認過是會員/試用中 → 先放行 (不蓋「確認中」、點卡片不等),
       //       Firebase 真值回來若已過期,refreshAndRender 會再蓋鎖。HUA: 「不要一直頻繁出現確認訂閱狀態」
       const FRESH_MS = 3 * 86400_000;
+      // v573: 快取裡的到期時刻已過 → 不放行,直接先鎖 (等 Firebase 真值,已續訂會解鎖)
+      if (c.until && Date.now() >= c.until) {
+        cachedStatus = {
+          ok: false,
+          reason: c.reason === "trial" ? "trial_expired" : "subscription_expired",
+          _optimistic: true,
+        };
+        applyBodyClass();
+        renderBlockOverlay();
+        markHomeCards();
+        return;
+      }
       if (
         (c.reason === "paid" || c.reason === "trial") &&
         c.ts &&
@@ -424,6 +478,8 @@
         applyBodyClass();
         renderBlockOverlay();
         markHomeCards();
+        // 樂觀放行也要排到期鬧鐘 (真值回來會重排)
+        if (c.until) scheduleExpiry(c.until);
       }
     } catch (e) {}
   }

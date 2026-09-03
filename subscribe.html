@@ -450,7 +450,7 @@
         "
       >
         <div style="font-weight: 700; color: #78350f; margin-bottom: 0.5rem">
-          🎁 有兌換碼? (30 天免費)
+          🎁 有兌換碼? (序號是幾天就開通幾天)
         </div>
         <div style="display: flex; gap: 0.5rem; align-items: center">
           <input
@@ -947,7 +947,16 @@
             throw new Error("序號已過期 (產出後 90 天內須使用)");
           const days = data.gift_days || 30;
           const now = Date.now();
-          const expires = now + days * 86400_000;
+          // v573: 還在會員期內就從原到期日往後加,不吃掉剩下的天數 (跟獎勵頁「續命」一致)
+          let base = now;
+          try {
+            const curSub = (
+              await db.ref("users/" + user.uid + "/subscription").once("value")
+            ).val();
+            if (curSub && curSub.expires_at && curSub.expires_at > now)
+              base = curSub.expires_at;
+          } catch (e) {}
+          const expires = base + days * 86400_000;
           // 用 transaction 防競爭 (兩人同時兌換)
           const tx = await ref.transaction((cur) => {
             // v544: Firebase transaction 第一次回呼常給 null (本地無快取),不是「不存在」
@@ -963,13 +972,17 @@
           if (!tx.committed) throw new Error("兌換失敗 (可能被別人搶先)");
           // 寫 subscription (直接覆蓋，和 Telegram 一鍵開通一致)
           await db.ref("users/" + user.uid + "/subscription").set({
-            plan: "monthly",
+            plan: "redeem-" + (data.type || "code"),
+            gift_days: days,
             started_at: now,
             expires_at: expires,
+            prev_expires_at: base !== now ? base : null,
             activated_by: "redeem-" + (data.type || "code"),
             payment_ref: "序號 " + code,
             redeem_code: code,
           });
+          // v576: 付費會員索引 (獎勵「有效讚」用)
+          db.ref("users/__stats/paid/" + user.uid).set(expires).catch(() => {});
           msgEl.innerHTML = `✅ 兌換成功! 開通 ${days} 天，到期 ${new Date(expires).toISOString().slice(0, 10)}`;
           msgEl.style.color = "#16a34a";
           btn.textContent = "已兌換";

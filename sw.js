@@ -8,6 +8,7 @@ const PRECACHE = [
   './skin.css',
   './skin.js',
   './tour.js',
+  './topics.js',
   './subscription.js',
   './auth.js',
   './version.js',

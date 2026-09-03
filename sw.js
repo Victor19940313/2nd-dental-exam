@@ -26,7 +26,7 @@ const PRECACHE = [
   './ya6/tw6-data.js',
   './sync.js',
   './exam/index.html',
-  './exam/questions-data.js',
+  // './exam/questions-data.js' ← v554: 不 precache,由頁面第一次 fetch 放進快取 (避免 install + 頁面同時各抓 41 MB)
   './exam/compare.html',
   './exam/numbers.html',
   './exam/flashcards.html',
@@ -50,9 +50,28 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
+async function carryOverQuestionBank() {
+  // v554: 版本換了,題庫通常沒變 → 從舊快取搬過來,不重抓 41 MB (fetch 時會用 ETag 背景確認)
+  try {
+    const keys = await caches.keys();
+    const newCache = await caches.open(CACHE_NAME);
+    const already = (await newCache.keys()).some(r => r.url.includes('questions-data.js'));
+    if (already) return;
+    for (const k of keys) {
+      if (k === CACHE_NAME) continue;
+      const old = await caches.open(k);
+      const reqs = (await old.keys()).filter(r => r.url.includes('questions-data.js'));
+      for (const r of reqs) {
+        const res = await old.match(r);
+        if (res) { await newCache.put(r, res); return; }
+      }
+    }
+  } catch (err) { console.warn('SW carryOver fail', err); }
+}
+
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
+    carryOverQuestionBank().then(() => caches.keys()).then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     ).then(() => self.clients.claim()).then(() => {
       // 🛡 v308:新版啟動後通知所有開啟的分頁,讓他們秀「新版本已就緒」toast
@@ -101,13 +120,26 @@ self.addEventListener('fetch', e => {
   //        新版本 = 新 CACHE_NAME,install 時會重新 precache,所以更新還是會拿到
   if (e.request.url.includes('questions-data.js')) {
     e.respondWith(
-      caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+      caches.match(e.request).then(cached => {
+        if (cached) {
+          // v554: 有快取立刻回;背景用 ETag 問伺服器有沒有變 (沒變回 304 = 幾乎零流量;變了才換)
+          const etag = cached.headers.get('etag');
+          const headers = etag ? { 'If-None-Match': etag } : {};
+          fetch(e.request, { headers, cache: 'no-cache' }).then(res => {
+            if (res.status === 200 && res.ok) {
+              caches.open(CACHE_NAME).then(cache => cache.put(e.request, res));
+            }
+          }).catch(() => {});
+          return cached;
         }
-        return res;
-      }))
+        return fetch(e.request).then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          }
+          return res;
+        });
+      })
     );
     return;
   }

@@ -73,9 +73,16 @@ html[data-skin] body {
   background: var(--sk-bg) !important;
   background-image: var(--sk-bg-img) !important;
   background-size: var(--sk-bg-size) !important;
-  background-attachment: fixed !important;
   color: var(--sk-ink);
   font-family: var(--sk-font) !important;
+}
+/* v554: background-attachment: fixed / backdrop-filter / 大模糊 在手機很慢,只給桌機用 */
+@media (min-width: 900px) {
+  html[data-skin] body { background-attachment: fixed !important; }
+}
+@media (max-width: 899px) {
+  #skin-deco { display: none !important; }
+  html[data-skin="watercolor"] { --sk-card: #ffffff; }
 }
 html[data-skin] h1,
 html[data-skin] h2,
@@ -230,8 +237,6 @@ html[data-skin] .btn-mode {
 html[data-skin] .btn-mode.active { border-radius: 999px !important; }
 html[data-skin] .btn-prev,
 html[data-skin] .btn-skip,
-html[data-skin] .btn-flag,
-html[data-skin] .btn-mark,
 html[data-skin] .btn-count,
 html[data-skin] .qgrid-toggle,
 html[data-skin] .daily-hist-toggle,
@@ -246,6 +251,11 @@ html[data-skin] .btn-add-notebook {
   box-shadow: none !important;
 }
 html[data-skin] .kick-btn { color: #dc2626 !important; }
+/* v554: 標記鈕保留原色,只改圓角;active/flagged 要看得出來 */
+html[data-skin] .btn-mark,
+html[data-skin] .btn-flag { border-radius: var(--sk-radius-s) !important; font-family: var(--sk-font); }
+html[data-skin] .btn-mark.active { box-shadow: 0 0 0 2px currentColor !important; transform: scale(1.04); }
+html[data-skin] .btn-flag.flagged { background: #ef4444 !important; color: #fff !important; border-color: #ef4444 !important; }
 
 /* ───────── 共用對應: chips / 篩選鈕 ───────── */
 html[data-skin] .chip,
@@ -270,14 +280,17 @@ html[data-skin] .nav-link:hover {
 }
 
 /* ───────── 練習本作答畫面 ───────── */
-html[data-skin] .opt-row,
-html[data-skin] .scroll-opt,
-html[data-skin] .exam-res-opt {
+/* v554: 有標記 (劃線/螢光筆/對錯) 的選項列不套風格底色,不然標記看不到 (HUA 手機回報) */
+html[data-skin] .opt-row:not(.mark-highlight):not(.mark-strike):not(.review-correct):not(.review-wrong),
+html[data-skin] .scroll-opt:not(.show-correct):not(.show-wrong):not(.sel),
+html[data-skin] .exam-res-opt:not(.wrong-sel):not(.correct-ans) {
   background: var(--sk-card) !important;
   border: var(--sk-bw) solid var(--sk-line) !important;
   border-radius: var(--sk-radius-s) !important;
   color: var(--sk-ink);
 }
+html[data-skin] .opt-row.mark-highlight { background: #fde047 !important; border-color: #facc15 !important; color: #1f2937 !important; }
+html[data-skin] .opt-row.mark-strike { color: #dc2626 !important; text-decoration: line-through; text-decoration-thickness: 1.5px; }
 html[data-skin] .ans-btn {
   background: var(--sk-card) !important;
   border: var(--sk-bw) solid var(--sk-line) !important;
@@ -324,11 +337,13 @@ html[data-skin] .foot { color: var(--sk-mute) !important; background: transparen
 #skin-deco .sk-cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
 #skin-deco .sk-cloud::before { width: 52px; height: 52px; top: -26px; left: 22px; }
 #skin-deco .sk-cloud::after { width: 38px; height: 38px; top: -16px; left: 66px; }
-html[data-skin="watercolor"] .card,
-html[data-skin="watercolor"] a.card,
-html[data-skin="watercolor"] .home-card,
-html[data-skin="watercolor"] .q-card,
-html[data-skin="watercolor"] .expl-box { backdrop-filter: blur(8px); }
+@media (min-width: 900px) {
+  html[data-skin="watercolor"] .card,
+  html[data-skin="watercolor"] a.card,
+  html[data-skin="watercolor"] .home-card,
+  html[data-skin="watercolor"] .q-card,
+  html[data-skin="watercolor"] .expl-box { backdrop-filter: blur(8px); }
+}
 html[data-skin="toon"] h1 { color: var(--sk-accent); text-shadow: 0 3px 0 var(--sk-accent-d); }
 html[data-skin="notebook"] body { font-size: 16px; }
 html[data-skin="kawaii"] .chip,

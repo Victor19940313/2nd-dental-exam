@@ -5,13 +5,13 @@
 // 邏輯:
 //   1. 每台裝置 localStorage 存一個 device_id (首次自動產)
 //   2. 登入後寫 users/{uid}/devices/{device_id} = { label, first_seen, last_seen, ua }
-//   3. 讀所有 devices, 按 last_seen desc 排序, 前 MAX 個算 active
-//   4. 若當前 device_id 不在前 MAX → 顯示 overlay 擋住,引導去 devices.html 踢舊裝置
+//   3. 讀所有 devices, 按 last_seen desc 排序，前 MAX 個算 active
+//   4. 若當前 device_id 不在前 MAX → 顯示 overlay 擋住，引導去 devices.html 踢舊裝置
 //
 // 對外 API:
 //   DeviceGuard.getDeviceId()          → 當前裝置 id
 //   DeviceGuard.detectLabel()          → 例 "Windows · Chrome"
-//   DeviceGuard.registerAndCheck()     → 註冊+檢查, 回 { ok, devices, current, max }
+//   DeviceGuard.registerAndCheck()     → 註冊+檢查，回 { ok, devices, current, max }
 //   DeviceGuard.removeDevice(deviceId) → 踢掉指定 device_id
 //   DeviceGuard.isBlocked()            → 當前是否被擋
 //   DeviceGuard.getStatus()            → 最近一次 status
@@ -134,8 +134,8 @@
       <div class="dbo-card">
         <div class="dbo-emoji">🔒</div>
         <h2>已達 3 台裝置上限</h2>
-        <p>妳的訂閱最多可在 3 台裝置使用,目前這台被暫時擋下。<br>
-        請去<b>裝置管理</b>踢掉一台舊裝置,再重新整理這頁即可解鎖。</p>
+        <p>妳的訂閱最多可在 3 台裝置使用，目前這台被暫時擋下。<br>
+        請去<b>裝置管理</b>踢掉一台舊裝置，再重新整理這頁即可解鎖。</p>
         <a href="/devices.html" class="dbo-btn">前往裝置管理</a>
         <p class="dbo-sub">當前裝置: <b>${detectLabel()}</b></p>
       </div>

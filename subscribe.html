@@ -619,6 +619,7 @@
               <li>您於口訣區、留言、回饋等處發布之內容，應確保不侵害他人權利、不含違法或不當資訊。</li>
               <li>您同意授權作者於本服務範圍內無償使用、修改、展示您所發布之內容，以利其他使用者學習。</li>
               <li>作者得自行判斷移除任何不當內容，毋須事先通知。</li>
+              <li>本服務之試題留言區、口訣區等使用者發布內容，均由使用者自行上傳並自負其責。若有侵害他人著作權、智慧財產權或其他權利之情事，<b>皆與作者無關</b>，作者不負任何法律責任；權利人得透過「許願 / Bug 回報」通知作者，作者將於知悉後儘速移除。</li>
             </ol>
 
             <h4>九、個人資料</h4>
@@ -652,7 +653,7 @@
             <h4>十四、聯絡方式</h4>
             <p>對本條款或本服務有任何疑問，請透過本網站「許願 / Bug 回報」頁面與作者聯繫。</p>
 
-            <p style="margin-top: 0.6rem; color: #9ca3af">條款版本：2026-09-03</p>
+            <p style="margin-top: 0.6rem; color: #9ca3af">條款版本：2026-09-03b</p>
           </div>
           <label class="terms-agree" for="terms-agree">
             <input type="checkbox" id="terms-agree" onchange="onTermsChange()" />
@@ -661,7 +662,7 @@
           <div class="terms-hint" id="terms-hint">勾選同意後才能送出對帳</div>
         </div>
         <button class="submit-btn locked" id="submit-btn" onclick="submitOrder()">
-          ✓ 我已匯款,送出對帳
+          ✓ 我已匯款，送出對帳
         </button>
       </div>
 
@@ -677,10 +678,10 @@
       <div class="notes">
         <b>注意事項</b>
         <ul>
-          <li>訂閱綁定妳的 Google 帳號,自動跨裝置同步</li>
-          <li>試用 7 天期間可完整使用,期滿必須訂閱才能繼續使用</li>
+          <li>訂閱綁定妳的 Google 帳號，自動跨裝置同步</li>
+          <li>試用 7 天期間可完整使用，期滿必須訂閱才能繼續使用</li>
           <li>已訂閱後恕不退費 (試用期間可隨時退出不扣款)</li>
-          <li>對帳靠妳輸入的「末 5 碼」+「匯款人姓名」,填錯會延遲對帳</li>
+          <li>對帳靠妳輸入的「末 5 碼」+「匯款人姓名」，填錯會延遲對帳</li>
           <li>
             有問題?<a
               href="feedback.html"
@@ -735,7 +736,7 @@
       }
 
       // v549: 免責聲明勾選 → 開放送出鈕
-      const TERMS_VERSION = "2026-09-03";
+      const TERMS_VERSION = "2026-09-03b";
       function onTermsChange() {
         const cb = document.getElementById("terms-agree");
         const btn = document.getElementById("submit-btn");
@@ -781,7 +782,7 @@
         const btn = document.getElementById("submit-btn");
         btn.disabled = true;
         btn.textContent = "送出中...";
-        // v540: 欄位被藏 (已填過推薦人) 就不送,避免殘值溜過去
+        // v540: 欄位被藏 (已填過推薦人) 就不送，避免殘值溜過去
         const _refField = document.getElementById("referrer-field");
         const referrerEmail =
           _refField && _refField.style.display === "none"
@@ -826,7 +827,7 @@
         } catch (e) {
           alert("送出失敗:" + e.message + "\n\n請重試或聯絡我們");
           btn.disabled = false;
-          btn.textContent = "✓ 我已匯款,送出對帳";
+          btn.textContent = "✓ 我已匯款，送出對帳";
         }
       }
 
@@ -847,7 +848,7 @@
           if (s.reason === "trial") {
             card.innerHTML = `<div class="status-card trial">
               <div class="status-icon">🎁</div>
-              <div class="status-text"><b>免費試用中 · 剩 ${s.days_left} 天</b><div class="sm">試用結束前訂閱,無縫接軌繼續學習</div></div>
+              <div class="status-text"><b>免費試用中 · 剩 ${s.days_left} 天</b><div class="sm">試用結束前訂閱，無縫接軌繼續學習</div></div>
             </div>`;
           } else if (s.reason === "paid") {
             card.innerHTML = `<div class="status-card paid">
@@ -862,7 +863,7 @@
               s.reason === "trial_expired" ? "試用已結束" : "訂閱已過期";
             card.innerHTML = `<div class="status-card expired">
               <div class="status-icon">🔒</div>
-              <div class="status-text"><b>${label}</b><div class="sm">選一個方案,立即恢復完整功能</div></div>
+              <div class="status-text"><b>${label}</b><div class="sm">選一個方案，立即恢復完整功能</div></div>
             </div>`;
           }
         });
@@ -872,7 +873,7 @@
       function waitAuth() {
         if (window.Auth && window.Auth.onChange) {
           // v539: 只靠 onChange (已 ready 會立刻補呼一次),不再一進來就 render
-          //       — 那時 Auth 還沒回,會先畫成「未登入」再閃掉
+          //       — 那時 Auth 還沒回，會先畫成「未登入」再閃掉
           window.Auth.onChange(function () {
             setTimeout(renderStatus, 300);
             setTimeout(toggleRedeemBox, 300);
@@ -929,7 +930,7 @@
         const msgEl = document.getElementById("redeem-msg");
         const btn = document.getElementById("redeem-btn");
         if (!/^EZPASS-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
-          msgEl.textContent = "格式錯,應該是 EZPASS-XXXX-XXXX";
+          msgEl.textContent = "格式錯，應該是 EZPASS-XXXX-XXXX";
           msgEl.style.color = "#b91c1c";
           return;
         }
@@ -960,7 +961,7 @@
             return cur;
           });
           if (!tx.committed) throw new Error("兌換失敗 (可能被別人搶先)");
-          // 寫 subscription (直接覆蓋,和 Telegram 一鍵開通一致)
+          // 寫 subscription (直接覆蓋，和 Telegram 一鍵開通一致)
           await db.ref("users/" + user.uid + "/subscription").set({
             plan: "monthly",
             started_at: now,
@@ -969,7 +970,7 @@
             payment_ref: "序號 " + code,
             redeem_code: code,
           });
-          msgEl.innerHTML = `✅ 兌換成功! 開通 ${days} 天,到期 ${new Date(expires).toISOString().slice(0, 10)}`;
+          msgEl.innerHTML = `✅ 兌換成功! 開通 ${days} 天，到期 ${new Date(expires).toISOString().slice(0, 10)}`;
           msgEl.style.color = "#16a34a";
           btn.textContent = "已兌換";
           document.getElementById("redeem-input").disabled = true;

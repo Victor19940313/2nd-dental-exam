@@ -393,7 +393,7 @@
           grid-column: 1 / -1;
         }
       }
-      /* v337:手機強制單欄,不管留言收合與否 */
+      /* v337:手機強制單欄，不管留言收合與否 */
       @media (max-width: 720px) {
         .workspace,
         .workspace.comments-collapsed {
@@ -1139,7 +1139,7 @@
         background: #2a2c3e;
         border-bottom-color: #3a3a4c;
       }
-          /* v557: 手機版口訣區 — 唯讀提示縮小、章節列表矮一點,內容不要被推到太下面 */
+          /* v557: 手機版口訣區 — 唯讀提示縮小、章節列表矮一點，內容不要被推到太下面 */
       @media (max-width: 720px) {
         .info-banner {
           font-size: 0.72rem;
@@ -1178,7 +1178,7 @@
       </span>
       <span class="user-tag" id="user-tag">--</span>
     </div>
-    <!-- v335:搜尋改放在下一排,獨佔一列 -->
+    <!-- v335:搜尋改放在下一排，獨佔一列 -->
     <div class="search-row">
       <input
         type="search"
@@ -1249,7 +1249,7 @@
             class="link-btn"
             id="link-btn"
             onclick="copyChapterLink()"
-            title="複製此章節連結,貼到留言可以一鍵跳過去"
+            title="複製此章節連結，貼到留言可以一鍵跳過去"
             style="display: none"
           >
             🔗 複製連結
@@ -1306,7 +1306,7 @@
         <div class="editor-body nb-editor-tiptap" id="editor-body">
           <div class="empty-pick">
             <div class="em">📒</div>
-            <div>從左邊選一章開始,或按「+ 新增」</div>
+            <div>從左邊選一章開始，或按「+ 新增」</div>
           </div>
         </div>
       </div>
@@ -1348,7 +1348,7 @@
           id="comment-readonly"
           style="display: none"
         >
-          🔒 唯讀模式,看得到留言但不能發
+          🔒 唯讀模式，看得到留言但不能發
         </div>
       </div>
     </div>
@@ -1405,7 +1405,7 @@
     </div>
 
     <script>
-      // v441:圖片點擊放大 lightbox — 手機看多張比較圖看不清時,點一下全螢幕放大
+      // v441:圖片點擊放大 lightbox — 手機看多張比較圖看不清時，點一下全螢幕放大
       (function () {
         function _openImageLightbox(src) {
           const old = document.getElementById("_img-lightbox");
@@ -1479,7 +1479,7 @@
 
       // v440:img 載入失敗自動 fallback — 使用者反映「有時候圖片顯示不出來」
       //       root cause:raw.githubusercontent / jsdelivr CDN 有時候暫時性 rate limit / 快取延遲 → 破圖
-      //       修法:全域 img error 監聽 → 自動輪替 GitHub 4 個 CDN 鏡像,直到有一個 load 成功
+      //       修法:全域 img error 監聽 → 自動輪替 GitHub 4 個 CDN 鏡像，直到有一個 load 成功
       (function () {
         const CDN_CHAIN = [
           {
@@ -1538,10 +1538,10 @@
 
       // ═══════════════════════════════════════════════════════════
       //  口訣複習區 — 設計原則
-      //  ★ 多章節結構(per-subject) — 內容大時可拆細,只載當前章節
+      //  ★ 多章節結構(per-subject) — 內容大時可拆細，只載當前章節
       //  ★ 白名單編輯 — HUA + Shirley 才能推雲端;其他人唯讀
       //  ★ 完整版本歷史 — 每次儲存留 snapshot,可預覽 / 一鍵還原
-      //  ★ IDB 本機快取 — LS 撞 quota 也不影響,離線可看
+      //  ★ IDB 本機快取 — LS 撞 quota 也不影響，離線可看
       //  ★ Per-subject 分檔 — mnemonics/{subj}.json + mnemonics/{subj}-versions.json
       // ═══════════════════════════════════════════════════════════
 
@@ -1624,14 +1624,14 @@
         }
       }
       const CUR_USER = getCurrentUser();
-      // v315:用小寫比對,大小寫差異不再卡她朋友
+      // v315:用小寫比對，大小寫差異不再卡她朋友
       // CAN_EDIT 變成「能不能留言」的判斷(白名單) — 不再控制章節編輯
       const CAN_COMMENT = ALLOWED_EDITORS.includes(
         (CUR_USER.name || "").trim().toLowerCase(),
       );
-      const CAN_EDIT = CAN_COMMENT; // 暫留舊變數做最小破壞性改動,真正控制「能否改章節」改用 canEditCurrent()
+      const CAN_EDIT = CAN_COMMENT; // 暫留舊變數做最小破壞性改動，真正控制「能否改章節」改用 canEditCurrent()
       // 是否能編輯目前 namespace 的內容(章節)— 只有 namespace owner 可以
-      // v532: 一律用 Google email 判斷,不再 fallback 舊 nickname
+      // v532: 一律用 Google email 判斷，不再 fallback 舊 nickname
       //       (nickname 存在 localStorage 可被竄改,email 來自 Firebase Auth 無法偽造)
       function canEditCurrent() {
         const ownerEmail = NS_OWNER_EMAIL[_curUser];
@@ -1664,7 +1664,7 @@
         const bg = localStorage.getItem(_uKey("nb_bg_style"));
         const font = localStorage.getItem(_uKey("nb_font_style"));
         // v314:bg_style 存的是 'marble'/'rice' 等(沒 prefix),要加 'bg-style-' 才會吃到紋路 CSS
-        //       font 同理,存 'serif' 要變 'font-serif'。theme 本來就存完整 class 名稱所以不用加
+        //       font 同理，存 'serif' 要變 'font-serif'。theme 本來就存完整 class 名稱所以不用加
         if (theme) document.body.classList.add(theme);
         if (bg)
           document.body.classList.add(
@@ -1700,7 +1700,7 @@
         if (e.key.startsWith(CUR_USER.id + "_nb_")) applyUserTheme();
       });
 
-      // v532: 改成具名函式,由 waitAuthThenInit 在 Auth ready 後呼叫
+      // v532: 改成具名函式，由 waitAuthThenInit 在 Auth ready 後呼叫
       //       (太早跑會因為拿不到 email 而誤顯示「唯讀模式」)
       function setupUserUI() {
         const tag = document.getElementById("user-tag");
@@ -1721,7 +1721,7 @@
           );
           const imgNote = hasToken
             ? ""
-            : '<br><span style="font-size:.78rem;color:#92400e">(沒設 GitHub token → 不能貼圖,文字共筆照常)</span>';
+            : '<br><span style="font-size:.78rem;color:#92400e">(沒設 GitHub token → 不能貼圖，文字共筆照常)</span>';
           // v532: 用 Google email 判斷自己的 namespace (不再靠 nickname)
           const myEmail =
             window.Auth && window.Auth.getUser
@@ -1735,14 +1735,14 @@
             }
           }
           const rule = ownNs
-            ? `你只能改「${ownNs}」的章節,其他人的可看可留言不能改。`
+            ? `你只能改「${ownNs}」的章節，其他人的可看可留言不能改。`
             : "";
-          slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>。${rule}文字即時同步,版本歷史在「📜 歷史」。${imgNote}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
+          slot.innerHTML = `<div class="info-banner editor">💡 你是 <strong>${escapeHtml(CUR_USER.name)}</strong>。${rule}文字即時同步，版本歷史在「📜 歷史」。${imgNote}<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
         } else {
           slot.innerHTML = `<div class="info-banner readonly">
-          🔒 唯讀模式 — 只有各區的擁有者能編輯自己的章節,其他人可看、可留言。
+          🔒 唯讀模式 — 只有各區的擁有者能編輯自己的章節，其他人可看、可留言。
           <br>
-          <span style="font-size:.78rem;color:#92400e">若這是你的區,請確認已用對應的 Google 帳號登入(回首頁登入)</span>
+          <span style="font-size:.78rem;color:#92400e">若這是你的區，請確認已用對應的 Google 帳號登入(回首頁登入)</span>
           <button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button>
         </div>`;
         }
@@ -1860,7 +1860,7 @@
       };
 
       // ──────────────────────────────────────────────────────────
-      // Firebase RTDB(v322:口訣內容主存,跨裝置即時同步,無需 GitHub token)
+      // Firebase RTDB(v322:口訣內容主存，跨裝置即時同步，無需 GitHub token)
       // ──────────────────────────────────────────────────────────
       let _fbDb = null;
       function _initFb() {
@@ -1882,7 +1882,7 @@
         return await _initFb().ref(path).push(data);
       }
       async function fbAppendVersion(ns, subj, snapshot) {
-        // 把 snapshot 加進 versions 陣列,只保留最近 FB_VERSION_KEEP 個
+        // 把 snapshot 加進 versions 陣列，只保留最近 FB_VERSION_KEEP 個
         // 用 transaction 避免並發覆寫
         const ref = _initFb().ref(FB_VERSIONS(ns, subj));
         await ref.transaction((cur) => {
@@ -1895,7 +1895,7 @@
       }
 
       // ──────────────────────────────────────────────────────────
-      // GitHub(v322:只給圖片上傳用了,內容已搬到 Firebase)
+      // GitHub(v322:只給圖片上傳用了，內容已搬到 Firebase)
       // ──────────────────────────────────────────────────────────
       function getGithubToken() {
         return (
@@ -1905,7 +1905,7 @@
         );
       }
       // v319:必須是 owner/repo 格式才生效;只填 'shirleyy' 這種帳號名會讓所有 GitHub 讀寫都失敗
-      //       這裡強制驗證,不合法的就回退到 REPO_DEFAULT
+      //       這裡強制驗證，不合法的就回退到 REPO_DEFAULT
       function _isValidRepo(s) {
         return typeof s === "string" && /^[\w.-]+\/[\w.-]+$/.test(s.trim());
       }
@@ -1937,7 +1937,7 @@
 
       async function fetchFromCdn(path) {
         const repo = getGithubRepo();
-        // v318:三條 fallback 路徑,任何一條成功就回。每條都記 log 方便診斷
+        // v318:三條 fallback 路徑，任何一條成功就回。每條都記 log 方便診斷
         const sources = [
           `https://raw.githubusercontent.com/${repo}/main/${path}`,
           `https://cdn.jsdelivr.net/gh/${repo}@main/${path}`,
@@ -2050,7 +2050,7 @@
           }
           if (r.status === 404) {
             throw new Error(
-              `找不到 repo「${repo}」。可能 token 沒給 Contents 權限,或 repo 名稱填錯`,
+              `找不到 repo「${repo}」。可能 token 沒給 Contents 權限，或 repo 名稱填錯`,
             );
           }
           throw new Error("PUT 失敗 " + r.status + ": " + txt.slice(0, 200));
@@ -2091,7 +2091,7 @@
       }
 
       // ──────────────────────────────────────────────────────────
-      // 載入(v326:Firebase realtime — 對方寫東西這邊自動更新,不用按按鈕)
+      // 載入(v326:Firebase realtime — 對方寫東西這邊自動更新，不用按按鈕)
       // ──────────────────────────────────────────────────────────
       let _contentRef = null;
       function detachContent() {
@@ -2125,7 +2125,7 @@
               const remoteTs = remoteHasContent ? remote.ts || 0 : 0;
               const cur = _state[sk];
               const curTs = cur && cur.ts ? cur.ts : 0;
-              // 第一次觸發 = 載入時的初始狀態,做一次 IDB→Firebase 補同步
+              // 第一次觸發 = 載入時的初始狀態，做一次 IDB→Firebase 補同步
               if (firstFire) {
                 firstFire = false;
                 const localTs = cache && cache.ts ? cache.ts : 0;
@@ -2139,7 +2139,7 @@
                   try {
                     await fbSet(FB_CONTENT(user, subject), cache);
                     setLoadStatus(
-                      `⬆️ 本地較新,已自動上傳 · ${cache.chapters.length} 章`,
+                      `⬆️ 本地較新，已自動上傳 · ${cache.chapters.length} 章`,
                     );
                     return; // 推完後 listener 會再 fire 一次帶到新狀態
                   } catch (e) {
@@ -2213,7 +2213,7 @@
 
       // ──────────────────────────────────────────────────────────
       // v323:章節留言區(per-chapter Firebase realtime)
-      // v324:留言區可收合,狀態存 localStorage
+      // v324:留言區可收合，狀態存 localStorage
       // ──────────────────────────────────────────────────────────
       const COMMENT_COLLAPSE_KEY = "mnemonics_comments_collapsed";
       // v331:預設留言區「收起」。使用者按 💬 展開後存 '0',下次記得展開
@@ -2457,7 +2457,7 @@
             document.execCommand("copy");
             showToast(`🔗 已複製「${title}」的連結`);
           } catch (e) {
-            showToast("複製失敗,請手動複製:" + url);
+            showToast("複製失敗，請手動複製:" + url);
           }
           document.body.removeChild(ta);
         };
@@ -2522,7 +2522,7 @@
         }
         return false;
       }
-      // 監聽 hash 改變(留言裡點連結,網址只是 hash 換,不會 reload)
+      // 監聽 hash 改變(留言裡點連結，網址只是 hash 換，不會 reload)
       window.addEventListener("hashchange", () => {
         _applyDeepLinkFromHash();
       });
@@ -2721,7 +2721,7 @@
         } catch (err) {
           console.error("[reorder fb] fail", err);
           showToast(
-            "本機已動,雲端同步失敗:" + (err.message || "").slice(0, 50),
+            "本機已動，雲端同步失敗:" + (err.message || "").slice(0, 50),
           );
         }
       }
@@ -2742,7 +2742,7 @@
       function onUserSelectChange(name) {
         if (name === "__add__") {
           addUser();
-          // 還原下拉到原本選擇,等 addUser 完成自己會 switchUser
+          // 還原下拉到原本選擇，等 addUser 完成自己會 switchUser
           document.getElementById("user-select").value = _curUser;
           return;
         }
@@ -2809,7 +2809,7 @@
       }
 
       function _migrateUsers(arr) {
-        // v389: 白名單恢復成 2 個 — HUA 跟 腦洞大開, 其他(包括之前加的速看表、亂碼)一律過濾
+        // v389: 白名單恢復成 2 個 — HUA 跟 腦洞大開，其他(包括之前加的速看表、亂碼)一律過濾
         const WHITELIST = ["HUA", "腦洞大開"];
         arr = arr.filter((u) => WHITELIST.includes(u));
         WHITELIST.forEach((u) => {
@@ -2818,7 +2818,7 @@
         return arr;
       }
 
-      // v329:把本機 IDB 裡 cloud_腦動大開_* / draft_腦動大開_* 自動搬到 腦洞大開,避免 Shirley 在 Mac 寫的「咬合修磨」丟失
+      // v329:把本機 IDB 裡 cloud_腦動大開_* / draft_腦動大開_* 自動搬到 腦洞大開，避免 Shirley 在 Mac 寫的「咬合修磨」丟失
       async function _migrateLocalChineseTypo() {
         const flag = "mn_migrated_typo_v329";
         if (localStorage.getItem(flag)) return;
@@ -2884,7 +2884,7 @@
 
       async function switchSubject(subj) {
         // 🛡 v310:閱覽模式下 _editor 已被 destroy,呼叫 .getHTML() 會丟 TypeError
-        //         導致整個 switchSubject 斷掉,後續按其他科目「沒反應」
+        //         導致整個 switchSubject 斷掉，後續按其他科目「沒反應」
         if (_dirty && _curChapterId && _editor) {
           await idbSet(k.draft(_curUser, _curSubject, _curChapterId), {
             content: _editor.getHTML(),
@@ -2910,7 +2910,7 @@
       }
 
       async function pickChapter(chId) {
-        // 🛡 v310:_editor 檢查保留,避免閱覽模式 NPE
+        // 🛡 v310:_editor 檢查保留，避免閱覽模式 NPE
         if (_dirty && _curChapterId && _editor) {
           await idbSet(k.draft(_curUser, _curSubject, _curChapterId), {
             content: _editor.getHTML(),
@@ -2938,15 +2938,15 @@
           showEmptyEditor();
           return;
         }
-        // v557: 手機單欄時,點章節後內容在下面看不到 → 自動捲到內容卡
+        // v557: 手機單欄時，點章節後內容在下面看不到 → 自動捲到內容卡
         if (window.innerWidth <= 720) {
           setTimeout(() => {
             const ec = document.querySelector(".editor-card");
             if (ec) ec.scrollIntoView({ behavior: "smooth", block: "start" });
           }, 120);
         }
-        // v311:閱覽模式直接渲染章節內容,不再因為 IDB 有舊草稿就跳 toast
-        //       (草稿仍保留,按「✏ 編輯」時會自動載入)
+        // v311:閱覽模式直接渲染章節內容，不再因為 IDB 有舊草稿就跳 toast
+        //       (草稿仍保留，按「✏ 編輯」時會自動載入)
         const titleInput = document.getElementById("title-input");
         const body = document.getElementById("editor-body");
         body.innerHTML =
@@ -2991,7 +2991,7 @@
           subj && _curChapterId
             ? subj.chapters.find((c) => c.id === _curChapterId)
             : null;
-        // meta-text 已經移除,不再使用
+        // meta-text 已經移除，不再使用
         const editBtn = document.getElementById("edit-btn");
         const saveBtn = document.getElementById("save-btn");
         const abandonBtn = document.getElementById("abandon-btn");
@@ -3010,7 +3010,7 @@
           tb.style.display = "none";
           titleInput.disabled = true;
         } else if (!canEditCurrent()) {
-          // v329:不是這個 namespace 的擁有者 → 唯讀,但歷史/複製連結可以看可以用
+          // v329:不是這個 namespace 的擁有者 → 唯讀，但歷史/複製連結可以看可以用
           editBtn.style.display = "none";
           saveBtn.style.display = "none";
           abandonBtn.style.display = "none";
@@ -3113,7 +3113,7 @@
           return;
         }
         if (!_curChapterId) {
-          showToast("請先從左邊選一章,或按「+ 新增」");
+          showToast("請先從左邊選一章，或按「+ 新增」");
           return;
         }
         if (!_editMode) {
@@ -3144,13 +3144,13 @@
             body.innerHTML =
               '<div style="padding:1.5rem;color:#dc2626;text-align:center">❌ 編輯器載入失敗:' +
               e.message +
-              "<br><br>網路問題,刷新重試</div>";
+              "<br><br>網路問題，刷新重試</div>";
           }
         } else {
           // 回閱覽模式
           if (
             _dirty &&
-            !confirm("有未儲存的草稿,要切回閱覽嗎?(草稿會保留在 IDB,不會掉)")
+            !confirm("有未儲存的草稿，要切回閱覽嗎?(草稿會保留在 IDB,不會掉)")
           )
             return;
           // 把目前內容存回 draft(若有 dirty)
@@ -3208,10 +3208,10 @@
         }
       }
 
-      // 放棄儲存:回到上次儲存的內容,退出編輯
+      // 放棄儲存:回到上次儲存的內容，退出編輯
       async function discardChanges() {
         if (!canEditCurrent() || !_curChapterId) return;
-        if (_dirty && !confirm("放棄目前所有修改,回到上次儲存的版本?")) return;
+        if (_dirty && !confirm("放棄目前所有修改，回到上次儲存的版本?")) return;
         await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
         const subj = curState();
         const ch = subj && subj.chapters.find((c) => c.id === _curChapterId);
@@ -3301,7 +3301,7 @@
           return;
         }
         const title = prompt(
-          `在「${_curUser}・${SUBJECT_LABEL[_curSubject]}」新增章節,標題:`,
+          `在「${_curUser}・${SUBJECT_LABEL[_curSubject]}」新增章節，標題:`,
           "新章節",
         );
         if (!title || !title.trim()) return;
@@ -3321,7 +3321,7 @@
         subj.chapters.push(newCh);
         subj.ts = Date.now();
         subj.updatedBy = CUR_USER.name || "Guest";
-        // v318:立刻持久化到本機,避免關頁就消失
+        // v318:立刻持久化到本機，避免關頁就消失
         await idbSet(k.cloud(_curUser, _curSubject), subj);
         _dirty = true;
         await pickChapter(newCh.id);
@@ -3329,7 +3329,7 @@
         await toggleEditMode();
         _dirty = true;
         refreshStatusUI();
-        showToast("新章節已建立,寫完按💾儲存(會推到雲端讓其他人看到)");
+        showToast("新章節已建立，寫完按💾儲存(會推到雲端讓其他人看到)");
       }
 
       async function deleteChapter(chId) {
@@ -3372,7 +3372,7 @@
         } catch (e) {
           console.error("[delete fb] fail", e);
           showToast(
-            "🗑 本機已刪,雲端同步失敗:" + (e.message || "").slice(0, 60),
+            "🗑 本機已刪，雲端同步失敗:" + (e.message || "").slice(0, 60),
           );
         }
       }
@@ -3382,7 +3382,7 @@
       // ──────────────────────────────────────────────────────────
       async function refreshFromCloud() {
         if (_dirty) {
-          if (!confirm("有未儲存草稿,刷新會用雲端版覆蓋。要繼續?")) return;
+          if (!confirm("有未儲存草稿，刷新會用雲端版覆蓋。要繼續?")) return;
           if (_curChapterId)
             await idbDel(k.draft(_curUser, _curSubject, _curChapterId));
         }
@@ -3503,7 +3503,7 @@
           showVersionModalContent(
             '<div style="font-size:.85rem;color:#6b7280">共 ' +
               sorted.length +
-              " 個版本(保留最近 30 個,自動丟最舊)</div><br>" +
+              " 個版本(保留最近 30 個，自動丟最舊)</div><br>" +
               rows,
           );
         } catch (e) {
@@ -3554,7 +3554,7 @@
           !confirm(
             "還原到「" +
               new Date(v.ts || 0).toLocaleString("zh-TW") +
-              "」的版本?\n\n會覆蓋當前章節內容,這次還原本身也會留新版本,之後可以再從歷史救回。",
+              "」的版本?\n\n會覆蓋當前章節內容，這次還原本身也會留新版本，之後可以再從歷史救回。",
           )
         )
           return;
@@ -3640,7 +3640,7 @@
               (v.snapshotBefore.title || "該章節") +
               "」到 " +
               new Date(v.ts).toLocaleString("zh-TW") +
-              " 的版本?\n\n會覆蓋當前內容,但會另外留新版本快照,可以再還原回現在。",
+              " 的版本?\n\n會覆蓋當前內容，但會另外留新版本快照，可以再還原回現在。",
           )
         )
           return;
@@ -3668,7 +3668,7 @@
         closeVersionModal();
         renderChapterList();
         pickChapter(ch.id);
-        showToast("已還原,記得按 💾 推到雲端");
+        showToast("已還原，記得按 💾 推到雲端");
       }
 
       // ──────────────────────────────────────────────────────────
@@ -3691,7 +3691,7 @@
       // 編輯器初始化
       // ──────────────────────────────────────────────────────────
       let _coreModules = null;
-      // 🛡 esm.sh 偶爾在手機掛掉,加 fallback CDN + 自動重試
+      // 🛡 esm.sh 偶爾在手機掛掉，加 fallback CDN + 自動重試
       const CDN_BASES = [
         "https://esm.sh/",
         "https://esm.run/",
@@ -3826,17 +3826,17 @@
       }
 
       // 🖼 圖片上傳(v322:固定走 dental-mnemonics-shared,不讀使用者 settings 的 repo)
-      //    這樣 HUA 跟 Shirley 兩個人圖片放同一個地方,兩人都看得到。
+      //    這樣 HUA 跟 Shirley 兩個人圖片放同一個地方，兩人都看得到。
       //    使用者設定的 github_repo 只給筆記本貼圖用。
       // v336:圖片上傳目標改回讀使用者 settings 的 repo,每個人傳到自己有寫入權的 repo
-      //       兩邊圖片放不同 repo,但 raw.github URL 是公開的,互看沒問題
+      //       兩邊圖片放不同 repo,但 raw.github URL 是公開的，互看沒問題
       //       (HUA → Victor19940313/2nd-dental-exam · Shirley → Victor19940313/dental-mnemonics-shared)
       const IMAGE_DIR_NEW = "mnemonics-images";
 
       async function uploadImageToGithub(blob) {
         const token = getGithubToken();
         if (!token) throw new Error("沒設定 GitHub token");
-        const repo = getGithubRepo(); // 讀使用者設定,沒設 / 格式錯會 fallback 到 REPO_DEFAULT
+        const repo = getGithubRepo(); // 讀使用者設定，沒設 / 格式錯會 fallback 到 REPO_DEFAULT
         // base64
         const b64 = await new Promise((resolve, reject) => {
           const r = new FileReader();
@@ -3881,12 +3881,12 @@
           }
           if (res.status === 404) {
             throw new Error(
-              `repo「${repo}」找不到。設定頁裡的 repo 名稱拼錯,或 token 沒給該 repo 的 Contents 權限`,
+              `repo「${repo}」找不到。設定頁裡的 repo 名稱拼錯，或 token 沒給該 repo 的 Contents 權限`,
             );
           }
           throw new Error("GitHub " + res.status + ": " + errTxt.slice(0, 200));
         }
-        // raw.github 用來顯示(任何人讀,不需 token)
+        // raw.github 用來顯示(任何人讀，不需 token)
         return `https://raw.githubusercontent.com/${repo}/main/${path}`;
       }
 
@@ -3896,11 +3896,11 @@
           return;
         }
         if (!_editor) return;
-        // v322:沒 token 早期擋下,顯示具體解法
+        // v322:沒 token 早期擋下，顯示具體解法
         if (!getGithubToken()) {
           showToast("🔒 還沒設 GitHub token,圖片功能停用。文字共筆照常用");
           alert(
-            "要貼圖必須設 GitHub token:\n\n1. 去 https://github.com/settings/personal-access-tokens/new 生 token\n   - Repository access:選 Victor19940313/dental-mnemonics-shared\n   - Permissions:Contents → Read and write\n2. 複製 token,回到考試 App → ⚙️ 設定 → GitHub 貼上\n3. repo 填 Victor19940313/dental-mnemonics-shared\n\n(只想打字不貼圖的話,直接按取消就好)",
+            "要貼圖必須設 GitHub token:\n\n1. 去 https://github.com/settings/personal-access-tokens/new 生 token\n   - Repository access:選 Victor19940313/dental-mnemonics-shared\n   - Permissions:Contents → Read and write\n2. 複製 token,回到考試 App → ⚙️ 設定 → GitHub 貼上\n3. repo 填 Victor19940313/dental-mnemonics-shared\n\n(只想打字不貼圖的話，直接按取消就好)",
           );
           return;
         }
@@ -3917,7 +3917,7 @@
       // 📷 工具列觸發檔案選擇
       function pickImageFile() {
         if (!canEditCurrent()) return;
-        // 沒 token 就直接走 tryUploadAndInsert 的 alert 路徑,讓使用者知道為什麼不能貼
+        // 沒 token 就直接走 tryUploadAndInsert 的 alert 路徑，讓使用者知道為什麼不能貼
         if (!getGithubToken()) {
           tryUploadAndInsert(null);
           return;
@@ -3951,7 +3951,7 @@
             mods.Image.configure({ inline: true, allowBase64: false }),
           ],
           content: "<p></p>",
-          editable: false, // 預設閱覽模式,按「✏ 編輯」才轉成 true
+          editable: false, // 預設閱覽模式，按「✏ 編輯」才轉成 true
           editorProps: {
             handlePaste(view, event) {
               if (!canEditCurrent()) return false;
@@ -4068,7 +4068,7 @@
             b.textContent = t.label;
             b.title = t.title || "";
             // v338:不在 build 時 disable(那時 _curUser 還沒設,canEditCurrent() 一定 false)
-            //       toolbar 本來就只在編輯模式顯示,能進編輯模式就代表 canEditCurrent() 成立
+            //       toolbar 本來就只在編輯模式顯示，能進編輯模式就代表 canEditCurrent() 成立
             b.onclick = () => {
               if (!canEditCurrent() || !_editor) return;
               if (t.custom === "pickImage") {
@@ -4085,7 +4085,7 @@
           });
           await loadUsersList();
           // 預設選「自己對應的 namespace」
-          // v532: 先用 Google email 對應,拿不到才 fallback 舊 nickname
+          // v532: 先用 Google email 對應，拿不到才 fallback 舊 nickname
           const myEmail =
             window.Auth && window.Auth.getUser
               ? (window.Auth.getUser()?.email || "").toLowerCase()
@@ -4114,7 +4114,7 @@
           document.getElementById("editor-body").innerHTML =
             '<div style="padding:1.5rem;color:#dc2626;text-align:center">❌ 載入失敗:' +
             err.message +
-            "<br><br>網路問題,刷新重試</div>";
+            "<br><br>網路問題，刷新重試</div>";
         }
       }
       // v532: 等 Firebase Auth 拿到使用者才 init
@@ -4135,10 +4135,10 @@
       })();
 
       window.addEventListener("beforeunload", (e) => {
-        // 🛡 v309:只在「真的在編輯模式 + 有改動 + 有選章節」才擋,避免閒置時也跳
+        // 🛡 v309:只在「真的在編輯模式 + 有改動 + 有選章節」才擋，避免閒置時也跳
         if (_dirty && _editMode && _curChapterId) {
           e.preventDefault();
-          e.returnValue = "有未儲存草稿,確定離開?";
+          e.returnValue = "有未儲存草稿，確定離開?";
         }
       });
 
@@ -4149,11 +4149,11 @@
             const t = document.createElement("div");
             t.className = "toast";
             t.style.cssText =
-              "background:#7c3aed;cursor:pointer;padding:.7rem 1.2rem;bottom:4.8rem"; // v557: 往上放,別壓到右下「留言」鈕
-            t.innerHTML = "✨ 新版本已就緒,點這裡刷新";
+              "background:#7c3aed;cursor:pointer;padding:.7rem 1.2rem;bottom:4.8rem"; // v557: 往上放，別壓到右下「留言」鈕
+            t.innerHTML = "✨ 新版本已就緒，點這裡刷新";
             t.onclick = () => location.reload();
             document.body.appendChild(t);
-            // 不自動消失,等使用者點
+            // 不自動消失，等使用者點
           }
         });
         navigator.serviceWorker
@@ -4169,7 +4169,7 @@
       }
     </script>
 
-    <!-- v390:從重看試卷右上「🧠 口訣區」跳過來時,秀一個浮動「🔙 回試卷·第N題」按鈕(樣式仿偷看筆記返回鈕) -->
+    <!-- v390:從重看試卷右上「🧠 口訣區」跳過來時，秀一個浮動「🔙 回試卷·第N題」按鈕(樣式仿偷看筆記返回鈕) -->
     <script>
       (function () {
         let raw = null;

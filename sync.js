@@ -39,9 +39,9 @@
     "opt_marks", // v429:選項劃線/螢光筆痕跡(跨裝置同步)
   ];
   // v373:gemini_model 拿掉不跨 device sync
-  // 原因:HUA 改 lite 馬上被別台 device IDB 內的 3.5 push 蓋回來,改設定改不掉
-  // 改成本機獨立,每台 device 自己選 model
-  // notebook chapter race:章節數會在多台 device IDB 之間飄,因為 sync 是 last-write-wins 沒章節級 merge
+  // 原因:HUA 改 lite 馬上被別台 device IDB 內的 3.5 push 蓋回來，改設定改不掉
+  // 改成本機獨立，每台 device 自己選 model
+  // notebook chapter race:章節數會在多台 device IDB 之間飄，因為 sync 是 last-write-wins 沒章節級 merge
 
   var _db = null;
   var _userId = null;
@@ -70,7 +70,7 @@
   }
 
   // ══════════════════════════════════════════
-  // v371: stale-device 防呆 — 如果本地章節數遠少於歷史見過的最多,拒絕 push
+  // v371: stale-device 防呆 — 如果本地章節數遠少於歷史見過的最多，拒絕 push
   // 起因:HUA 某台 device IDB 只剩 108 章卻 _ts 比 remote 大,startup 時 push 蓋掉 remote 200 章
   function _countNotebookChapters(nbStr) {
     if (!nbStr || typeof nbStr !== "string") return -1;
@@ -207,7 +207,7 @@
   function _safetyAllowNotebookPush(payloadNotebook) {
     if (!_userId) return true;
     var localCount = _countNotebookChapters(payloadNotebook);
-    if (localCount < 0) return true; // 解不開,放行
+    if (localCount < 0) return true; // 解不開，放行
     var seen = 0;
     try {
       seen = parseInt(
@@ -216,7 +216,7 @@
       );
     } catch (e) {}
     if (seen <= 0) return true;
-    // 章節數明顯掉超過 30% → 視為 stale device 誤判,擋住 push
+    // 章節數明顯掉超過 30% → 視為 stale device 誤判，擋住 push
     // (HUA 案例:108/200=54% 還是擋掉; 真的要刪一堆章節請用「強制推送」forcePushToCloud 略過此檢查)
     if (localCount < seen * 0.7) {
       console.error(
@@ -245,7 +245,7 @@
 
   /** Push to BOTH new path and old data/ path for backward compat */
   /** v283: notebook 改從 IDB 讀(localStorage 撞 quota 後 stale)
-   *  v285: examHistory 也改從 IDB 讀(同樣理由,避免跨裝置同步遺失試卷紀錄) */
+   *  v285: examHistory 也改從 IDB 讀(同樣理由，避免跨裝置同步遺失試卷紀錄) */
   function pushToFirebase(force) {
     if (!_db || !_userId) return Promise.resolve();
     var payload = { _ts: Date.now() };
@@ -368,7 +368,7 @@
     _syncing = true;
     return Promise.all([notebookPromise, examHistPromise, wrongbookPromise])
       .then(function () {
-        // v371: stale-device guard — 章節數暴跌就拒絕 push (force=true 略過,給「強制推送」用)
+        // v371: stale-device guard — 章節數暴跌就拒絕 push (force=true 略過，給「強制推送」用)
         if (
           !force &&
           payload.notebook !== undefined &&

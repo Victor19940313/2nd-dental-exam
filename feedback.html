@@ -214,7 +214,7 @@
 
       <h1>💬 許願 / Bug 回報</h1>
       <p class="sub-title">
-        跟作者說說話,想要什麼功能、哪裡壞掉、或想罵人都可以
+        跟作者說說話，想要什麼功能、哪裡壞掉、或想罵人都可以
       </p>
 
       <div id="need-login" class="login-hint" style="display: none">
@@ -245,7 +245,7 @@
         <textarea
           id="fb-msg"
           maxlength="2000"
-          placeholder="例:&#10;· 想要新增○○功能&#10;· ○○那頁點○○會壞掉&#10;· 詳解○○那題錯了,應該是○○"
+          placeholder="例:&#10;· 想要新增○○功能&#10;· ○○那頁點○○會壞掉&#10;· 詳解○○那題錯了，應該是○○"
           required
         ></textarea>
         <p class="hint" id="len-hint">0 / 2000</p>
@@ -321,7 +321,7 @@
         }
       }
       // v539: 只靠 onChange (已 ready 會立刻補呼),不再 800ms 硬 render
-      //       — 那時 Auth 可能還沒回,會先閃「請先登入」
+      //       — 那時 Auth 可能還沒回，會先閃「請先登入」
       if (window.Auth && window.Auth.onChange) {
         window.Auth.onChange(refreshLoginUI);
       }

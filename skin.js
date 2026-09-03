@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
 //  skin.js — 全站「風格」切換 (v550)
-//  ─ 使用者在左下角 🎨 下拉選單選一種風格,存 localStorage.dental_skin (裝置層級,不分帳號)
+//  ─ 使用者在左下角 🎨 下拉選單選一種風格，存 localStorage.dental_skin (裝置層級，不分帳號)
 //  ─ 套用方式: <html data-skin="kawaii">,樣式全部在 skin.css 用 html[data-skin=…] 覆蓋
-//  ─ 沒選 (classic) 時 data-skin 不存在 → skin.css 完全不生效,網站跟原本一模一樣
-//  ─ 跟練習本/口訣區原有的「配色」(body.theme-xxx, {uid}_nb_theme) 是兩層,互不影響
-//  載入位置: <head> 內、version.js 之後 (同步載,避免先閃原本樣式)
+//  ─ 沒選 (classic) 時 data-skin 不存在 → skin.css 完全不生效，網站跟原本一模一樣
+//  ─ 跟練習本/口訣區原有的「配色」(body.theme-xxx, {uid}_nb_theme) 是兩層，互不影響
+//  載入位置: <head> 內、version.js 之後 (同步載，避免先閃原本樣式)
 // ═══════════════════════════════════════════════════════════════
 (function () {
   var KEY = "dental_skin";
@@ -120,7 +120,7 @@
     document.body.appendChild(d);
   }
 
-  // v560: 首頁 hero 插圖 (只有首頁有 #hero-art),每種風格一張,SVG 直接畫,不載外部圖
+  // v560: 首頁 hero 插圖 (只有首頁有 #hero-art),每種風格一張,SVG 直接畫，不載外部圖
   var TOOTH =
     '<svg viewBox="0 0 120 120"><path d="M32 18c14-10 42-10 56 0 14 10 12 34 4 56-4 12-8 34-16 34s-8-22-16-22-8 22-16 22-12-22-16-34C20 52 18 28 32 18z" fill="FILL" stroke="STROKE" stroke-width="3.5" stroke-linejoin="round"/><circle cx="46" cy="52" r="3.5" fill="STROKE"/><circle cx="74" cy="52" r="3.5" fill="STROKE"/><path d="M52 64q8 7 16 0" fill="none" stroke="STROKE" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="62" r="5" fill="CHEEK" opacity=".9"/><circle cx="82" cy="62" r="5" fill="CHEEK" opacity=".9"/></svg>';
   var ART = {
@@ -213,7 +213,7 @@
     });
   }
 
-  // 1. 先套 data-skin (head 階段,避免閃)
+  // 1. 先套 data-skin (head 階段，避免閃)
   apply(read(), false);
   // 2. body 好了再放選單 + 裝飾
   function onReady() {

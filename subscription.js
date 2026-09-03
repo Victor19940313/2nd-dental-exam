@@ -15,7 +15,7 @@
 //   subscription_expired- 訂閱過期
 //
 // UI:
-//   加 <span id="sub-badge"></span> 到 header 位置, 這邊 auto render
+//   加 <span id="sub-badge"></span> 到 header 位置，這邊 auto render
 
 (function () {
   if (typeof firebase === "undefined" || !firebase.database) return;
@@ -98,7 +98,7 @@
       const data = await loadUserData(user.uid);
       const s = computeStatus(user, data);
       cachedStatus = s;
-      // v538: 記住這個 uid 的狀態,下次進站 0 秒先套用 (過期的人不會有空窗可以點進去)
+      // v538: 記住這個 uid 的狀態，下次進站 0 秒先套用 (過期的人不會有空窗可以點進去)
       try {
         localStorage.setItem(
           STATUS_CACHE_KEY,
@@ -129,7 +129,7 @@
     }
     if (s.reason === "trial") {
       const cls = s.days_left <= 2 ? "sub-b-warn" : "sub-b-trial";
-      el.innerHTML = `<span class="sub-b ${cls}" title="試用中,還剩 ${s.days_left} 天"><span>試用</span><b>剩 ${s.days_left} 天</b><a href="/subscribe.html" class="sub-b-btn">訂閱</a></span>`;
+      el.innerHTML = `<span class="sub-b ${cls}" title="試用中，還剩 ${s.days_left} 天"><span>試用</span><b>剩 ${s.days_left} 天</b><a href="/subscribe.html" class="sub-b-btn">訂閱</a></span>`;
     } else if (s.reason === "paid") {
       const cls = s.days_left <= 5 ? "sub-b-warn" : "sub-b-paid";
       const planName =
@@ -164,9 +164,9 @@
   }
 
   // v537: 全鎖 (方案 A) — 過期就蓋全螢幕 overlay,什麼都不能用
-  //   白名單 (不鎖,過期的人要能去訂閱/兌換/回報): 首頁、訂閱、獎勵、回饋、裝置
+  //   白名單 (不鎖，過期的人要能去訂閱/兌換/回報): 首頁、訂閱、獎勵、回饋、裝置
   //   其他頁 (練習本、筆記本、口訣、牙三四五六、故事、遊戲) 一律鎖
-  //   資料不動: 只是蓋一層,users/{uid} 的筆記/標記/紀錄都在,付費後拿掉 overlay 即恢復
+  //   資料不動: 只是蓋一層,users/{uid} 的筆記/標記/紀錄都在，付費後拿掉 overlay 即恢復
   const UNLOCKED_PAGES = [
     "/",
     "/index.html",
@@ -178,11 +178,17 @@
   function isUnlockedPage() {
     // v542: 只做「完全相等」比對。v537 用 endsWith("/index.html") 會把 /exam/index.html、
     //       /ya3/index.html 全部誤判成首頁而不鎖 → 全鎖從沒在練習本/筆記生效過。
-    //       白名單只有根目錄那幾頁,子目錄的 index.html 一律要鎖。
+    //       白名單只有根目錄那幾頁，子目錄的 index.html 一律要鎖。
     const p = location.pathname.replace(/\/+$/, "") || "/";
     return UNLOCKED_PAGES.some((u) => p === u || p === u.replace(/\/$/, ""));
   }
 
+  // v568: 這些頁沒登入也要擋 (口訣區的分享連結只有試用/會員能開) — HUA 指定
+  const REQUIRE_LOGIN_PAGES = ["/mnemonics.html"];
+  function requiresLogin() {
+    const p = location.pathname.replace(/\/+$/, "") || "/";
+    return REQUIRE_LOGIN_PAGES.some((u) => p === u || p.endsWith(u));
+  }
   function renderBlockOverlay() {
     const id = "sub-block-overlay";
     let el = document.getElementById(id);
@@ -190,7 +196,30 @@
       if (el) el.remove();
       return;
     }
-    // v544: 狀態還沒回來 (cachedStatus null) → 先蓋「確認中」,不留空窗
+    // v568: 沒登入 + 這頁要登入 → 蓋「請先登入」
+    if (
+      cachedStatus &&
+      cachedStatus.reason === "not_logged_in" &&
+      requiresLogin()
+    ) {
+      if (el && el.dataset.mode === "needlogin") return;
+      if (el) el.remove();
+      const depth0 = (location.pathname.match(/\//g) || []).length - 1;
+      const base0 = depth0 > 0 ? "../".repeat(depth0) : "./";
+      el = document.createElement("div");
+      el.id = id;
+      el.dataset.mode = "needlogin";
+      el.innerHTML = `
+      <div class="sbo-card">
+        <div class="sbo-emoji">🔐</div>
+        <h2>請先登入</h2>
+        <p>口訣區只開放給<b>試用中或訂閱中</b>的會員。用 Google 登入後就能看，新帳號有 7 天免費試用。</p>
+        <a href="${base0}index.html" class="sbo-btn">回首頁登入</a>
+      </div>`;
+      document.body.appendChild(el);
+      return;
+    }
+    // v544: 狀態還沒回來 (cachedStatus null) → 先蓋「確認中」，不留空窗
     //       (not_logged_in / trial / paid 都不是 null,不會誤蓋)
     if (cachedStatus === null) {
       if (el && el.dataset.mode === "loading") return;
@@ -213,7 +242,7 @@
     const isTrial = s.reason === "trial_expired";
     const title = isTrial ? "免費試用已結束" : "訂閱已到期";
     const desc = isTrial
-      ? "7 天試用期滿,訂閱後即可繼續使用全部功能。"
+      ? "7 天試用期滿，訂閱後即可繼續使用全部功能。"
       : "續訂後即可繼續使用全部功能。";
     // 首頁相對路徑: 從子目錄 (exam/、ya3/) 要回上一層
     const depth = (location.pathname.match(/\//g) || []).length - 1;
@@ -244,8 +273,8 @@
         const nameEl = a.querySelector(".name");
         if (!nameEl) return;
         let tag = nameEl.querySelector(".sub-lock-tag");
-        // v538: click 一律攔,不只 locked 時才綁 —
-        //   狀態還沒回來 (cachedStatus null) → 先擋住,等回來再決定放行或導去訂閱
+        // v538: click 一律攔，不只 locked 時才綁 —
+        //   狀態還沒回來 (cachedStatus null) → 先擋住，等回來再決定放行或導去訂閱
         //   這樣 Firebase 1-3 秒的空窗期也點不進去
         if (!a.dataset.subLockBound) {
           a.dataset.subLockBound = "1";
@@ -256,7 +285,7 @@
               location.href = "subscribe.html";
               return;
             }
-            // 還沒回來: 顯示提示,等狀態回來再走
+            // 還沒回來: 顯示提示，等狀態回來再走
             showWaitToast();
             const target = a.getAttribute("href");
             const once = (s) => {
@@ -313,12 +342,12 @@
     scheduleExpiry();
   }
 
-  // v558: 頁面一直開著,到期那一刻自動重查一次並蓋鎖 (HUA: 剩兩天的人一直在考試頁)
+  // v558: 頁面一直開著，到期那一刻自動重查一次並蓋鎖 (HUA: 剩兩天的人一直在考試頁)
   //   ─ 只設一個 setTimeout,到期前零 CPU、零流量;到期時只多讀一次 profile+subscription 兩小欄位
   //   ─ 手機切到背景計時器可能被暫停 → 切回來 (visibilitychange) 若已過到期時刻就補查
   let _expiryTimer = null;
   let _expiryAt = 0;
-  const MAX_TIMER = 2147483000; // setTimeout 上限 ~24.8 天,超過就先排到上限再接力
+  const MAX_TIMER = 2147483000; // setTimeout 上限 ~24.8 天，超過就先排到上限再接力
   function scheduleExpiry(untilOverride) {
     if (_expiryTimer) {
       clearTimeout(_expiryTimer);
@@ -330,7 +359,7 @@
     }
     _expiryAt = until;
     if (!until) return;
-    const ms = until - Date.now() + 1500; // 多 1.5 秒,確保重查時已經過期
+    const ms = until - Date.now() + 1500; // 多 1.5 秒，確保重查時已經過期
     if (ms <= 0) return;
     _expiryTimer = setTimeout(
       () => {
@@ -362,7 +391,7 @@
     },
   };
 
-  // v538: 樂觀鎖 — DOM ready 就先讀上次快取,過期的人 0 秒先鎖住,
+  // v538: 樂觀鎖 — DOM ready 就先讀上次快取，過期的人 0 秒先鎖住,
   //       等 Firebase 真值回來再由 refreshAndRender 覆蓋 (已續訂就自動解鎖)
   function applyOptimisticLock() {
     // v544: 不管有沒有快取,DOM ready 先做兩件事:

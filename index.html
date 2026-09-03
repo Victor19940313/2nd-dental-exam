@@ -280,7 +280,7 @@
         text-align: center;
         box-shadow: var(--shadow);
         width: 100%;
-        max-width: 560px; /* v558: 跟 .grid 同寬,右邊才對齊 */
+        max-width: 560px; /* v558: 跟 .grid 同寬，右邊才對齊 */
       }
       .countdown .days {
         font-size: 2.2rem;
@@ -297,7 +297,7 @@
       /* ── Sync bar ── */
       .sync-bar {
         width: 100%;
-        max-width: 560px; /* v558: 跟 .grid 同寬,右邊才對齊 */
+        max-width: 560px; /* v558: 跟 .grid 同寬，右邊才對齊 */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -336,7 +336,7 @@
       /* ── User bar ── */
       .user-bar {
         width: 100%;
-        max-width: 560px; /* v558: 跟 .grid 同寬,右邊才對齊 */
+        max-width: 560px; /* v558: 跟 .grid 同寬，右邊才對齊 */
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -498,10 +498,10 @@
       <link rel="stylesheet" href="skin.css" />
   </head>
   <body>
-    <!-- User selection overlay (v507: 只留 Google 登入, 移除訪客模式) -->
+    <!-- User selection overlay (v507: 只留 Google 登入，移除訪客模式) -->
     <div class="user-overlay" id="user-overlay">
       <h2>歡迎回來</h2>
-      <p class="sub2">用 Google 帳號登入,資料跨裝置同步</p>
+      <p class="sub2">用 Google 帳號登入，資料跨裝置同步</p>
       <div style="margin: 2rem 0 1rem; display: flex; justify-content: center">
         <span id="auth-widget"></span>
       </div>
@@ -525,7 +525,7 @@
           line-height: 1.6;
         "
       >
-        畫面若沒自動跳轉,請按
+        畫面若沒自動跳轉，請按
         <a
           href="javascript:location.reload()"
           style="color: #7c3aed; font-weight: 700; text-decoration: underline"
@@ -546,7 +546,7 @@
         <button class="user-switch" onclick="switchUser()">切換</button>
       </div>
 
-      <!-- v560: hero (風格模式才會左對齊+插圖; 經典模式 eyebrow/hero-art 都隱藏, 長相不變) -->
+      <!-- v560: hero (風格模式才會左對齊+插圖; 經典模式 eyebrow/hero-art 都隱藏，長相不變) -->
       <div class="hero">
         <div class="hero-text">
           <span class="hero-eyebrow">EZPASS DENTAL</span>
@@ -570,7 +570,7 @@
           <span class="emoji">📝</span>
           <div class="info">
             <span class="name">牙醫國考練習本</span>
-            <span class="topics">歷屆試題 · 105–115年 · 6720題 · 狀態追蹤</span>
+            <span class="topics">11 年歷屆 7040 題 · 全部分門別類 · 狀態追蹤</span>
           </div>
         </a>
         <a
@@ -834,7 +834,7 @@
         if (pin == null) return false;
         const h = await _hashPin(pin);
         if (h === knownHash) {
-          // 同步:若 cloud 有但本機沒,寫回本機;反之亦然
+          // 同步:若 cloud 有但本機沒，寫回本機;反之亦然
           if (cloudHash && !localHash)
             localStorage.setItem("hua_pin_hash", cloudHash);
           if (!cloudHash && localHash) {
@@ -922,9 +922,9 @@
       // v534: 舊的 dental-migration-done listener 已移除
       //   它會把 dental_cur_user 設回 nickname (hua/shirley),跟下面
       //   autoSelectOnGoogleLogin (用 Google uid) 打架 → Firebase 多一份 users/hua
-      //   現在 migration.js 只負責搬資料,身份一律由 autoSelectOnGoogleLogin 決定
+      //   現在 migration.js 只負責搬資料，身份一律由 autoSelectOnGoogleLogin 決定
 
-      // v532: Google email = 唯一使用者身份,拿掉舊 nickname 邏輯
+      // v532: Google email = 唯一使用者身份，拿掉舊 nickname 邏輯
       //   - wing2004piten@gmail.com → 顯示 HUA
       //   - wen84224@gmail.com → 顯示 Shirley
       //   - 其他 email → 顯示 Google displayName 或 email 前綴
@@ -948,13 +948,13 @@
               "user";
             // v534: id 直接用 Google uid (不再用顯示名轉小寫)
             //   → sync.js / exam / mnemonics 的 localStorage 前綴 + Firebase 路徑
-            //     全部變 users/{google_uid},一個帳號一份資料,後台不再冒出 hua/hua_hsu
+            //     全部變 users/{google_uid},一個帳號一份資料，後台不再冒出 hua/hua_hsu
             //   顯示名 (HUA / Shirley / Google 名) 只放在 users[].name 給 UI 用
             const id = user.uid;
             const curNow = getCurUser();
             if (curNow !== id) {
               const users = getUsers();
-              // 只保留 Google uid 格式的項目,舊 nickname 項目一律清掉
+              // 只保留 Google uid 格式的項目，舊 nickname 項目一律清掉
               const filtered = users.filter(
                 (x) => x.id !== id && /^[A-Za-z0-9]{20,}$/.test(x.id),
               );

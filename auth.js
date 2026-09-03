@@ -1,5 +1,5 @@
-// auth.js — Google 登入系統 (里程碑 1a: 基礎版, 不動舊使用者)
-// v497: 首次加 Google Auth. 純加功能, 舊匿名使用者不受影響
+// auth.js — Google 登入系統 (里程碑 1a: 基礎版，不動舊使用者)
+// v497: 首次加 Google Auth. 純加功能，舊匿名使用者不受影響
 //
 // 用法:
 //   1. HTML 內加 <span id="auth-widget"></span> 位置放登入 button
@@ -13,7 +13,7 @@
 
 (function () {
   if (typeof firebase === "undefined" || !firebase.auth) {
-    console.warn("[Auth] firebase.auth 未載入, 跳過");
+    console.warn("[Auth] firebase.auth 未載入，跳過");
     return;
   }
 
@@ -39,7 +39,7 @@
 
   let currentUser = null;
   // v539: 「登入狀態已確定」旗標 — Firebase 第一次回呼 (不管有沒有 user) 才算確定
-  //   各頁在 isReady() 為 false 時不要顯示「請先登入」,避免已登入者看到閃一下
+  //   各頁在 isReady() 為 false 時不要顯示「請先登入」，避免已登入者看到閃一下
   let authReady = false;
   let _readyResolve;
   const readyPromise = new Promise(function (r) {
@@ -88,7 +88,7 @@
 
   // 監聽登入狀態
   auth.onAuthStateChanged(async function (user) {
-    // 過濾: 只認 Google provider (匿名的照舊, 不影響)
+    // 過濾: 只認 Google provider (匿名的照舊，不影響)
     if (user && user.providerData && user.providerData.length > 0) {
       const isGoogle = user.providerData.some(function (p) {
         return p.providerId === "google.com";
@@ -108,7 +108,7 @@
       _readyResolve(currentUser);
     }
     // v540: 身份校正搬到這裡 (每頁都載 auth.js) — 不管從哪頁進 (書籤直開練習本、手機捷徑),
-    //   dental_cur_user 都必須 = Google uid。v534 只放在首頁,直開練習本會用舊暱稱寫 Firebase (hua_hsu 復活)
+    //   dental_cur_user 都必須 = Google uid。v534 只放在首頁，直開練習本會用舊暱稱寫 Firebase (hua_hsu 復活)
     if (currentUser) {
       try {
         const want = currentUser.uid;
@@ -152,7 +152,7 @@
     } catch (e) {
       // popup 被關 or blocked
       if (e.code === "auth/popup-blocked") {
-        alert("瀏覽器擋了彈窗, 請允許此網站彈窗後再試");
+        alert("瀏覽器擋了彈窗，請允許此網站彈窗後再試");
       } else if (
         e.code !== "auth/popup-closed-by-user" &&
         e.code !== "auth/cancelled-popup-request"
@@ -202,7 +202,7 @@
         "</div>";
     } else {
       el.innerHTML =
-        '<button class="auth-w-signin" onclick="Auth.signIn()" title="用 Google 帳號登入, 資料跨裝置同步">' +
+        '<button class="auth-w-signin" onclick="Auth.signIn()" title="用 Google 帳號登入，資料跨裝置同步">' +
         '<svg width="16" height="16" viewBox="0 0 48 48" style="vertical-align:middle;margin-right:6px"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34 6.5 29.3 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5 43.5 34.8 43.5 24c0-1.2-.1-2.4-.3-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34 6.5 29.3 4.5 24 4.5 16.3 4.5 9.6 8.8 6.3 14.7z"/><path fill="#4CAF50" d="M24 43.5c5.2 0 9.9-2 13.4-5.2l-6.2-5.1c-2 1.5-4.5 2.3-7.2 2.3-5.2 0-9.6-3.3-11.3-8l-6.6 5.1C9.5 39 16.2 43.5 24 43.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.7l6.2 5.1c-.4.4 6.6-4.8 6.6-14.8 0-1.2-.1-2.4-.4-3.5z"/></svg>' +
         "<span>Google 登入</span>" +
         "</button>";
@@ -234,7 +234,7 @@
     onChange: function (cb) {
       if (typeof cb !== "function") return;
       changeCallbacks.push(cb);
-      // v539: 若狀態已確定,晚註冊的 listener 立刻補呼一次 (不然永遠等不到第一次)
+      // v539: 若狀態已確定，晚註冊的 listener 立刻補呼一次 (不然永遠等不到第一次)
       if (authReady) {
         try {
           cb(currentUser);

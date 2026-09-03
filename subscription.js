@@ -179,12 +179,29 @@
   function renderBlockOverlay() {
     const id = "sub-block-overlay";
     let el = document.getElementById(id);
-    const locked = isLocked();
-    if (!locked || isUnlockedPage()) {
+    if (isUnlockedPage()) {
       if (el) el.remove();
       return;
     }
-    if (el) return;
+    // v544: 狀態還沒回來 (cachedStatus null) → 先蓋「確認中」,不留空窗
+    //       (not_logged_in / trial / paid 都不是 null,不會誤蓋)
+    if (cachedStatus === null) {
+      if (el && el.dataset.mode === "loading") return;
+      if (el) el.remove();
+      el = document.createElement("div");
+      el.id = id;
+      el.dataset.mode = "loading";
+      el.innerHTML = `<div class="sbo-card" style="max-width:320px"><div class="sbo-emoji">⏳</div><p style="margin:0">確認訂閱狀態中…</p></div>`;
+      document.body.appendChild(el);
+      return;
+    }
+    const locked = isLocked();
+    if (!locked) {
+      if (el) el.remove();
+      return;
+    }
+    if (el && el.dataset.mode === "locked") return;
+    if (el) el.remove();
     const s = cachedStatus || {};
     const isTrial = s.reason === "trial_expired";
     const title = isTrial ? "免費試用已結束" : "訂閱已到期";
@@ -196,6 +213,7 @@
     const base = depth > 0 ? "../".repeat(depth) : "./";
     el = document.createElement("div");
     el.id = id;
+    el.dataset.mode = "locked";
     el.innerHTML = `
       <div class="sbo-card">
         <div class="sbo-emoji">🔒</div>
@@ -304,6 +322,11 @@
   // v538: 樂觀鎖 — DOM ready 就先讀上次快取,過期的人 0 秒先鎖住,
   //       等 Firebase 真值回來再由 refreshAndRender 覆蓋 (已續訂就自動解鎖)
   function applyOptimisticLock() {
+    // v544: 不管有沒有快取,DOM ready 先做兩件事:
+    //   1. 首頁入口卡先綁 click 攔截 (v538 只在有快取時才綁 → 沒快取的空窗期能點進去)
+    //   2. 鎖定頁在狀態未知時先蓋「確認中」overlay (沒快取的空窗期能用)
+    markHomeCards();
+    renderBlockOverlay();
     try {
       const raw = localStorage.getItem(STATUS_CACHE_KEY);
       if (!raw) return;

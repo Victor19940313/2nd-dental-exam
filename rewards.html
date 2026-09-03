@@ -444,14 +444,15 @@
         const user = window.Auth && window.Auth.getUser();
         if (!user) return alert("請先 Google 登入");
         const now = Date.now();
-        // 先讀 code 檢查有效期
+        // 先讀 code 檢查有效期 (v544: 順便留著當 transaction 的基底)
+        let cdBase = null;
         try {
           const cSnap = await firebase
             .database()
             .ref("redeem_codes/" + code)
             .once("value");
-          const cd = cSnap.val();
-          if (cd && cd.expires_ts && now > cd.expires_ts)
+          cdBase = cSnap.val();
+          if (cdBase && cdBase.expires_ts && now > cdBase.expires_ts)
             return alert("❌ 此序號已過期 (產出後 90 天內須使用)");
         } catch (e) {}
         const startFrom =
@@ -469,8 +470,9 @@
           const db = firebase.database();
           const ref = db.ref("redeem_codes/" + code);
           const tx = await ref.transaction((cur) => {
-            if (!cur) return;
-            if (cur.used) return;
+            // v544: Firebase transaction 第一次常給 null (不是不存在) → 用剛讀到的當基底
+            if (cur === null && cdBase) cur = Object.assign({}, cdBase);
+            if (!cur || cur.used) return; // 真的沒有 / 已用 → abort
             cur.used = true;
             cur.used_by = user.uid;
             cur.used_by_email = user.email || "";

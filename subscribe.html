@@ -801,8 +801,10 @@
           const expires = now + days * 86400_000;
           // 用 transaction 防競爭 (兩人同時兌換)
           const tx = await ref.transaction((cur) => {
-            if (!cur) return; // abort
-            if (cur.used) return; // abort
+            // v544: Firebase transaction 第一次回呼常給 null (本地無快取),不是「不存在」
+            //       → 用剛 once() 讀到的 data 當基底繼續;若 server 其實已被用,SDK 會帶真值 retry 再擋
+            if (cur === null) cur = Object.assign({}, data);
+            if (!cur || cur.used) return; // 真的沒有 / 已用 → abort
             cur.used = true;
             cur.used_by = user.uid;
             cur.used_by_email = user.email || "";

@@ -97,6 +97,21 @@ self.addEventListener('fetch', e => {
   if (e.request.url.includes('raw.githubusercontent.com') ||
       e.request.url.includes('api.github.com')) return;
 
+  // v553: 41 MB 題庫改 cache-first — 有快取就直接回,不再每次開頁重抓 (萬人審計 #1)
+  //        新版本 = 新 CACHE_NAME,install 時會重新 precache,所以更新還是會拿到
+  if (e.request.url.includes('questions-data.js')) {
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
+        return res;
+      }))
+    );
+    return;
+  }
+
   if (isDataFile(e.request.url)) {
     // Network first for data files (題庫、各科 data 要拿最新)
     e.respondWith(

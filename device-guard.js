@@ -177,12 +177,12 @@
   }
   subscribe();
 
-  // 心跳: 每 5 分鐘 upsert last_seen (避免長時間開著被判過期)
+  // 心跳: 每 15 分鐘 upsert last_seen (避免長時間開著被判過期)
   setInterval(
     () => {
       if (window.Auth && window.Auth.getUser()) registerAndCheck();
     },
-    5 * 60 * 1000,
+    15 * 60 * 1000, // v553: 5 → 15 分鐘 (萬人審計 #15)
   );
 
   // CSS

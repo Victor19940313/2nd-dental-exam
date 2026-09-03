@@ -67,6 +67,20 @@
         payload.trial_started_at = now; // 首次登入自動起算 7 天試用
       }
       await ref.update(payload);
+      // v553: email → uid 索引 (萬人審計 #6: Worker 找推薦人以前要掃全部使用者)
+      //   key = email 小寫,'.' 換 ',',其他 Firebase 不准的字換 '_'
+      if (user.email) {
+        const key = String(user.email)
+          .trim()
+          .toLowerCase()
+          .replace(/\./g, ",")
+          .replace(/[#$\[\]\/]/g, "_");
+        if (key) {
+          db.ref("users/__email_index/" + key)
+            .set(user.uid)
+            .catch(() => {});
+        }
+      }
     } catch (e) {
       console.warn("[Auth] upsertUserProfile failed:", e.message);
     }

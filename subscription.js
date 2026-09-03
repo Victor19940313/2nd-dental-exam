@@ -26,9 +26,13 @@
   let cachedStatus = null;
   const changeCbs = [];
 
+  // v553: 只讀 profile + subscription 兩個小欄位 (萬人審計 #4: 以前整個 users/{uid} 幾 MB 抓下來只為看到期日)
   async function loadUserData(uid) {
-    const snap = await db.ref("users/" + uid).once("value");
-    return snap.val() || {};
+    const [p, sub] = await Promise.all([
+      db.ref("users/" + uid + "/profile").once("value"),
+      db.ref("users/" + uid + "/subscription").once("value"),
+    ]);
+    return { profile: p.val() || {}, subscription: sub.val() || null };
   }
 
   function computeStatus(user, userData) {

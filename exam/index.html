@@ -17,7 +17,7 @@
         );
       }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- v553: supabase SDK 已移除 (USE_SUPABASE 永遠 false, 每次載 40KB 沒用到) -->
     <style>
       :root {
         --purple: #7c3aed;
@@ -28975,7 +28975,11 @@
         navigator.serviceWorker
           .register("../sw.js")
           .then((reg) => {
-            setInterval(() => reg.update(), 30000);
+            // v553: 30 秒 → 30 分鐘 + 0~5 分亂數 (萬人審計 #8: 一萬人每 30 秒打 GitHub 一次太兇)
+            setInterval(
+              () => reg.update(),
+              30 * 60 * 1000 + Math.floor(Math.random() * 5 * 60 * 1000),
+            );
             if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
             reg.addEventListener("updatefound", () => {
               const nw = reg.installing;

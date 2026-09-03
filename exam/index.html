@@ -1019,14 +1019,253 @@
       .home-layout {
         display: flex;
         gap: 1rem;
-        max-width: 980px;
+        max-width: 760px;
         margin: 0 auto;
         align-items: flex-start;
       }
       .home-main {
         flex: 1;
         min-width: 0;
-        max-width: 600px;
+      }
+      /* v548: 練習本首頁改版 */
+      .home-top,
+      .home-modes,
+      .home-how,
+      .home-start,
+      .home-bottom,
+      #screen-home > .stats-card,
+      #screen-home > .resume-btn,
+      #screen-home > #resume-info {
+        max-width: 760px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .home-top .daily-log-section {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        border-bottom: 0;
+        padding: 0.7rem 1rem;
+        margin-bottom: 0.9rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem 1rem;
+      }
+      .home-top .daily-log-title {
+        margin-bottom: 0;
+      }
+      .home-top .daily-bars {
+        margin: 0;
+      }
+      .home-top .daily-hist-toggle {
+        margin-top: 0 !important;
+      }
+      .home-modes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+        margin-bottom: 0.9rem;
+      }
+      .home-mode {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 0.85rem 1rem;
+        cursor: pointer;
+        text-align: left;
+        font: inherit;
+        color: #1e293b;
+        display: flex;
+        gap: 0.7rem;
+        align-items: flex-start;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .home-mode .hm-em {
+        font-size: 1.5rem;
+        line-height: 1;
+      }
+      .home-mode b {
+        display: block;
+        font-size: 1.02rem;
+        font-weight: 900;
+      }
+      .home-mode .hm-desc {
+        display: block;
+        font-size: 0.76rem;
+        color: var(--gray);
+        margin-top: 0.1rem;
+        line-height: 1.4;
+      }
+      .home-mode[aria-selected="true"] {
+        border-color: var(--purple);
+        box-shadow: 0 0 0 4px #ede9fe;
+      }
+      .home-mode[aria-selected="true"] b {
+        color: var(--purple);
+      }
+      .home-layout.mode-paper .topic-sidebar {
+        display: none;
+      }
+      .home-layout.mode-topic .home-main {
+        display: none;
+      }
+      .home-layout.mode-topic .topic-sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+      }
+      .home-how {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        padding: 1rem 1.2rem;
+        margin-top: 0.9rem;
+      }
+      .how-opts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 0.6rem 0.9rem;
+      }
+      .how-opt {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.6rem;
+        padding: 0.55rem 0.7rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .how-opt input {
+        margin-top: 0.25rem;
+        accent-color: #0f766e;
+      }
+      .how-opt.sel {
+        border-color: #0f766e;
+        background: #ccfbf1;
+      }
+      .how-opt b {
+        display: block;
+        font-size: 0.92rem;
+      }
+      .how-opt .how-desc {
+        display: block;
+        font-size: 0.74rem;
+        color: var(--gray);
+      }
+      .how-toggles {
+        display: flex;
+        gap: 0.4rem 1.2rem;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+      }
+      .home-start {
+        position: sticky;
+        bottom: 0.6rem;
+        z-index: 5;
+        margin-top: 0.9rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 0.7rem 1rem;
+        box-shadow: 0 8px 30px rgba(30, 41, 59, 0.14);
+      }
+      .home-start #match-count {
+        font-size: 0.88rem;
+        color: var(--gray);
+      }
+      .home-start #match-count b {
+        color: #1e293b;
+      }
+      .home-start-btn {
+        background: var(--purple);
+        color: #fff;
+        border: 0;
+        border-radius: 12px;
+        padding: 0.8rem 1.6rem;
+        font: inherit;
+        font-size: 1rem;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 4px 0 var(--purple-dark);
+        white-space: nowrap;
+      }
+      .home-start-btn:active {
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 var(--purple-dark);
+      }
+      .home-bottom {
+        margin-top: 0.9rem;
+      }
+      .home-bottom > div {
+        margin-top: 0 !important;
+      }
+      .topic-item .ti-main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        line-height: 1.3;
+      }
+      .topic-item .ti-sub {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        font-weight: 400;
+      }
+      .topic-item .ti-right {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex-shrink: 0;
+      }
+      .ti-bar {
+        width: 64px;
+        height: 7px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+        display: block;
+      }
+      .ti-bar i {
+        display: block;
+        height: 100%;
+        background: #22c55e;
+      }
+      .ti-err {
+        font-size: 0.72rem;
+        font-weight: 700;
+        min-width: 3.2em;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .ti-err.ti-na {
+        color: #cbd5e1;
+        font-weight: 400;
+      }
+      @media (max-width: 520px) {
+        .home-modes {
+          grid-template-columns: 1fr;
+        }
+        .ti-bar {
+          width: 40px;
+        }
+        .home-start {
+          padding: 0.5rem 0.7rem;
+          gap: 0.6rem;
+          bottom: 0.3rem;
+        }
+        .home-start #match-count {
+          font-size: 0.78rem;
+        }
+        .home-start-btn {
+          padding: 0.6rem 1rem;
+          font-size: 0.92rem;
+        }
       }
 
       .topic-sidebar {
@@ -5480,10 +5719,9 @@
 
     <!-- ═══════════════ HOME SCREEN ═══════════════ -->
     <div id="screen-home">
-      <div class="home-layout">
-        <!-- Topic sidebar -->
-        <div class="topic-sidebar" id="topic-sidebar">
-          <div class="daily-log-section">
+      <!-- v548: 練習本首頁改版 — 每日練習/統計在最上面,兩個模式分頁,作答方式共用 -->
+      <div class="home-top">
+        <div class="daily-log-section">
             <div class="daily-log-title">📅 每日練習</div>
             <div class="daily-bars" id="daily-bars"></div>
             <div class="daily-today-count" id="daily-today-count"></div>
@@ -5516,6 +5754,44 @@
               📚 試卷次數統計
             </button>
           </div>
+      </div>
+      <div class="stats-card" id="stats-card">
+            <div class="stat-item">
+              <div class="num" id="st-total">-</div>
+              <div class="lbl">題目總數</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: var(--green)" id="st-understood">
+                -
+              </div>
+              <div class="lbl">🟢 簡單</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: #2563eb" id="st-guessed">-</div>
+              <div class="lbl">🤔 猜的</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: var(--amber)" id="st-learning">
+                -
+              </div>
+              <div class="lbl">🟡 再努力!</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: var(--red)" id="st-giveup">-</div>
+              <div class="lbl">🔴 送他吧</div>
+            </div>
+          </div>
+      <div class="home-modes" role="tablist">
+        <button class="home-mode" role="tab" id="hm-paper" aria-selected="true" onclick="setHomeMode('paper')">
+          <span class="hm-em">📄</span><span><b>照試卷練</b><span class="hm-desc">選一份年度試卷，完整走一遍。適合模擬考、抓手感。</span></span>
+        </button>
+        <button class="home-mode" role="tab" id="hm-topic" aria-selected="false" onclick="setHomeMode('topic')">
+          <span class="hm-em">🎯</span><span><b>照考點練</b><span class="hm-desc">挑一個考點集中打。看得到每個考點做過幾題、錯誤率多少。</span></span>
+        </button>
+      </div>
+      <div class="home-layout mode-paper" id="home-layout">
+        <!-- Topic sidebar (照考點練) -->
+        <div class="topic-sidebar" id="topic-sidebar">
           <div class="topic-sidebar-title">🏷 考點分類</div>
           <div class="ts-status-bar">
             <div
@@ -5628,68 +5904,12 @@
               ></div>
             </div>
           </details>
-          <div
-            style="
-              padding: 0.3rem 0.55rem 0.1rem;
-              display: flex;
-              justify-content: flex-end;
-            "
-          >
-            <button
-              id="btn-wrong-pct"
-              onclick="toggleWrongPct()"
-              title="開/關側邊每類別的錯誤率顯示(只算試卷成績內做過的題)"
-              style="
-                font-size: 0.72rem;
-                padding: 0.25rem 0.5rem;
-                background: #f3f4f6;
-                border: 1px solid #d1d5db;
-                border-radius: 5px;
-                cursor: pointer;
-                color: #6b7280;
-                font-weight: 700;
-              "
-            >
-              📊 顯示錯誤率
-            </button>
-          </div>
+          
           <div id="topic-list"></div>
-          <div class="ts-go-wrap">
-            <button class="ts-go-btn" id="ts-go-btn" onclick="goFromSidebar()">
-              ▶ 開始練習
-            </button>
           </div>
-        </div>
 
         <!-- Main content -->
         <div class="home-main">
-          <div class="stats-card" id="stats-card">
-            <div class="stat-item">
-              <div class="num" id="st-total">-</div>
-              <div class="lbl">題目總數</div>
-            </div>
-            <div class="stat-item">
-              <div class="num" style="color: var(--green)" id="st-understood">
-                -
-              </div>
-              <div class="lbl">🟢 簡單</div>
-            </div>
-            <div class="stat-item">
-              <div class="num" style="color: #2563eb" id="st-guessed">-</div>
-              <div class="lbl">🤔 猜的</div>
-            </div>
-            <div class="stat-item">
-              <div class="num" style="color: var(--amber)" id="st-learning">
-                -
-              </div>
-              <div class="lbl">🟡 再努力!</div>
-            </div>
-            <div class="stat-item">
-              <div class="num" style="color: var(--red)" id="st-giveup">-</div>
-              <div class="lbl">🔴 送他吧</div>
-            </div>
-          </div>
-
           <div class="filter-card">
             <div class="filter-label">科目</div>
             <div class="chip-row" id="chips-subj">
@@ -5928,59 +6148,58 @@
             </div>
           </div>
 
-          <div
-            id="match-count"
-            style="
-              font-size: 0.82rem;
-              color: var(--gray);
-              margin-bottom: 0.5rem;
-              text-align: center;
-            "
-          ></div>
+          </div>
+        <!-- end .home-main -->
+      </div>
+      <!-- end .home-layout -->
 
-          <button
-            class="start-btn resume-btn"
-            id="btn-resume"
-            onclick="resumePractice()"
-            style="display: none; background: #0d9488"
-          >
-            ⏎ 繼續上次
-          </button>
-          <div
-            id="resume-info"
-            style="
-              font-size: 0.78rem;
-              color: #0d9488;
-              text-align: center;
-              margin-top: 0.3rem;
-              margin-bottom: 0.2rem;
-              display: none;
-            "
-          ></div>
-          <div class="start-btn-row">
-            <button class="start-btn" onclick="startPractice(false)">
-              ▶ 逐題模式（含答案）
-            </button>
-            <button class="start-btn secondary" onclick="startPractice(true)">
-              🔀 隨機
-            </button>
-          </div>
-          <label class="timer-toggle-row">
-            <input type="checkbox" id="timer-enable" /> ⏱ 開始試卷時計時 60 分鐘
+      <!-- v548: 共用作答方式 -->
+      <div class="home-how" id="home-how">
+        <div class="filter-label">作答方式</div>
+        <div class="how-opts">
+          <label class="how-opt sel" id="how-practice">
+            <input type="radio" name="home-how" value="practice" checked onchange="onHowChange()" />
+            <span><b>邊做邊看答案</b><span class="how-desc">每題答完立刻看詳解，適合讀書</span></span>
           </label>
-          <div class="start-btn-row" style="margin-top: 0.3rem">
-            <button class="start-btn exam-btn" onclick="startExam(false)">
-              📋 逐題試卷（答案後給）
-            </button>
-            <button
-              class="start-btn exam-btn"
-              style="background: #0d9488"
-              onclick="startExam(true)"
-            >
-              📃 整頁捲動（答案後給）
-            </button>
-          </div>
-          <!-- 📅 昨日錯題:有的話才顯示,點下去進複習模式 -->
+          <label class="how-opt" id="how-exam">
+            <input type="radio" name="home-how" value="exam" onchange="onHowChange()" />
+            <span><b>模擬考：交卷才看答案</b><span class="how-desc">整份做完一次對答案，可以計時</span></span>
+          </label>
+        </div>
+        <div class="how-toggles">
+          <label class="timer-toggle-row" id="tog-shuffle"><input type="checkbox" id="home-shuffle" /> 🔀 隨機順序</label>
+          <label class="timer-toggle-row"><input type="checkbox" id="timer-enable" /> ⏱ 計時 60 分鐘</label>
+          <label class="timer-toggle-row" id="tog-scroll"><input type="checkbox" id="home-scroll" /> 📃 整頁捲動（不用一題一題按）</label>
+        </div>
+      </div>
+
+      <button
+        class="start-btn resume-btn"
+        id="btn-resume"
+        onclick="resumePractice()"
+        style="display: none; background: #0d9488"
+      >
+        ⏎ 繼續上次
+      </button>
+      <div
+        id="resume-info"
+        style="
+          font-size: 0.78rem;
+          color: #0d9488;
+          text-align: center;
+          margin-top: 0.3rem;
+          margin-bottom: 0.2rem;
+          display: none;
+        "
+      ></div>
+
+      <div class="home-start" id="home-start">
+        <div id="match-count"></div>
+        <button class="home-start-btn" id="home-start-btn" onclick="homeStart()">▶ 開始練習</button>
+      </div>
+
+      <div class="home-bottom">
+        <!-- 📅 昨日錯題:有的話才顯示,點下去進複習模式 -->
           <div
             id="yesterday-wrong-card"
             style="
@@ -6037,10 +6256,7 @@
               </button>
             </div>
           </div>
-        </div>
-        <!-- end .home-main -->
       </div>
-      <!-- end .home-layout -->
     </div>
     <!-- end #screen-home -->
 
@@ -9346,11 +9562,12 @@
         if (!list) return;
 
         // v443:如果錯誤率開了,順便算 stats
-        const wrongStats = _wrongPctOn ? _calcWrongRateStats() : null;
+        const wrongStats = _calcWrongRateStats(); // v548: 永遠顯示 (方案三)
 
         // Aggregate: subj → cat → total count AND filtered count
         const data = {}; // {subj: {cat: totalCount}}
         const filtered = {}; // {subj: {cat: filteredCount}}
+        const doneCnt = {}; // v548: {subj: {cat: 做過題數}} (classCount>0, 與考點進度 modal 同定義)
         QS.forEach((q) => {
           if (!q.topic) return;
           // v380: 年份篩選(空集合 = 不篩)
@@ -9363,8 +9580,10 @@
           if (!data[s]) {
             data[s] = {};
             filtered[s] = {};
+            doneCnt[s] = {};
           }
           data[s][c] = (data[s][c] || 0) + 1;
+          if (_isQDone(q.id)) doneCnt[s][c] = (doneCnt[s][c] || 0) + 1;
           // Check if this question passes the sidebar status filter
           const st = getS(q.id).status;
           const pass =
@@ -9405,24 +9624,31 @@
               isFiltered && filtCount === 0
                 ? ' style="opacity:.35;pointer-events:none"'
                 : "";
-            // v443:錯誤率(開了才顯示,沒做過→「—」不顯示)
+            // v548: 錯誤率永遠顯示 (試卷成績內做過的題), 沒做過→「—」
             let wrongPctHtml = "";
-            if (wrongStats) {
+            {
               const st = (wrongStats[subj] || {})[cat];
               if (st && st.done > 0) {
                 const pct = Math.round((st.wrong / st.done) * 100);
                 const col =
                   pct >= 40 ? "#dc2626" : pct >= 25 ? "#ea580c" : "#059669";
-                wrongPctHtml = `<span title="錯 ${st.wrong}/${st.done} 題" style="font-size:.72rem;font-weight:700;color:${col};margin-right:.35rem">${pct}%</span>`;
+                wrongPctHtml = `<span class="ti-err" title="試卷內錯 ${st.wrong}/${st.done} 題" style="color:${col}">錯 ${pct}%</span>`;
               } else {
-                wrongPctHtml = `<span style="font-size:.72rem;color:#cbd5e1;margin-right:.35rem">—</span>`;
+                wrongPctHtml = `<span class="ti-err ti-na" title="還沒在試卷模式做過">—</span>`;
               }
             }
+            // v548: 做過幾題 (分類練習進度) 進度條
+            const dn = (doneCnt[subj] || {})[cat] || 0;
+            const pctDone =
+              totalCount > 0 ? Math.round((dn / totalCount) * 100) : 0;
+            const subLabel =
+              dn > 0 ? `做過 ${dn} / ${totalCount}` : `還沒做過 · ${totalCount} 題`;
             const catNum = String(_catIdx + 1).padStart(2, "0");
             html +=
               `<div class="topic-item${active}"${dimmed} onclick="selectCat('${esc_subj}','${esc_cat}')">` +
-              `<span><span style="color:#94a3b8;font-weight:600;margin-right:.35rem">${catNum}</span>${cat}</span>` +
-              `<span style="display:flex;align-items:center">${wrongPctHtml}<span class="topic-count">${displayCount}</span></span></div>`;
+              `<span class="ti-main"><span><span style="color:#94a3b8;font-weight:600;margin-right:.35rem">${catNum}</span>${cat}</span>` +
+              `<span class="ti-sub">${subLabel}${isFiltered ? ` · 符合 ${displayCount}` : ""}</span></span>` +
+              `<span class="ti-right"><span class="ti-bar" title="做過 ${dn}/${totalCount}"><i style="width:${pctDone}%"></i></span>${wrongPctHtml}<span class="topic-count">${displayCount}</span></span></div>`;
           });
 
           html += `</div></div>`;
@@ -9432,7 +9658,10 @@
           html ||
           '<div style="padding:.6rem .85rem;font-size:.78rem;color:#94a3b8">（無考點資料）</div>';
         updateGoBtn();
-        // v443:錯誤率開關按鈕視覺狀態
+        try {
+          updateMatchCount(); // v548: 開始列的「已選考點 · N 題」
+        } catch (e) {}
+        // v443:錯誤率開關按鈕視覺狀態 (v548 按鈕已移除, 保留無害)
         const btn = document.getElementById("btn-wrong-pct");
         if (btn) {
           if (_wrongPctOn) {
@@ -9461,8 +9690,8 @@
           openTopicProgress(subj, cat);
       }
 
-      function startCatPractice(subj, cat) {
-        _isClassPractice = true; // v383: 唯一會記分類進度的入口
+      // v548: 考點 + sidebar 年份/標記篩選後的題目 (startCatPractice 與開始列計數共用)
+      function _catFilteredList(subj, cat) {
         let list = QS.filter(
           (q) => q.subject === subj && getTopicCat(q.topic) === cat,
         );
@@ -9476,9 +9705,14 @@
           list = list.filter((q) => getS(q.id).status === "none");
         else if (sidebarStatus !== "all")
           list = list.filter((q) => getS(q.id).status === sidebarStatus);
+        return list;
+      }
+      function startCatPractice(subj, cat) {
+        _isClassPractice = true; // v383: 唯一會記分類進度的入口
+        const list = _catFilteredList(subj, cat);
         if (!list.length) {
           showToast("此篩選條件無符合題目");
-          return;
+          return false;
         }
         activeTopic = null;
         practiceList = _applyPracticeSort(list);
@@ -9488,7 +9722,96 @@
         showPractice();
         updatePracticeScoreUI();
         loadPracticeQ();
+        return true;
       }
+
+      // ── v548: 首頁兩種模式 (照試卷練 / 照考點練) + 共用作答方式 ──
+      window._homeMode = "paper";
+      try {
+        if (localStorage.getItem(uKey("home_mode")) === "topic")
+          window._homeMode = "topic";
+      } catch (e) {}
+      function setHomeMode(m) {
+        window._homeMode = m === "topic" ? "topic" : "paper";
+        try {
+          localStorage.setItem(uKey("home_mode"), window._homeMode);
+        } catch (e) {}
+        const lay = document.getElementById("home-layout");
+        if (lay) {
+          lay.classList.toggle("mode-paper", window._homeMode === "paper");
+          lay.classList.toggle("mode-topic", window._homeMode === "topic");
+        }
+        ["hm-paper", "hm-topic"].forEach((id) => {
+          const b = document.getElementById(id);
+          if (b)
+            b.setAttribute(
+              "aria-selected",
+              id === "hm-" + window._homeMode ? "true" : "false",
+            );
+        });
+        onHowChange();
+        try {
+          updateMatchCount();
+        } catch (e) {}
+      }
+      function _homeHow() {
+        const r = document.querySelector('input[name="home-how"]:checked');
+        return r && r.value === "exam" ? "exam" : "practice";
+      }
+      function onHowChange() {
+        const topic = window._homeMode === "topic";
+        const howExam = document.getElementById("how-exam");
+        if (howExam) howExam.style.display = topic ? "none" : "";
+        if (topic && _homeHow() === "exam") {
+          // 考點模式目前只有「邊做邊看答案」
+          const rp = document.querySelector(
+            'input[name="home-how"][value="practice"]',
+          );
+          if (rp) rp.checked = true;
+        }
+        const how = _homeHow();
+        const hp = document.getElementById("how-practice");
+        if (hp) hp.classList.toggle("sel", how === "practice");
+        if (howExam) howExam.classList.toggle("sel", how === "exam");
+        const togScroll = document.getElementById("tog-scroll");
+        if (togScroll)
+          togScroll.style.display = how === "exam" && !topic ? "" : "none";
+        const togShuffle = document.getElementById("tog-shuffle");
+        if (togShuffle)
+          togShuffle.style.display = how === "practice" && !topic ? "" : "none";
+        const btn = document.getElementById("home-start-btn");
+        if (btn) btn.textContent = how === "exam" ? "▶ 開始模擬考" : "▶ 開始練習";
+      }
+      function homeStart() {
+        if (window._homeMode === "topic") {
+          if (!activeKey) {
+            showToast("請先在上面選一個考點");
+            return;
+          }
+          const [subj, cat] = activeKey.split("|");
+          const ok = startCatPractice(subj, cat);
+          const t = document.getElementById("timer-enable");
+          if (ok === true && t && t.checked) startTimer(3600);
+          return;
+        }
+        if (_homeHow() === "exam") {
+          const sc = document.getElementById("home-scroll");
+          startExam(!!(sc && sc.checked));
+        } else {
+          const sh = document.getElementById("home-shuffle");
+          startPractice(!!(sh && sh.checked));
+        }
+      }
+      window.setHomeMode = setHomeMode;
+      window.onHowChange = onHowChange;
+      window.homeStart = homeStart;
+      document.addEventListener("DOMContentLoaded", () => {
+        try {
+          setHomeMode(window._homeMode);
+        } catch (e) {
+          console.warn("setHomeMode init fail", e);
+        }
+      });
 
       // v456: 練習/考試題目排序 (0=原順序 / 1=新→舊 / 2=舊→新), 存 LS
       const _SORT_LS = uKey("practice_sort_mode");
@@ -11113,6 +11436,9 @@
         examAnswers = {};
         stopTimer();
         updateHomeStats();
+        try {
+          renderTopicSidebar(); // v548: 考點樹上的「做過 / 錯誤率」回首頁要重算
+        } catch (e) {}
         updateMatchCount();
         checkLastPos();
         renderDailyLog();
@@ -11247,9 +11573,25 @@
       }
 
       function updateMatchCount() {
+        const el = document.getElementById("match-count");
+        if (!el) return;
+        // v548: 考點模式 → 顯示已選考點 + 題數
+        if (window._homeMode === "topic") {
+          if (!activeKey) {
+            el.textContent = "請先在上面選一個考點";
+            return;
+          }
+          const [subj, cat] = activeKey.split("|");
+          const n = _catFilteredList(subj, cat).length;
+          el.textContent = "";
+          const b = document.createElement("b");
+          b.textContent = (SUBJ_NAMES[subj] || subj) + " · " + cat;
+          el.appendChild(b);
+          el.appendChild(document.createTextNode(` · 符合條件：${n} 題`));
+          return;
+        }
         const n = getHomeFiltered().length;
-        document.getElementById("match-count").textContent =
-          `符合條件：${n} 題`;
+        el.textContent = `符合條件：${n} 題`;
       }
 
       function updateHomeStats() {

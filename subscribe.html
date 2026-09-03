@@ -699,12 +699,9 @@
               <div class="status-text"><b>免費試用中 · 剩 ${s.days_left} 天</b><div class="sm">試用結束前訂閱,無縫接軌繼續學習</div></div>
             </div>`;
           } else if (s.reason === "paid") {
-            const planName =
-              { monthly: "月費", quarterly: "季費", semi: "半年" }[s.plan] ||
-              s.plan;
             card.innerHTML = `<div class="status-card paid">
               <div class="status-icon">✨</div>
-              <div class="status-text"><b>會員中 · ${planName} · 剩 ${s.days_left} 天</b></div>
+              <div class="status-text"><b>${s.plan === "lifetime" ? "終身會員" : `會員剩 ${s.days_left} 天`}</b></div>
             </div>`;
           } else if (
             s.reason === "trial_expired" ||

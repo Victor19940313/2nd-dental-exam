@@ -130,7 +130,10 @@
       const cls = s.days_left <= 5 ? "sub-b-warn" : "sub-b-paid";
       const planName =
         { monthly: "月", quarterly: "季", semi: "半年" }[s.plan] || s.plan;
-      el.innerHTML = `<span class="sub-b ${cls}" title="會員 · 剩 ${s.days_left} 天"><span>✨會員</span><b>剩 ${s.days_left} 天</b></span>`;
+      el.innerHTML =
+        s.plan === "lifetime"
+          ? `<span class="sub-b sub-b-paid" title="終身會員"><span>✨終身會員</span></span>`
+          : `<span class="sub-b ${cls}" title="會員剩 ${s.days_left} 天"><span>✨會員</span><b>剩 ${s.days_left} 天</b></span>`;
     } else if (s.reason === "trial_expired") {
       el.innerHTML = `<span class="sub-b sub-b-expired"><span>試用結束</span><a href="/subscribe.html" class="sub-b-btn">訂閱解鎖</a></span>`;
     } else if (s.reason === "subscription_expired") {

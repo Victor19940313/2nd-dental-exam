@@ -5326,7 +5326,6 @@
       <h1>🦷 牙醫國考練習本</h1>
       <div class="header-right">
         <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
-        <span class="header-user" id="header-user" title="目前使用者"></span>
         <span id="sub-badge" style="margin-right: 0.4rem"></span>
         <span id="auth-widget" style="margin-right: 0.5rem"></span>
         <button
@@ -27736,19 +27735,7 @@
       // ════════════════════════════════════════════
       //  User badge in header
       // ════════════════════════════════════════════
-      (function initUserBadge() {
-        const uid = localStorage.getItem("dental_cur_user");
-        const users = JSON.parse(localStorage.getItem("dental_users") || "[]");
-        const u = users.find((x) => x.id === uid);
-        const el = document.getElementById("header-user");
-        if (u && el) {
-          el.style.background = u.color;
-          el.textContent = u.name[0];
-          el.title = "使用者：" + u.name;
-        } else if (el) {
-          el.style.display = "none";
-        }
-      })();
+      // v545: 舊的紫色暱稱頭像 (header-user) 已移除,Google 登入區 (auth-widget) 已有頭像+名字
 
       // ════════════════════════════════════════════
       //  Flag (wrongbook) toggle

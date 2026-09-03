@@ -12077,6 +12077,7 @@
         }
         const q = practiceList[practiceIdx];
         answered = false;
+        _qShownAt = Date.now(); // v572: 題目出現時間 (太快答不算進全站統計)
 
         // 🛡 v287:練習模式也顯示交卷按鈕
         const submitBtn = document.getElementById("btn-submit-exam");
@@ -12477,6 +12478,12 @@
           trackDailyCount(q);
           // ── 紀錄本輪分數 + 使用者實際選的選項（題號總覽要用）──
           practiceResults[q.id] = isCorrect;
+          // v572: 默默記錄全站「第一次作答」統計 (還沒開放顯示)
+          _qstatRecord(q, idx, isCorrect, "practice", {
+            skipped: !!qgridSkipped[practiceIdx],
+            count: qState[q.id].count || 0,
+            ms: Date.now() - _qShownAt,
+          });
           // v571: 從錯題本進來 + 勾了「答對就自動移出」 → 答對就拿掉 🚩
           if (_fromWrongbook && isCorrect && wbOpts && wbOpts.autoRemove && qState[q.id].flagged) {
             qState[q.id].flagged = false;
@@ -12998,6 +13005,7 @@
             const ok = correctArr.includes(userIdx);
             if (ok) correct++;
             else wrongQs.push({ q, userIdx, correctArr }); // v395
+            if (examMode) _qstatRecord(q, userIdx, ok, "exam", {}); // v572
             if (resultEl)
               resultEl.innerHTML = ok
                 ? '<span class="scroll-result-badge ok">✓ 答對</span>'
@@ -14475,7 +14483,10 @@
           if (isOk) correct++;
           else wrongQs.push({ q, userIdx, correctArr });
           // 試卷模式還沒記過 daily count，這裡補
-          if (examMode) trackDailyCount(q);
+          if (examMode) {
+            trackDailyCount(q);
+            _qstatRecord(q, userIdx, isOk, "exam", {}); // v572
+          }
         });
 
         // 記下答錯題 IDs（供「只練錯題」用）
@@ -28317,6 +28328,202 @@
       const wbOpen = new Set(); // 展開中的群組 key
       const wbShown = {}; // key → 目前顯示幾列
       let _fromWrongbook = false; // 這輪練習是不是從錯題本進來 (答對自動移出用)
+      // ═══ v572: 全站「大家怎麼答」統計 — 目前只默默記錄,不顯示 (HUA: 會員還沒起來先不開放) ═══
+      // 規則 (HUA 拍板): 每人每題只算「第一次」作答;不分練習/模擬考。
+      //   不算: 沒登入、從錯題本進來、跳過後補答、之前寫過 (本機 count / examHistory / 雲端 marker)、2 秒內按下。
+      // 存法: users/__qstats/{qid} = { n:總人數, c:答對, o:{選項idx:人數}, en:模擬考人數, ec:模擬考答對 }
+      //       users/{uid}/qstat/{qid} = ts  (跨裝置去重 marker)
+      // 一次 multi-path update 用 ServerValue.increment,每人每題一生只寫一次,一萬人也撐得住。
+      // 顯示門檻 (之後開放時): 滿 20 人才顯示;首次正確率 <40% 難 / 40–70 中 / >70 易。
+      let _qShownAt = 0;
+      const QSTAT_MIN_N = 20;
+      const QSTAT_MIN_MS = 2000;
+      let _qstatSent = null; // Set<qid> 這個帳號已經記過的
+      let _qstatCloud = new Set(); // 雲端 marker (別的裝置記過的)
+      let _qstatUid = null;
+      let _qstatCloudLoaded = false;
+      let _qstatLoading = null;
+      function _qstatGetUid() {
+        try {
+          if (typeof DentalSync !== "undefined" && DentalSync.getUserId) {
+            const u = DentalSync.getUserId();
+            if (u) return u;
+          }
+        } catch (e) {}
+        const u = localStorage.getItem("dental_cur_user");
+        return u && u !== "user" && u !== "default" ? u : null;
+      }
+      function _qstatLocalSet(uid) {
+        if (_qstatSent && _qstatUid === uid) return _qstatSent;
+        _qstatUid = uid;
+        _qstatCloudLoaded = false;
+        _qstatCloud = new Set();
+        try {
+          _qstatSent = new Set(JSON.parse(localStorage.getItem("qstat_sent:" + uid) || "[]"));
+        } catch (e) {
+          _qstatSent = new Set();
+        }
+        return _qstatSent;
+      }
+      function _qstatSaveLocal(uid) {
+        try {
+          localStorage.setItem("qstat_sent:" + uid, JSON.stringify([..._qstatSent]));
+        } catch (e) {}
+      }
+      function _qstatDb() {
+        if (typeof firebase === "undefined" || !firebase.database || !firebase.apps || !firebase.apps.length) return null;
+        return firebase.database();
+      }
+      // 之前有沒有寫過這題 (本機能判斷的部分)
+      function _qstatAnsweredBefore(qid) {
+        try {
+          const eh = typeof _readExamHistorySync === "function" ? _readExamHistorySync() : [];
+          for (const e of eh || []) {
+            if (e && e.userAnswers && e.userAnswers[qid] !== undefined) return true;
+          }
+        } catch (e) {}
+        return false;
+      }
+      async function _qstatEnsureCloud(uid) {
+        if (_qstatCloudLoaded) return;
+        if (_qstatLoading) return _qstatLoading;
+        _qstatLoading = (async () => {
+          const db = _qstatDb();
+          if (!db) return;
+          try {
+            const snap = await db.ref(`users/${uid}/qstat`).once("value");
+            const v = snap.val() || {};
+            Object.keys(v).forEach((k) => {
+              _qstatSent.add(k);
+              _qstatCloud.add(k);
+            });
+            _qstatCloudLoaded = true;
+            _qstatSaveLocal(uid);
+          } catch (e) {
+            /* 讀不到就先信本機 */
+          }
+        })();
+        try {
+          await _qstatLoading;
+        } finally {
+          _qstatLoading = null;
+        }
+      }
+      // 沒網路/沒 SDK 時先排隊,下次再送
+      function _qstatQueue(uid, item) {
+        try {
+          const k = "qstat_pending:" + uid;
+          const arr = JSON.parse(localStorage.getItem(k) || "[]");
+          if (arr.length < 300) arr.push(item);
+          localStorage.setItem(k, JSON.stringify(arr));
+        } catch (e) {}
+      }
+      async function _qstatFlush(uid) {
+        const k = "qstat_pending:" + uid;
+        let arr = [];
+        try {
+          arr = JSON.parse(localStorage.getItem(k) || "[]");
+        } catch (e) {}
+        if (!arr.length) return;
+        const db = _qstatDb();
+        if (!db) return;
+        localStorage.removeItem(k);
+        for (const it of arr) {
+          try {
+            await _qstatWrite(db, uid, it);
+          } catch (e) {
+            _qstatQueue(uid, it);
+          }
+        }
+      }
+      function _qstatPayload(uid, it) {
+        const inc = firebase.database.ServerValue.increment;
+        const base = `users/__qstats/${it.qid}`;
+        const up = {};
+        up[`${base}/n`] = inc(1);
+        up[`${base}/o/${it.idx}`] = inc(1);
+        if (it.ok) up[`${base}/c`] = inc(1);
+        if (it.mode === "exam") {
+          up[`${base}/en`] = inc(1);
+          if (it.ok) up[`${base}/ec`] = inc(1);
+        }
+        up[`users/${uid}/qstat/${it.qid}`] = it.ts || Date.now();
+        return up;
+      }
+      async function _qstatWrite(db, uid, it) {
+        const up = _qstatPayload(uid, it);
+        if (window._qstatDryRun) {
+          (window._qstatDryLog = window._qstatDryLog || []).push(up);
+          return;
+        }
+        await db.ref().update(up);
+      }
+      // 主入口 — 任何錯誤都吞掉,絕不影響作答
+      function _qstatRecord(q, idx, isCorrect, mode, ctx) {
+        try {
+          if (!q || idx === undefined || idx === null) return;
+          if (_fromWrongbook) return;
+          if (ctx && ctx.skipped) return;
+          if (mode === "practice" && ctx && ctx.count > 1) return; // count 已在前面 +1,>1 = 以前寫過
+          if (mode === "practice" && ctx && ctx.ms !== undefined && ctx.ms < QSTAT_MIN_MS) return;
+          const uid = _qstatGetUid();
+          if (!uid) return;
+          const sent = _qstatLocalSet(uid);
+          if (sent.has(q.id)) return;
+          if (_qstatAnsweredBefore(q.id)) {
+            sent.add(q.id);
+            _qstatSaveLocal(uid);
+            return;
+          }
+          const item = { qid: q.id, idx: idx, ok: !!isCorrect, mode: mode, ts: Date.now() };
+          // 先在本機標記,避免同一題連按兩次
+          sent.add(q.id);
+          _qstatSaveLocal(uid);
+          (async () => {
+            try {
+              await _qstatEnsureCloud(uid);
+              if (_qstatCloud.has(q.id)) return; // 別的裝置已經記過這題
+              const db = _qstatDb();
+              if (!db) {
+                _qstatQueue(uid, item);
+                return;
+              }
+              await _qstatFlush(uid);
+              await _qstatWrite(db, uid, item);
+            } catch (e) {
+              _qstatQueue(uid, item);
+            }
+          })();
+        } catch (e) {}
+      }
+      // 之後開放顯示時用: 讀一題的統計 (現在只給 console 看)
+      async function _qstatGet(qid) {
+        const db = _qstatDb();
+        if (!db) return null;
+        const snap = await db.ref(`users/__qstats/${qid}`).once("value");
+        const v = snap.val();
+        if (!v) return null;
+        const n = v.n || 0;
+        const rate = n ? (v.c || 0) / n : null;
+        return {
+          n,
+          correct: v.c || 0,
+          rate,
+          options: v.o || {},
+          exam: { n: v.en || 0, correct: v.ec || 0 },
+          enough: n >= QSTAT_MIN_N,
+          level: rate === null ? null : rate < 0.4 ? "難" : rate <= 0.7 ? "中等" : "易",
+        };
+      }
+      window.QStats = { get: _qstatGet, record: _qstatRecord, MIN_N: QSTAT_MIN_N, _payload: _qstatPayload, _flush: _qstatFlush };
+      // 上線一段時間後有排隊的就補送
+      setTimeout(() => {
+        try {
+          const uid = _qstatGetUid();
+          if (uid) _qstatFlush(uid);
+        } catch (e) {}
+      }, 15000);
+
       const _WB_OPT_LS = uKey("wb2_opts");
       let wbOpts = { order: "seq", onlyWrong: false, autoRemove: false };
       try {

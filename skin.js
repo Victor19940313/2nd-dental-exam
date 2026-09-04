@@ -190,18 +190,15 @@
     });
   }
 
-  // ── 左下角選單 ──
+  // v615: 不再放浮動的 🎨 鈕 (HUA: 沒人會一直換風格,收進選單);改成 Skin.open() 從各頁的選單叫出置中面板
   function buildPicker() {
     if (document.getElementById("skin-picker")) return;
     var id = read();
     var wrap = document.createElement("div");
     wrap.id = "skin-picker";
+    wrap.hidden = true;
     wrap.innerHTML =
-      '<button type="button" id="skin-picker-btn" title="切換網站風格" aria-haspopup="listbox" aria-expanded="false">' +
-      '<span id="skin-picker-cur">' +
-      byId[id].em +
-      "</span></button>" +
-      '<div id="skin-menu" role="listbox" hidden><div class="sk-menu-title">網站風格</div>' +
+      '<div id="skin-menu" role="listbox"><div class="sk-menu-title">網站風格 <button type="button" class="sk-close" aria-label="關閉">✕</button></div>' +
       SKINS.map(function (s) {
         return (
           '<button type="button" role="option" data-skin="' +
@@ -217,30 +214,28 @@
       }).join("") +
       "</div>";
     document.body.appendChild(wrap);
-    var btn = document.getElementById("skin-picker-btn");
     var menu = document.getElementById("skin-menu");
     function close() {
-      menu.hidden = true;
-      btn.setAttribute("aria-expanded", "false");
+      wrap.hidden = true;
     }
-    btn.addEventListener("click", function (e) {
-      e.stopPropagation();
-      var open = menu.hidden;
-      menu.hidden = !open;
-      btn.setAttribute("aria-expanded", open ? "true" : "false");
-    });
     menu.addEventListener("click", function (e) {
+      if (e.target.closest(".sk-close")) return close();
       var b = e.target.closest("button[data-skin]");
       if (!b) return;
       apply(b.dataset.skin, true);
       close();
     });
-    document.addEventListener("click", function (e) {
-      if (!wrap.contains(e.target)) close();
+    wrap.addEventListener("click", function (e) {
+      if (e.target === wrap) close();
     });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") close();
     });
+  }
+  function openPicker() {
+    buildPicker();
+    var wrap = document.getElementById("skin-picker");
+    if (wrap) wrap.hidden = false;
   }
 
   // 1. 先套 data-skin (head 階段，避免閃)
@@ -276,5 +271,5 @@
     if (e.key && e.key.indexOf(KEY) === 0) apply(read(), false);
   });
 
-  window.Skin = { apply: apply, current: read, list: SKINS };
+  window.Skin = { apply: apply, current: read, list: SKINS, open: openPicker };
 })();

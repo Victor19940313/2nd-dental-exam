@@ -350,25 +350,20 @@ html[data-skin="kawaii"] .chip,
 html[data-skin="kawaii"] .ts-chip { box-shadow: 2px 2px 0 #4a3b4b !important; }
 
 /* ───────── 左下角風格選單 (所有風格、含經典都顯示) ───────── */
-#skin-picker { position: fixed; left: 12px; bottom: 14px; z-index: 12000; font-family: "Noto Sans TC", system-ui, sans-serif; }
-#skin-picker-btn {
-  width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid rgba(0, 0, 0, 0.12); background: #fff;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); cursor: pointer; font-size: 1.15rem; line-height: 1; display: grid; place-items: center; padding: 0;
-  transition: transform 0.15s;
-}
-#skin-picker-btn:hover { transform: scale(1.06); }
-#skin-picker-btn:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+/* v615: 風格選單改成從各頁「選單」叫出的置中面板 (不再浮動在旁邊) */
+#skin-picker { position: fixed; inset: 0; z-index: 12000; background: rgba(20, 18, 30, 0.45); display: flex; align-items: center; justify-content: center; padding: 1rem; font-family: "Noto Sans TC", system-ui, sans-serif; }
+#skin-picker[hidden] { display: none; }
 #skin-menu {
-  position: absolute; left: 0; bottom: 48px; min-width: 180px; background: #fff; border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18); padding: 0.35rem; display: grid; gap: 2px;
+  width: min(320px, 100%); background: #fff; border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25); padding: 0.5rem; display: grid; gap: 2px;
 }
-#skin-menu[hidden] { display: none; }
-#skin-menu .sk-menu-title { font-size: 0.7rem; color: #9ca3af; letter-spacing: 0.1em; padding: 0.3rem 0.6rem 0.15rem; }
-#skin-menu button {
-  display: flex; align-items: center; gap: 0.55rem; width: 100%; text-align: left; font: inherit; font-size: 0.86rem; color: #1f2937;
-  background: none; border: 0; border-radius: 9px; padding: 0.45rem 0.6rem; cursor: pointer;
+#skin-menu .sk-menu-title { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 800; color: #6b7280; letter-spacing: 0.08em; padding: 0.35rem 0.6rem 0.4rem; }
+#skin-menu .sk-close { font: inherit; font-size: 0.9rem; color: #9ca3af; background: none; border: 0; cursor: pointer; padding: 0.1rem 0.3rem; }
+#skin-menu button[data-skin] {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left; font: inherit; font-size: 0.92rem; color: #1f2937;
+  background: none; border: 0; border-radius: 10px; padding: 0.55rem 0.7rem; cursor: pointer;
 }
-#skin-menu button:hover { background: #f3f4f6; }
+#skin-menu button[data-skin]:hover { background: #f3f4f6; }
 #skin-menu button[aria-checked="true"] { background: #ede9fe; color: #5b21b6; font-weight: 700; }
 #skin-menu .sk-em { width: 1.4em; text-align: center; }
 @media print { #skin-picker, #skin-deco { display: none !important; } }
@@ -380,12 +375,6 @@ html[data-skin] .nav-row button { white-space: nowrap; padding-left: 0.75rem !im
   html[data-skin] .nav-row .btn-next { flex: 1 1 100%; order: 9; }
 }
 
-/* v556: 手機上 🎨 鈕不能壓到底部 sticky 的「下一題」列 → 改貼在左邊緣中間,小一點半透明 */
-@media (max-width: 899px) {
-  #skin-picker { left: 0; bottom: auto; top: 46vh; }
-  #skin-picker-btn { width: 30px; height: 36px; border-radius: 0 12px 12px 0; border-left: 0; font-size: 0.95rem; opacity: 0.85; box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15); }
-  #skin-menu { bottom: auto; top: 0; left: 34px; }
-}
 /* v556: 動畫風 header 按鈕 (btn-mode) 沒邊框看起來像純文字 → 給底部立體陰影 */
 html[data-skin="toon"] .btn-mode,
 html[data-skin="toon"] .chip,

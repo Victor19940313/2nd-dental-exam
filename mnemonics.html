@@ -1558,6 +1558,12 @@
         font-size: 0.8rem;
         box-shadow: var(--shadow);
       }
+      /* v615: 分享獎勵卡 收合 / 顯示全部 */
+      .mn-reward .rw-head { cursor: pointer; }
+      .mn-reward .rw-count { font-size: 0.74rem; font-weight: 600; color: var(--text-sub); }
+      .mn-reward .rw-caret { margin-left: auto; font-size: 0.8rem; color: var(--text-sub); }
+      .mn-reward .rw-head .rule { flex-basis: 100%; }
+      .mn-reward .rw-more { display: block; width: 100%; margin-top: 0.4rem; padding: 0.35rem; font: inherit; font-size: 0.78rem; font-weight: 700; color: #7c3aed; background: transparent; border: 1.5px dashed #ddd0fb; border-radius: 10px; cursor: pointer; }
       .mn-reward .rw-head {
         display: flex;
         gap: 0.6rem;
@@ -1658,6 +1664,7 @@
       <a href="exam/index.html#notebook" class="nav-link nav-pill nav-notebook"
         >📒 筆記本</a
       >
+      <a href="javascript:void(0)" class="nav-link nav-pill" onclick="if (window.Skin && Skin.open) Skin.open()">🎨 風格</a>
       <!-- v574: 三分頁取代作者下拉 -->
       <div class="mn-tabs" id="mn-tabs" role="tablist">
         <button data-mode="mine" class="active" onclick="switchMode('mine')">🧠 我的口訣</button>
@@ -3639,17 +3646,26 @@
         const pubs = st && st.chapters ? st.chapters.filter((c) => isChPublic(_curUser, c)) : [];
         const idx = _pubIndex[_curSubject] || {};
         const c = _rewardCfg;
-        const rows = pubs
+        // v615: 預設只列前 3 章,可展開看全部;整張卡也可收合 (HUA: 全列太占版面 → 做收合)
+        const collapsed = localStorage.getItem("mn_reward_collapsed") === "1";
+        const all = pubs
           .map((ch) => ({ ch, likes: (idx[pubKey(_curUser, ch.id)] || {}).likes || 0 }))
-          .sort((a, b) => b.likes - a.likes)
-          .slice(0, 3)
+          .sort((a, b) => b.likes - a.likes);
+        const rows = (window._rwShowAll ? all : all.slice(0, 3))
           .map(({ ch, likes }) => {
             const next = likes < c.likes1 ? c.likes1 : likes < c.likes2 ? c.likes2 : c.likes3;
             const pct = Math.min(100, Math.round((likes / next) * 100));
             return `<div class="rw-row"><span class="t">${escapeHtml(ch.title || "")}</span><span class="bar"><i style="width:${pct}%"></i></span><span class="cnt">👍 ${likes} / ${next}</span></div>`;
           })
           .join("");
-        el.innerHTML = `<div class="rw-head">🎁 分享獎勵 <span class="rule">同一章 ${c.likes1} 讚 → ${c.days1} 天序號、${c.likes2} 讚 → 再 ${c.days2} 天、${c.likes3} 讚 → 再 ${c.days3} 天 (門檻隨會員人數調整;只有付費會員的讚算;自動發到「我的獎勵」)</span></div>${rows || `<div class="rw-row" style="color:var(--text-sub)">${SUBJECT_LABEL[_curSubject]} 還沒有公開的章節。選好考點、打開「公開」就開始累積 👍</div>`}`;
+        const more = all.length > 3
+          ? `<button type="button" class="rw-more" onclick="window._rwShowAll=!window._rwShowAll;renderRewardCard()">${window._rwShowAll ? "▴ 只看前 3 章" : `▾ 顯示全部 ${all.length} 章`}</button>`
+          : "";
+        const body = collapsed
+          ? ""
+          : `<div class="rw-body">${rows || `<div class="rw-row" style="color:var(--text-sub)">${SUBJECT_LABEL[_curSubject]} 還沒有公開的章節。選好考點、打開「公開」就開始累積 👍</div>`}${more}</div>`;
+        el.classList.toggle("collapsed", collapsed);
+        el.innerHTML = `<div class="rw-head" role="button" tabindex="0" onclick="localStorage.setItem('mn_reward_collapsed', localStorage.getItem('mn_reward_collapsed') === '1' ? '0' : '1');renderRewardCard()" title="${collapsed ? "點開" : "收合"}">🎁 分享獎勵 <span class="rw-count">${all.length ? `公開 ${all.length} 章` : ""}</span><span class="rw-caret">${collapsed ? "▸" : "▾"}</span>${collapsed ? "" : `<span class="rule">同一章 ${c.likes1} 讚 → ${c.days1} 天序號、${c.likes2} 讚 → 再 ${c.days2} 天、${c.likes3} 讚 → 再 ${c.days3} 天 (門檻隨會員人數調整;只有付費會員的讚算;自動發到「我的獎勵」)</span>`}</div>${body}`;
       }
 
 

@@ -1671,6 +1671,109 @@
         background: var(--purple-dark) !important;
         color: #fff !important;
       }
+      /* v615: 手機作答畫面整理 — 只動 ≤760px,桌機不變 */
+      @media (max-width: 760px) {
+        /* 頁首:收起時分頁鈕一律藏 (連 JS 設 display:block 的「回到考題」也藏);展開時才尊重各自的 inline display */
+        .header:not(.nav-open) .header-right .btn-mode {
+          display: none !important;
+        }
+        /* 收起時:會員徽章 (終身/會員) 藏起來,只有 試用/快到期/過期 這種要提醒的才留 */
+        .header:not(.nav-open) #sub-badge .sub-b-paid {
+          display: none;
+        }
+        /* 收起時:頭像不帶名字,只留圓形頭像 */
+        .header:not(.nav-open) .auth-w-name,
+        .header:not(.nav-open) .auth-w-caret {
+          display: none;
+        }
+        .header:not(.nav-open) .auth-w-loggedin {
+          padding: 0.15rem !important;
+          gap: 0 !important;
+        }
+        /* 展開時:徽章排到最後一列 */
+        .header.nav-open #sub-badge {
+          order: 20;
+          flex-basis: 100%;
+          text-align: right;
+          margin: 0.2rem 0 0 !important;
+        }
+        #sub-badge {
+          margin-right: 0 !important;
+        }
+        #auth-widget {
+          margin-right: 0 !important;
+        }
+
+        /* 詳解下方:三顆工具鈕等寬一列 */
+        .result-area .expl-actions {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+          gap: 0.4rem;
+          margin: 0.7rem 0 0.45rem;
+        }
+        .result-area .expl-actions > button {
+          margin: 0 !important;
+          padding: 0.5rem 0.2rem !important;
+          font-size: 0.8rem !important;
+          border-radius: 10px !important;
+          text-align: center;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        /* 標記列:四個標記等寬一列;錯題本 + 已寫過 N 次 排第二列 */
+        .result-area .mark-row {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 0.35rem;
+          margin-bottom: 0.6rem;
+        }
+        .result-area .mark-row .mark-label {
+          display: none;
+        }
+        .result-area .mark-row > .btn-mark {
+          padding: 0.5rem 0.1rem;
+          font-size: 0.76rem;
+          border-radius: 10px;
+          text-align: center;
+          white-space: nowrap;
+          letter-spacing: -0.01em;
+        }
+        .result-area .mark-row > .btn-flag {
+          order: 5;
+          grid-column: span 2;
+          padding: 0.45rem 0.3rem;
+          font-size: 0.78rem;
+          border-radius: 10px;
+          border-width: 1.5px;
+          text-align: center;
+        }
+        .result-area .mark-row > .btn-count {
+          order: 6;
+          grid-column: span 2;
+          margin-left: 0;
+          padding: 0.45rem 0.3rem;
+          font-size: 0.76rem;
+          border-radius: 10px;
+          border-style: dashed;
+          text-align: center;
+          background: transparent;
+        }
+      }
+      /* v615: 底部導覽 ≤760px:小鈕一列、「下一題」自己一整列 (經典模式也比照風格模式) */
+      @media (max-width: 760px) {
+        .nav-row {
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .nav-row button {
+          white-space: nowrap;
+        }
+        #screen-practice .nav-row .btn-next {
+          flex: 1 1 100% !important;
+          order: 9;
+        }
+      }
       /* v583: 標記統計旁的小重製鈕 */
       .stats-card { position: relative; }
       .stats-card .stats-reset {
@@ -5993,6 +6096,9 @@
         </button>
         <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
           瀏覽
+        </button>
+        <button class="btn-mode" id="btn-skin" onclick="if (window.Skin && Skin.open) Skin.open()" title="換網站風格">
+          🎨 風格
         </button>
         <!-- v583: ☁️ 同步面板 / 🔧 修補 / 🗑️ 重置 三顆頁首小圖示拿掉 (HUA);同步全自動,重製搬到標記統計旁 -->
       </div>

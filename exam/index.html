@@ -4869,6 +4869,46 @@
         box-decoration-break: clone;
       }
       /* 子標籤（特點/功能/機制 等）— 藍色字體 */
+      /* v611: 清單三層 — ◆ 群組標題 (深字) → 子項目 (縮排 + 淡紫左線,藍色欄位標籤) → 內文 */
+      .nb-chapter-content li.li-group {
+        list-style: none;
+        margin: 1rem 0 0.35rem -1.2rem;
+      }
+      .nb-chapter-content li.li-group > strong {
+        background: none;
+        padding: 0;
+        font-size: 1.04rem;
+        color: #3b2a6b;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+      .nb-chapter-content li.li-group > strong::before {
+        content: "";
+        width: 0.5em;
+        height: 0.5em;
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
+        border-radius: 2px;
+        transform: rotate(45deg);
+        flex: none;
+      }
+      .nb-chapter-content ul.nb-sub {
+        margin: 0.35rem 0 0.5rem 0.35rem;
+        padding-left: 0.9rem;
+        border-left: 2px solid #e9d5ff;
+      }
+      .nb-chapter-content ul.nb-sub > li {
+        list-style: none;
+        margin-bottom: 0.3rem;
+      }
+      .nb-chapter-content ul.nb-sub > li.li-sublabel {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: 0;
+      }
+      .nb-chapter-content ul.nb-sub ul.nb-sub > li {
+        list-style: disc;
+      }
       /* v610: 收合段落 (延伸補充 / 易考重點) 的點開提示 */
       .nb-chapter-content .nb-fold-hint::before {
         content: "▸ 點開";
@@ -24696,24 +24736,37 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
         // lists (group consecutive lines starting with - or * ; allow leading indent)
         // 結尾補 \n,避免後面的 list/ol 行因失去行首而 match 失敗
+        // v611: 縮排巢狀 — 「  - 子項」縮兩格以上就變成上一項底下的 <ul class="nb-sub"> (以前一律壓平,層級全消失)
         s = s.replace(/((?:^[ \t]*[-*] .+(?:\n|$))+)/gm, (m) => {
-          const items = m
-            .trim()
-            .split(/\n/)
-            .map((l) => l.replace(/^[ \t]*[-*] /, ""));
-          return (
-            "<ul>" +
-            items
-              .map((i) => {
-                // li 開頭是子標籤 → 加 class 把圓點拿掉
-                const cls = /^\s*<span class="md-label">/.test(i)
-                  ? ' class="li-sublabel"'
-                  : "";
-                return "<li" + cls + ">" + i + "</li>";
-              })
-              .join("") +
-            "</ul>\n"
-          );
+          const lines = m.replace(/\s+$/, "").split(/\n/);
+          const liHtml = (i) => {
+            const cls = /^\s*<span class="md-label">/.test(i) ? ' class="li-sublabel"' : "";
+            return "<li" + cls + ">" + i;
+          };
+          let out = "<ul>";
+          const stack = [0]; // 每層的縮排寬度
+          let openLi = false;
+          lines.forEach((l) => {
+            const ind = (/^[ \t]*/.exec(l)[0] || "").replace(/\t/g, "  ").length;
+            const txt = l.replace(/^[ \t]*[-*] /, "");
+            if (ind > stack[stack.length - 1] + 1 && openLi) {
+              stack.push(ind);
+              out += '<ul class="nb-sub">';
+              openLi = false;
+            } else {
+              while (stack.length > 1 && ind < stack[stack.length - 1]) {
+                stack.pop();
+                out += (openLi ? "</li>" : "") + "</ul></li>";
+                openLi = true;
+              }
+              if (openLi) out += "</li>";
+            }
+            out += liHtml(txt);
+            openLi = true;
+          });
+          if (openLi) out += "</li>";
+          while (stack.length > 1) { stack.pop(); out += "</ul></li>"; }
+          return out + "</ul>\n";
         });
         s = s.replace(/((?:^[ \t]*\d+\. .+(?:\n|$))+)/gm, (m) => {
           const lines = m.trim().split(/\n/);
@@ -24773,6 +24826,47 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             return rows.length ? rows.join("") + closeTag : m;
           },
         );
+        // v611: 清單層級 — AI 常把「**酯類**:」和它底下的「特性:」「藥物:」寫成同一層;
+        //   (1) 整個 li 只有「粗體(+冒號)」→ 當群組標題,後面的兄弟項目收進它底下的 <ul class="nb-sub">
+        //   (2) 子項目開頭「特性:」「藥物:」這類詞 (即使沒粗體) → 藍色 md-label,一眼分出「標題 / 欄位 / 內容」三層
+        if (typeof document !== "undefined" && /<ul>/.test(s)) {
+          const box = document.createElement("div");
+          box.innerHTML = s;
+          // 自己已經有縮排子清單的 li 也算 (只看 <ul 之前的部分)
+          const isHead = (li) => /^\s*<strong>[^<]{1,40}<\/strong>\s*[:：]?\s*$/.test(li.innerHTML.split(/<ul[\s>]/)[0]);
+          box.querySelectorAll("ul:not(.nb-sub)").forEach((ul) => {
+            const lis = Array.from(ul.children).filter((x) => x.tagName === "LI");
+            if (!lis.some(isHead) || lis.every(isHead)) return;
+            let group = null;
+            lis.forEach((li) => {
+              if (isHead(li)) {
+                li.classList.add("li-group");
+                const sub = li.querySelector(":scope > ul");
+                if (sub) { sub.classList.add("nb-sub"); }
+                else li.innerHTML = li.innerHTML.replace(/\s*[:：]\s*$/, "");
+                group = null;
+                const nxt = li.nextElementSibling;
+                if (!sub && nxt && nxt.tagName === "LI" && !isHead(nxt)) {
+                  group = document.createElement("ul");
+                  group.className = "nb-sub";
+                  li.appendChild(group);
+                }
+              } else if (group) group.appendChild(li);
+            });
+          });
+          const LABEL_WORDS = /^([^\s:：<]{1,6})[ \t]*[:：][ \t]*/;
+          box.querySelectorAll("ul.nb-sub > li").forEach((li) => {
+            const first = li.firstChild;
+            if (!first || first.nodeType !== 3) return;
+            const mm = LABEL_WORDS.exec(first.nodeValue);
+            if (!mm) return; // 子項目開頭「短詞:」一律當欄位標籤 (特性 / 藥物 / 脂溶性 / pKa …)
+            first.nodeValue = first.nodeValue.slice(mm[0].length);
+            const lab = document.createElement("span"); lab.className = "md-label"; lab.textContent = mm[1];
+            const col = document.createElement("span"); col.className = "md-colon"; col.textContent = ":";
+            li.insertBefore(col, first); li.insertBefore(lab, col);
+          });
+          s = box.innerHTML;
+        }
         return s;
       }
       function _renderCellInline(c) {

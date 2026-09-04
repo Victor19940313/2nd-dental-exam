@@ -417,6 +417,48 @@
         border-top: 1px solid #e5e7eb;
         padding-top: 1.2rem;
       }
+      /* v611: LINE Pay */
+      .lp-box {
+        display: none;
+        margin: 0.9rem 0 0;
+        padding: 0.9rem 1rem;
+        border: 1.5px solid #bfe8c9;
+        background: #f2fbf4;
+        border-radius: 14px;
+      }
+      .lp-box.show {
+        display: block;
+      }
+      .lp-box h3 {
+        margin: 0 0 0.3rem;
+        font-size: 1rem;
+      }
+      .lp-box p {
+        margin: 0 0 0.6rem;
+        font-size: 0.86rem;
+        color: #4b5563;
+      }
+      .lp-btn {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        padding: 0.85rem;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #fff;
+        background: #06c755;
+        cursor: pointer;
+      }
+      .lp-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .lp-or {
+        text-align: center;
+        color: #9ca3af;
+        font-size: 0.8rem;
+        margin: 0.7rem 0 0.2rem;
+      }
     </style>
       <link rel="stylesheet" href="skin.css" />
   </head>
@@ -510,6 +552,17 @@
         </div>
       </div>
 
+      <div class="lp-box" id="lp-box">
+        <h3>💚 LINE Pay 付款 (付完立刻開通)</h3>
+        <p>
+          按下去會跳到 LINE Pay,付款成功會<b>自動開通</b>,不用填對帳資料。
+          要先勾選下方的服務條款。
+        </p>
+        <button class="lp-btn" id="lp-btn" onclick="payLinepay()">
+          用 LINE Pay 付 <span id="lp-amount">$400</span>
+        </button>
+        <div class="lp-or">— 或是用下面的匯款 —</div>
+      </div>
       <div class="bank-info" id="bank-info">
         <h3>💳 匯款資訊</h3>
         <div class="bank-row">
@@ -722,6 +775,7 @@
           document.getElementById("show-amount").textContent =
             "$" + selectedAmount;
           document.getElementById("bank-info").classList.add("show");
+          lpSync();
           document.getElementById("form").classList.add("show");
           document
             .getElementById("form")
@@ -746,6 +800,91 @@
         if (hint) hint.textContent = ok ? "" : "勾選同意後才能送出對帳";
       }
       window.onTermsChange = onTermsChange;
+
+      // v611: LINE Pay — Worker 說有開才顯示;付完 LINE Pay 導回 ?linepay=ok|fail|cancel
+      const LP_WORKER = "https://island-watch.seat-watch.workers.dev";
+      let lpEnabled = false;
+      fetch(LP_WORKER + "/linepay/status")
+        .then((r) => r.json())
+        .then((j) => {
+          lpEnabled = !!(j && j.enabled);
+          if (lpEnabled && selectedPlan) document.getElementById("lp-box").classList.add("show");
+        })
+        .catch(() => {});
+      function lpSync() {
+        const box = document.getElementById("lp-box");
+        if (!box) return;
+        box.classList.toggle("show", lpEnabled && !!selectedPlan);
+        const a = document.getElementById("lp-amount");
+        if (a) a.textContent = "$" + selectedAmount;
+      }
+      async function payLinepay() {
+        const user = window.Auth && window.Auth.getUser();
+        if (!user) {
+          alert("請先 Google 登入");
+          document.getElementById("not-logged").classList.add("show");
+          return;
+        }
+        if (!selectedPlan) return alert("請先選一個方案");
+        const termsCb = document.getElementById("terms-agree");
+        if (!termsCb || !termsCb.checked) {
+          alert("請先閱讀並勾選同意服務條款與免責聲明");
+          try {
+            document.getElementById("terms-wrap").scrollIntoView({ behavior: "smooth", block: "center" });
+          } catch (e) {}
+          return;
+        }
+        const btn = document.getElementById("lp-btn");
+        btn.disabled = true;
+        btn.textContent = "連線 LINE Pay 中…";
+        const _refField = document.getElementById("referrer-field");
+        const referrerEmail =
+          _refField && _refField.style.display === "none"
+            ? ""
+            : (document.getElementById("referrer-email").value || "").trim().toLowerCase();
+        try {
+          const r = await fetch(LP_WORKER + "/linepay/request", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              uid: user.uid,
+              email: user.email || "",
+              name: user.displayName || "",
+              plan: selectedPlan,
+              referrer_email: referrerEmail,
+              terms_version: TERMS_VERSION,
+            }),
+          });
+          const j = await r.json();
+          if (!j.ok || !j.paymentUrl) throw new Error(j.error || "LINE Pay 沒回應");
+          location.href = j.paymentUrl;
+        } catch (e) {
+          alert("LINE Pay 付款啟動失敗:" + e.message + "\n可以改用匯款,或稍後再試");
+          btn.disabled = false;
+          btn.innerHTML = '用 LINE Pay 付 <span id="lp-amount">$' + selectedAmount + "</span>";
+        }
+      }
+      window.payLinepay = payLinepay;
+      (function lpReturn() {
+        const q = new URLSearchParams(location.search);
+        const st = q.get("linepay");
+        if (!st) return;
+        history.replaceState(null, "", location.pathname);
+        if (st === "ok") {
+          document.getElementById("plans").style.display = "none";
+          const sc = document.getElementById("success");
+          sc.querySelector("h2").textContent = "LINE Pay 付款成功,已自動開通!";
+          sc.querySelector("p").innerHTML = "徽章會變成金色「✨會員」<br />如果沒有馬上變,重新整理一次就好";
+          document.getElementById("order-id").textContent = q.get("oid") ? "訂單編號: " + q.get("oid") : "";
+          sc.classList.add("show");
+          if (window.Subscription && window.Subscription.refresh) setTimeout(() => window.Subscription.refresh(), 800);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (st === "cancel") {
+          alert("已取消 LINE Pay 付款,沒有扣款。");
+        } else {
+          alert("LINE Pay 付款沒有完成 (" + (q.get("why") || "未知") + ")。沒有開通也沒有扣款的話可以再試一次,或改用匯款。");
+        }
+      })();
 
       async function submitOrder() {
         const user = window.Auth && window.Auth.getUser();

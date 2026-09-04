@@ -1,7 +1,7 @@
 // v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js')
 //   原因:瀏覽器檢查 SW 更新時,importScripts 的檔案會走 HTTP 快取 (Cloudflare 給 4 小時),
 //   拿到舊的 version.js 就會把「舊版」當成新版裝進來 → 使用者按更新 → 又檢查到新版 → 無限「立即更新」
-const APP_VERSION = "v615";
+const APP_VERSION = "v616";
 self.APP_VERSION = APP_VERSION;
 const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-persist-isClassPractice-through-reload';
 const PRECACHE = [

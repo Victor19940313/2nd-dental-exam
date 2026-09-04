@@ -789,11 +789,11 @@
         margin: 1.4rem 0;
       }
       body:not(.theme-default) .nb-chapter-content strong {
-        color: var(--purple-dark) !important;
+        color: #2a2140 !important;
         background: linear-gradient(
           180deg,
-          transparent 52%,
-          var(--strong-bg) 52%
+          transparent 64%,
+          var(--strong-bg) 64%
         ) !important;
       }
       body:not(.theme-default) .nb-chapter-content em {
@@ -801,9 +801,9 @@
       }
       body:not(.theme-default) .nb-chapter-content .ctag,
       body:not(.theme-default) .ctag {
-        background: var(--tag-bg) !important;
-        color: var(--tag-color) !important;
-        border: 1px solid var(--purple-soft) !important;
+        background: var(--purple-light) !important;
+        color: var(--purple-dark) !important;
+        border: 0 !important;
       }
       body:not(.theme-default) .nb-table tr:nth-child(even) td {
         background: var(--purple-light) !important;
@@ -4374,6 +4374,44 @@
         gap: 0.4rem;
         flex-wrap: wrap;
       }
+      .nb-more {
+        position: relative;
+        display: inline-block;
+      }
+      .nb-more .nb-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 4px);
+        background: #fff;
+        border: 1px solid #ddd6fe;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        min-width: 190px;
+        padding: 0.3rem;
+        z-index: 60;
+      }
+      .nb-more.open .nb-menu {
+        display: block;
+      }
+      .nb-more .nb-menu button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 0;
+        padding: 0.5rem 0.8rem;
+        font: inherit;
+        font-size: 0.86rem;
+        color: #374151;
+        cursor: pointer;
+        border-radius: 6px;
+        white-space: nowrap;
+      }
+      .nb-more .nb-menu button:hover {
+        background: #f3e8ff;
+        color: #5b21b6;
+      }
       .nb-tb-btn {
         background: white;
         color: #6b21a8;
@@ -4668,14 +4706,14 @@
       }
       .nb-chapter-content li {
         margin-bottom: 0.4rem;
-        line-height: 1.75;
+        line-height: 1.85;
       }
       .nb-chapter-content li::marker {
         color: #a855f7;
       }
       .nb-chapter-content p {
         margin: 0;
-        line-height: 1.65;
+        line-height: 1.85;
       }
       .nb-chapter-content code {
         background: #fef3c7;
@@ -4687,12 +4725,13 @@
         font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
       }
       /* 主體名詞 / 關鍵字 — 像螢光筆畫過 */
+      /* v606: 粗體 (子標題/重點) = 深墨色 + 細螢光底線,和關鍵字的淡紫一深一淺兩層 */
       .nb-chapter-content strong {
-        color: #6b21a8;
-        font-weight: 900;
-        background: linear-gradient(180deg, transparent 52%, #fde047 52%);
-        padding: 0 4px;
-        font-size: 1.02em;
+        color: #2a2140;
+        font-weight: 800;
+        background: linear-gradient(180deg, transparent 64%, #fde68a 64%);
+        padding: 0 2px;
+        font-size: 1em;
       }
       .nb-chapter-content em {
         color: #0369a1;
@@ -4816,15 +4855,18 @@
       }
 
       /* Inline "概念標籤"：當 AI 用 [[概念]] 包起來時會渲染成彩色標籤 */
+      /* v606: 關鍵字 = 淡紫底、沒有框、字不縮小 (HUA 選 B);行內不切碎句子,窄表格也能斷行 */
       .nb-chapter-content .ctag {
-        display: inline-block;
-        background: #e9d5ff;
-        color: #6b21a8;
-        padding: 1px 9px;
-        border-radius: 10px;
-        font-size: 0.78em;
-        font-weight: 700;
-        margin: 0 2px;
+        display: inline;
+        background: #efe8fb;
+        color: #5b21b6;
+        padding: 0.05em 0.3em;
+        border-radius: 4px;
+        font-size: 1em;
+        font-weight: 600;
+        margin: 0 0.05em;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
       }
       /* 子標籤（特點/功能/機制 等）— 藍色字體 */
       .nb-chapter-content .md-label {
@@ -5090,10 +5132,10 @@
         margin: 0;
       }
       .nb-editor-tiptap .ProseMirror strong {
-        color: #5b21b6;
-        font-weight: 900;
-        background: linear-gradient(180deg, transparent 52%, #fcd97b 52%);
-        padding: 0 4px;
+        color: #2a2140;
+        font-weight: 800;
+        background: linear-gradient(180deg, transparent 64%, #fde68a 64%);
+        padding: 0 2px;
       }
       .nb-editor-tiptap .ProseMirror em {
         color: #4a7a99;
@@ -5135,14 +5177,13 @@
         background: #e9d5ff;
       }
       .nb-editor-tiptap .ProseMirror .ctag {
-        display: inline-block;
-        background: #d8c4ef;
-        color: #5d4694;
-        padding: 1px 9px;
-        border-radius: 10px;
-        font-size: 0.85em;
-        font-weight: 700;
-        margin: 0 2px;
+        display: inline;
+        background: #efe8fb;
+        color: #5b21b6;
+        padding: 0.05em 0.3em;
+        border-radius: 4px;
+        font-size: 1em;
+        font-weight: 600;
       }
       .nb-editor-tiptap .ProseMirror table {
         border-collapse: collapse;
@@ -7314,124 +7355,33 @@
           </button>
         </div>
         <div class="nb-toolbar-actions">
-          <button class="nb-tb-btn" onclick="showOnboarding()" title="入門指引">
-            📖 入門
-          </button>
-          <button
-            class="nb-tb-btn"
-            id="btn-pending"
-            onclick="openPendingModal()"
-            title="之前整理失敗的題目（可一鍵重試）"
-            style="
-              display: none;
-              background: #fef3c7;
-              border-color: #fbbf24;
-              color: #92400e;
-            "
-          >
-            📥 待整理
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="reorganizeAllSubtopics()"
-            title="讓 AI 幫所有章節重新分配子主題分組（章節內文不會改）"
-          >
-            🗂 子主題分組
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="openMergeChaptersModal()"
-            title="讓 AI 找出講同件事卻被切太細的章節 → 合併成一章（圖片絕對保留）"
-            style="background: #dcfce7; border-color: #22c55e; color: #166534"
-          >
-            🧹 合併重複章節
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="openNotebookBackupModal()"
-            title="合併/AI 整理之前的筆記快照，出事可一鍵還原"
-            style="background: #fee2e2; border-color: #ef4444; color: #991b1b"
-          >
-            🛟 還原備份
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="openNbTimingsModal()"
-            title="看最近 20 次「加入筆記」花了多久 — 可以一鍵複製傳給 Claude 看"
-            style="background: #e0e7ff; border-color: #6366f1; color: #3730a3"
-          >
-            ⏱ 計時
-          </button>
-          <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定">
-            ⚙️ 設定
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="undoLastChange()"
-            title="一鍵復原上一次的修改"
-          >
-            ↶ 復原
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="openHistoryModal()"
-            title="編輯歷史"
-          >
-            🕓 歷史
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="diagnoseChapterSubjects()"
-            title="檢查每章的科目（牙三/牙四/牙五/牙六）有沒有分錯，一鍵修正"
-          >
-            🔧 修正科目
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="fixEscapedNewlinesInAllChapters()"
-            title="掃所有章節:(1) 字面「\n」→ 真換行 (2) 表格孤兒列(空行隔開的「| ... |」)→ 接回主表"
-            style="background: #fef3c7; border-color: #fbbf24; color: #92400e"
-          >
-            🧹 修亂碼
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="fixNotebookEmojiGarble()"
-            title="v472: 修 h3/h4 標題被拆壞的 emoji (如 ### �� 一句話定義 → ### 📌 一句話定義)。只修已知模板，內文不動。頁面首次載入會自動跑一次。"
-            style="background: #fef3c7; border-color: #fbbf24; color: #92400e"
-          >
-            🎨 修 emoji 亂碼
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="renameUnnamedChapters()"
-            title="用 AI 幫名稱含「未命名」或「待整理」的章節改成正常名稱"
-            style="background: #fef3c7; border-color: #fbbf24; color: #92400e"
-          >
-            🏷 修未命名章節
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="regenPendingChapters()"
-            title="一鍵重生所有「(待整理)」章節 — 刪掉空章節後，把它們的題目重新讓 AI 分類到現有章節或建有實質內容的新章。v434 有 retry 保證品質"
-            style="background: #fef3c7; border-color: #f97316; color: #9a3412"
-          >
-            🔄 重生待整理章節
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="openPrintModal()"
-            title="列印單頁/多頁/全部章節"
-          >
-            🖨️ 列印
-          </button>
-          <button
-            class="nb-tb-btn"
-            onclick="exportNotebookMD()"
-            title="匯出為 Markdown"
-          >
-            📥 匯出
-          </button>
+          <!-- v606: 工具列瘦身 (HUA: 畫面越乾淨功能鍵越少越好) — 4 顆常用 + ⋯更多 + 管理者才有的 🛠維修 -->
+          <button class="nb-tb-btn" id="btn-pending" onclick="openPendingModal()" title="之前整理失敗的題目（會自動重試，也可一鍵重試）" style="display: none">📥 待整理</button>
+          <button class="nb-tb-btn" onclick="undoLastChange()" title="一鍵復原上一次的修改">↶ 復原</button>
+          <button class="nb-tb-btn" onclick="openAISettings()" title="AI 設定（Gemini API key）">⚙️ 設定</button>
+          <div class="nb-more" id="nb-more">
+            <button class="nb-tb-btn" onclick="nbToggleMenu('nb-more')" title="更多功能">⋯ 更多</button>
+            <div class="nb-menu">
+              <button onclick="nbMenuRun('nb-more', showOnboarding)">📖 入門指引</button>
+              <button onclick="nbMenuRun('nb-more', reorganizeAllSubtopics)">🗂 子主題分組</button>
+              <button onclick="nbMenuRun('nb-more', openMergeChaptersModal)">🧹 合併重複章節</button>
+              <button onclick="nbMenuRun('nb-more', openHistoryModal)">🕘 歷史</button>
+              <button onclick="nbMenuRun('nb-more', openNotebookBackupModal)">🛟 還原備份</button>
+              <button onclick="nbMenuRun('nb-more', exportNotebookMD)">📤 匯出</button>
+              <button onclick="nbMenuRun('nb-more', openPrintModal)">🖨 列印</button>
+            </div>
+          </div>
+          <div class="nb-more" id="nb-fix" style="display: none">
+            <button class="nb-tb-btn" onclick="nbToggleMenu('nb-fix')" title="管理者維修工具（只有管理者看得到）">🛠 維修</button>
+            <div class="nb-menu">
+              <button onclick="nbMenuRun('nb-fix', diagnoseChapterSubjects)">🔧 修正科目</button>
+              <button onclick="nbMenuRun('nb-fix', fixEscapedNewlinesInAllChapters)">🧹 修亂碼</button>
+              <button onclick="nbMenuRun('nb-fix', fixNotebookEmojiGarble)">🎨 修 emoji 亂碼</button>
+              <button onclick="nbMenuRun('nb-fix', renameUnnamedChapters)">🏷 修未命名章節</button>
+              <button onclick="nbMenuRun('nb-fix', regenPendingChapters)">🔁 重生待整理章節</button>
+              <button onclick="nbMenuRun('nb-fix', openNbTimingsModal)">⏱ 計時</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="nb-layout">
@@ -18860,6 +18810,42 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         }
         return removed;
       }
+      // v606: 工具列下拉選單
+      function nbToggleMenu(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const open = !el.classList.contains("open");
+        document.querySelectorAll(".nb-more.open").forEach((m) => m.classList.remove("open"));
+        if (open) el.classList.add("open");
+      }
+      function nbMenuRun(id, fn) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("open");
+        try {
+          fn();
+        } catch (e) {
+          console.warn("[nb menu]", e);
+        }
+      }
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest || !e.target.closest(".nb-more")) {
+          document.querySelectorAll(".nb-more.open").forEach((m) => m.classList.remove("open"));
+        }
+      });
+      (function nbAdminTools() {
+        const ADMIN = ["BMtTkADnLOQCHocZ5dxoqoLpZCl1"];
+        function apply() {
+          const u = window.Auth && window.Auth.getUser ? window.Auth.getUser() : null;
+          const el = document.getElementById("nb-fix");
+          if (el) el.style.display = u && ADMIN.includes(u.uid) ? "" : "none";
+        }
+        (function wait() {
+          if (window.Auth && window.Auth.onChange) {
+            window.Auth.onChange(apply);
+            apply();
+          } else setTimeout(wait, 300);
+        })();
+      })();
       function updatePendingBadge() {
         // 順手清掉已整理的
         _cleanupAlreadyOrganizedPending();

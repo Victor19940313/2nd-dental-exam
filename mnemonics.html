@@ -1273,15 +1273,16 @@
         color: #15803d;
         background: #ecfdf5;
       }
-      .chapter-list .ch-item .ch-mn {
-        color: #16a34a;
-        font-weight: 900;
-        font-size: 0.8rem;
+      /* v591: 有口訣 → 標題綠字 (HUA: 綠勾會讓沒勾的看起來不重要) */
+      .chapter-list .ch-item .ch-title.has-mn {
+        color: #15803d;
+        font-weight: 700;
       }
-      .pub-item .t .mn-ok {
-        color: #16a34a;
-        font-size: 0.8rem;
-        margin-left: 0.2rem;
+      .chapter-list .ch-item.active .ch-title.has-mn {
+        color: #166534;
+      }
+      .pub-item .t.has-mn {
+        color: #15803d;
       }
       .pub-dialog .consent.hasmn {
         color: #15803d;
@@ -1704,7 +1705,7 @@
             <i></i><span id="pub-label">只給自己看</span>
           </label>
           <button class="topic-btn" id="topic-btn" onclick="changeTopic()" style="display: none" title="設定這章屬於哪個考點">🏷 考點</button>
-          <button class="hasmn-btn" id="hasmn-btn" onclick="toggleHasMn()" style="display: none" title="這章已經寫好口訣了嗎?(打勾的章節會顯示綠色勾勾)">☐ 已有口訣</button>
+          <button class="hasmn-btn" id="hasmn-btn" onclick="toggleHasMn()" style="display: none" title="這章已經寫好口訣了嗎?(有口訣的章節標題會是綠色字)">☐ 已有口訣</button>
           <button class="like-btn" id="like-btn" onclick="toggleLike()" style="display: none">👍 <span id="like-n">0</span></button>
           <button class="fav-btn" id="fav-btn" onclick="toggleFav()" style="display: none">⭐ 收藏</button>
           <button class="fork-btn" id="fork-btn" onclick="forkChapter()" style="display: none" title="複製一份到我的口訣 (只能自己看,不能再公開)">📋 複製到我的</button>
@@ -3101,7 +3102,7 @@
               <select id="pubd-topic"><option value="">請選擇…</option>${topics.map((t) => `<option value="${escapeHtml(t)}" ${t === ch.topic ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select>
               <div style="font-size:.74rem;color:var(--text-sub);margin-top:.25rem">和練習本同一份考點清單,大家會在這個考點底下看到它</div></div>
             <div class="warn" id="pubd-warn">⚠️ 還沒選考點,不能公開。</div>
-            <label class="consent hasmn"><input type="checkbox" id="pubd-hasmn" ${ch.hasMn ? "checked" : ""} style="margin-top:.2rem"><span>這章已有口訣 (打勾會在列表顯示綠色 ✅)</span></label>
+            <label class="consent hasmn"><input type="checkbox" id="pubd-hasmn" ${ch.hasMn ? "checked" : ""} style="margin-top:.2rem"><span>這章已有口訣 (列表會用綠色字顯示)</span></label>
             <label class="consent"><input type="checkbox" id="pubd-consent" style="margin-top:.2rem"><span>內容是我自己整理的,或已取得授權;若有侵權由我自行負責,與網站無關 (見訂閱條款第八條)</span></label>
             <div class="acts"><button type="button" id="pubd-cancel">取消</button><button type="button" class="go" id="pubd-go" disabled>🌐 公開</button></div>
           </div>`;
@@ -3137,7 +3138,7 @@
           overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:420px">
             <h2>🏷 ${escapeHtml(msg || "這章屬於哪個考點?")}</h2>
             <div class="fld"><select id="tpd-sel"><option value="">${allowSkip ? "先不選 (放「還沒分考點」)" : "請選擇…"}</option>${topics.map((t) => `<option value="${escapeHtml(t)}" ${t === current ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select></div>
-            <label class="consent hasmn"><input type="checkbox" id="tpd-hasmn" ${window._tpdHasMn ? "checked" : ""} style="margin-top:.2rem"><span>這章已有口訣 (列表會顯示綠色 ✅)</span></label>
+            <label class="consent hasmn"><input type="checkbox" id="tpd-hasmn" ${window._tpdHasMn ? "checked" : ""} style="margin-top:.2rem"><span>這章已有口訣 (列表會用綠色字顯示)</span></label>
             <div class="acts"><button type="button" id="tpd-cancel">取消</button><button type="button" class="go" id="tpd-go">確定</button></div>
           </div>`;
           document.body.appendChild(overlay);
@@ -3255,9 +3256,9 @@
               ? items
                   .map((e) => {
                     const safeNs = String(e.ns).replace(/['"\\\\]/g, "");
-                    const dt = e.pubTs || e.ts ? new Date(e.pubTs || e.ts).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" }) : "";
+                    const dt = e.pubTs || e.ts ? new Date(e.pubTs || e.ts).toLocaleDateString("zh-TW", { year: "numeric", month: "numeric", day: "numeric" }) : "";
                     return `<div class="pub-item ${e.ns === mine ? "mine" : ""}" onclick="openPubChapter('${safeNs}','${e.subj}','${e.ch}')">
-              <div><div class="t">${escapeHtml(e.title || "(無標題)")}${e.hasMn ? '<span class="mn-ok" title="已有口訣">✅</span>' : ""}${e.ns === mine ? ' <span style="font-size:.7rem;color:#5b21b6">(你的)</span>' : ""}${e.gone ? ' <span style="font-size:.7rem;color:var(--text-sub)">使用者已收回</span>' : ""}</div>
+              <div><div class="t ${e.hasMn ? "has-mn" : ""}" title="${e.hasMn ? "已有口訣" : ""}">${escapeHtml(e.title || "(無標題)")}${e.ns === mine ? ' <span style="font-size:.7rem;color:#5b21b6">(你的)</span>' : ""}${e.gone ? ' <span style="font-size:.7rem;color:var(--text-sub)">使用者已收回</span>' : ""}</div>
               <div class="sub"><span class="cat">${escapeHtml(e.topic || "未分類")}</span><span>${escapeHtml(e.author || "")}</span><span>${dt}</span></div></div>
               <div class="nums"><span class="l">👍 ${e.likes || 0}</span><span class="f">⭐ ${e.favs || 0}</span></div>
             </div>`;
@@ -3900,7 +3901,7 @@
               const pub = isChPublic(_curUser, ch);
               const vis = ch.forkFrom ? "📋🔒" : pub ? `🌐${ch.likes ? " 👍" + ch.likes : ""}` : "🔒";
               return `<div class="ch-item ${active ? "active" : ""} ${ch.forkFrom ? "forked" : ""}" onclick="pickChapter('${ch.id}')" title="${ch.forkFrom ? "複製自 " + escapeHtml(ch.forkFrom.author || "") + ",不能公開" : pub ? "公開中" : "只給自己看"}">
-            ${ch.hasMn ? '<span class="ch-mn" title="已有口訣">✅</span>' : ""}<span class="ch-title">${escapeHtml(ch.title || "(無標題)")}</span>
+            <span class="ch-title ${ch.hasMn ? "has-mn" : ""}" title="${ch.hasMn ? "已有口訣" : ""}">${escapeHtml(ch.title || "(無標題)")}</span>
             <span class="ch-vis">${vis}</span>
             ${canEditCurrent() ? `<button class="ch-del" onclick="event.stopPropagation();deleteChapter('${ch.id}')" title="刪除這章">🗑</button>` : ""}
           </div>`;

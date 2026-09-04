@@ -996,6 +996,7 @@
         gap: 0.6rem;
       }
       .btn-mode {
+        white-space: nowrap; /* v584: 任何寬度都不在字中間折行 */
         padding: 0.3rem 0.7rem;
         border-radius: 20px;
         border: 1.5px solid rgba(255, 255, 255, 0.5);
@@ -1569,6 +1570,7 @@
         .btn-mode {
           padding: 0.35rem 0.6rem;
           font-size: 0.72rem;
+          white-space: nowrap; /* v584: 平板寬度不要「回到/選單」折成兩行 */
         }
         .header-user {
           position: absolute;
@@ -1580,6 +1582,27 @@
         }
       }
 
+      /* v583: 標記統計旁的小重製鈕 */
+      .stats-card { position: relative; }
+      .stats-card .stats-reset {
+        position: absolute;
+        right: 0.5rem;
+        bottom: 0.35rem;
+        font: inherit;
+        font-size: 0.68rem;
+        color: #9ca3af;
+        background: transparent;
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 0.1rem 0.5rem;
+        cursor: pointer;
+        opacity: 0.75;
+      }
+      .stats-card .stats-reset:hover {
+        color: #dc2626;
+        border-color: #fca5a5;
+        opacity: 1;
+      }
       .stats-card {
         background: white;
         border-radius: 14px;
@@ -3925,7 +3948,7 @@
         background: #f59e0b;
         border: 1.5px solid white;
       }
-      /* 左上角小色點：顯示標記（簡單/猜的/再努力/送他吧）*/
+      /* 左上角小色點：顯示標記（送分題/一知半解/亂猜一通/不需要懂）*/
       .qg-cell.qg-st-understood::before,
       .qg-cell.qg-st-guessed::before,
       .qg-cell.qg-st-learning::before,
@@ -5785,51 +5808,7 @@
         <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
           瀏覽
         </button>
-        <button
-          style="
-            padding: 0.25rem 0.5rem;
-            border-radius: 8px;
-            border: 1.5px solid rgba(255, 255, 255, 0.4);
-            background: transparent;
-            color: white;
-            font-size: 0.85rem;
-            cursor: pointer;
-          "
-          title="同步狀態（手機 / 電腦）"
-          onclick="openSyncPanel()"
-        >
-          ☁️
-        </button>
-        <button
-          style="
-            padding: 0.25rem 0.5rem;
-            border-radius: 8px;
-            border: 1.5px solid rgba(255, 255, 255, 0.4);
-            background: transparent;
-            color: white;
-            font-size: 0.85rem;
-            cursor: pointer;
-          "
-          title="修補題目（需密碼）"
-          onclick="enterFixExam()"
-        >
-          🔧
-        </button>
-        <button
-          style="
-            padding: 0.25rem 0.5rem;
-            border-radius: 8px;
-            border: 1.5px solid rgba(255, 255, 255, 0.4);
-            background: transparent;
-            color: white;
-            font-size: 0.85rem;
-            cursor: pointer;
-          "
-          title="重置所有標記"
-          onclick="resetAllMarks()"
-        >
-          🗑️
-        </button>
+        <!-- v583: ☁️ 同步面板 / 🔧 修補 / 🗑️ 重置 三顆頁首小圖示拿掉 (HUA);同步全自動,重製搬到標記統計旁 -->
       </div>
     </div>
 
@@ -5929,22 +5908,23 @@
               <div class="num" style="color: var(--green)" id="st-understood">
                 -
               </div>
-              <div class="lbl">🟢 簡單</div>
-            </div>
-            <div class="stat-item">
-              <div class="num" style="color: #2563eb" id="st-guessed">-</div>
-              <div class="lbl">🤔 猜的</div>
+              <div class="lbl">🟢 送分題</div>
             </div>
             <div class="stat-item">
               <div class="num" style="color: var(--amber)" id="st-learning">
                 -
               </div>
-              <div class="lbl">🟡 再努力!</div>
+              <div class="lbl">🟡 一知半解</div>
+            </div>
+            <div class="stat-item">
+              <div class="num" style="color: #2563eb" id="st-guessed">-</div>
+              <div class="lbl">🤔 亂猜一通</div>
             </div>
             <div class="stat-item">
               <div class="num" style="color: var(--red)" id="st-giveup">-</div>
-              <div class="lbl">🔴 送他吧</div>
+              <div class="lbl">🔴 不需要懂</div>
             </div>
+            <button type="button" class="stats-reset" onclick="resetAllMarks()" title="清掉全部標記與練習次數 (會再問你兩次)">🗑 重製</button>
           </div>
       <div class="home-modes" role="tablist">
         <button class="home-mode" role="tab" id="hm-paper" aria-selected="true" onclick="setHomeMode('paper')">
@@ -5978,28 +5958,28 @@
               data-sts="understood"
               onclick="setSidebarStatus(this, 'understood')"
             >
-              🟢 簡單
-            </div>
-            <div
-              class="ts-chip"
-              data-sts="guessed"
-              onclick="setSidebarStatus(this, 'guessed')"
-            >
-              🤔 猜的
+              🟢 送分題
             </div>
             <div
               class="ts-chip"
               data-sts="learning"
               onclick="setSidebarStatus(this, 'learning')"
             >
-              🟡 再努力!
+              🟡 一知半解
+            </div>
+            <div
+              class="ts-chip"
+              data-sts="guessed"
+              onclick="setSidebarStatus(this, 'guessed')"
+            >
+              🤔 亂猜一通
             </div>
             <div
               class="ts-chip"
               data-sts="give_up"
               onclick="setSidebarStatus(this, 'give_up')"
             >
-              🔴 送他吧
+              🔴 不需要懂
             </div>
           </div>
           <details
@@ -6287,28 +6267,28 @@
                 data-status="understood"
                 onclick="setStatusMode(this)"
               >
-                🟢 簡單
-              </div>
-              <div
-                class="chip chip-status"
-                data-status="guessed"
-                onclick="setStatusMode(this)"
-              >
-                🤔 猜的
+                🟢 送分題
               </div>
               <div
                 class="chip chip-status"
                 data-status="learning"
                 onclick="setStatusMode(this)"
               >
-                🟡 再努力!
+                🟡 一知半解
+              </div>
+              <div
+                class="chip chip-status"
+                data-status="guessed"
+                onclick="setStatusMode(this)"
+              >
+                🤔 亂猜一通
               </div>
               <div
                 class="chip chip-status"
                 data-status="give_up"
                 onclick="setStatusMode(this)"
               >
-                🔴 送他吧
+                🔴 不需要懂
               </div>
             </div>
           </div>
@@ -6554,28 +6534,28 @@
             id="mk-understood"
             onclick="markQ('understood')"
           >
-            🟢 簡單
-          </button>
-          <button
-            class="btn-mark btn-mark-guessed"
-            id="mk-guessed"
-            onclick="markQ('guessed')"
-          >
-            🤔 猜的
+            🟢 送分題
           </button>
           <button
             class="btn-mark btn-mark-learning"
             id="mk-learning"
             onclick="markQ('learning')"
           >
-            🟡 再努力!
+            🟡 一知半解
+          </button>
+          <button
+            class="btn-mark btn-mark-guessed"
+            id="mk-guessed"
+            onclick="markQ('guessed')"
+          >
+            🤔 亂猜一通
           </button>
           <button
             class="btn-mark btn-mark-give_up"
             id="mk-give_up"
             onclick="markQ('give_up')"
           >
-            🔴 送他吧
+            🔴 不需要懂
           </button>
           <button class="btn-count" id="mk-count" onclick="incCountPractice()">
             已寫過 0 次
@@ -6663,7 +6643,7 @@
                 vertical-align: middle;
               "
             ></span>
-            簡單</span
+            送分題</span
           >
           <span
             ><span
@@ -6676,7 +6656,7 @@
                 vertical-align: middle;
               "
             ></span>
-            猜的</span
+            亂猜一通</span
           >
           <span
             ><span
@@ -6689,7 +6669,7 @@
                 vertical-align: middle;
               "
             ></span>
-            再努力</span
+            一知半解</span
           >
           <span
             ><span
@@ -6702,7 +6682,7 @@
                 vertical-align: middle;
               "
             ></span>
-            送他吧</span
+            不需要懂</span
           >
         </div>
         <div class="qgrid" id="qgrid"></div>
@@ -7036,28 +7016,28 @@
           data-bf="understood"
           onclick="setBF(this, 'status', 'understood')"
         >
-          🟢 簡單
-        </div>
-        <div
-          class="bf-chip"
-          data-bf="guessed"
-          onclick="setBF(this, 'status', 'guessed')"
-        >
-          🤔 猜的
+          🟢 送分題
         </div>
         <div
           class="bf-chip"
           data-bf="learning"
           onclick="setBF(this, 'status', 'learning')"
         >
-          🟡 再努力!
+          🟡 一知半解
+        </div>
+        <div
+          class="bf-chip"
+          data-bf="guessed"
+          onclick="setBF(this, 'status', 'guessed')"
+        >
+          🤔 亂猜一通
         </div>
         <div
           class="bf-chip"
           data-bf="give_up"
           onclick="setBF(this, 'status', 'give_up')"
         >
-          🔴 送他吧
+          🔴 不需要懂
         </div>
         <div class="bf-divider"></div>
         <div
@@ -7213,10 +7193,10 @@
         <div class="wb2-lab">標記</div>
         <div class="wb-filters" id="wb-mark-filters">
           <button class="wb-chip wbm sel" data-wbm="all" onclick="setWBMark(this, 'all')">全部</button>
-          <button class="wb-chip wbm" data-wbm="learning" onclick="setWBMark(this, 'learning')">🟡 再努力 <small id="wbm-learning"></small></button>
-          <button class="wb-chip wbm" data-wbm="give_up" onclick="setWBMark(this, 'give_up')">🔴 送他吧 <small id="wbm-give_up"></small></button>
-          <button class="wb-chip wbm" data-wbm="guessed" onclick="setWBMark(this, 'guessed')">🤔 猜的 <small id="wbm-guessed"></small></button>
-          <button class="wb-chip wbm" data-wbm="understood" onclick="setWBMark(this, 'understood')">🟢 簡單 <small id="wbm-understood"></small></button>
+          <button class="wb-chip wbm" data-wbm="understood" onclick="setWBMark(this, 'understood')">🟢 送分題 <small id="wbm-understood"></small></button>
+          <button class="wb-chip wbm" data-wbm="learning" onclick="setWBMark(this, 'learning')">🟡 一知半解 <small id="wbm-learning"></small></button>
+          <button class="wb-chip wbm" data-wbm="guessed" onclick="setWBMark(this, 'guessed')">🤔 亂猜一通 <small id="wbm-guessed"></small></button>
+          <button class="wb-chip wbm" data-wbm="give_up" onclick="setWBMark(this, 'give_up')">🔴 不需要懂 <small id="wbm-give_up"></small></button>
           <button class="wb-chip wbm" data-wbm="none" onclick="setWBMark(this, 'none')">未標記 <small id="wbm-none"></small></button>
         </div>
         <div class="wb2-row">
@@ -12525,10 +12505,10 @@
         updateHomeStats();
         showToast(
           {
-            give_up: "🔴 送他吧",
-            learning: "🟡 再努力!",
-            guessed: "🤔 猜的",
-            understood: "🟢 簡單",
+            give_up: "🔴 不需要懂",
+            learning: "🟡 一知半解",
+            guessed: "🤔 亂猜一通",
+            understood: "🟢 送分題",
             none: "標記取消",
           }[qState[q.id].status],
         );
@@ -12798,10 +12778,10 @@
                           ${nbBtn}
                           ${simBtn}
                           ${flagBtn}
-                          ${_markBtn("understood", "🟢", "簡單", "#dcfce7", "#22c55e")}
-                          ${_markBtn("guessed", "🤔", "猜的", "#ede9fe", "#a78bfa")}
-                          ${_markBtn("learning", "🟡", "再努力", "#fef9c3", "#eab308")}
-                          ${_markBtn("give_up", "🔴", "送他吧", "#fee2e2", "#ef4444")}
+                          ${_markBtn("understood", "🟢", "送分題", "#dcfce7", "#22c55e")}
+                                                    ${_markBtn("guessed", "🤔", "亂猜一通", "#ede9fe", "#a78bfa")}
+${_markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
+                          ${_markBtn("give_up", "🔴", "不需要懂", "#fee2e2", "#ef4444")}
                         </div>`;
             return `<div class="scroll-q-card" id="se-card-${q.id}">
                   <div class="scroll-q-meta">
@@ -12902,10 +12882,10 @@
         qState[qid].status = qState[qid].status === status ? "none" : status;
         await persist(qid);
         const labels = {
-          give_up: "🔴 送他吧",
-          learning: "🟡 再努力!",
-          guessed: "🤔 猜的",
-          understood: "🟢 簡單",
+          give_up: "🔴 不需要懂",
+          learning: "🟡 一知半解",
+          guessed: "🤔 亂猜一通",
+          understood: "🟢 送分題",
           none: "標記取消",
         };
         showToast(labels[qState[qid].status]);
@@ -14077,10 +14057,10 @@
                       <div style="display:flex;align-items:center;gap:.35rem;margin-bottom:.6rem;flex-wrap:wrap;padding:.45rem .55rem;background:#fafafa;border:1px dashed #d1d5db;border-radius:8px">
                         <button onclick="reviewToggleFlag()" title="加入/移出錯題本" style="background:${flagged ? "#f59e0b" : "#fff"};color:${flagged ? "#fff" : "#92400e"};border:1.5px solid #f59e0b;border-radius:7px;padding:.3rem .55rem;font-size:.78rem;font-weight:700;cursor:pointer">🚩 ${flagged ? "已收錄" : "錯題本"}</button>
                         <span style="font-size:.75rem;color:#6b7280">標記:</span>
-                        ${sBtn("understood", "🟢", "簡單", "#22c55e")}
-                        ${sBtn("guessed", "🤔", "猜的", "#a78bfa")}
-                        ${sBtn("learning", "🟡", "再努力", "#eab308")}
-                        ${sBtn("give_up", "🔴", "送他吧", "#ef4444")}
+                        ${sBtn("understood", "🟢", "送分題", "#22c55e")}
+                                                ${sBtn("guessed", "🤔", "亂猜一通", "#a78bfa")}
+${sBtn("learning", "🟡", "一知半解", "#eab308")}
+                        ${sBtn("give_up", "🔴", "不需要懂", "#ef4444")}
                         ${clearBtn}
                         ${clearMarksAllBtn}
                         <span style="font-size:.74rem;color:#9ca3af;margin-left:auto">已寫過 ${cnt} 次</span>
@@ -14120,10 +14100,10 @@
           showToast(
             "已是「" +
               ({
-                give_up: "🔴 送他吧",
-                learning: "🟡 再努力",
-                guessed: "🤔 猜的",
-                understood: "🟢 簡單",
+                give_up: "🔴 不需要懂",
+                learning: "🟡 一知半解",
+                guessed: "🤔 亂猜一通",
+                understood: "🟢 送分題",
               }[status] || status) +
               "」 — 要取消請按清除",
           );
@@ -14155,10 +14135,10 @@
         renderReviewQ(_reviewIdx);
         showToast(
           {
-            give_up: "🔴 送他吧",
-            learning: "🟡 再努力!",
-            guessed: "🤔 猜的",
-            understood: "🟢 簡單",
+            give_up: "🔴 不需要懂",
+            learning: "🟡 一知半解",
+            guessed: "🤔 亂猜一通",
+            understood: "🟢 送分題",
           }[status],
         );
       }
@@ -14843,10 +14823,10 @@
       const SMAP2 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
       const SLABELS = {
         none: "─ 未標記",
-        give_up: "🔴 送他吧",
-        learning: "🟡 再努力!",
-        guessed: "🤔 猜的",
-        understood: "🟢 簡單",
+        give_up: "🔴 不需要懂",
+        learning: "🟡 一知半解",
+        guessed: "🤔 亂猜一通",
+        understood: "🟢 送分題",
       };
       const SCLS = {
         none: "a-none",
@@ -14903,10 +14883,10 @@
         };
         const actionRow = `
                   ${flagBtn}
-                  ${markBtn("understood", "🟢", "簡單", "#dcfce7", "#22c55e")}
-                  ${markBtn("guessed", "🤔", "猜的", "#ede9fe", "#a78bfa")}
-                  ${markBtn("learning", "🟡", "再努力", "#fef9c3", "#eab308")}
-                  ${markBtn("give_up", "🔴", "送他吧", "#fee2e2", "#ef4444")}
+                  ${markBtn("understood", "🟢", "送分題", "#dcfce7", "#22c55e")}
+                                    ${markBtn("guessed", "🤔", "亂猜一通", "#ede9fe", "#a78bfa")}
+${markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
+                  ${markBtn("give_up", "🔴", "不需要懂", "#fee2e2", "#ef4444")}
                   <button class="a-count" onclick="browseIncCount('${q.id}',event)">已寫過 ${st.count} 次</button>
                   <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️</button>`;
 
@@ -28126,7 +28106,7 @@
       async function resetAllMarks() {
         if (
           !confirm(
-            "確定要重置所有標記嗎？\n\n🟢 簡單、🤔 猜的、🟡 再努力!、🔴 送他吧 的標記與練習次數\n都將被清除。",
+            "確定要重置所有標記嗎？\n\n🟢 送分題、🤔 亂猜一通、🟡 一知半解、🔴 不需要懂 的標記與練習次數\n都將被清除。",
           )
         )
           return;
@@ -28644,7 +28624,7 @@
         if (f) {
           const parts = [];
           if (wbFilter !== "all") parts.push({ ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" }[wbFilter]);
-          if (wbMarkFilter !== "all") parts.push({ learning: "再努力", give_up: "送他吧", guessed: "猜的", understood: "簡單", none: "未標記" }[wbMarkFilter]);
+          if (wbMarkFilter !== "all") parts.push({ learning: "一知半解", give_up: "不需要懂", guessed: "亂猜一通", understood: "送分題", none: "未標記" }[wbMarkFilter]);
           if (wbYearSet.size) parts.push("年份 " + wbYearSet.size + " 個");
           if (wbQuery) parts.push("搜尋「" + wbQuery + "」");
           f.textContent = "· 目前篩選：" + (parts.length ? parts.join("、") : "全部");
@@ -28672,7 +28652,7 @@
           sm.innerHTML =
             `<div class="s" onclick="setWBMark(document.querySelector('[data-wbm=all]'),'all');document.getElementById('wb2-onlywrong').checked=false;wbSetOpt()"><div class="n">${allFlagged.length}</div><div class="l">全部</div></div>` +
             `<div class="s" onclick="document.getElementById('wb2-onlywrong').checked=true;wbSetOpt();showToast('已勾「只練還沒答對的」')"><div class="n" style="color:#ef4444">${notOK}</div><div class="l">還沒答對過</div></div>` +
-            `<div class="s" onclick="setWBMark(document.querySelector('[data-wbm=learning]'),'learning')"><div class="n" style="color:#f59e0b">${learning}</div><div class="l">🟡 再努力</div></div>` +
+            `<div class="s" onclick="setWBMark(document.querySelector('[data-wbm=learning]'),'learning')"><div class="n" style="color:#f59e0b">${learning}</div><div class="l">🟡 一知半解</div></div>` +
             `<div class="s"><div class="n" style="color:#22c55e">${week}</div><div class="l">這週新加</div></div>`;
         const statsEl = document.getElementById("wb-stats");
         // 各科 / 各標記 數量 (小字)
@@ -28968,7 +28948,7 @@
 
           if (isFlagged) cls += " qg-flagged";
           if (isCurrent) cls += " qg-current";
-          // 顯示標記（簡單/猜的/再努力/送他吧）— 左上角小色點
+          // 顯示標記（送分題/一知半解/亂猜一通/不需要懂）— 左上角小色點
           var st = getS(q.id).status;
           if (st && st !== "none") cls += " qg-st-" + st;
 

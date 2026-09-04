@@ -960,7 +960,9 @@
       fetch(LP_WORKER + "/ecpay/status")
         .then((r) => r.json())
         .then((j) => {
-          ecEnabled = !!(j && j.enabled);
+          // 測試模式 (官方測試商店) 只有網址帶 ?ecpaytest=1 才顯示,避免一般人走到測試站
+          window._ecStage = !!(j && j.stage);
+          ecEnabled = !!(j && j.enabled) && (!j.stage || /ecpaytest=1/.test(location.search));
           ecSync();
         })
         .catch(() => {});
@@ -1001,6 +1003,7 @@
               name: user.displayName || "",
               plan: selectedPlan,
               method,
+              test: !!window._ecStage,
               referrer_email: referrerEmail,
               terms_version: TERMS_VERSION,
             }),

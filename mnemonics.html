@@ -1284,9 +1284,6 @@
         margin-left: 0.2rem;
       }
       .pub-dialog .consent.hasmn {
-        background: #ecfdf5;
-        border-radius: 8px;
-        padding: 0.45rem 0.6rem;
         color: #15803d;
         font-weight: 700;
       }
@@ -3104,7 +3101,7 @@
               <select id="pubd-topic"><option value="">請選擇…</option>${topics.map((t) => `<option value="${escapeHtml(t)}" ${t === ch.topic ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select>
               <div style="font-size:.74rem;color:var(--text-sub);margin-top:.25rem">和練習本同一份考點清單,大家會在這個考點底下看到它</div></div>
             <div class="warn" id="pubd-warn">⚠️ 還沒選考點,不能公開。</div>
-            <label class="consent hasmn"><input type="checkbox" id="pubd-hasmn" ${ch.hasMn ? "checked" : ""} style="margin-top:.2rem"><span>✅ 這章已有口訣 (打勾會在列表顯示綠色勾勾)</span></label>
+            <label class="consent hasmn"><input type="checkbox" id="pubd-hasmn" ${ch.hasMn ? "checked" : ""} style="margin-top:.2rem"><span>這章已有口訣 (打勾會在列表顯示綠色 ✅)</span></label>
             <label class="consent"><input type="checkbox" id="pubd-consent" style="margin-top:.2rem"><span>內容是我自己整理的,或已取得授權;若有侵權由我自行負責,與網站無關 (見訂閱條款第八條)</span></label>
             <div class="acts"><button type="button" id="pubd-cancel">取消</button><button type="button" class="go" id="pubd-go" disabled>🌐 公開</button></div>
           </div>`;
@@ -3140,7 +3137,7 @@
           overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:420px">
             <h2>🏷 ${escapeHtml(msg || "這章屬於哪個考點?")}</h2>
             <div class="fld"><select id="tpd-sel"><option value="">${allowSkip ? "先不選 (放「還沒分考點」)" : "請選擇…"}</option>${topics.map((t) => `<option value="${escapeHtml(t)}" ${t === current ? "selected" : ""}>${escapeHtml(t)}</option>`).join("")}</select></div>
-            <label class="consent hasmn"><input type="checkbox" id="tpd-hasmn" ${window._tpdHasMn ? "checked" : ""} style="margin-top:.2rem"><span>✅ 這章已有口訣</span></label>
+            <label class="consent hasmn"><input type="checkbox" id="tpd-hasmn" ${window._tpdHasMn ? "checked" : ""} style="margin-top:.2rem"><span>這章已有口訣 (列表會顯示綠色 ✅)</span></label>
             <div class="acts"><button type="button" id="tpd-cancel">取消</button><button type="button" class="go" id="tpd-go">確定</button></div>
           </div>`;
           document.body.appendChild(overlay);

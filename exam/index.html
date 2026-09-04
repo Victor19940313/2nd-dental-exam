@@ -24836,7 +24836,8 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           const isHead = (li) => /^\s*<strong>[^<]{1,40}<\/strong>\s*[:：]?\s*$/.test(li.innerHTML.split(/<ul[\s>]/)[0]);
           box.querySelectorAll("ul:not(.nb-sub)").forEach((ul) => {
             const lis = Array.from(ul.children).filter((x) => x.tagName === "LI");
-            if (!lis.some(isHead) || lis.every(isHead)) return;
+            // v612: 全部都是粗體標題但各自帶縮排子清單 → 也要當群組 (只有「純粗體、沒子項」的清單才跳過)
+            if (!lis.some(isHead) || (lis.every(isHead) && !lis.some((x) => x.querySelector(":scope > ul")))) return;
             let group = null;
             lis.forEach((li) => {
               if (isHead(li)) {

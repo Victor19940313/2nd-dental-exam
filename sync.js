@@ -246,8 +246,20 @@
   /** Push to BOTH new path and old data/ path for backward compat */
   /** v283: notebook 改從 IDB 讀(localStorage 撞 quota 後 stale)
    *  v285: examHistory 也改從 IDB 讀(同樣理由，避免跨裝置同步遺失試卷紀錄) */
+  // v601: 推雲端前確認「現在登入的人」= 這個模組初始化時的人;不一致 (同瀏覽器換帳號、舊分頁) 就不推
+  function identityMismatch(where) {
+    try {
+      var nowId = localStorage.getItem("dental_cur_user");
+      if (nowId && _userId && nowId !== _userId) {
+        console.warn("[Sync] 身份不一致,略過 " + where + ":", _userId, "→", nowId);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
   function pushToFirebase(force) {
     if (!_db || !_userId) return Promise.resolve();
+    if (identityMismatch("pushAll")) return Promise.resolve();
     var payload = { _ts: Date.now() };
     var oldPayload = {};
     var IDB_KEYS = ["notebook", "examHistory", "wrongbook_state"];
@@ -434,11 +446,79 @@
   }
 
   /** On startup: compare timestamps, newer wins */
+  // v601: 遠端清除 — 後台在 users/{uid}/_meta/wipe_ts 放一個時間,本機若還沒依這個時間清過,
+  //       就把這個 uid 的本機資料 (localStorage + IDB) 全部清掉再重新載入,避免舊副本被推回雲端。
+  //       用途:HUA 兩個帳號互相污染後,把 B 帳號清乾淨。
+  var IDB_NAME = "dental_notebooks_v1";
+  var IDB_STORE = "notebooks";
+  function wipeLocalForUser(uid) {
+    var keys = SYNC_KEYS.slice();
+    keys.forEach(function (sk) {
+      try {
+        localStorage.removeItem(uid + "_" + sk);
+      } catch (e) {}
+    });
+    try {
+      localStorage.removeItem(uid + "__ts");
+    } catch (e) {}
+    return new Promise(function (resolve) {
+      try {
+        var req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = function (e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+        };
+        req.onsuccess = function () {
+          var db = req.result;
+          try {
+            var tx = db.transaction(IDB_STORE, "readwrite");
+            var st = tx.objectStore(IDB_STORE);
+            ["notebook", "examHistory", "wrongbook_state", "notebook_pending", "wrongbook_lastpos", "opt_marks"].forEach(function (sk) {
+              try {
+                st.delete(uid + "_" + sk);
+              } catch (e) {}
+            });
+            tx.oncomplete = function () {
+              db.close();
+              resolve(true);
+            };
+            tx.onerror = function () {
+              db.close();
+              resolve(false);
+            };
+          } catch (e) {
+            resolve(false);
+          }
+        };
+        req.onerror = function () {
+          resolve(false);
+        };
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  }
   function syncOnLoad() {
     if (!_db || !_userId) return Promise.resolve();
     _syncing = true;
     return readRemote()
       .then(function (remote) {
+        // v601: 先看有沒有遠端清除標記
+        try {
+          var wipeTs = remote && remote._meta && remote._meta.wipe_ts ? remote._meta.wipe_ts : 0;
+          var wipedAt = parseInt(localStorage.getItem(_userId + "__wiped") || "0");
+          if (wipeTs && wipeTs > wipedAt) {
+            console.warn("[Sync] 遠端要求清除本機舊資料", _userId, wipeTs);
+            localStorage.setItem(_userId + "__wiped", String(wipeTs));
+            var uidToWipe = _userId;
+            return wipeLocalForUser(uidToWipe).then(function () {
+              _syncing = false;
+              window._syncWiped = true;
+              if (!window._syncNoReload) location.reload();
+              return { _wiped: true };
+            });
+          }
+        } catch (e) {}
         var remoteTs = remote._ts || 0;
         var localTs = parseInt(localStorage.getItem(_userId + "__ts") || "0");
 
@@ -793,6 +873,7 @@
     // v413:輕量單 key 推送 — 標記變動只推 wrongbook_state,不要每次都把 examHistory + notebook 全部一起推
     pushOne: function (sk, payload) {
       if (!_db || !_userId) return Promise.resolve();
+      if (identityMismatch("pushOne " + sk)) return Promise.resolve();
       var update = {};
       update[sk] = payload;
       update._ts = Date.now();

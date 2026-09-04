@@ -112,7 +112,8 @@
     if (currentUser) {
       try {
         const want = currentUser.uid;
-        if (localStorage.getItem("dental_cur_user") !== want) {
+        const prevUid = localStorage.getItem("dental_cur_user");
+        if (prevUid !== want) {
           const EMAIL_DISPLAY = {
             "wing2004piten@gmail.com": "HUA",
             "wen84224@gmail.com": "Shirley",
@@ -133,8 +134,26 @@
           list.push({ id: want, name: name, color: "#7c3aed" });
           localStorage.setItem("dental_users", JSON.stringify(list));
           localStorage.setItem("dental_cur_user", want);
-          if (window.DentalSync && window.DentalSync.switchUser)
+          // v601: 同一個瀏覽器從 A 帳號換到 B 帳號 → 整頁重新載入,讓每個模組用 B 的身份重新初始化。
+          //       以前就地 switchUser,練習本記憶體裡還是 A 的筆記/紀錄,下一次 push 就寫進 B 的雲端 (HUA 兩個帳號互相看到對方資料)
+          const wasRealUser = prevUid && /^[A-Za-z0-9]{20,}$/.test(prevUid);
+          let reloaded = false;
+          if (wasRealUser) {
+            try {
+              const guard = "auth_switch_reload_" + want;
+              if (!sessionStorage.getItem(guard)) {
+                sessionStorage.setItem(guard, "1");
+                reloaded = true;
+                location.reload();
+              }
+            } catch (e) {}
+          }
+          if (!reloaded && window.DentalSync && window.DentalSync.switchUser)
             window.DentalSync.switchUser(want);
+        } else {
+          try {
+            sessionStorage.removeItem("auth_switch_reload_" + want);
+          } catch (e) {}
         }
       } catch (e) {}
     }

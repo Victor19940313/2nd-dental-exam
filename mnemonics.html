@@ -5278,7 +5278,7 @@
       if ("serviceWorker" in navigator) {
         // v607: 新版改由 update.js 問使用者,這裡只註冊 + 定時檢查
         navigator.serviceWorker
-          .register("./sw.js")
+          .register("./sw.js", { updateViaCache: "none" })
           .then((reg) => {
             setInterval(
               () => reg.update(),

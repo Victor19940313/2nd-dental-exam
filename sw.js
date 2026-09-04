@@ -1,4 +1,8 @@
-importScripts('./version.js');
+// v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js')
+//   原因:瀏覽器檢查 SW 更新時,importScripts 的檔案會走 HTTP 快取 (Cloudflare 給 4 小時),
+//   拿到舊的 version.js 就會把「舊版」當成新版裝進來 → 使用者按更新 → 又檢查到新版 → 無限「立即更新」
+const APP_VERSION = "v609";
+self.APP_VERSION = APP_VERSION;
 const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-persist-isClassPractice-through-reload';
 const PRECACHE = [
   './',
@@ -36,10 +40,20 @@ const PRECACHE = [
   './exam/duplicates.html',
 ];
 
+// v609: 拒裝舊版 — 如果已經有更新的快取 (dental-all-vNNN, NNN 比我大) 代表這個 sw.js 是 CDN 給的舊檔,
+//   直接讓 install 失敗,瀏覽器會保留現在的新版;之後再檢查時拿到正確檔就會正常裝
+function verNum(str) { const m = /dental-all-v(\d+)/.exec(str || ''); return m ? parseInt(m[1], 10) : 0; }
+async function refuseIfStale() {
+  const mine = parseInt((/^v(\d+)$/.exec(APP_VERSION) || [])[1] || '0', 10);
+  const keys = await caches.keys();
+  const newest = Math.max(0, ...keys.map(verNum));
+  if (mine && newest > mine) throw new Error('SW stale: ' + APP_VERSION + ' < v' + newest + ' (refuse install)');
+}
+
 self.addEventListener('install', e => {
   // Precache individually — don't let one 404 block the whole install
   e.waitUntil(
-    caches.open(CACHE_NAME).then(cache =>
+    refuseIfStale().then(() => caches.open(CACHE_NAME)).then(cache =>
       Promise.all(PRECACHE.map(url =>
         cache.add(url).catch(() => console.warn('SW precache skip:', url))
       ))

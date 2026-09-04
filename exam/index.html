@@ -29518,7 +29518,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       // v607: 不再自動切新版 + reload;新版裝好由 update.js 問使用者 (立即更新 / 稍後)
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
-          .register("../sw.js")
+          .register("../sw.js", { updateViaCache: "none" })
           .then((reg) => {
             setInterval(
               () => reg.update(),

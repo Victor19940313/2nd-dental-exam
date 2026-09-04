@@ -4195,7 +4195,7 @@
           tb.style.display = "flex";
           titleInput.disabled = false;
         } else {
-          show(editBtn, histBtn, linkBtn, pubT, topicBtn, mnBtn);
+          show(editBtn, linkBtn, pubT, topicBtn, mnBtn); // v595: 歷史鈕拿掉 (HUA: 不太重要);版本仍照存,要救回時 openVersionModal() 還在
           editBtn.textContent = "✏ 編輯";
           mnBtn.classList.toggle("on", !!ch.hasMn);
           mnBtn.textContent = ch.hasMn ? "✅ 已有口訣" : "☐ 已有口訣";

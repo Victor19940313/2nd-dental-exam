@@ -441,6 +441,7 @@
           }
         });
         result._ts = root._ts || 0;
+        result._meta = root._meta || null; // v602: 讓 syncOnLoad 看得到 wipe_ts
         return result;
       });
   }

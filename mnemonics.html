@@ -2811,7 +2811,7 @@
               isMine || isAdmin() || canEditCurrent()
                 ? `<button class="del-c" onclick="deleteComment('${c.key}')" title="刪除這則留言">✕</button>`
                 : "";
-            const authorTag = c.uid && c.uid === nsOwnerUid(_curUser) ? ' <span style="color:#5b21b6;font-weight:800">作者</span>' : "";
+            const authorTag = c.uid && c.uid === nsOwnerUid(_curUser) ? ' <span style="color:#5b21b6;font-weight:800">使用者</span>' : "";
             return `<div class="comment-item">
           ${delBtn}
           <div class="meta"><span class="who">${escapeHtml(c.by || "?")}</span>${authorTag} · ${dt}</div>
@@ -2912,7 +2912,7 @@
         const idx = (_pubIndex[_curSubject] || {})[key] || {};
         const parts = [];
         parts.push(`<span class="crumb">${escapeHtml(SUBJECT_LABEL[_curSubject])} · ${escapeHtml(ch.topic || "還沒分考點")}</span>`);
-        if (!canEditCurrent()) parts.push(`<span>作者 ${escapeHtml(idx.author || ch.updatedBy || "")}</span>`);
+        if (!canEditCurrent()) parts.push(`<span>使用者 ${escapeHtml(idx.author || ch.updatedBy || "")}</span>`);
         if (isChPublic(ns, ch)) parts.push(`<span>👍 ${idx.likes || ch.likes || 0}</span><span>⭐ ${idx.favs || 0} 人收藏</span>`);
         if (ch.hasMn) parts.push(`<span style="color:#16a34a;font-weight:800">✅ 已有口訣</span>`);
         if (ch.forkFrom) parts.push(`<span class="fork-tag">📋 複製自 ${escapeHtml(ch.forkFrom.author || "")} · 不能公開</span>`);
@@ -3257,7 +3257,7 @@
                     const safeNs = String(e.ns).replace(/['"\\\\]/g, "");
                     const dt = e.pubTs || e.ts ? new Date(e.pubTs || e.ts).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" }) : "";
                     return `<div class="pub-item ${e.ns === mine ? "mine" : ""}" onclick="openPubChapter('${safeNs}','${e.subj}','${e.ch}')">
-              <div><div class="t">${escapeHtml(e.title || "(無標題)")}${e.hasMn ? '<span class="mn-ok" title="已有口訣">✅</span>' : ""}${e.ns === mine ? ' <span style="font-size:.7rem;color:#5b21b6">(你的)</span>' : ""}${e.gone ? ' <span style="font-size:.7rem;color:var(--text-sub)">作者已收回</span>' : ""}</div>
+              <div><div class="t">${escapeHtml(e.title || "(無標題)")}${e.hasMn ? '<span class="mn-ok" title="已有口訣">✅</span>' : ""}${e.ns === mine ? ' <span style="font-size:.7rem;color:#5b21b6">(你的)</span>' : ""}${e.gone ? ' <span style="font-size:.7rem;color:var(--text-sub)">使用者已收回</span>' : ""}</div>
               <div class="sub"><span class="cat">${escapeHtml(e.topic || "未分類")}</span><span>${escapeHtml(e.author || "")}</span><span>${dt}</span></div></div>
               <div class="nums"><span class="l">👍 ${e.likes || 0}</span><span class="f">⭐ ${e.favs || 0}</span></div>
             </div>`;
@@ -3295,7 +3295,7 @@
         st = curState();
         const ch = st && st.chapters ? st.chapters.find((c) => c.id === chId) : null;
         if (!ch || !isChPublic(ns, ch)) {
-          showToast("這章沒有公開,或已被作者收回");
+          showToast("這章沒有公開,或已被使用者收回");
           _curChapterId = null;
           renderChapterList();
           renderPubList();
@@ -3562,7 +3562,7 @@
           delete _takedown[key];
           showToast("已恢復顯示");
         } else {
-          if (!confirm(`下架「${ch.title}」? 作者的公開開關會鎖住,大家都看不到。`)) return;
+          if (!confirm(`下架「${ch.title}」? 使用者的公開開關會鎖住,大家都看不到。`)) return;
           await _initFb().ref(`${FB_TAKEDOWN}/${key}`).set({ ts: Date.now(), by: myUid(), title: ch.title || "", ns: _curUser, subj: _curSubject });
           await _initFb().ref(`${FB_PUB(_curSubject)}/${key}/hidden`).set(true);
           _takedown[key] = { ts: Date.now() };
@@ -3672,7 +3672,7 @@
           const idx = _pubIndex[targetSubj] || {};
           const entry = idx[pubKey(ns, ch)];
           if (!ch || !entry || entry.hidden || _takedown[pubKey(ns, ch)]) {
-            showToast("這章沒有公開,或已被作者收回");
+            showToast("這章沒有公開,或已被使用者收回");
             renderChapterList();
             renderPubList();
             return true;

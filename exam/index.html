@@ -17201,11 +17201,14 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           throw new Error("no_key");
         }
         // 允許 caller 指定 model(跑詳解時鎖死 3.5-flash);否則用使用者 AI 設定
-        const model =
+        const model0 =
           opts.model ||
           localStorage.getItem(uKey("gemini_model")) ||
           localStorage.getItem("gemini_model") ||
           "gemini-2.5-flash";
+        let model = model0;
+        // v590: 第一輪全撞 503 / 太慢 → 第二輪改用備用模型 (caller 給 opts.fallbackModel),不再用同一個忙線的模型硬等
+        const fallbackModel = opts.fallbackModel && opts.fallbackModel !== model0 ? opts.fallbackModel : null;
         const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         // v351:策略改成「兩輪」— 第一輪每把 key 試一次(全部失敗才整批等 5 秒做第二輪)
         //       原本「per-key 等 15 秒 × 2 + 7 把 key」最壞要 3.5 分鐘，現在最壞 ~20 秒
@@ -17351,11 +17354,21 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
               roundQ503 > 0
                 ? roundQ503 + " 把撞 503"
                 : roundTimeout + " 把 timeout";
+            if (fallbackModel) {
+              // v590: 立刻換備用模型 (只等 1.5 秒讓連線喘口氣)
+              console.warn("[Gemini] 第一輪 " + reason + ",改用備用模型 " + fallbackModel + " 再試…");
+              if (typeof showToast === "function" && !opts.quiet) {
+                showToast("⏳ " + (roundQ503 > 0 ? "AI 忙線" : "AI 回應太慢") + ",改用備用模型再試一次…", 3000);
+              }
+              model = fallbackModel;
+              await sleep(1500);
+              continue;
+            }
             console.warn("[Gemini] 第一輪 " + reason + ",5 秒後做第二輪…");
-            if (typeof showToast === "function") {
+            if (typeof showToast === "function" && !opts.quiet) {
               showToast(
                 "⏳ " +
-                  (roundQ503 > 0 ? "Gemini 全面忙線" : "網路不穩") +
+                  (roundQ503 > 0 ? "AI 忙線" : "AI 回應太慢") +
                   ",5 秒後再試一輪…",
               );
             }
@@ -17374,6 +17387,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
               : Date.now()) - _gCallStart,
           ),
           round: finalRound,
+          model: model,
           keyMask: finalKeyMask,
           status: 0,
           succeeded: false,
@@ -18357,9 +18371,20 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         document.body.removeChild(ta);
       }
       // v419:hard cap 75s → 45s,使用者反映等太久，失敗就快點進 pending queue
-      const ADDQ_HARD_CAP_MS = 45000;
-      // v419:單筆 Gemini call timeout 30s → 20s,key 卡更快換
-      const ADDQ_GEMINI_TIMEOUT_MS = 20000;
+      // v590: 3.5-flash 整理一題常要 20~30 秒,20 秒就切斷會把「慢」誤判成「壞」→ 放寬到 35 秒;
+      //       總上限 75 秒 (第一輪 35 + 換備用模型再 35);備用模型見 _addQFallbackModel()
+      const ADDQ_HARD_CAP_MS = 75000;
+      const ADDQ_GEMINI_TIMEOUT_MS = 35000;
+      function _addQFallbackModel() {
+        const cur =
+          localStorage.getItem(uKey("gemini_model")) ||
+          localStorage.getItem("gemini_model") ||
+          "gemini-2.5-flash";
+        // 3.5-flash 忙 → 2.5-flash;2.5-flash 忙 → 2.5-flash-lite;lite 忙 → 2.5-flash
+        if (/3\.5/.test(cur)) return "gemini-2.5-flash";
+        if (/lite/.test(cur)) return "gemini-2.5-flash";
+        return "gemini-2.5-flash-lite";
+      }
 
       async function addQToNotebook(q, opts) {
         opts = opts || {};
@@ -18377,7 +18402,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         });
         const _wrappedCallGemini = (prompt, schema, callOpts) => {
           const merged = Object.assign(
-            { timeoutMs: ADDQ_GEMINI_TIMEOUT_MS },
+            { timeoutMs: ADDQ_GEMINI_TIMEOUT_MS, fallbackModel: _addQFallbackModel(), quiet: !!opts.silent },
             callOpts || {},
           );
           return Promise.race([
@@ -18677,22 +18702,22 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             // v419:失敗 toast 持續 6 秒，文字明確告訴使用者「這題沒進筆記」，不要再讓使用者以為加成功
             if (is429)
               showToast(
-                "⚠️ Gemini 額度滿了，這題還沒進筆記(已排到「📥 待整理」，可手動重試或等明天)",
+                "⚠️ 這把 API key 今天的額度用完了，這題先放「📥 待整理」(換一把 key 或明天會自動補上)",
                 6000,
               );
             else if (is503)
               showToast(
-                "⚠️ Gemini 太忙，這題還沒進筆記(已排到「📥 待整理」，稍後重試)",
+                "⚠️ AI 這一刻忙線，這題先放「📥 待整理」，10 秒後自動再試，不用重按",
                 6000,
               );
             else if (isHardCap)
               showToast(
-                "⚠️ AI 太慢被切斷，這題還沒進筆記(已排到「📥 待整理」，背景重試)",
+                "⚠️ AI 回應太慢，這題先放「📥 待整理」，10 秒後自動再試，不用重按",
                 6000,
               );
             else
               showToast(
-                "⚠️ 整理失敗，這題還沒進筆記(已排到「📥 待整理」，背景重試)",
+                "⚠️ 這題暫時沒整理成功，先放「📥 待整理」，10 秒後自動再試",
                 6000,
               );
           }
@@ -18762,7 +18787,8 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           }
           const minR = Math.min(...arr.map((x) => x.retries || 0));
           // 智能延遲:嘗試次數越多，間隔越長(避免空轉燒 quota)
-          const delay = minR < 5 ? 30000 : minR < 15 ? 300000 : 1800000;
+          // v590: 剛失敗的先 10 秒就重試 (通常只是那一刻忙),再失敗才拉長
+          const delay = minR < 2 ? 10000 : minR < 6 ? 30000 : minR < 15 ? 300000 : 1800000;
           _pendingAutoRetryTimer = setTimeout(async () => {
             _cleanupAlreadyOrganizedPending();
             const arr2 = getPendingQueue();

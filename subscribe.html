@@ -459,6 +459,64 @@
         font-size: 0.8rem;
         margin: 0.7rem 0 0.2rem;
       }
+      /* v624: 綠界線上付款 */
+      .ec-box {
+        display: none;
+        margin: 0.9rem 0 0;
+        padding: 0.9rem 1rem;
+        border: 1.5px solid #c7d7f5;
+        background: #f3f7ff;
+        border-radius: 14px;
+      }
+      .ec-box.show {
+        display: block;
+      }
+      .ec-box h3 {
+        margin: 0 0 0.3rem;
+        font-size: 1rem;
+      }
+      .ec-box p {
+        margin: 0 0 0.6rem;
+        font-size: 0.86rem;
+        color: #4b5563;
+      }
+      .ec-btns {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+      }
+      .ec-btn {
+        border: 1.5px solid #93b4f0;
+        background: #fff;
+        color: #1d4ed8;
+        border-radius: 12px;
+        padding: 0.7rem 0.3rem;
+        font-size: 0.92rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .ec-btn small {
+        display: block;
+        font-weight: 500;
+        font-size: 0.72rem;
+        color: #6b7280;
+        margin-top: 0.15rem;
+      }
+      .ec-btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .ec-or {
+        text-align: center;
+        color: #9ca3af;
+        font-size: 0.8rem;
+        margin: 0.7rem 0 0.2rem;
+      }
+      @media (max-width: 480px) {
+        .ec-btns {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
       <link rel="stylesheet" href="skin.css" />
   </head>
@@ -552,6 +610,16 @@
         </div>
       </div>
 
+      <div class="ec-box" id="ec-box">
+        <h3>💳 線上付款 (付完自動開通)</h3>
+        <p>信用卡付完馬上開通;ATM、超商繳完款後幾分鐘內自動開通,不用填對帳。要先勾選下方的服務條款。</p>
+        <div class="ec-btns">
+          <button class="ec-btn" type="button" onclick="payEcpay('credit')">💳 信用卡<small>立即開通</small></button>
+          <button class="ec-btn" type="button" onclick="payEcpay('atm')">🏧 ATM 轉帳<small>取得虛擬帳號</small></button>
+          <button class="ec-btn" type="button" onclick="payEcpay('cvs')">🏪 超商代碼<small>7-11 / 全家</small></button>
+        </div>
+        <div class="ec-or">— 或是用下面的方式 —</div>
+      </div>
       <div class="lp-box" id="lp-box">
         <h3>💚 LINE Pay 付款 (付完立刻開通)</h3>
         <p>
@@ -776,6 +844,7 @@
             "$" + selectedAmount;
           document.getElementById("bank-info").classList.add("show");
           lpSync();
+          ecSync();
           document.getElementById("form").classList.add("show");
           document
             .getElementById("form")
@@ -883,6 +952,105 @@
           alert("已取消 LINE Pay 付款,沒有扣款。");
         } else {
           alert("LINE Pay 付款沒有完成 (" + (q.get("why") || "未知") + ")。沒有開通也沒有扣款的話可以再試一次,或改用匯款。");
+        }
+      })();
+
+      // v624: 綠界線上付款 — Worker 說有開才顯示;付完綠界把人導回 ?ecpay=ok|pending|fail|back
+      let ecEnabled = false;
+      fetch(LP_WORKER + "/ecpay/status")
+        .then((r) => r.json())
+        .then((j) => {
+          ecEnabled = !!(j && j.enabled);
+          ecSync();
+        })
+        .catch(() => {});
+      function ecSync() {
+        const box = document.getElementById("ec-box");
+        if (box) box.classList.toggle("show", ecEnabled && !!selectedPlan);
+      }
+      async function payEcpay(method) {
+        const user = window.Auth && window.Auth.getUser();
+        if (!user) {
+          alert("請先 Google 登入");
+          document.getElementById("not-logged").classList.add("show");
+          return;
+        }
+        if (!selectedPlan) return alert("請先選一個方案");
+        const termsCb = document.getElementById("terms-agree");
+        if (!termsCb || !termsCb.checked) {
+          alert("請先閱讀並勾選同意服務條款與免責聲明");
+          try {
+            document.getElementById("terms-wrap").scrollIntoView({ behavior: "smooth", block: "center" });
+          } catch (e) {}
+          return;
+        }
+        const btns = [...document.querySelectorAll(".ec-btn")];
+        btns.forEach((b) => (b.disabled = true));
+        const _refField = document.getElementById("referrer-field");
+        const referrerEmail =
+          _refField && _refField.style.display === "none"
+            ? ""
+            : (document.getElementById("referrer-email").value || "").trim().toLowerCase();
+        try {
+          const r = await fetch(LP_WORKER + "/ecpay/checkout", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              uid: user.uid,
+              email: user.email || "",
+              name: user.displayName || "",
+              plan: selectedPlan,
+              method,
+              referrer_email: referrerEmail,
+              terms_version: TERMS_VERSION,
+            }),
+          });
+          const j = await r.json();
+          if (!j.ok || !j.action) throw new Error(j.error || "綠界沒回應");
+          // 組表單自動送到綠界付款頁
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = j.action;
+          Object.keys(j.fields).forEach((k) => {
+            const i = document.createElement("input");
+            i.type = "hidden";
+            i.name = k;
+            i.value = j.fields[k];
+            form.appendChild(i);
+          });
+          document.body.appendChild(form);
+          form.submit();
+        } catch (e) {
+          alert("線上付款啟動失敗:" + e.message + "\n可以改用匯款,或稍後再試");
+          btns.forEach((b) => (b.disabled = false));
+        }
+      }
+      window.payEcpay = payEcpay;
+      (function ecReturn() {
+        const q = new URLSearchParams(location.search);
+        const st = q.get("ecpay");
+        if (!st) return;
+        history.replaceState(null, "", location.pathname);
+        const sc = document.getElementById("success");
+        if (st === "ok") {
+          document.getElementById("plans").style.display = "none";
+          sc.querySelector("h2").textContent = "付款成功,已自動開通!";
+          sc.querySelector("p").innerHTML = "徽章會變成金色「✨會員」<br />如果沒有馬上變,重新整理一次就好";
+          document.getElementById("order-id").textContent = q.get("oid") ? "訂單編號: " + q.get("oid") : "";
+          sc.classList.add("show");
+          if (window.Subscription && window.Subscription.refresh) setTimeout(() => window.Subscription.refresh(), 800);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (st === "pending") {
+          document.getElementById("plans").style.display = "none";
+          sc.querySelector("h2").textContent = "已取得繳費資訊";
+          sc.querySelector("p").innerHTML = "請依綠界頁面上的 ATM 帳號或超商代碼繳款,<b>繳完款後幾分鐘內會自動開通</b>,不用再回來對帳。";
+          document.getElementById("order-id").textContent = q.get("oid") ? "訂單編號: " + q.get("oid") : "";
+          sc.classList.add("show");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (st === "back") {
+          alert("你回到了訂閱頁。如果已經付款,幾分鐘內會自動開通;沒付款的話可以再選一次。");
+        } else {
+          alert("線上付款沒有完成 (" + (q.get("why") || "未知") + ")。沒有扣款的話可以再試一次,或改用匯款。");
         }
       })();
 

@@ -1774,6 +1774,37 @@
           order: 9;
         }
       }
+      /* v624: 錯題本手機篩選列 — 科目 5 等分、標記 3 等分,數字換到第二行,不再高低參差 (HUA) */
+      @media (max-width: 760px) {
+        #screen-wrongbook #wb-filters,
+        #screen-wrongbook #wb-mark-filters {
+          display: grid;
+          gap: 0.35rem;
+        }
+        #screen-wrongbook #wb-filters {
+          grid-template-columns: repeat(5, 1fr);
+        }
+        #screen-wrongbook #wb-mark-filters {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        #screen-wrongbook .wb-chip {
+          padding: 0.42rem 0.15rem;
+          text-align: center;
+          white-space: nowrap;
+          font-size: 0.8rem;
+          border-radius: 10px;
+          line-height: 1.25;
+        }
+        #screen-wrongbook .wb-chip small {
+          display: block;
+          margin: 0.1rem 0 0;
+          font-size: 0.68rem;
+          line-height: 1;
+        }
+        #screen-wrongbook .wb2-row {
+          gap: 0.4rem;
+        }
+      }
       /* v583: 標記統計旁的小重製鈕 */
       .stats-card { position: relative; }
       .stats-card .stats-reset {

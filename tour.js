@@ -21,7 +21,7 @@
     "#tour-card.below::before{top:-7px}#tour-card.above::before{bottom:-7px}" +
     "#tour-help{position:fixed;left:12px;bottom:62px;z-index:12000;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(0,0,0,.12);background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15);cursor:pointer;font-size:1.1rem;display:grid;place-items:center;padding:0;font-family:system-ui}" +
     "#tour-help:hover{transform:scale(1.06)}" +
-    "@media (max-width:899px){#tour-help{left:0;bottom:auto;top:calc(46vh + 44px);width:30px;height:36px;border-radius:0 12px 12px 0;border-left:0;font-size:.95rem;opacity:.85}}" +
+    "@media (max-width:899px){#tour-help{left:0;bottom:14px;top:auto;width:28px;height:32px;border-radius:0 12px 12px 0;border-left:0;font-size:.9rem;opacity:.8;transition:bottom .2s}}" + // v624: HUA — 手機放左下角,不要卡在左邊中間
     "@media print{#tour-help,#tour-spot,#tour-card{display:none!important}}" +
     "body.tour-open{overflow:hidden}";
 
@@ -623,6 +623,21 @@
   }, 1200);
 
   // ── ❓ 重看教學 ──
+  // v624: 手機版 ❓ 在左下角;底部有 sticky 作答列 (.nav-row / .wb2-bar 等) 時自動墊高到它上面
+  function placeHelp() {
+    var b = document.getElementById("tour-help");
+    if (!b || window.innerWidth > 899) return;
+    var bars = document.querySelectorAll("#screen-practice .nav-row, .nav-row.sticky, #wb2-start-bar");
+    var h = 0;
+    bars.forEach(function (el) {
+      if (!el.offsetParent) return;
+      var r = el.getBoundingClientRect();
+      if (r.height > 0 && r.bottom >= window.innerHeight - 4 && r.top < window.innerHeight) h = Math.max(h, window.innerHeight - r.top);
+    });
+    b.style.bottom = (h ? h + 8 : 14) + "px";
+  }
+  setInterval(placeHelp, 700);
+  window.addEventListener("resize", placeHelp);
   function buildHelp() {
     if (!mine.length || document.getElementById("tour-help")) return;
     injectCSS(); // v566: ❓ 鈕的樣式要先進來，不能等教學開始才注入

@@ -161,6 +161,29 @@
           color: #fff;
         }
       }
+      /* v624: 回列表鈕 */
+      .back-list-btn {
+        display: none;
+        font: inherit;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: #5b21b6;
+        background: #f3eefc;
+        border: 1.5px solid #ddd0fb;
+        border-radius: 999px;
+        padding: 0.3rem 0.7rem;
+        cursor: pointer;
+        white-space: nowrap;
+        margin-right: 0.4rem;
+      }
+      body.mode-pub .back-list-btn {
+        display: inline-flex;
+      }
+      @media (max-width: 720px) {
+        .back-list-btn {
+          display: inline-flex;
+        }
+      }
       @media (max-width: 720px) {
         .nav-row .ns-inline {
           flex-basis: 100%;
@@ -1728,6 +1751,8 @@
       </div>
       <div class="editor-card nb-chapter-content">
         <div class="editor-status">
+          <!-- v624: 點進某章後要能回到列表 (HUA);手機一律顯示,桌機在「大家分享的」顯示 -->
+          <button class="back-list-btn" id="back-list-btn" type="button" onclick="backToChapterList()" title="回到章節列表">← 回列表</button>
           <input
             type="text"
             id="title-input"
@@ -2977,7 +3002,19 @@
       }
 
       // ── 分頁 ──
+      // v624: 回到章節列表 — 捲回列表 (手機列表在上面),並取消目前章節的高亮
+      function backToChapterList() {
+        const list = document.querySelector(".chapter-list");
+        if (list) list.scrollIntoView({ behavior: "smooth", block: "start" });
+        try {
+          if (history.length > 1 && /[#?]/.test(location.href) && (location.hash || "").includes("c=")) {
+            history.replaceState(null, "", location.pathname);
+          }
+        } catch (e) {}
+      }
+      window.backToChapterList = backToChapterList;
       async function switchMode(mode, opts) {
+        document.body.classList.toggle("mode-pub", mode === "pub"); // v624: 回列表鈕用
         if (!["mine", "favs", "pub"].includes(mode)) return;
         if (_dirty && _editMode && !confirm("有未儲存草稿,要切換嗎?(草稿會留在本機)")) return;
         _mode = mode;

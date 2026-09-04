@@ -1273,6 +1273,20 @@
         color: #15803d;
         background: #ecfdf5;
       }
+      .mn-legend {
+        font-size: 0.7rem;
+        color: var(--text-sub);
+        padding: 0 0.45rem 0.4rem;
+        letter-spacing: 0.02em;
+      }
+      .mn-legend .g {
+        color: #15803d;
+        font-weight: 800;
+      }
+      .mn-legend .k {
+        color: var(--text);
+        font-weight: 800;
+      }
       /* v591: 有口訣 → 標題綠字 (HUA: 綠勾會讓沒勾的看起來不重要) */
       .chapter-list .ch-item .ch-title.has-mn {
         color: #15803d;
@@ -1670,6 +1684,8 @@
             + 新增
           </button>
         </div>
+        <!-- v592: 顏色說明 (HUA) -->
+        <div class="mn-legend"><span class="g">綠字</span>＝有口訣　<span class="k">黑字</span>＝重點整理（沒口訣）</div>
         <div id="ch-items"></div>
       </div>
       <div class="editor-card nb-chapter-content">
@@ -3249,7 +3265,7 @@
         });
         const mine = myNs();
         body.innerHTML = `<div class="pub-list">
-          <div class="pl-head"><h3>${escapeHtml(title)}</h3>
+          <div class="pl-head"><h3>${escapeHtml(title)}</h3><span class="mn-legend" style="padding:0"><span class="g">綠字</span>＝有口訣　<span class="k">黑字</span>＝重點整理</span>
             <select onchange="setPubSort(this.value)"><option value="likes" ${_pubSort === "likes" ? "selected" : ""}>最多讚</option><option value="new" ${_pubSort === "new" ? "selected" : ""}>最新</option><option value="favs" ${_pubSort === "favs" ? "selected" : ""}>最多收藏</option></select></div>
           ${
             items.length

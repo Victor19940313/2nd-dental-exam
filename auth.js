@@ -237,6 +237,10 @@
   } catch (e) {}
 
   async function signOutFn() {
+    // v598: 登出後回首頁 (HUA: 用到一半按登出,頁面不會跳轉)
+    const depth = (location.pathname.match(/\//g) || []).length - 1;
+    const base = depth > 0 ? "../".repeat(depth) : "./";
+    const onHome = /(^|\/)(index\.html)?$/.test(location.pathname);
     try {
       await auth.signOut();
       // v532: 清 nickname/curUser 避免下次登入其他帳號時被舊值污染
@@ -248,6 +252,8 @@
     } catch (e) {
       console.warn("[Auth] signOut failed:", e.message);
     }
+    if (!onHome) location.href = base + "index.html";
+    else location.reload();
   }
 
   function renderWidget() {

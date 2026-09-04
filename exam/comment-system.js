@@ -579,6 +579,49 @@
   // ─────────────────────────────────────────
   // Sanitize HTML (基本擋 script/iframe/on* handler)
   // ─────────────────────────────────────────
+  // v581: 留言裡的口訣區連結 (mnemonics.html#n=&s=&c=) → 「🧠 口訣」小卡,標題從公開索引補上
+  const MN_LINK_RE = /https?:\/\/[^\s"'<>]*mnemonics\.html#[^\s"'<>]*c=[^\s"'<>]+/g;
+  const _mnTitleCache = {};
+  function mnPill(url) {
+    const h = url.slice(url.indexOf("#") + 1);
+    const params = {};
+    h.split("&").forEach((kv) => {
+      const [k, v] = kv.split("=");
+      if (k) params[k] = decodeURIComponent(v || "");
+    });
+    const ns = params.n || params.ns || "", subj = params.s || params.subj || "", ch = params.c || params.ch || "";
+    const key = ns + "__" + ch;
+    const title = _mnTitleCache[key];
+    const SUBJ = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
+    return `<a class="qc-mn-pill" data-mnkey="${escapeHtml(key)}" data-subj="${escapeHtml(subj)}" href="${escapeHtml(url)}" target="_blank" rel="noopener">🧠 ${SUBJ[subj] || ""}口訣${title ? "：" + escapeHtml(title) : ""}</a>`;
+  }
+  function linkifyMnemonic(html) {
+    if (!html || html.indexOf("mnemonics.html#") < 0) return html;
+    // 先處理已經是 <a> 的 (編輯器插入連結),再處理純文字網址
+    let out = html.replace(/<a\b[^>]*href="([^"]*mnemonics\.html#[^"]*)"[^>]*>[\s\S]*?<\/a>/gi, (m, href) => mnPill(href));
+    out = out.replace(/(^|[^"'=>])(https?:\/\/[^\s"'<>]*mnemonics\.html#[^\s"'<>]*)/g, (m, pre, url) => pre + mnPill(url));
+    return out;
+  }
+  // 小卡標題補齊 (讀公開索引,一題一次)
+  async function fillMnTitles(root) {
+    const pills = [...(root || document).querySelectorAll(".qc-mn-pill[data-mnkey]")].filter((a) => !/：/.test(a.textContent));
+    if (!pills.length || !fbReady()) return;
+    const need = {};
+    pills.forEach((a) => { (need[a.dataset.subj] = need[a.dataset.subj] || new Set()).add(a.dataset.mnkey); });
+    for (const subj of Object.keys(need)) {
+      if (!/^ya[3-6]$/.test(subj)) continue;
+      try {
+        const snap = await fbDb().ref("users/__mnemonics/pub/" + subj).once("value");
+        const idx = snap.val() || {};
+        need[subj].forEach((key) => { if (idx[key] && idx[key].title) _mnTitleCache[key] = idx[key].title; });
+      } catch (e) {}
+    }
+    pills.forEach((a) => {
+      const t = _mnTitleCache[a.dataset.mnkey];
+      if (t) a.textContent = a.textContent.replace(/口訣.*$/, "口訣：" + t);
+      else a.textContent = a.textContent.replace(/口訣$/, "口訣 (未公開或已收回)");
+    });
+  }
   function sanitizeHtml(html) {
     if (!html) return "";
     let s = String(html);
@@ -647,7 +690,7 @@
     const myDislike = c.dislikes_by && c.dislikes_by[myUid];
     const likeCnt = Object.keys(c.likes_by || {}).length;
     const dislikeCnt = Object.keys(c.dislikes_by || {}).length;
-    const clean = sanitizeHtml(c.content_html || "");
+    const clean = linkifyMnemonic(sanitizeHtml(c.content_html || ""));
     const featuredTag = c.featured ? '<span class="qc-featured-tag">⭐ 精選詳解</span>' : "";
     const likeTitle = isMine ? "不能給自己按讚" : isPaidMember() ? "每天 3 個讚 (口訣區與留言共用)" : "付費會員才能按讚";
     const adminBtn = adminUid() && !isMine ? `<button class="qc-btn-mini qc-feat-btn ${c.featured ? "qc-featured-on" : ""}" onclick="QuestionComments.feature('${c.qid_ref}','${c.cid}',this)">${c.featured ? "⭐ 取消精選" : "⭐ 精選"}</button>` : "";
@@ -754,6 +797,7 @@
     html += `</div>`;
     html += editorHtml;
     container.innerHTML = html;
+    fillMnTitles(container); // v581
   }
 
   // ─────────────────────────────────────────
@@ -1351,6 +1395,8 @@
 .qc-meta { display: flex; align-items: center; gap: .5rem; font-size: .78rem; color: #6b7280; margin-bottom: .35rem; flex-wrap: wrap; }
 .qc-who { font-weight: 700; color: #7c3aed; }
 .qc-who.qc-anon { color: #6b7280; font-weight: 600; }
+.qc-mn-pill { display: inline-flex; align-items: center; gap: .25rem; background: #fdf2f8; color: #9d174d; border: 1px solid #f9a8d4; border-radius: 999px; padding: .12rem .6rem; font-size: .8rem; font-weight: 700; text-decoration: none !important; margin: .1rem 0; max-width: 100%; }
+.qc-mn-pill:hover { background: #fce7f3; }
 .qc-mine-tag { background: #ede9fe; color: #6d28d9; padding: .05rem .4rem; border-radius: 999px; font-size: .68rem; font-weight: 700; }
 .qc-featured-tag { background: #fef3c7; color: #92400e; padding: .05rem .45rem; border-radius: 999px; font-size: .68rem; font-weight: 800; }
 .qc-item.qc-featured { border-color: #f59e0b; background: linear-gradient(180deg, #fffbeb, #fff); }

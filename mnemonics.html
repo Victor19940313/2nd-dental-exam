@@ -3066,7 +3066,7 @@
       }
       function publishDialog(ch) {
         return new Promise((resolve) => {
-          const topics = ((window.TOPICS && window.TOPICS[_curSubject]) || []).concat(["其他"]); // v579: AI 分類不一定準,留一個「其他」
+          const topics = (window.TOPICS && window.TOPICS[_curSubject]) || []; // v581: 固定分類 (含「其他」)
           const overlay = document.createElement("div");
           overlay.className = "modal-overlay";
           overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:460px">
@@ -3106,7 +3106,7 @@
       // 選考點 (新增章節 / 改考點 共用)
       function pickTopicDialog(current, msg, allowSkip) {
         return new Promise((resolve) => {
-          const topics = ((window.TOPICS && window.TOPICS[_curSubject]) || []).concat(["其他"]); // v579: AI 分類不一定準,留一個「其他」
+          const topics = (window.TOPICS && window.TOPICS[_curSubject]) || []; // v581: 固定分類 (含「其他」)
           const overlay = document.createElement("div");
           overlay.className = "modal-overlay";
           overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:420px">
@@ -3572,8 +3572,10 @@
           return;
         }
         const ch = _findCh(_curUser, _curSubject, _curChapterId);
-        if (ch && !isChPublic(_curUser, ch) && canEditCurrent()) {
-          if (!confirm("這章目前「只給自己看」,別人打開連結會看不到。\n\n還是要複製連結? (要分享請先打開「公開」)")) return;
+        // v581: 只有公開的章節能複製連結 (HUA: 複製連結要開共享的,可以貼到考題留言區)
+        if (ch && !isChPublic(_curUser, ch)) {
+          showToast(canEditCurrent() ? "先打開「公開」才能複製連結 (私人章節別人打不開)" : "這章沒有公開,不能複製連結");
+          return;
         }
         const hash = `#n=${encodeURIComponent(_curUser)}&s=${_curSubject}&c=${encodeURIComponent(_curChapterId)}`;
         const url = location.origin + location.pathname + hash;
@@ -3595,7 +3597,7 @@
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(url).then(
-            () => showToast(`🔗 已複製「${title}」的連結`),
+            () => showToast(`🔗 已複製「${title}」的連結,可以貼到考題的留言區`),
             () => fallback(),
           );
         } else {

@@ -25306,7 +25306,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                           </ol>
                         </div>
                         <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:.3rem;color:#374151">把 key 貼這裡</label>
-                        <input type="password" id="ob-gemini-key" value="${escapeHtml(cur)}" placeholder="AIzaSy..." style="width:100%;padding:.6rem .8rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.88rem" />
+                        <input type="password" id="ob-gemini-key" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-form-type="other" value="${escapeHtml(cur)}" placeholder="AIzaSy..." style="width:100%;padding:.6rem .8rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.88rem" />
                         <label style="display:flex;align-items:center;gap:.3rem;font-size:.78rem;color:#6b7280;margin-top:.4rem;cursor:pointer">
                           <input type="checkbox" onchange="document.getElementById('ob-gemini-key').type=this.checked?'text':'password'"> 顯示文字
                         </label>
@@ -25389,7 +25389,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         row.innerHTML =
           '<input type="' +
           inputType +
-          '" class="ai-key-input" value="' +
+          '" class="ai-key-input" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-form-type="other" value="' +
           escapeHtml(value || "") +
           '" placeholder="AIzaSy..." style="flex:1;padding:.5rem .7rem;border:1.5px solid ' +
           (isPaid ? "#f59e0b" : "#d1d5db") +

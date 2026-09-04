@@ -2917,7 +2917,7 @@
         const inp = document.getElementById("ch-search");
         if (inp) {
           inp.value = "";
-          inp.placeholder = mode === "mine" ? "🔍 搜我的口訣 (四科)" : mode === "pub" ? "🔍 搜大家分享的口訣 (標題 / 考點 / 作者)" : "🔍 搜我的最愛";
+          inp.placeholder = mode === "mine" ? "🔍 搜我的口訣 (標題 / 考點 / 關鍵字)" : mode === "pub" ? "🔍 搜大家分享的口訣 (標題 / 考點 / 關鍵字)" : "🔍 搜我的最愛";
         }
         const rw = document.getElementById("mn-reward");
         if (rw) rw.style.display = mode === "mine" ? "" : "none";
@@ -3066,7 +3066,7 @@
       }
       function publishDialog(ch) {
         return new Promise((resolve) => {
-          const topics = (window.TOPICS && window.TOPICS[_curSubject]) || [];
+          const topics = ((window.TOPICS && window.TOPICS[_curSubject]) || []).concat(["其他"]); // v579: AI 分類不一定準,留一個「其他」
           const overlay = document.createElement("div");
           overlay.className = "modal-overlay";
           overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:460px">
@@ -3106,7 +3106,7 @@
       // 選考點 (新增章節 / 改考點 共用)
       function pickTopicDialog(current, msg, allowSkip) {
         return new Promise((resolve) => {
-          const topics = (window.TOPICS && window.TOPICS[_curSubject]) || [];
+          const topics = ((window.TOPICS && window.TOPICS[_curSubject]) || []).concat(["其他"]); // v579: AI 分類不一定準,留一個「其他」
           const overlay = document.createElement("div");
           overlay.className = "modal-overlay";
           overlay.innerHTML = `<div class="modal pub-dialog" style="max-width:420px">
@@ -3725,13 +3725,48 @@
             });
           }
         } else if (_mode === "pub") {
+          // v579: 大家分享的也要搜得到「內容」— 把索引裡出現的作者/科目內容拉進來 (有快取),再搜標題/考點/內文
           await Promise.all(SUBJECTS.map((sub) => ensurePubIndex(sub)));
+          const need = [];
+          for (const sub of SUBJECTS) {
+            const idx = _pubIndex[sub] || {};
+            Object.values(idx).forEach((e) => {
+              if (!e || e.hidden || !e.ns) return;
+              const sk = stateKey(e.ns, sub);
+              if (!(_state[sk] && _state[sk].chapters) && !need.some((x) => x.sk === sk)) need.push({ ns: e.ns, sub, sk });
+            });
+          }
+          await Promise.all(
+            need.map(async ({ ns, sub, sk }) => {
+              try {
+                const cache = await idbGet(k.cloud(ns, sub));
+                if (cache && cache.chapters) _state[sk] = cache;
+                const remote = await fbGet(FB_CONTENT(ns, sub));
+                if (remote && remote.chapters) {
+                  _state[sk] = remote;
+                  await idbSet(k.cloud(ns, sub), remote);
+                }
+              } catch (e) {}
+            }),
+          );
           for (const sub of SUBJECTS) {
             const idx = _pubIndex[sub] || {};
             Object.entries(idx).forEach(([key, e]) => {
               if (!e || e.hidden || _takedown[key]) return;
-              if ((e.title || "").toLowerCase().includes(q) || (e.topic || "").toLowerCase().includes(q) || (e.author || "").toLowerCase().includes(q)) {
-                hits.push({ ns: e.ns, subj: sub, ch: { id: e.ch, title: e.title }, snippet: `${e.topic || "未分類"} · ${e.author || ""} · 👍 ${e.likes || 0}`, pub: true });
+              const st = _state[stateKey(e.ns, sub)];
+              const ch = st && st.chapters ? st.chapters.find((c) => c.id === e.ch) : null;
+              const plain = ch ? (ch.content || "").replace(/<[^>]+>/g, " ").toLowerCase() : "";
+              const inTitle = (e.title || "").toLowerCase().includes(q);
+              const inTopic = (e.topic || "").toLowerCase().includes(q);
+              const inBody = plain.includes(q);
+              if (inTitle || inTopic || inBody) {
+                let snippet = `${e.topic || "未分類"} · ${e.author || ""} · 👍 ${e.likes || 0}`;
+                if (inBody && !inTitle) {
+                  const i = plain.indexOf(q);
+                  const start = Math.max(0, i - 18);
+                  snippet = (start > 0 ? "…" : "") + plain.slice(start, i + q.length + 28).trim() + " · " + (e.author || "");
+                }
+                hits.push({ ns: e.ns, subj: sub, ch: { id: e.ch, title: e.title }, snippet, pub: true });
               }
             });
           }

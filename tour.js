@@ -181,7 +181,7 @@
         { s: "#nb-search-input", t: "搜尋筆記", b: "跨章節、跨科目找關鍵字。" },
         { s: "#nb-star-filter", t: "⭐ 只看重點", b: "把你標了星號的段落篩出來，考前衝刺用。" },
         { s: "#notebook-toc", t: "目錄", b: "AI 會把類似題串進同一個章節，目錄在這裡。點章節名可以改名。" },
-        { s: "#notebook-body", t: "筆記內容", b: "共筆等級的整理。點段落可以直接編輯、加星號、貼圖（要有 GitHub token）。" },
+        { s: "#notebook-body", t: "筆記內容", b: "共筆等級的整理。點段落可以直接編輯、加星號、貼圖（要有 GitHub token）。貼圖小撇步：截圖後直接 Ctrl+V 貼上，Windows 按 Win+Shift+S、Mac 按 Cmd+Ctrl+Shift+4。" },
         { s: '.nb-tb-btn[onclick="reorganizeAllSubtopics()"]', t: "🗂 子主題分組", b: "章節太長？讓 AI 把它分成幾個子主題。" },
         { s: '.nb-tb-btn[onclick="openMergeChaptersModal()"]', t: "🧹 合併重複章節", b: "同一個觀念被開成兩章？在這裡合併。" },
         { s: '.nb-tb-btn[onclick="undoLastChange()"]', t: "↶ 復原", b: "AI 改壞了或自己改錯了，一鍵回上一步。" },
@@ -232,7 +232,7 @@
         { s: ".chapter-list", t: "章節列表", b: "點一個章節，內容會出現在下面（手機會自動捲過去）。" },
         { s: "#btn-add-ch", t: "新增章節", b: "有編輯權的人可以在這裡開一個新章節，寫自己的口訣。" },
         { s: ".editor-card", t: "口訣內容", b: "這裡就是口訣本身。有編輯權的人可以寫；其他人可看、可留言。" },
-        { s: "#edit-btn", t: "✏ 編輯", b: "按一下進入編輯模式，可以打字、貼圖、排版。" },
+        { s: "#edit-btn", t: "✏ 編輯", b: "按一下進入編輯模式，可以打字、貼圖、排版。貼圖最快的方法：電腦截圖後直接 Ctrl+V 貼上（Windows 按 Win+Shift+S，Mac 按 Cmd+Ctrl+Shift+4 會存到剪貼簿）。要先在筆記本設定好 GitHub token。" },
         { s: "#save-btn", t: "💾 儲存", b: "改完按儲存，會推到雲端讓大家看到；每次儲存都留一個版本。" },
         { s: "#undo-btn", t: "↶ 回復", b: "剛剛存錯了？一鍵回到上一版。" },
         {
@@ -467,8 +467,8 @@
     ensureEls();
     if (active) end(false);
     active = { id: id, steps: steps, i: 0 };
-    document.body.appendChild(els.spot);
-    document.body.appendChild(els.card);
+    document.documentElement.appendChild(els.spot); // v608: 掛在 <html> 不掛 body — body 有 filter/transform (筆記主題飽和度、風格) 時 fixed 會跟著 body 捲,手機聚光燈就對不準
+    document.documentElement.appendChild(els.card);
     go(0);
     return true;
   }
@@ -533,7 +533,11 @@
     if (!active || !active.el) return;
     var r = active.el.getBoundingClientRect();
     var pad = 8;
-    var vw = window.innerWidth, vh = window.innerHeight;
+    // v608: iOS 手指縮放過時 fixed 是相對「視覺視窗」,getBoundingClientRect 是相對「版面視窗」→ 補上偏移
+    var vv = window.visualViewport;
+    var ox = vv ? vv.offsetLeft : 0, oy = vv ? vv.offsetTop : 0;
+    var vw = vv ? vv.width : window.innerWidth, vh = vv ? vv.height : window.innerHeight;
+    r = { left: r.left - ox, top: r.top - oy, width: r.width, height: r.height, right: r.right - ox, bottom: r.bottom - oy };
     els.spot.style.left = r.left - pad + "px";
     els.spot.style.top = r.top - pad + "px";
     els.spot.style.width = r.width + pad * 2 + "px";
@@ -606,7 +610,7 @@
       var k = pick.length ? pick[pick.length - 1] : mine[0];
       start(k);
     };
-    document.body.appendChild(b);
+    document.documentElement.appendChild(b);
   }
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", buildHelp);

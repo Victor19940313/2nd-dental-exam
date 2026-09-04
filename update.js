@@ -35,7 +35,7 @@
     b.id = "upd-banner";
     b.innerHTML =
       '<span>✨ 網站有新版本</span><button class="upd-now" type="button">立即更新</button><button class="upd-later" type="button">稍後</button>';
-    document.body.appendChild(b);
+    document.documentElement.appendChild(b);
     b.querySelector(".upd-now").onclick = function () {
       b.innerHTML = "<span>⏳ 更新中…</span>";
       var reloaded = false;

@@ -4293,6 +4293,13 @@
               _dirty = !!draft;
               refreshStatusUI();
               _editor.commands.focus();
+              // v608: 第一次進編輯提示貼圖小撇步 (HUA)
+              try {
+                if (!localStorage.getItem("mn_paste_tip_seen")) {
+                  localStorage.setItem("mn_paste_tip_seen", "1");
+                  showToast("📸 小撇步：電腦截圖後直接 Ctrl+V 就貼進來（Windows 按 Win+Shift+S；Mac 按 Cmd+Ctrl+Shift+4）。要先設定 GitHub token。");
+                }
+              } catch (e) {}
             }
           } catch (e) {
             body.innerHTML =

@@ -1,7 +1,7 @@
 // v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js')
 //   原因:瀏覽器檢查 SW 更新時,importScripts 的檔案會走 HTTP 快取 (Cloudflare 給 4 小時),
 //   拿到舊的 version.js 就會把「舊版」當成新版裝進來 → 使用者按更新 → 又檢查到新版 → 無限「立即更新」
-const APP_VERSION = "v616";
+const APP_VERSION = "v623";
 self.APP_VERSION = APP_VERSION;
 const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-persist-isClassPractice-through-reload';
 const PRECACHE = [
@@ -123,6 +123,12 @@ self.addEventListener('fetch', e => {
   if (!e.request.url.startsWith('http')) return;
   if (e.request.url.includes('supabase')) return;
   if (e.request.url.includes('firebase') || e.request.url.includes('firebaseio')) return;
+  // v618: AI API (Gemini / GitHub 圖床 等 POST) 一律不經過 SW — 以前 POST 也被 stale-while-revalidate 包住,
+  //       網路一斷 catch 會回 index.html 給 Gemini 呼叫 → 「AI 回傳格式無法解析」;而且多一層轉手
+  if (e.request.method !== 'GET') return;
+  if (e.request.url.includes('generativelanguage.googleapis.com') ||
+      e.request.url.includes('api.github.com') ||
+      e.request.url.includes('workers.dev')) return;
   // 第三方 CDN(TipTap ESM、gstatic 等)直接交給瀏覽器,不過 SW
   // 否則 fetch 失敗時 fallback 到 index.html 會回 HTML,導致 ESM 模組載入失敗
   if (e.request.url.includes('esm.sh') ||

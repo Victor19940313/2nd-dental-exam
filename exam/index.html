@@ -8207,20 +8207,23 @@
               font-size: 0.85rem;
             "
           >
-            <option value="gemini-3.5-flash">
-              gemini-3.5-flash（🆕 最新、最聰明｜每天 500 次）
-            </option>
-            <option value="gemini-3-pro-preview">
-              gemini-3-pro-preview（最強推理｜每天 100 次）
-            </option>
-            <option value="gemini-3-flash">
-              gemini-3-flash（聰明｜每天 500 次）
-            </option>
             <option value="gemini-2.5-flash">
-              gemini-2.5-flash（穩定推薦｜每天 500 次）
+              gemini-2.5-flash（預設｜省 token、額度大、品質穩）
+            </option>
+            <option value="gemini-3.5-flash">
+              gemini-3.5-flash（最聰明｜免費額度每把 key 每天只有 20 次，用完自動改走 2.5-flash）
             </option>
             <option value="gemini-2.5-flash-lite">
-              gemini-2.5-flash-lite（額度最高，適合大量整理｜每天 1500 次）
+              gemini-2.5-flash-lite（最省、額度最高｜品質略低，適合大量整理）
+            </option>
+            <option value="gemini-3-flash">
+              gemini-3-flash（聰明｜額度小）
+            </option>
+            <option value="gemini-3-pro-preview">
+              gemini-3-pro-preview（最強推理｜額度很小、慢）
+            </option>
+            <option value="gemini-2.5-pro">
+              gemini-2.5-pro（聰明｜額度小、慢）
             </option>
             <option value="gemini-2.5-pro">
               gemini-2.5-pro（聰明｜每天 100 次）
@@ -17436,6 +17439,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           const roundTag = round === 0 ? "" : " (第2輪)";
           let roundQ503 = 0;
           let roundTimeout = 0;
+          let roundQ429 = 0; // v621
           for (let attempt = 0; attempt < keys.length; attempt++) {
             const key = _pickHealthyKey(keys);
             if (!key) break;
@@ -17491,6 +17495,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                 _mark429(key);
                 cumStats.q429++;
                 cumStats.keySwitches++;
+                roundQ429++;
                 tried.push(kMask + ":🟠429");
                 console.warn("[Gemini key 撞額度]", kMask, msg.slice(0, 120));
                 continue;
@@ -17518,6 +17523,12 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                   kMask,
                   msg.slice(0, 120),
                 );
+                // v620: 第一次 timeout 就換備用模型 (timeout 通常是模型卡,不是 key 的問題;以前要等整輪 2×35s 才換,直接撞 75s 上限)
+                if (fallbackModel && model !== fallbackModel && /timeout/i.test(msg)) {
+                  console.warn("[Gemini] timeout → 立刻改用備用模型 " + fallbackModel);
+                  if (typeof showToast === "function" && !opts.quiet) showToast("⏳ AI 回應太慢,改用備用模型再試…", 2500);
+                  model = fallbackModel;
+                }
                 continue;
               }
               cumStats.other++;
@@ -17543,6 +17554,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           }
           finalTried = tried;
           // 第一輪整輪都失敗 + 是 503(Gemini 忙線) 或 timeout(網路卡)→ 等 5 秒做第二輪
+          // v621: 全部 key 都撞 429 (免費額度是「每個模型」分開算:3.5-flash 一天只有 20 次!) → 換備用模型再試一輪
+          if (round === 0 && fallbackModel && model !== fallbackModel && roundQ429 > 0 && roundQ429 >= keys.length - invalidKeys.size) {
+            console.warn("[Gemini] 全部 key 在 " + model + " 撞額度,改用備用模型 " + fallbackModel + " (額度是每個模型分開算)");
+            if (typeof showToast === "function" && !opts.quiet) showToast("⏳ " + model + " 今日額度用完,改用備用模型 " + fallbackModel + "…", 3500);
+            model = fallbackModel;
+            keys.forEach((k) => _resetKey429(k));
+            await sleep(800);
+            continue;
+          }
           if (
             round === 0 &&
             (roundQ503 > 0 || roundTimeout > 0) &&
@@ -17617,6 +17637,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           temperature: 0.3,
           maxOutputTokens: opts.maxOutputTokens || 8192,
         };
+        // v617: thinkingConfig — 3.5-flash / 2.5-flash 預設「動態思考」,實測寫 400 字筆記會燒 37,000 個 thinking token、30-60 秒,
+        //       還常撞 35 秒 timeout;加入筆記這種「整理」工作給小預算就夠 (預設 1024;使用者可在 AI 設定改;-1 = 交給模型)
+        if (/gemini-(2\.5|3)/.test(model) && opts.thinkingBudget !== undefined && opts.thinkingBudget !== null && opts.thinkingBudget >= 0) {
+          generationConfig.thinkingConfig = { thinkingBudget: Math.round(opts.thinkingBudget) };
+        }
         if (schema) {
           generationConfig.responseMimeType = "application/json";
           generationConfig.responseSchema = schema;
@@ -17998,6 +18023,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             1. 不能 skip(schema 已禁) — 只能 append 或 new_chapter
             2. **本科 ${SMAP[q.subject] || q.subject}** 限定，只能用下方章節清單裡的章 append
             3. delta 不重複 candidates 的 subsections/concepts/facts/bullets 已有的東西
+            4. 數值衝突:新題正解的數值若跟候選 facts **不一樣**時,以新題正解為準,只在那一個 bullet 尾巴標「(國考正解)」;其他任何地方**禁止**出現「國考正解」四個字
+            7. append 時 **content 必須是空字串**,新內容只放 delta_markdown (300-800 字);new_chapter 的 content 上限 1500 字。寫太長會被截斷、整題作廢
+            8. delta 裡**不要**自己寫「🔗 延伸補充」「📝 易考重點」「📌 一句話定義」子標題 — 這三段章節已經有;要補延伸點就直接把 bullet 寫在 delta 最後,程式會併進去
+            5. delta_target_section 優先選候選 subsections 裡**主題最接近的既有子段**;只有所有既有子段都不沾邊時才填 "NEW"(開新子段前先問自己:這跟既有哪一段重疊?重疊就不開)
+            6. delta_markdown 用真正的換行分行,**不要**寫字面 \\n;表格第一行必須是表頭列,第二行才是 |---|---| 分隔線
 
             【append vs new_chapter — 平衡判斷】
             **不要因為小差異就開新章，也不要硬塞不同主題到同一章**:
@@ -18042,6 +18072,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             - bullet 用 \`- \`(不要 \`*\`)
             - \`[[X]]\` 跟 \`**X**\` 二選一，不要 \`**[[X]]**\`
             - 表格 cell 短句(禁止整段敘事),每行獨佔一行，首尾必須 \`|\`,禁止混 HTML \`<table>\` 跟 markdown
+            - 表格**禁止用空白把欄寬對齊**(\`| 短 |\` 就好,不要 \`| 短        |\`) — 對齊空白會讓輸出爆量被截斷
             - 禁止 raw HTML(\`<span>\`/\`<strong>\` 等)、禁止 LaTeX(\`$...$\` / \`\\ge\`)、禁止 \`---\` 分隔線
             - 數學用 Unicode(≥ ≤ ± × ÷ → ° ≈ α β π)
             - 整理順序:解剖→外到內;發育→時間;分類→輕到重;臨床→操作順;預設「定義→機制→臨床→易考」
@@ -18571,8 +18602,47 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       // v419:hard cap 75s → 45s,使用者反映等太久，失敗就快點進 pending queue
       // v590: 3.5-flash 整理一題常要 20~30 秒,20 秒就切斷會把「慢」誤判成「壞」→ 放寬到 35 秒;
       //       總上限 75 秒 (第一輪 35 + 換備用模型再 35);備用模型見 _addQFallbackModel()
-      const ADDQ_HARD_CAP_MS = 75000;
-      const ADDQ_GEMINI_TIMEOUT_MS = 35000;
+      const ADDQ_HARD_CAP_MS = 90000; // v620
+      const ADDQ_GEMINI_TIMEOUT_MS = 30000; // v620
+      // v617: 加入筆記的思考預算 (token)。0 = 不思考 (最快最省),1024 = 預設,-1 = 交給模型自己決定 (慢、貴)
+      function _addQThinkingBudget() {
+        const raw = localStorage.getItem(uKey("gemini_thinking"));
+        if (raw === null || raw === "") return 1024;
+        const n = parseInt(raw, 10);
+        return isNaN(n) ? 1024 : n;
+      }
+      window._addQThinkingBudget = _addQThinkingBudget;
+      // v617: 備援用的精簡題目註記 (以前是把題目+選項+整段詳解倒進章節,很醜) → 一個 callout:題幹一句 + 正解 + 為何選的一句話
+      // v620: 把一段內容插在第一個結尾段 (🔗 延伸補充 / 📝 易考重點) 前面;沒有結尾段就接在最後
+      function _insertBeforeEnding(content, block) {
+        const re = /\n(#{3,4})\s+[^\n]*(延伸補充|易考重點)/;
+        const m = content.match(re);
+        if (!m) return content.trimEnd() + block;
+        const idx = content.indexOf(m[0]);
+        return content.slice(0, idx).trimEnd() + block + "\n" + content.slice(idx + 1);
+      }
+      function _compactQNote(q) {
+        const LETTERS = "ABCDE";
+        const ansIdx = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+        const correctOpt = ((q.options || [])[ansIdx] || "").replace(/^\([A-E]\)\s*/, "");
+        let why = "";
+        const ex = String(q.explanation || "");
+        const m = ex.match(/【為何選[^】]*】\s*([\s\S]*?)(?=【|$)/);
+        why = (m ? m[1] : ex).replace(/\*\*|\[\[|\]\]|`|#+\s?/g, "").replace(/【[^】]*】/g, " ").replace(/\s+/g, " ").trim();
+        // v618: 跳過開場白 (「這題考的是…」「本題屬於…」) — 找第一句真的在講理由的
+        if (!m) {
+          const sents = why.split(/(?<=[。！？])/).map((x) => x.trim()).filter(Boolean);
+          const good = sents.find((x) => !/^(這題|本題|此題|題目|這一題|本題目)/.test(x) && x.length > 8);
+          if (good) why = good;
+        }
+        if (why.length > 160) why = why.slice(0, 160).replace(/[,，。;；]?[^,，。;；]*$/, "") + "…";
+        const stem = (q.question || "").replace(/\s+/g, " ").trim();
+        return (
+          "\n\n> 📝 **" + (q.meta || q.id) + "**：" + (stem.length > 90 ? stem.slice(0, 90) + "…" : stem) +
+          (correctOpt ? "\n> ✅ 正解 (" + LETTERS[ansIdx] + ") " + correctOpt : "") +
+          (why ? "\n> 💡 " + why : "") + "\n"
+        );
+      }
       function _addQFallbackModel() {
         const cur =
           localStorage.getItem(uKey("gemini_model")) ||
@@ -18600,7 +18670,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         });
         const _wrappedCallGemini = (prompt, schema, callOpts) => {
           const merged = Object.assign(
-            { timeoutMs: ADDQ_GEMINI_TIMEOUT_MS, fallbackModel: _addQFallbackModel(), quiet: !!opts.silent },
+            { timeoutMs: ADDQ_GEMINI_TIMEOUT_MS, fallbackModel: _addQFallbackModel(), quiet: !!opts.silent, thinkingBudget: _addQThinkingBudget() },
             callOpts || {},
           );
           return Promise.race([
@@ -18648,8 +18718,29 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             { ms: Math.round(_now() - _ai1Start) },
             window._lastGeminiCallStats || {},
           );
-          const dec = extractJSON(raw);
+          let dec = extractJSON(raw);
           _timing.decision = dec && dec.action;
+          // v622: new_chapter 內容先壓掉表格對齊空白;看起來被截斷 (太短 / 沒結尾段 / 表格列沒關) → 用精簡指示再問一次
+          if (dec && dec.action === "new_chapter") {
+            dec.content = _collapseSpaces(dec.content || "");
+            if (_looksTruncated(dec.content) && !opts._retried) {
+              console.warn("[addQToNotebook] new_chapter 內容像被截斷 (len=" + dec.content.length + "),精簡版重問一次");
+              const _r2Start = _now();
+              try {
+                const raw2 = await _wrappedCallGemini(
+                  prompt + "\n\n【重要】上一次輸出被截斷了。這次 content 請控制在 1000 字內:表格最多 4 列、cell 短句、**禁止用空白對齊欄寬**;一定要寫到「### 🔗 延伸補充」和「### 📝 易考重點」結尾。",
+                  ADD_NOTEBOOK_SCHEMA,
+                );
+                const dec2 = extractJSON(raw2);
+                if (dec2 && dec2.action === "new_chapter") dec2.content = _collapseSpaces(dec2.content || "");
+                if (dec2 && (dec2.action !== "new_chapter" || !_looksTruncated(dec2.content))) dec = dec2;
+                _timing.ai2 = Object.assign({ ms: Math.round(_now() - _r2Start), retry_reason: "truncated" }, window._lastGeminiCallStats || {});
+              } catch (e2) {
+                console.warn("[addQToNotebook] 精簡版重問失敗,沿用原本內容", e2 && e2.message);
+              }
+            }
+          }
+          if (dec && dec.action === "append" && dec.delta_markdown) dec.delta_markdown = _collapseSpaces(dec.delta_markdown);
           // v435:拿掉 v434 的敷衍偵測+retry — 治標不治本，也浪費 token
           //       真正的解法在 v435:把 v433 砍掉的完整詳解餵回 AI(不再 slice 到 1500 字)
           //       + schema.required 加 chapter_name(v434 保留)
@@ -18759,21 +18850,8 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                     .map((o, i) => "(" + "ABCDE"[i] + ") " + o)
                     .join("\n");
                   const correctOpt = (q.options || [])[q.answer] || "";
-                  const fallbackDelta =
-                    "\n\n### 📝 " +
-                    (q.meta || q.id) +
-                    " 思路\n\n" +
-                    "**題目重點**:" +
-                    (q.question || "").slice(0, 200) +
-                    "\n\n" +
-                    (correctOpt ? "**正確答案**:" + correctOpt + "\n\n" : "") +
-                    (q.explanation
-                      ? "**詳解摘要**:" +
-                        String(q.explanation).slice(0, 500) +
-                        (q.explanation.length > 500 ? "…" : "")
-                      : "") +
-                    "\n";
-                  merged = oldContent.trimEnd() + fallbackDelta;
+                  const fallbackDelta = _compactQNote(q); // v617 精簡
+                  merged = _insertBeforeEnding(oldContent, fallbackDelta); // v620
                   dec.content = _preserveImagesIn(oldContent, merged);
                   dec._forcedAppend = true;
                   _timing.ai2 = {
@@ -19897,12 +19975,158 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       // dec.delta_target_section: 既有 ### 子標題原文(含 emoji) 或 "NEW"
       // dec.delta_new_section_title: 當 target='NEW' 時的新子段標題
       // dec.delta_markdown: 純新增的 bullet/row/段落
+      // v617: AI 回的 delta 常見三種壞格式 — (1) 字面 "\n" 沒換行 (2) 表格只有分隔線沒表頭 (3) 偷寫 ## 主標題
+      // v622: 2.5-flash 會用幾千個空白把表格欄寬「對齊」→ 一個 cell 幾萬字、JSON 被截斷。連續 3 個以上空白壓成 1 個 (行首縮排保留)
+      function _collapseSpaces(md) {
+        if (!md) return md;
+        return md.replace(/([^\s ])[ \t]{3,}/g, "$1 ").replace(/^[ \t]{3,}\|/gm, "|").replace(/\|[ \t]{3,}/g, "| ");
+      }
+      // 新章節內容看起來被截斷了嗎:太短、沒有結尾段、或最後一行是沒關的表格列/半句
+      function _looksTruncated(md) {
+        const t = (md || "").trim();
+        if (t.length < 300) return true;
+        if (!/(延伸補充|易考重點)/.test(t)) return true;
+        const last = t.split("\n").pop().trim();
+        if (/^\|/.test(last) && !/\|$/.test(last)) return true;
+        return false;
+      }
+      window._collapseSpaces = _collapseSpaces;
+      window._looksTruncated = _looksTruncated;
+      function _fixLiteralNewlines(md) {
+        if (!md) return md;
+        const lit = (md.match(/\\n/g) || []).length;
+        const real = (md.match(/\n/g) || []).length;
+        if (lit >= 2 && real < lit) {
+          return md.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\"/g, '"');
+        }
+        return md;
+      }
+      function _fixOrphanTableSep(md) {
+        if (!md || !/\|/.test(md)) return md;
+        const lines = md.split("\n");
+        const isSep = (l) => /^\s*\|?[\s:\-|]+\|?\s*$/.test(l) && /-{2,}/.test(l);
+        const isRow = (l) => /^\s*\|.*\|\s*$/.test(l) && !isSep(l);
+        const out = [];
+        for (let i = 0; i < lines.length; i++) {
+          const l = lines[i];
+          if (isSep(l)) {
+            const prev = out.length ? out[out.length - 1] : "";
+            if (!isRow(prev)) {
+              // 前面沒有表頭:把下一行 row 提上來當表頭,分隔線接在它後面;沒有 row 就把分隔線丟掉
+              const next = lines[i + 1];
+              if (next && isRow(next)) {
+                out.push(next);
+                out.push(l);
+                i++;
+              }
+              continue;
+            }
+          }
+          out.push(l);
+        }
+        return out.join("\n");
+      }
+      function _normalizeDeltaMd(md) {
+        let t = _collapseSpaces(_fixLiteralNewlines(md || ""));
+        t = t.replace(/^\s*#\s+/gm, "### ").replace(/^\s*##\s+(?!#)/gm, "### "); // delta 不准有 # / ## 主標題
+        t = t.replace(/^\s*#{5,}\s+/gm, "#### ");
+        t = _fixOrphanTableSep(t);
+        return t;
+      }
+      window._normalizeDeltaMd = _normalizeDeltaMd;
+      // v618: 把 delta 裡的「延伸補充 / 易考重點 / 一句話定義」子塊拆出來 (heading 到下一個 heading 之間)
+      function _splitEndingBlocks(md) {
+        const lines = (md || "").split("\n");
+        const out = { main: [], extend: [], exam: [] };
+        let mode = "main";
+        for (const ln of lines) {
+          const h = ln.match(/^\s*(#{2,5})\s+(.*)$/);
+          if (h) {
+            const t = h[2];
+            if (/延伸補充/.test(t)) { mode = "extend"; continue; }
+            if (/易考重點|易考點/.test(t)) { mode = "exam"; continue; }
+            if (/一句話定義/.test(t)) { mode = "drop"; continue; }
+            mode = "main";
+          }
+          if (mode === "drop") continue;
+          if (mode === "main") out.main.push(ln);
+          else if (/^\s*[-*]\s+/.test(ln)) out[mode].push(ln.replace(/^\s*[-*]\s+/, "- "));
+          else if (ln.trim()) out[mode].push("- " + ln.trim());
+        }
+        return { main: out.main.join("\n"), extend: out.extend, exam: out.exam };
+      }
+      window._splitEndingBlocks = _splitEndingBlocks;
+      // v619: 兩個子段標題「講同一件事」嗎 — 去 emoji/標點後相等、包含,或字元 bigram 重疊 ≥ 0.6
+      function _normHeading(t) {
+        return (t || "").replace(/[^一-鿿a-zA-Z0-9]/g, "").toLowerCase();
+      }
+      function _headingSimilar(a, b) {
+        const x = _normHeading(a), y = _normHeading(b);
+        if (!x || !y) return false;
+        if (x === y) return true;
+        if (x.length >= 4 && y.length >= 4 && (x.includes(y) || y.includes(x))) return true;
+        const bg = (t) => { const set = new Set(); for (let i = 0; i < t.length - 1; i++) set.add(t.slice(i, i + 2)); return set; };
+        const A = bg(x), B = bg(y);
+        if (A.size < 3 || B.size < 3) return false;
+        let inter = 0; A.forEach((g) => { if (B.has(g)) inter++; });
+        return inter / Math.min(A.size, B.size) >= 0.6;
+      }
+      // 章節裡所有 ###/#### 標題 (原文 + 位置)
+      function _listHeadings(content) {
+        const out = [];
+        const re = /(^|\n)(#{3,4})\s+([^\n]+)/g;
+        let m;
+        while ((m = re.exec(content))) out.push({ level: m[2].length, text: m[3].trim(), idx: m.index + m[1].length });
+        return out;
+      }
+      // 把一段內容塞進「某個既有標題」的段落尾巴 (下一個同層或更高層標題之前)
+      function _appendIntoHeading(content, headingText, body) {
+        const hs = _listHeadings(content);
+        const h = hs.find((x) => x.text === headingText);
+        if (!h || !body.trim()) return content;
+        const lineEnd = content.indexOf("\n", h.idx);
+        const startIdx = lineEnd < 0 ? content.length : lineEnd + 1;
+        const restRe = new RegExp("\\n(#{2," + h.level + "})\\s+", "g");
+        restRe.lastIndex = startIdx;
+        const nx = restRe.exec(content);
+        const endIdx = nx ? nx.index : content.length;
+        const sec = content.slice(startIdx, endIdx).replace(/\s+$/, "");
+        return content.slice(0, startIdx) + (sec ? sec + "\n" : "") + body.trim() + "\n\n" + content.slice(endIdx).replace(/^\s+/, "");
+      }
+      // delta 裡的 ####/### 區塊,標題跟章節既有子段相近 → 內容併進既有子段,delta 只留真的新區塊
+      function _routeDuplicateSubsections(oldContent, delta) {
+        const existing = _listHeadings(oldContent);
+        if (!existing.length || !/^\s*#{3,4}\s+/m.test(delta)) return { content: oldContent, delta };
+        const lines = delta.split("\n");
+        const blocks = [];
+        let cur = { heading: null, lines: [] };
+        for (const ln of lines) {
+          const hm = ln.match(/^\s*(#{3,4})\s+(.*)$/);
+          if (hm) { blocks.push(cur); cur = { heading: hm[2].trim(), raw: ln, lines: [] }; }
+          else cur.lines.push(ln);
+        }
+        blocks.push(cur);
+        let content = oldContent;
+        const keep = [];
+        let routed = 0;
+        for (const b of blocks) {
+          if (!b.heading) { keep.push(b.lines.join("\n")); continue; }
+          const hit = existing.find((h) => _headingSimilar(h.text, b.heading));
+          if (hit) {
+            content = _appendIntoHeading(content, hit.text, b.lines.join("\n"));
+            routed++;
+          } else keep.push([b.raw].concat(b.lines).join("\n"));
+        }
+        if (routed) console.log("[surgicalAppend] " + routed + " 個 delta 子段跟既有子段同題,已併進去");
+        return { content, delta: keep.join("\n").trim() };
+      }
+      window._headingSimilar = _headingSimilar;
       function surgicalAppend(oldContent, dec) {
         // 章節結尾固定子段(從章節最末往回排):📝 易考重點 必須在最末,🔗 延伸補充 在它之前
         // 順序 = 章節中應該出現的順序(由前往後)
         const ENDING_SECTIONS = ["🔗 延伸補充", "📝 易考重點"];
         const SAFE_SECTIONS = ENDING_SECTIONS; // 別名，保留舊邏輯名稱
-        const delta = (dec.delta_markdown || "").trim();
+        const delta = _normalizeDeltaMd((dec.delta_markdown || "").trim()).trim(); // v617
         if (!delta) return oldContent; // 沒新東西就維持原狀
         // 把 delta 拆成行，跟 oldContent 字面比對去重
         // v392/v393:舊內容也要剝掉 markdown,並把所有空白壓成 1 個(才能跨換行/多空格 match)
@@ -19950,10 +20174,17 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           }
           return ln;
         };
+        // v618: 表頭列 (下一行是 |---| 分隔線) 一律保留 — 以前表頭的字 (類型/剛性/適應症…) 舊章都有,token 重疊 90% 被殺掉,表格就沒表頭
+        const _deltaLines = delta.split("\n");
+        const _isSepLine = (l) => /^\s*\|?[\s:\-|]+\|?\s*$/.test(l) && /-{2,}/.test(l);
+        const _headerIdx = new Set();
+        _deltaLines.forEach((l, i) => {
+          if (i + 1 < _deltaLines.length && _isSepLine(_deltaLines[i + 1]) && /^\s*\|/.test(l) && !_isSepLine(l)) _headerIdx.add(i);
+        });
         // bullet 行做去重，非 bullet(段落 / table / callout)原樣保留
-        const filteredLines = delta
-          .split("\n")
-          .map((ln) => {
+        const filteredLines = _deltaLines
+          .map((ln, _li) => {
+            if (_headerIdx.has(_li)) return ln;
             if (/^\s*[-*]\s+/.test(ln)) return dedupLine(ln);
             // table row: 含 | 且不是分隔線
             // v395 fix:用「row key (第一格內文)」當指紋，舊章節同一個 key 已有 → 視為更新意圖，去重
@@ -19988,8 +20219,37 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             return ln;
           })
           .filter((ln) => ln !== null);
-        const cleanDelta = filteredLines.join("\n").trim();
+        let cleanDelta = _fixOrphanTableSep(filteredLines.join("\n")).trim();
         if (!cleanDelta) return oldContent; // 全被去重 → 沒新東西
+        // v618: delta 自帶「🔗 延伸補充 / 📝 易考重點 / 📌 一句話定義」子塊 → 拆出來:
+        //       延伸/易考的 bullet 併進章節既有的同名結尾段 (沒有就留著);定義塊直接丟 (章節只能有一個定義)
+        const _split = _splitEndingBlocks(cleanDelta);
+        cleanDelta = _split.main.trim();
+        let _endingExtra = "";
+        const _appendToEnding = (content, title, bullets) => {
+          if (!bullets.length) return content;
+          const re = new RegExp("(^|\\n)(#{3,4})\\s+[^\\n]*" + title + "[^\\n]*\\n", "m");
+          const m = content.match(re);
+          if (!m) { _endingExtra += "\n\n### 🔗 " + title + "\n" + bullets.join("\n") + "\n"; return content; }
+          const startIdx = content.indexOf(m[0]) + m[0].length;
+          const restRe = /\n(#{2,4})\s+/g;
+          restRe.lastIndex = startIdx;
+          const nx = restRe.exec(content);
+          const endIdx = nx ? nx.index : content.length;
+          const body = content.slice(startIdx, endIdx).replace(/\s+$/, "");
+          return content.slice(0, startIdx) + (body ? body + "\n" : "") + bullets.join("\n") + "\n\n" + content.slice(endIdx).replace(/^\s+/, "");
+        };
+        oldContent = _appendToEnding(oldContent, "延伸補充", _split.extend.map(dedupLine).filter(Boolean));
+        oldContent = _appendToEnding(oldContent, "易考重點", _split.exam.map(dedupLine).filter(Boolean));
+        if (_endingExtra) oldContent = oldContent.trimEnd() + _endingExtra;
+        if (!cleanDelta) return oldContent; // 只有結尾段 bullet → 已經併好了
+        // v619: delta 裡跟既有子段同題的區塊 → 併進既有子段 (以前:「#### 組織病理學微觀特徵」出現兩次)
+        {
+          const routed = _routeDuplicateSubsections(oldContent, cleanDelta);
+          oldContent = routed.content;
+          cleanDelta = routed.delta;
+          if (!cleanDelta) return oldContent;
+        }
 
         const target = (dec.delta_target_section || "").trim();
         const isNew = !target || target.toUpperCase() === "NEW";
@@ -20003,6 +20263,23 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           if (!title) {
             if (target && target.toUpperCase() !== "NEW") title = target;
             else title = "🆕 新主題";
+          }
+          // v619: 新子段標題跟既有 ### 相近 (「🏥 臨床意義」又開一個「臨床意義」) → 直接併進那段
+          {
+            const hit = _listHeadings(oldContent).find((h) => h.level === 3 && _headingSimilar(h.text, title));
+            if (hit) {
+              console.log("[surgicalAppend] NEW 子段「" + title + "」跟既有「" + hit.text + "」同題,改併入");
+              return _appendIntoHeading(oldContent, hit.text, cleanDelta);
+            }
+          }
+          // v618: delta 第一行若是跟新子段同名 (或幾乎同名) 的 heading → 去掉,不然會 ### X 底下馬上一個 #### X
+          {
+            const _norm = (t) => (t || "").replace(/[^一-鿿a-zA-Z0-9]/g, "").toLowerCase();
+            const first = cleanDelta.split("\n")[0] || "";
+            const hm = first.match(/^\s*#{2,5}\s+(.*)$/);
+            if (hm && (_norm(hm[1]) === _norm(title) || _norm(hm[1]).includes(_norm(title)) || _norm(title).includes(_norm(hm[1])))) {
+              cleanDelta = cleanDelta.split("\n").slice(1).join("\n").trim();
+            }
           }
           const newSection = "\n\n### " + title + "\n\n" + cleanDelta + "\n";
           const isEndingTitle = ENDING_SECTIONS.some((t) =>
@@ -20187,22 +20464,8 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                 .map((o, i) => "(" + "ABCDE"[i] + ") " + o)
                 .join("\n");
               const correctOpt = (q.options || [])[q.answer] || "";
-              const fallbackDelta =
-                "\n\n### 📝 " +
-                (q.meta || q.id) +
-                " 補充\n\n" +
-                "**題目重點**:" +
-                (q.question || "").slice(0, 200) +
-                "\n\n" +
-                (correctOpt ? "**正解**:" + correctOpt + "\n\n" : "") +
-                (q.explanation
-                  ? "**詳解**:" +
-                    String(q.explanation).slice(0, 400) +
-                    (q.explanation.length > 400 ? "…" : "")
-                  : "") +
-                "\n";
-              const newContent =
-                (bestMatch.content || "").trimEnd() + fallbackDelta;
+              const fallbackDelta = _compactQNote(q); // v617 精簡
+              const newContent = _insertBeforeEnding(bestMatch.content || "", fallbackDelta); // v620
               bestMatch.content = _preserveImagesIn(
                 bestMatch.content || "",
                 newContent,
@@ -20262,9 +20525,18 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         if (dec.action === "append") {
           const chId = dec.chapter_id || dec.chapterId;
           const ch = notebook.chapters.find((c) => c.id === chId);
+          // v617: 退回 new_chapter 時,content 只能是「這題的 delta」— 以前直接拿 surgicalAppend 合併後的整章當新章內容,
+          //       結果整章被複製一份 (壓力測試:同一組 11 題長出兩章,第二章開頭 4800 字跟第一章一模一樣)
+          const _asNewChapter = () => {
+            const d = { ...dec, action: "new_chapter" };
+            if (dec.delta_markdown && dec.delta_markdown.trim()) {
+              const title = (dec.chapter_name || dec.delta_new_section_title || q.topic || q.meta || "未命名章節").replace(/^#+\s*/, "");
+              d.content = "## " + title + "\n\n" + _normalizeDeltaMd(dec.delta_markdown.trim());
+            }
+            applyAIDecision(d, q);
+          };
           if (!ch) {
-            // fallback to new_chapter
-            applyAIDecision({ ...dec, action: "new_chapter" }, q);
+            _asNewChapter();
             return;
           }
           // ★ 跨科分類保險:c.subject 最優先(因為加入時已寫死科目)
@@ -20277,7 +20549,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
               q.subject,
               ch.name,
             );
-            applyAIDecision({ ...dec, action: "new_chapter" }, q);
+            _asNewChapter();
             return;
           }
           // 順便:append 時若舊章還沒 subject 欄位，趁機補上(migration on-write)
@@ -20288,16 +20560,22 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           const chSub = _normSub(ch.subtopic);
           const newSub = _normSub(dec.subtopic);
           if (chSub && newSub && chSub !== newSub) {
-            console.warn(
-              "subtopic mismatch, forcing new_chapter:",
-              chSub,
-              "!=",
-              newSub,
-              "ch:",
-              ch.name,
-            );
-            applyAIDecision({ ...dec, action: "new_chapter" }, q);
-            return;
+            // v617: AI 已經指名 chapter_id + delta 要補進哪一段 → 只是 subtopic 字串寫法不同 (「Connectors 連接體」vs「Major connectors 主連接體」),
+            //       相信它,照 append;沒有 delta 的舊路徑才退回新章
+            if (dec.delta_markdown && dec.delta_markdown.trim()) {
+              console.warn("subtopic 字串不同但有 delta,照 append:", chSub, "vs", newSub, "ch:", ch.name);
+            } else {
+              console.warn(
+                "subtopic mismatch, forcing new_chapter:",
+                chSub,
+                "!=",
+                newSub,
+                "ch:",
+                ch.name,
+              );
+              _asNewChapter();
+              return;
+            }
           }
           histEntry.chapterId = ch.id;
           histEntry.snapshot = {
@@ -24233,6 +24511,8 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       }
 
       function renderMarkdown(md) {
+        // v617: 舊資料修補 — 以前存進去的字面 \n 跟沒表頭的表格,渲染時順手修 (不改存檔)
+        if (typeof _fixLiteralNewlines === "function") md = _fixOrphanTableSep(_collapseSpaces(_fixLiteralNewlines(md || "")));
         if (!md) return '<p style="color:#9ca3af">（章節內容是空的）</p>';
         // 清掉 LaTeX 標記(網站不支援數學渲染，只轉成 Unicode 顯示)
         md = _stripLatex(md);

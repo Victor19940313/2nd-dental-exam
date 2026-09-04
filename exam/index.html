@@ -29515,37 +29515,17 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       };
     </script>
     <script>
-      // Service Worker:確保新版 deploy 後此頁也自動更新(不靠使用者手動清 SW)
+      // v607: 不再自動切新版 + reload;新版裝好由 update.js 問使用者 (立即更新 / 稍後)
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
           .register("../sw.js")
           .then((reg) => {
-            // v553: 30 秒 → 30 分鐘 + 0~5 分亂數 (萬人審計 #8: 一萬人每 30 秒打 GitHub 一次太兇)
             setInterval(
               () => reg.update(),
               30 * 60 * 1000 + Math.floor(Math.random() * 5 * 60 * 1000),
             );
-            if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
-            reg.addEventListener("updatefound", () => {
-              const nw = reg.installing;
-              if (!nw) return;
-              nw.addEventListener("statechange", () => {
-                if (
-                  nw.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  nw.postMessage({ type: "SKIP_WAITING" });
-                }
-              });
-            });
           })
           .catch(() => {});
-        let _reloaded = false;
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (_reloaded) return;
-          _reloaded = true;
-          location.reload();
-        });
       }
     </script>
 
@@ -29567,5 +29547,6 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       未經授權禁止轉載、複製、爬取內容
     </footer>
       <script src="../tour.js" defer></script>
+    <script src="../update.js" defer></script>
 </body>
 </html>

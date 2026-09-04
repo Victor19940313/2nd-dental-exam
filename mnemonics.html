@@ -5269,22 +5269,10 @@
 
       // 🛡 v308:SW 通知有新版時提示使用者
       if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.addEventListener("message", (event) => {
-          if (event.data && event.data.type === "NEW_VERSION_READY") {
-            const t = document.createElement("div");
-            t.className = "toast";
-            t.style.cssText =
-              "background:#7c3aed;cursor:pointer;padding:.7rem 1.2rem;bottom:4.8rem"; // v557: 往上放，別壓到右下「留言」鈕
-            t.innerHTML = "✨ 新版本已就緒，點這裡刷新";
-            t.onclick = () => location.reload();
-            document.body.appendChild(t);
-            // 不自動消失，等使用者點
-          }
-        });
+        // v607: 新版改由 update.js 問使用者,這裡只註冊 + 定時檢查
         navigator.serviceWorker
           .register("./sw.js")
           .then((reg) => {
-            // v557: 每分鐘 → 每 30 分鐘 + 亂數 (萬人審計 #8)
             setInterval(
               () => reg.update(),
               30 * 60 * 1000 + Math.floor(Math.random() * 5 * 60 * 1000),
@@ -5357,5 +5345,6 @@
       未經授權禁止轉載、複製、爬取內容
     </footer>
       <script src="tour.js" defer></script>
+      <script src="update.js" defer></script>
 </body>
 </html>

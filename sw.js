@@ -7,6 +7,7 @@ const PRECACHE = [
   './themes.css',
   './skin.css',
   './skin.js',
+  './update.js',
   './tour.js',
   './topics.js',
   './subscription.js',
@@ -44,7 +45,7 @@ self.addEventListener('install', e => {
       ))
     )
   );
-  self.skipWaiting();
+  // v607: 不再自動 skipWaiting — 等使用者按「立即更新」(update.js 送 SKIP_WAITING) 或所有分頁關掉
 });
 
 // Allow pages to force-activate a waiting SW

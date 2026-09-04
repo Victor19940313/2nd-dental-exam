@@ -988,28 +988,12 @@
       }
       updateCountdown();
 
-      // Service Worker — aggressive update
+      // Service Worker — v607: 不再自動切新版 + reload (寫到一半被踢回首頁);
+      //   新版裝好由 update.js 問使用者「立即更新 / 稍後」
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js").then((reg) => {
-          // Check for updates every 30 seconds while page is open
-          setInterval(() => reg.update(), 30000);
-          // If a new SW is waiting, tell it to activate immediately
-          if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
-          reg.addEventListener("updatefound", () => {
-            const nw = reg.installing;
-            nw.addEventListener("statechange", () => {
-              if (
-                nw.state === "installed" &&
-                navigator.serviceWorker.controller
-              ) {
-                nw.postMessage({ type: "SKIP_WAITING" });
-              }
-            });
-          });
+          setInterval(() => reg.update(), 30 * 60 * 1000 + Math.floor(Math.random() * 5 * 60 * 1000));
         });
-        navigator.serviceWorker.addEventListener("controllerchange", () =>
-          location.reload(),
-        );
       }
 
       // Sync UI
@@ -1078,5 +1062,7 @@
       未經授權禁止轉載、複製、爬取內容
     </footer>
       <script src="tour.js" defer></script>
+    <script src="update.js" defer></script>
+    <script src="update.js" defer></script>
 </body>
 </html>

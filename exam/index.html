@@ -5925,7 +5925,7 @@
             </div>
             <div class="stat-item">
               <div class="num" style="color: var(--red)" id="st-giveup">-</div>
-              <div class="lbl">🔴 不需要懂</div>
+              <div class="lbl">❌ 不需要懂</div>
             </div>
             <button type="button" class="stats-reset" onclick="resetAllMarks()" title="清掉全部標記與練習次數 (會再問你兩次)">🗑 重製</button>
           </div>
@@ -5982,7 +5982,7 @@
               data-sts="give_up"
               onclick="setSidebarStatus(this, 'give_up')"
             >
-              🔴 不需要懂
+              ❌ 不需要懂
             </div>
           </div>
           <details
@@ -6291,7 +6291,7 @@
                 data-status="give_up"
                 onclick="setStatusMode(this)"
               >
-                🔴 不需要懂
+                ❌ 不需要懂
               </div>
             </div>
           </div>
@@ -6558,7 +6558,7 @@
             id="mk-give_up"
             onclick="markQ('give_up')"
           >
-            🔴 不需要懂
+            ❌ 不需要懂
           </button>
           <button class="btn-count" id="mk-count" onclick="incCountPractice()">
             已寫過 0 次
@@ -7040,7 +7040,7 @@
           data-bf="give_up"
           onclick="setBF(this, 'status', 'give_up')"
         >
-          🔴 不需要懂
+          ❌ 不需要懂
         </div>
         <div class="bf-divider"></div>
         <div
@@ -7199,7 +7199,7 @@
           <button class="wb-chip wbm" data-wbm="understood" onclick="setWBMark(this, 'understood')">🟢 送分題 <small id="wbm-understood"></small></button>
           <button class="wb-chip wbm" data-wbm="learning" onclick="setWBMark(this, 'learning')">🟡 一知半解 <small id="wbm-learning"></small></button>
           <button class="wb-chip wbm" data-wbm="guessed" onclick="setWBMark(this, 'guessed')">🤔 亂猜一通 <small id="wbm-guessed"></small></button>
-          <button class="wb-chip wbm" data-wbm="give_up" onclick="setWBMark(this, 'give_up')">🔴 不需要懂 <small id="wbm-give_up"></small></button>
+          <button class="wb-chip wbm" data-wbm="give_up" onclick="setWBMark(this, 'give_up')">❌ 不需要懂 <small id="wbm-give_up"></small></button>
           <button class="wb-chip wbm" data-wbm="none" onclick="setWBMark(this, 'none')">未標記 <small id="wbm-none"></small></button>
         </div>
         <div class="wb2-row">
@@ -12508,7 +12508,7 @@
         updateHomeStats();
         showToast(
           {
-            give_up: "🔴 不需要懂",
+            give_up: "❌ 不需要懂",
             learning: "🟡 一知半解",
             guessed: "🤔 亂猜一通",
             understood: "🟢 送分題",
@@ -12784,7 +12784,7 @@
                           ${_markBtn("understood", "🟢", "送分題", "#dcfce7", "#22c55e")}
                                                     ${_markBtn("guessed", "🤔", "亂猜一通", "#ede9fe", "#a78bfa")}
 ${_markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
-                          ${_markBtn("give_up", "🔴", "不需要懂", "#fee2e2", "#ef4444")}
+                          ${_markBtn("give_up", "❌", "不需要懂", "#fee2e2", "#ef4444")}
                         </div>`;
             return `<div class="scroll-q-card" id="se-card-${q.id}">
                   <div class="scroll-q-meta">
@@ -12885,7 +12885,7 @@ ${_markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
         qState[qid].status = qState[qid].status === status ? "none" : status;
         await persist(qid);
         const labels = {
-          give_up: "🔴 不需要懂",
+          give_up: "❌ 不需要懂",
           learning: "🟡 一知半解",
           guessed: "🤔 亂猜一通",
           understood: "🟢 送分題",
@@ -14063,7 +14063,7 @@ ${_markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
                         ${sBtn("understood", "🟢", "送分題", "#22c55e")}
                                                 ${sBtn("guessed", "🤔", "亂猜一通", "#a78bfa")}
 ${sBtn("learning", "🟡", "一知半解", "#eab308")}
-                        ${sBtn("give_up", "🔴", "不需要懂", "#ef4444")}
+                        ${sBtn("give_up", "❌", "不需要懂", "#ef4444")}
                         ${clearBtn}
                         ${clearMarksAllBtn}
                         <span style="font-size:.74rem;color:#9ca3af;margin-left:auto">已寫過 ${cnt} 次</span>
@@ -14103,7 +14103,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
           showToast(
             "已是「" +
               ({
-                give_up: "🔴 不需要懂",
+                give_up: "❌ 不需要懂",
                 learning: "🟡 一知半解",
                 guessed: "🤔 亂猜一通",
                 understood: "🟢 送分題",
@@ -14138,7 +14138,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
         renderReviewQ(_reviewIdx);
         showToast(
           {
-            give_up: "🔴 不需要懂",
+            give_up: "❌ 不需要懂",
             learning: "🟡 一知半解",
             guessed: "🤔 亂猜一通",
             understood: "🟢 送分題",
@@ -14826,7 +14826,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
       const SMAP2 = { ya3: "牙三", ya4: "牙四", ya5: "牙五", ya6: "牙六" };
       const SLABELS = {
         none: "─ 未標記",
-        give_up: "🔴 不需要懂",
+        give_up: "❌ 不需要懂",
         learning: "🟡 一知半解",
         guessed: "🤔 亂猜一通",
         understood: "🟢 送分題",
@@ -14889,7 +14889,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
                   ${markBtn("understood", "🟢", "送分題", "#dcfce7", "#22c55e")}
                                     ${markBtn("guessed", "🤔", "亂猜一通", "#ede9fe", "#a78bfa")}
 ${markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
-                  ${markBtn("give_up", "🔴", "不需要懂", "#fee2e2", "#ef4444")}
+                  ${markBtn("give_up", "❌", "不需要懂", "#fee2e2", "#ef4444")}
                   <button class="a-count" onclick="browseIncCount('${q.id}',event)">已寫過 ${st.count} 次</button>
                   <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️</button>`;
 
@@ -28109,7 +28109,7 @@ ${markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
       async function resetAllMarks() {
         if (
           !confirm(
-            "確定要重置所有標記嗎？\n\n🟢 送分題、🤔 亂猜一通、🟡 一知半解、🔴 不需要懂 的標記與練習次數\n都將被清除。",
+            "確定要重置所有標記嗎？\n\n🟢 送分題、🤔 亂猜一通、🟡 一知半解、❌ 不需要懂 的標記與練習次數\n都將被清除。",
           )
         )
           return;

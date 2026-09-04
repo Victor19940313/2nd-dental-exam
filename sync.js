@@ -249,6 +249,10 @@
   // v601: 推雲端前確認「現在登入的人」= 這個模組初始化時的人;不一致 (同瀏覽器換帳號、舊分頁) 就不推
   function identityMismatch(where) {
     try {
+      if (_userId && localStorage.getItem(_userId + "__wipe_pending")) {
+        console.warn("[Sync] 清除中,略過 " + where);
+        return true;
+      }
       var nowId = localStorage.getItem("dental_cur_user");
       if (nowId && _userId && nowId !== _userId) {
         console.warn("[Sync] 身份不一致,略過 " + where + ":", _userId, "→", nowId);
@@ -511,6 +515,7 @@
           if (wipeTs && wipeTs > wipedAt) {
             console.warn("[Sync] 遠端要求清除本機舊資料", _userId, wipeTs);
             localStorage.setItem(_userId + "__wiped", String(wipeTs));
+            localStorage.setItem(_userId + "__wipe_pending", String(wipeTs)); // v603: 重新載入後 skin.js 會再清一次
             var uidToWipe = _userId;
             return wipeLocalForUser(uidToWipe).then(function () {
               _syncing = false;

@@ -1,3 +1,33 @@
+// v603: 遠端清除 — 上一次載入 sync.js 發現 users/{uid}/_meta/wipe_ts 比本機新,會設 {uid}__wipe_pending 再重新載入;
+//       這裡在任何程式讀資料之前 (skin.js 是最早載入的共用檔) 同步把該 uid 的本機資料再清一次,避免舊副本復活。
+(function earlyWipe() {
+  try {
+    var uid = localStorage.getItem("dental_cur_user");
+    if (!uid) return;
+    var pend = localStorage.getItem(uid + "__wipe_pending");
+    if (!pend) return;
+    var KEYS = ["wrongbook_state", "daily_log", "wrongbook_lastpos", "notebook", "notebook_pending", "gemini_api_key", "gemini_api_keys", "github_token", "github_repo", "examHistory", "exam_reviewed", "nb_theme", "nb_theme_sat", "nb_theme_opa", "nb_theme_gstr", "nb_toc_mono", "nb_bg_style", "nb_font_style", "opt_marks", "_ts"];
+    KEYS.forEach(function (k) {
+      try { localStorage.removeItem(uid + "_" + k); } catch (e) {}
+    });
+    localStorage.setItem(uid + "__wiped", pend);
+    window._syncWipePending = pend;
+    try {
+      var req = indexedDB.open("dental_notebooks_v1", 1);
+      req.onupgradeneeded = function (e) { var db = e.target.result; if (!db.objectStoreNames.contains("notebooks")) db.createObjectStore("notebooks"); };
+      req.onsuccess = function () {
+        var db = req.result;
+        try {
+          var tx = db.transaction("notebooks", "readwrite");
+          var st = tx.objectStore("notebooks");
+          ["notebook", "examHistory", "wrongbook_state", "notebook_pending", "wrongbook_lastpos", "opt_marks"].forEach(function (k) { try { st.delete(uid + "_" + k); } catch (e) {} });
+          tx.oncomplete = function () { db.close(); try { localStorage.removeItem(uid + "__wipe_pending"); } catch (e) {} window._syncWipePending = null; };
+          tx.onerror = function () { db.close(); };
+        } catch (e) {}
+      };
+    } catch (e) {}
+  } catch (e) {}
+})();
 // ═══════════════════════════════════════════════════════════════
 //  skin.js — 全站「風格」切換 (v550)
 //  ─ 使用者在左下角 🎨 下拉選單選一種風格，存 localStorage.dental_skin (裝置層級，不分帳號)

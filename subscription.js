@@ -220,7 +220,7 @@
     return UNLOCKED_PAGES.some((u) => p === u || p === u.replace(/\/$/, ""));
   }
 
-  // v568: 這些頁沒登入也要擋 (口訣區的分享連結只有試用/會員能開) — HUA 指定
+  // v568: 這些頁沒登入也要擋 (口訣與重點分享區的分享連結只有試用/會員能開) — HUA 指定
   const REQUIRE_LOGIN_PAGES = ["/mnemonics.html"];
   function requiresLogin() {
     const p = location.pathname.replace(/\/+$/, "") || "/";
@@ -250,7 +250,7 @@
       <div class="sbo-card">
         <div class="sbo-emoji">🔐</div>
         <h2>請先登入</h2>
-        <p>口訣區只開放給<b>試用中或訂閱中</b>的會員。用 Google 登入後就能看，新帳號有 7 天免費試用。</p>
+        <p>口訣與重點分享區只開放給<b>試用中或訂閱中</b>的會員。用 Google 登入後就能看，新帳號有 7 天免費試用。</p>
         <a href="${base0}index.html" class="sbo-btn">回首頁登入</a>
       </div>`;
       document.body.appendChild(el);

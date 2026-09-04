@@ -3,7 +3,7 @@
 //  ─ 使用者在左下角 🎨 下拉選單選一種風格，存 localStorage.dental_skin (裝置層級，不分帳號)
 //  ─ 套用方式: <html data-skin="kawaii">,樣式全部在 skin.css 用 html[data-skin=…] 覆蓋
 //  ─ 沒選 (classic) 時 data-skin 不存在 → skin.css 完全不生效，網站跟原本一模一樣
-//  ─ 跟練習本/口訣區原有的「配色」(body.theme-xxx, {uid}_nb_theme) 是兩層，互不影響
+//  ─ 跟練習本/口訣與重點分享區原有的「配色」(body.theme-xxx, {uid}_nb_theme) 是兩層，互不影響
 //  載入位置: <head> 內、version.js 之後 (同步載，避免先閃原本樣式)
 // ═══════════════════════════════════════════════════════════════
 (function () {

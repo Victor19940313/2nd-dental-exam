@@ -5804,9 +5804,9 @@
           class="btn-mode"
           id="btn-mnemonics"
           onclick="location.href = '../mnemonics.html'"
-          title="共筆口訣區"
+          title="共筆口訣與重點分享區"
         >
-          🧠 口訣區
+          🧠 口訣與重點分享
         </button>
         <button class="btn-mode" id="btn-browse" onclick="showBrowse()">
           瀏覽
@@ -6815,7 +6815,7 @@
           >
             <button
               onclick="goToMnemonicsFromReview()"
-              title="到口訣區看一下，等等可以一鍵回到這題"
+              title="到口訣與重點分享區看一下，等等可以一鍵回到這題"
               style="
                 background: rgba(255, 255, 255, 0.22);
                 border: 1px solid rgba(255, 255, 255, 0.35);
@@ -6828,7 +6828,7 @@
                 white-space: nowrap;
               "
             >
-              🧠 口訣區
+              🧠 口訣與重點分享
             </button>
             <button
               onclick="closeExamReview()"
@@ -8183,7 +8183,7 @@
             id="gh-repo-hint"
             style="font-size: 0.72rem; color: #9ca3af; margin-top: 0.3rem"
           >
-            不確定填什麼 → 留空也可以，圖床功能會 disable(口訣區會用預設 repo)
+            不確定填什麼 → 留空也可以，圖床功能會 disable(口訣與重點分享區會用預設 repo)
           </p>
         </details>
         <script>
@@ -11799,7 +11799,7 @@
       //       這版改成:先用記憶體 practiceList(現場最常見),不行才退回 localStorage,
       //       全空就明確 toast,任何 throw 不再被吞掉
       // v422:resumePractice 改 async,等 QS 載完才動作
-      //       原因:從口訣區回來 hash=#resume DOMContentLoaded 立刻 call,但 QS 還沒 load → list=[] → 誤判沒進度 → 還清掉 lastPos
+      //       原因:從口訣與重點分享區回來 hash=#resume DOMContentLoaded 立刻 call,但 QS 還沒 load → list=[] → 誤判沒進度 → 還清掉 lastPos
       async function resumePractice() {
         try {
           // (1) 記憶體有 practiceList → 直接用(從筆記本/錯題本切回的常見情境)
@@ -11853,7 +11853,7 @@
             showToast("沒有上次的進度，請從「考試首頁」開始");
             return;
           }
-          // v422:等 QS load 完(從口訣區回來時 QS 還在載)
+          // v422:等 QS load 完(從口訣與重點分享區回來時 QS 還在載)
           for (let i = 0; i < 50; i++) {
             if (typeof QS !== "undefined" && QS.length > 100) break;
             await new Promise((r) => setTimeout(r, 200));
@@ -12692,7 +12692,7 @@
           if (er) er.style.display = "none";
           window.scrollTo(0, 0);
           if (useTimer) startTimer(3600);
-          // v422:整頁捲動模式也存 lastPos,從口訣區回得來
+          // v422:整頁捲動模式也存 lastPos,從口訣與重點分享區回得來
           try {
             saveScrollExamLastPos();
           } catch (e) {}
@@ -12831,7 +12831,7 @@ ${_markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       }
       window._scrollExamRehydrateUI = _scrollExamRehydrateUI;
 
-      // v422:整頁捲動模式存 lastPos(從口訣區回來時 resumePractice 能回到原試卷)
+      // v422:整頁捲動模式存 lastPos(從口訣與重點分享區回來時 resumePractice 能回到原試卷)
       function saveScrollExamLastPos() {
         if (!scrollExamList || !scrollExamList.length) return;
         try {
@@ -14302,8 +14302,8 @@ ${sBtn("learning", "❓", "一知半解", "#eab308")}
         window._reviewPeekActive = true;
         if (typeof peekNotebook === "function") peekNotebook(q);
       }
-      // 從重看試卷右上角的「🧠 口訣區」跳到 mnemonics.html
-      // 把當前 review 狀態存到 sessionStorage,讓口訣區頁面可以秀「🔙 回試卷」一鍵回來
+      // 從重看試卷右上角的「🧠 口訣與重點分享」跳到 mnemonics.html
+      // 把當前 review 狀態存到 sessionStorage,讓口訣與重點分享區頁面可以秀「🔙 回試卷」一鍵回來
       function goToMnemonicsFromReview() {
         if (!_reviewEntry) {
           location.href = "../mnemonics.html";

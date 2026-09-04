@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>口訣複習區 — 牙醫國考</title>
+    <title>口訣與重點分享區 — 牙醫國考</title>
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#f8f7f0" />
     <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -1123,7 +1123,7 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
 
-      /* ═══ v574: 口訣區新版 ═══ */
+      /* ═══ v574: 口訣與重點分享區新版 ═══ */
       /* 別人的章節按鈕多 (連結/讚/收藏/複製/檢舉) → 允許換行,標題不被擠掉 */
       .editor-status {
         flex-wrap: wrap;
@@ -1600,7 +1600,7 @@
         background: #2a2c3e;
         border-bottom-color: #3a3a4c;
       }
-          /* v557: 手機版口訣區 — 唯讀提示縮小、章節列表矮一點，內容不要被推到太下面 */
+          /* v557: 手機版口訣與重點分享區 — 唯讀提示縮小、章節列表矮一點，內容不要被推到太下面 */
       @media (max-width: 720px) {
         .info-banner {
           font-size: 0.72rem;
@@ -2010,7 +2010,7 @@
       })();
 
       // ═══════════════════════════════════════════════════════════
-      //  口訣複習區 — 設計原則
+      //  口訣與重點分享區 — 設計原則
       //  ★ 多章節結構(per-subject) — 內容大時可拆細，只載當前章節
       //  ★ 白名單編輯 — HUA + Shirley 才能推雲端;其他人唯讀
       //  ★ 完整版本歷史 — 每次儲存留 snapshot,可預覽 / 一鍵還原
@@ -2018,7 +2018,7 @@
       //  ★ Per-subject 分檔 — mnemonics/{subj}.json + mnemonics/{subj}-versions.json
       // ═══════════════════════════════════════════════════════════
 
-      // v322:口訣區內容從 GitHub 改成 Firebase RTDB。
+      // v322:口訣與重點分享區內容從 GitHub 改成 Firebase RTDB。
       //       為什麼:GitHub 需要每個編輯者有 PAT + repo write 權,Shirley 沒 GitHub 帳號全卡住。
       //       Firebase 跟筆記本同一套,Shirley 不用任何設定就能用。
       //       圖片仍走 GitHub(Firebase 不適合塞 binary blob),沒 token 時禁用圖片功能。
@@ -2105,7 +2105,7 @@
         }
       }
       const CUR_USER = getCurrentUser();
-      // v574: 每個登入的人都有自己的口訣區 (namespace = uid;HUA / Shirley 沿用舊 namespace 名稱,內容不用搬)
+      // v574: 每個登入的人都有自己的口訣與重點分享區 (namespace = uid;HUA / Shirley 沿用舊 namespace 名稱,內容不用搬)
       function authUser() {
         return window.Auth && window.Auth.getUser ? window.Auth.getUser() : null;
       }
@@ -2218,7 +2218,7 @@
         if (localStorage.getItem(BANNER_DISMISS_KEY)) {
           slot.style.display = "none";
         } else {
-          slot.innerHTML = `<div class="info-banner editor">💡 這是<strong>你自己的口訣區</strong>,寫的東西預設只有你看得到。想分享給大家,先幫章節選「考點」再打開「公開」;別人的好章節可以 ⭐ 收藏、👍 讚 (付費會員)、📋 複製一份自己改 (複製品不能再公開)。<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
+          slot.innerHTML = `<div class="info-banner editor">💡 這是<strong>你自己的口訣與重點分享區</strong>,寫的東西預設只有你看得到。想分享給大家,先幫章節選「考點」再打開「公開」;別人的好章節可以 ⭐ 收藏、👍 讚 (付費會員)、📋 複製一份自己改 (複製品不能再公開)。<button class="banner-close" onclick="dismissBanner()" title="不再顯示">✕</button></div>`;
         }
       }
       function dismissBanner() {
@@ -2956,7 +2956,7 @@
         const inp = document.getElementById("ch-search");
         if (inp) {
           inp.value = "";
-          inp.placeholder = mode === "mine" ? "🔍 搜我的口訣 (標題 / 考點 / 關鍵字)" : mode === "pub" ? "🔍 搜大家分享的口訣 (標題 / 考點 / 關鍵字)" : "🔍 搜我的最愛";
+          inp.placeholder = mode === "mine" ? "🔍 搜我的口訣與重點 (標題 / 考點 / 關鍵字)" : mode === "pub" ? "🔍 搜大家分享的重點 (標題 / 考點 / 關鍵字)" : "🔍 搜我的最愛";
         }
         const rw = document.getElementById("mn-reward");
         if (rw) rw.style.display = mode === "mine" ? "" : "none";
@@ -3241,7 +3241,7 @@
         const ti = document.getElementById("title-input");
         if (ti) {
           ti.value = "";
-          ti.placeholder = _mode === "pub" ? "大家分享的口訣" : "我的最愛";
+          ti.placeholder = _mode === "pub" ? "大家分享的重點" : "我的最愛";
         }
         let items;
         let title;
@@ -5215,7 +5215,7 @@
             };
             toolbar.appendChild(b);
           });
-          // v574: 自己的口訣區 = 自己的 namespace (HUA/Shirley 沿用舊名稱,其他人用 uid)
+          // v574: 自己的口訣與重點分享區 = 自己的 namespace (HUA/Shirley 沿用舊名稱,其他人用 uid)
           const mine = myNs();
           _curUser = mine || "__guest__";
           loadRewardCfg();
@@ -5294,7 +5294,7 @@
       }
     </script>
 
-    <!-- v390:從重看試卷右上「🧠 口訣區」跳過來時，秀一個浮動「🔙 回試卷·第N題」按鈕(樣式仿偷看筆記返回鈕) -->
+    <!-- v390:從重看試卷右上「🧠 口訣與重點分享」跳過來時，秀一個浮動「🔙 回試卷·第N題」按鈕(樣式仿偷看筆記返回鈕) -->
     <script>
       (function () {
         let raw = null;

@@ -109,6 +109,16 @@
     }
     // v540: 身份校正搬到這裡 (每頁都載 auth.js) — 不管從哪頁進 (書籤直開練習本、手機捷徑),
     //   dental_cur_user 都必須 = Google uid。v534 只放在首頁，直開練習本會用舊暱稱寫 Firebase (hua_hsu 復活)
+    if (currentUser) applyIdentity(currentUser);
+    renderWidget();
+    changeCallbacks.forEach(function (cb) {
+      try {
+        cb(currentUser);
+      } catch (e) {}
+    });
+  });
+  // v604: 身份校正抽成函式 (回測用 Auth._applyIdentityForTest)
+  function applyIdentity(currentUser) {
     if (currentUser) {
       try {
         const want = currentUser.uid;
@@ -137,8 +147,11 @@
           // v601: 同一個瀏覽器從 A 帳號換到 B 帳號 → 整頁重新載入,讓每個模組用 B 的身份重新初始化。
           //       以前就地 switchUser,練習本記憶體裡還是 A 的筆記/紀錄,下一次 push 就寫進 B 的雲端 (HUA 兩個帳號互相看到對方資料)
           const wasRealUser = prevUid && /^[A-Za-z0-9]{20,}$/.test(prevUid);
+          // v604: 頁面不是首頁 (練習本 / 口訣區 / 牙三…) 而且是「載入後才登入」→ 頁面已用 "default" 命名空間初始化
+          //       (登出後直接開練習本再登入就是這樣),也要重新載入;不然 API key / 標記都讀到 default_* 那份 (HUA 用 evonne 帳號看到自己的 key)
+          const onHomePage = /^\/(index\.html)?$/.test(location.pathname);
           let reloaded = false;
-          if (wasRealUser) {
+          if (wasRealUser || !onHomePage) {
             try {
               const guard = "auth_switch_reload_" + want;
               if (!sessionStorage.getItem(guard)) {
@@ -157,13 +170,7 @@
         }
       } catch (e) {}
     }
-    renderWidget();
-    changeCallbacks.forEach(function (cb) {
-      try {
-        cb(currentUser);
-      } catch (e) {}
-    });
-  });
+  }
 
   // v577: 手機登入卡在空白的 firebaseapp.com 頁 (HUA 朋友回報)
   //   原因:手機上 signInWithPopup 開的新分頁登完 Google 後,回不到原分頁 (被 in-app 瀏覽器 /
@@ -344,6 +351,7 @@
       return authReady;
     },
     _loginMethod: loginMethod, // v577 回測用
+    _applyIdentityForTest: applyIdentity, // v604 回測用
     ready: readyPromise, // await Auth.ready → 拿到 user 或 null,但「確定了」
     _toggleMenu: function (el) {
       if (el && el.classList) el.classList.toggle("open");

@@ -240,7 +240,7 @@
     // v598: 登出後回首頁 (HUA: 用到一半按登出,頁面不會跳轉)
     const depth = (location.pathname.match(/\//g) || []).length - 1;
     const base = depth > 0 ? "../".repeat(depth) : "./";
-    const onHome = /(^|\/)(index\.html)?$/.test(location.pathname);
+    const onHome = /^\/(index\.html)?$/.test(location.pathname); // 只有根目錄首頁才算 (v599 修:原本 /exam/index.html 也被當首頁)
     try {
       await auth.signOut();
       // v532: 清 nickname/curUser 避免下次登入其他帳號時被舊值污染

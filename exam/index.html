@@ -5917,7 +5917,7 @@
               <div class="num" style="color: var(--amber)" id="st-learning">
                 -
               </div>
-              <div class="lbl">🟡 一知半解</div>
+              <div class="lbl">❓ 一知半解</div>
             </div>
             <div class="stat-item">
               <div class="num" style="color: #2563eb" id="st-guessed">-</div>
@@ -5968,7 +5968,7 @@
               data-sts="learning"
               onclick="setSidebarStatus(this, 'learning')"
             >
-              🟡 一知半解
+              ❓ 一知半解
             </div>
             <div
               class="ts-chip"
@@ -6277,7 +6277,7 @@
                 data-status="learning"
                 onclick="setStatusMode(this)"
               >
-                🟡 一知半解
+                ❓ 一知半解
               </div>
               <div
                 class="chip chip-status"
@@ -6544,7 +6544,7 @@
             id="mk-learning"
             onclick="markQ('learning')"
           >
-            🟡 一知半解
+            ❓ 一知半解
           </button>
           <button
             class="btn-mark btn-mark-guessed"
@@ -7026,7 +7026,7 @@
           data-bf="learning"
           onclick="setBF(this, 'status', 'learning')"
         >
-          🟡 一知半解
+          ❓ 一知半解
         </div>
         <div
           class="bf-chip"
@@ -7197,7 +7197,7 @@
         <div class="wb-filters" id="wb-mark-filters">
           <button class="wb-chip wbm sel" data-wbm="all" onclick="setWBMark(this, 'all')">全部</button>
           <button class="wb-chip wbm" data-wbm="understood" onclick="setWBMark(this, 'understood')">🟢 送分題 <small id="wbm-understood"></small></button>
-          <button class="wb-chip wbm" data-wbm="learning" onclick="setWBMark(this, 'learning')">🟡 一知半解 <small id="wbm-learning"></small></button>
+          <button class="wb-chip wbm" data-wbm="learning" onclick="setWBMark(this, 'learning')">❓ 一知半解 <small id="wbm-learning"></small></button>
           <button class="wb-chip wbm" data-wbm="guessed" onclick="setWBMark(this, 'guessed')">🤔 亂猜一通 <small id="wbm-guessed"></small></button>
           <button class="wb-chip wbm" data-wbm="give_up" onclick="setWBMark(this, 'give_up')">❌ 不需要懂 <small id="wbm-give_up"></small></button>
           <button class="wb-chip wbm" data-wbm="none" onclick="setWBMark(this, 'none')">未標記 <small id="wbm-none"></small></button>
@@ -12509,7 +12509,7 @@
         showToast(
           {
             give_up: "❌ 不需要懂",
-            learning: "🟡 一知半解",
+            learning: "❓ 一知半解",
             guessed: "🤔 亂猜一通",
             understood: "🟢 送分題",
             none: "標記取消",
@@ -12783,7 +12783,7 @@
                           ${flagBtn}
                           ${_markBtn("understood", "🟢", "送分題", "#dcfce7", "#22c55e")}
                                                     ${_markBtn("guessed", "🤔", "亂猜一通", "#ede9fe", "#a78bfa")}
-${_markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
+${_markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                           ${_markBtn("give_up", "❌", "不需要懂", "#fee2e2", "#ef4444")}
                         </div>`;
             return `<div class="scroll-q-card" id="se-card-${q.id}">
@@ -12886,7 +12886,7 @@ ${_markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
         await persist(qid);
         const labels = {
           give_up: "❌ 不需要懂",
-          learning: "🟡 一知半解",
+          learning: "❓ 一知半解",
           guessed: "🤔 亂猜一通",
           understood: "🟢 送分題",
           none: "標記取消",
@@ -14062,7 +14062,7 @@ ${_markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
                         <span style="font-size:.75rem;color:#6b7280">標記:</span>
                         ${sBtn("understood", "🟢", "送分題", "#22c55e")}
                                                 ${sBtn("guessed", "🤔", "亂猜一通", "#a78bfa")}
-${sBtn("learning", "🟡", "一知半解", "#eab308")}
+${sBtn("learning", "❓", "一知半解", "#eab308")}
                         ${sBtn("give_up", "❌", "不需要懂", "#ef4444")}
                         ${clearBtn}
                         ${clearMarksAllBtn}
@@ -14104,7 +14104,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
             "已是「" +
               ({
                 give_up: "❌ 不需要懂",
-                learning: "🟡 一知半解",
+                learning: "❓ 一知半解",
                 guessed: "🤔 亂猜一通",
                 understood: "🟢 送分題",
               }[status] || status) +
@@ -14139,7 +14139,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
         showToast(
           {
             give_up: "❌ 不需要懂",
-            learning: "🟡 一知半解",
+            learning: "❓ 一知半解",
             guessed: "🤔 亂猜一通",
             understood: "🟢 送分題",
           }[status],
@@ -14827,7 +14827,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
       const SLABELS = {
         none: "─ 未標記",
         give_up: "❌ 不需要懂",
-        learning: "🟡 一知半解",
+        learning: "❓ 一知半解",
         guessed: "🤔 亂猜一通",
         understood: "🟢 送分題",
       };
@@ -14888,7 +14888,7 @@ ${sBtn("learning", "🟡", "一知半解", "#eab308")}
                   ${flagBtn}
                   ${markBtn("understood", "🟢", "送分題", "#dcfce7", "#22c55e")}
                                     ${markBtn("guessed", "🤔", "亂猜一通", "#ede9fe", "#a78bfa")}
-${markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
+${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                   ${markBtn("give_up", "❌", "不需要懂", "#fee2e2", "#ef4444")}
                   <button class="a-count" onclick="browseIncCount('${q.id}',event)">已寫過 ${st.count} 次</button>
                   <button class="a-edit" onclick="openEditModal('${q.id}',event)">✏️</button>`;
@@ -28109,7 +28109,7 @@ ${markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
       async function resetAllMarks() {
         if (
           !confirm(
-            "確定要重置所有標記嗎？\n\n🟢 送分題、🤔 亂猜一通、🟡 一知半解、❌ 不需要懂 的標記與練習次數\n都將被清除。",
+            "確定要重置所有標記嗎？\n\n🟢 送分題、🤔 亂猜一通、❓ 一知半解、❌ 不需要懂 的標記與練習次數\n都將被清除。",
           )
         )
           return;
@@ -28655,7 +28655,7 @@ ${markBtn("learning", "🟡", "一知半解", "#fef9c3", "#eab308")}
           sm.innerHTML =
             `<div class="s" onclick="setWBMark(document.querySelector('[data-wbm=all]'),'all');document.getElementById('wb2-onlywrong').checked=false;wbSetOpt()"><div class="n">${allFlagged.length}</div><div class="l">全部</div></div>` +
             `<div class="s" onclick="document.getElementById('wb2-onlywrong').checked=true;wbSetOpt();showToast('已勾「只練還沒答對的」')"><div class="n" style="color:#ef4444">${notOK}</div><div class="l">還沒答對過</div></div>` +
-            `<div class="s" onclick="setWBMark(document.querySelector('[data-wbm=learning]'),'learning')"><div class="n" style="color:#f59e0b">${learning}</div><div class="l">🟡 一知半解</div></div>` +
+            `<div class="s" onclick="setWBMark(document.querySelector('[data-wbm=learning]'),'learning')"><div class="n" style="color:#f59e0b">${learning}</div><div class="l">❓ 一知半解</div></div>` +
             `<div class="s"><div class="n" style="color:#22c55e">${week}</div><div class="l">這週新加</div></div>`;
         const statsEl = document.getElementById("wb-stats");
         // 各科 / 各標記 數量 (小字)

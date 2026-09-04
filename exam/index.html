@@ -1585,6 +1585,92 @@
         }
       }
 
+      /* v613: 手機頁首導覽收合 — 桌機不變;≤760px 只留 標題 + 徽章 + 頭像 + 「目前頁 ▾」,分頁按鈕點開才出現 */
+      .nav-toggle,
+      .nav-break {
+        display: none;
+      }
+      @media (max-width: 760px) {
+        .header {
+          padding: 0.45rem 0.7rem;
+          gap: 0.25rem;
+        }
+        .header h1 {
+          width: auto;
+          flex: 1 1 auto;
+          margin-bottom: 0;
+          font-size: 0.9rem;
+        }
+        .header-right {
+          width: auto;
+          flex: 0 1 auto;
+          justify-content: flex-end;
+          gap: 0.3rem;
+          margin-left: auto;
+        }
+        .header-right .btn-mode {
+          display: none;
+        }
+        .nav-toggle {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          font: inherit;
+          font-size: 0.74rem;
+          font-weight: 700;
+          color: #fff;
+          background: rgba(255, 255, 255, 0.16);
+          border: 1.5px solid rgba(255, 255, 255, 0.55);
+          border-radius: 999px;
+          padding: 0.32rem 0.6rem 0.32rem 0.7rem;
+          cursor: pointer;
+          white-space: nowrap;
+          max-width: 46vw;
+        }
+        .nav-toggle .nav-cur {
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .nav-toggle .nav-caret {
+          font-size: 0.7rem;
+          transition: transform 0.18s;
+        }
+        .header.nav-open .nav-toggle {
+          background: #fff;
+          color: #5b21b6;
+        }
+        .header.nav-open .nav-toggle .nav-caret {
+          transform: rotate(180deg);
+        }
+        .header.nav-open .header-right {
+          width: 100%;
+          justify-content: flex-end;
+        }
+        .header.nav-open .nav-break {
+          display: block;
+          flex-basis: 100%;
+          height: 0;
+        }
+        .header.nav-open .header-right .btn-mode {
+          display: inline-block;
+        }
+        .header.nav-open .header-right {
+          padding-bottom: 0.2rem;
+        }
+        .header.nav-open .header-right .btn-mode {
+          margin-top: 0.15rem;
+        }
+      }
+      /* v613: 主題頁首是白底 → 收合鈕跟分頁按鈕同色系 */
+      body:not(.theme-default) .nav-toggle {
+        color: var(--purple-dark) !important;
+        border-color: var(--purple-soft) !important;
+        background: var(--purple-light) !important;
+      }
+      body:not(.theme-default) .header.nav-open .nav-toggle {
+        background: var(--purple-dark) !important;
+        color: #fff !important;
+      }
       /* v583: 標記統計旁的小重製鈕 */
       .stats-card { position: relative; }
       .stats-card .stats-reset {
@@ -5856,6 +5942,11 @@
         <span class="exam-timer" id="exam-timer">⏱ 60:00</span>
         <span id="sub-badge" style="margin-right: 0.4rem"></span>
         <span id="auth-widget" style="margin-right: 0.5rem"></span>
+        <!-- v613: 手機版導覽收合 — 只在 ≤760px 顯示;點開才展開下面那排分頁 -->
+        <button class="nav-toggle" id="nav-toggle" type="button" onclick="toggleHeaderNav()" aria-expanded="false">
+          <span class="nav-cur" id="nav-cur">考試首頁</span><span class="nav-caret">▾</span>
+        </button>
+        <i class="nav-break" aria-hidden="true"></i>
         <button
           class="btn-mode"
           id="btn-notes"
@@ -23433,6 +23524,38 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       function scrollToChapter(id) {
         selectChapter(id);
       }
+      // v613: 手機頁首導覽收合
+      function toggleHeaderNav(force) {
+        const h = document.querySelector(".header");
+        if (!h) return;
+        const open = typeof force === "boolean" ? force : !h.classList.contains("nav-open");
+        h.classList.toggle("nav-open", open);
+        const t = document.getElementById("nav-toggle");
+        if (t) t.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      function updateNavCur() {
+        const cur = document.getElementById("nav-cur");
+        if (!cur) return;
+        const act = document.querySelector(".header-right .btn-mode.active");
+        cur.textContent = act ? act.textContent.trim() : "選單";
+      }
+      window.toggleHeaderNav = toggleHeaderNav;
+      (function () {
+        const hr = document.querySelector(".header-right");
+        if (!hr) return;
+        // 點任何分頁按鈕 → 收起來;active 變了 → 更新「目前頁」字樣
+        hr.addEventListener("click", (e) => {
+          if (e.target.closest(".btn-mode")) setTimeout(() => { toggleHeaderNav(false); updateNavCur(); }, 60);
+        });
+        document.addEventListener("click", (e) => {
+          const h = document.querySelector(".header");
+          if (h && h.classList.contains("nav-open") && !e.target.closest(".header")) toggleHeaderNav(false);
+        });
+        try {
+          new MutationObserver(updateNavCur).observe(hr, { attributes: true, subtree: true, attributeFilter: ["class"] });
+        } catch (e) {}
+        updateNavCur();
+      })();
       function toggleMobileToc() {
         const pane = document.querySelector(".nb-toc-pane");
         if (pane) pane.classList.toggle("open");

@@ -175,19 +175,14 @@
       },
       trigger: "#screen-notebook #notebook-toc",
       steps: [
-        { s: '.nb-tb-btn[onclick="showOnboarding()"]', t: "第一步：先看入門指引", b: "筆記本要先設定 Gemini API（或 GitHub）才會開始幫你做筆記。點這顆，照步驟設定一次就好。" },
+        { s: "#nb-more > .nb-tb-btn", t: "第一步：先看入門指引", b: "點「更多」→「入門指引」。筆記本要先設定 Gemini API（或 GitHub）才會開始幫你做筆記，照步驟設定一次就好。子主題分組、合併重複章節、歷史、還原備份、匯出、列印也都收在「更多」裡。" },
         { s: '.nb-tb-btn[onclick="openAISettings()"]', t: "⚙️ 設定", b: "之後要改 API key、換模型、改 GitHub token，都在這裡。" },
         { s: "#btn-pending", t: "📥 待整理", b: "你在作答時按「加入筆記本」的題目會先排在這裡，AI 會在背景一題一題整理。" },
         { s: "#nb-search-input", t: "搜尋筆記", b: "跨章節、跨科目找關鍵字。" },
-        { s: "#nb-star-filter", t: "⭐ 只看重點", b: "把你標了星號的段落篩出來，考前衝刺用。" },
+        { s: "#nb-star-filter", t: "⭐ 只看重點", b: "把你標了星號的段落篩出來，考前衝刺用。（手機上目錄側欄從左邊滑出來，平常點左上角的 ☰ 開）" },
         { s: "#notebook-toc", t: "目錄", b: "AI 會把類似題串進同一個章節，目錄在這裡。點章節名可以改名。" },
         { s: "#notebook-body", t: "筆記內容", b: "共筆等級的整理。點段落可以直接編輯、加星號、貼圖（要有 GitHub token）。貼圖小撇步：截圖後直接 Ctrl+V 貼上，Windows 按 Win+Shift+S、Mac 按 Cmd+Ctrl+Shift+4。" },
-        { s: '.nb-tb-btn[onclick="reorganizeAllSubtopics()"]', t: "🗂 子主題分組", b: "章節太長？讓 AI 把它分成幾個子主題。" },
-        { s: '.nb-tb-btn[onclick="openMergeChaptersModal()"]', t: "🧹 合併重複章節", b: "同一個觀念被開成兩章？在這裡合併。" },
         { s: '.nb-tb-btn[onclick="undoLastChange()"]', t: "↶ 復原", b: "AI 改壞了或自己改錯了，一鍵回上一步。" },
-        { s: '.nb-tb-btn[onclick="openHistoryModal()"]', t: "🕓 歷史", b: "每一次變動都有紀錄，可以還原到任何一版。" },
-        { s: '.nb-tb-btn[onclick="openNotebookBackupModal()"]', t: "🛟 還原備份", b: "整本筆記每天自動備份，出事從這裡救回來。" },
-        { s: '.nb-tb-btn[onclick="openPrintModal()"]', t: "🖨️ 列印 / 匯出", b: "考前想印出來看，或匯出成 Markdown 帶走，都可以。" },
       ],
     },
     examBrowse: {
@@ -511,6 +506,20 @@
       return go(Math.min(i, active.steps.length - 1));
     }
     active.el = el;
+    // v613: 目標在手機收起的側欄 (.nb-toc-pane 等 fixed 在畫面外的面板) 裡 → 教學期間先把它打開,離開時關回去
+    var pane = el.closest(".nb-toc-pane");
+    if (pane) {
+      var pr = pane.getBoundingClientRect();
+      if ((pr.right <= 0 || pr.left >= window.innerWidth) && !pane.classList.contains("open")) {
+        pane.classList.add("open");
+        pane.style.zIndex = "12500"; // 要壓過頁首 (z 11000),不然聚光燈對到的是被頁首蓋住的位置
+        active.openedPane = pane;
+      }
+    } else if (active.openedPane) {
+      active.openedPane.classList.remove("open");
+      active.openedPane.style.zIndex = "";
+      active.openedPane = null;
+    }
     els.card.querySelector(".tc-step").textContent =
       i + 1 + " / " + active.steps.length;
     els.card.querySelector(".tc-title").textContent = s.t;
@@ -519,10 +528,28 @@
       i === 0 ? "hidden" : "visible";
     els.card.querySelector(".tc-next").textContent =
       i === active.steps.length - 1 ? "完成 ✓" : "下一步";
-    try {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    } catch (e) {
-      el.scrollIntoView();
+    // v613: sticky 容器 (筆記本工具列) 捲下去會被 sticky 頁首蓋住,聚光燈對到的是被蓋住的位置 → 直接捲回最上面
+    var stickyAnc = null, a = el, depth = 0;
+    while (a && a !== document.body && depth++ < 6) {
+      if (getComputedStyle(a).position === "sticky") { stickyAnc = a; break; }
+      a = a.parentElement;
+    }
+    if (stickyAnc && !pane) {
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { window.scrollTo(0, 0); }
+    } else if (!pane) {
+      // 很高的目標 (整篇筆記內容) 用 center 會把頂端捲出畫面 → 改成「頂端對齊在 sticky 頁首下方一點」
+      var er = el.getBoundingClientRect();
+      if (er.height > window.innerHeight * 0.6) {
+        var hdr = document.querySelector(".header, .nb-toolbar");
+        var hh = hdr ? hdr.getBoundingClientRect().bottom : 0;
+        try { window.scrollTo({ top: window.scrollY + er.top - Math.max(hh, 0) - 12, behavior: "smooth" }); } catch (e) { window.scrollTo(0, window.scrollY + er.top - 60); }
+      } else {
+        try {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        } catch (e) {
+          el.scrollIntoView();
+        }
+      }
     }
     place();
     // 平滑捲動、字型載入、頁面自己重排 都會讓位置跑掉 → 前 1.2 秒多對幾次,之後每 400ms 再校正一次 (只有教學開著時)
@@ -541,11 +568,12 @@
     els.spot.style.left = r.left - pad + "px";
     els.spot.style.top = r.top - pad + "px";
     els.spot.style.width = r.width + pad * 2 + "px";
-    els.spot.style.height = r.height + pad * 2 + "px";
+    els.spot.style.height = Math.min(r.height + pad * 2, vh - (r.top - pad) - 8) + "px"; // v613: 很高的目標不要超出視窗
     var cw = els.card.offsetWidth || 320, ch = els.card.offsetHeight || 160;
     var spaceBelow = vh - (r.bottom + 16), spaceAbove = r.top - 16;
     var below = spaceBelow >= ch || spaceBelow >= spaceAbove;
     var top = below ? r.bottom + 16 : r.top - 16 - ch;
+    if (r.height > vh * 0.6) top = vh - ch - 8; // v613: 目標比視窗還高 (整篇筆記) → 卡片貼底,不要蓋住目標頂端
     top = Math.max(8, Math.min(top, vh - ch - 8));
     var left = Math.max(16, Math.min(r.left, vw - cw - 16));
     els.card.className = below ? "below" : "above";
@@ -555,6 +583,7 @@
   function end(mark) {
     if (!active) return;
     if (mark) markDone(active.id);
+    if (active.openedPane) { active.openedPane.classList.remove("open"); active.openedPane.style.zIndex = ""; } // v613
     active = null;
     if (els.spot && els.spot.parentNode)
       els.spot.parentNode.removeChild(els.spot);

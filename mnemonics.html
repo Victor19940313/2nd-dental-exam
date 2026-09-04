@@ -132,6 +132,35 @@
         background: #fef3c7;
         color: #92400e;
       }
+      /* v613: 手機導覽收合 — 桌機不變;手機只留 ☰ 選單 + 三個分頁 + 使用者標籤 */
+      .nav-toggle-mn {
+        display: none;
+      }
+      @media (max-width: 720px) {
+        .nav-row .nav-pill {
+          display: none;
+        }
+        .nav-row.nav-open .nav-pill {
+          display: inline-flex;
+        }
+        .nav-toggle-mn {
+          display: inline-flex;
+          align-items: center;
+          font: inherit;
+          font-size: 0.78rem;
+          font-weight: 800;
+          color: #5b21b6;
+          background: #f3eefc;
+          border: 1.5px solid #ddd0fb;
+          border-radius: 999px;
+          padding: 0.28rem 0.7rem;
+          cursor: pointer;
+        }
+        .nav-row.nav-open .nav-toggle-mn {
+          background: #5b21b6;
+          color: #fff;
+        }
+      }
       @media (max-width: 720px) {
         .nav-row .ns-inline {
           flex-basis: 100%;
@@ -1620,6 +1649,8 @@
   </head>
   <body>
     <div class="nav-row">
+      <!-- v613: 手機版導覽收合 -->
+      <button class="nav-toggle-mn" id="nav-toggle-mn" type="button" onclick="document.querySelector('.nav-row').classList.toggle('nav-open')">☰ 選單</button>
       <a href="index.html" class="nav-link nav-pill">回到選單</a>
       <a href="exam/index.html" class="nav-link nav-pill">考試首頁</a>
       <a href="exam/index.html#resume" class="nav-link nav-pill">↩ 回到考題</a>

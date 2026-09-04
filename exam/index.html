@@ -4860,15 +4860,26 @@
         display: inline;
         background: #efe8fb;
         color: #5b21b6;
-        padding: 0.05em 0.3em;
+        padding: 0.06em 0.22em;
         border-radius: 4px;
         font-size: 1em;
         font-weight: 600;
-        margin: 0 0.05em;
+        margin: 0 0.04em;
         -webkit-box-decoration-break: clone;
         box-decoration-break: clone;
       }
       /* 子標籤（特點/功能/機制 等）— 藍色字體 */
+      /* v610: 收合段落 (延伸補充 / 易考重點) 的點開提示 */
+      .nb-chapter-content .nb-fold-hint::before {
+        content: "▸ 點開";
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #a78bfa;
+        white-space: nowrap;
+      }
+      .nb-chapter-content details[open] > summary .nb-fold-hint::before {
+        content: "▾ 收起";
+      }
       .nb-chapter-content .md-label {
         color: #0369a1;
         font-weight: 700;
@@ -22546,6 +22557,12 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         // 兜底：渲染完掃一遍，把連續「只放一張圖的段落」強制塞進並排容器
         const contentArea = document.querySelector(".nb-chapter-content");
         if (contentArea) _domGroupImageRows(contentArea);
+        // v610: 內文第一個 <h2> 跟章節名相同 → 藏掉 (標題連出現兩次很醜);不同才留著
+        if (contentArea && !isEditing) {
+          const h2 = contentArea.querySelector("h2");
+          const norm = (t) => (t || "").replace(/[\s\u3000]+/g, "").toLowerCase();
+          if (h2 && h2 === contentArea.firstElementChild && norm(h2.textContent) === norm(curCh.name)) h2.style.display = "none";
+        }
       }
 
       function selectChapter(id) {
@@ -23891,9 +23908,10 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           details.className = "nb-collapsible-section";
           details.style.cssText = "margin:.8rem 0";
           const summary = document.createElement("summary");
-          summary.innerHTML = h3.innerHTML;
+          // v610: 右邊加「▸ 點開 / ▾ 收起」提示,不然跟一般小標長一樣,看不出可以點
+          summary.innerHTML = h3.innerHTML + '<span class="nb-fold-hint"></span>';
           summary.style.cssText =
-            "cursor:pointer;font-weight:700;color:#7c3aed;padding:.55rem .85rem;background:#f3e8ff;border-radius:8px;font-size:1rem;list-style:none";
+            "cursor:pointer;font-weight:700;color:#7c3aed;padding:.55rem .85rem;background:#f3e8ff;border-radius:8px;font-size:1rem;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:.5rem";
           details.appendChild(summary);
           h3.replaceWith(details);
           siblings.forEach((s) => details.appendChild(s));
@@ -24581,6 +24599,9 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         });
         // 概念標籤 [[xxx]]
         s = s.replace(/\[\[([^\]]+)\]\]/g, '<span class="ctag">$1</span>');
+        // v610: 中文旁的關鍵字不要多一個半形空格 (AI 愛寫「[[X]] 是」,渲染後看起來像兩個空格;標籤本身有留白)
+        s = s.replace(/([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]) +(<span class="ctag">)/g, "$1$2");
+        s = s.replace(/(<\/span>) +(?=[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef])/g, "$1");
         // 子標籤白名單：只有這些抽象欄位詞才當灰藍 label，其他「**xxx**：」維持主項目紫色 highlight
         const SUBLABEL_WORDS = new Set([
           "特點",

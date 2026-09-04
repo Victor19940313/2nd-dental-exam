@@ -146,21 +146,95 @@
     });
   });
 
+  // v577: 手機登入卡在空白的 firebaseapp.com 頁 (HUA 朋友回報)
+  //   原因:手機上 signInWithPopup 開的新分頁登完 Google 後,回不到原分頁 (被 in-app 瀏覽器 /
+  //   Samsung / 第三方 cookie 限制擋掉),就停在空白的 __/auth/handler。
+  //   作法:Android / 一般手機瀏覽器改走 signInWithRedirect (同一個分頁來回,不靠彈窗);
+  //        iOS Safari 留 popup (Safari 的 ITP 反而會擋 redirect);popup 失敗一律退回 redirect;
+  //        LINE / FB / IG 內建瀏覽器 Google 根本不給登,直接引導用外部瀏覽器開 (LINE 可用 openExternalBrowser=1)。
+  const UA = navigator.userAgent || "";
+  const IN_APP = /Line\/|FBAN|FBAV|FB_IAB|Instagram|Messenger|MicroMessenger|Twitter/i.test(UA);
+  const IS_IOS = /iPhone|iPad|iPod/i.test(UA) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(UA));
+  const IS_ANDROID = /Android/i.test(UA);
+  const IS_MOBILE = IS_IOS || IS_ANDROID;
+  function loginMethod() {
+    if (IN_APP) return "inapp";
+    if (IS_ANDROID) return "redirect";
+    if (IS_IOS) return "popup";
+    return "popup";
+  }
+  function openExternal() {
+    const url = location.href.split("#")[0];
+    if (/Line\//i.test(UA)) {
+      location.href = url + (url.includes("?") ? "&" : "?") + "openExternalBrowser=1";
+      return;
+    }
+    try {
+      navigator.clipboard && navigator.clipboard.writeText(url);
+    } catch (e) {}
+    alert(
+      "這個 App 內建的瀏覽器不能用 Google 登入。\n\n請點右上角「⋯」選「用瀏覽器開啟」(或複製網址貼到 Chrome / Safari),再登入一次。\n\n網址已幫你複製好了。",
+    );
+  }
   async function signIn() {
+    const method = loginMethod();
+    if (method === "inapp") {
+      openExternal();
+      return;
+    }
+    if (method === "redirect") {
+      try {
+        sessionStorage.setItem("auth_redirect_pending", "1");
+      } catch (e) {}
+      try {
+        await auth.signInWithRedirect(provider);
+      } catch (e) {
+        alert("登入失敗: " + (e.message || e.code));
+      }
+      return;
+    }
     try {
       await auth.signInWithPopup(provider);
     } catch (e) {
-      // popup 被關 or blocked
-      if (e.code === "auth/popup-blocked") {
-        alert("瀏覽器擋了彈窗，請允許此網站彈窗後再試");
-      } else if (
-        e.code !== "auth/popup-closed-by-user" &&
-        e.code !== "auth/cancelled-popup-request"
+      if (e.code === "auth/popup-closed-by-user" || e.code === "auth/cancelled-popup-request") return;
+      // popup 被擋 / 這個環境不支援 → 退回 redirect
+      if (
+        e.code === "auth/popup-blocked" ||
+        e.code === "auth/operation-not-supported-in-this-environment" ||
+        e.code === "auth/web-storage-unsupported" ||
+        IS_MOBILE
       ) {
-        alert("登入失敗: " + (e.message || e.code));
+        try {
+          sessionStorage.setItem("auth_redirect_pending", "1");
+        } catch (e2) {}
+        try {
+          await auth.signInWithRedirect(provider);
+          return;
+        } catch (e3) {
+          alert("登入失敗: " + (e3.message || e3.code));
+          return;
+        }
       }
+      alert("登入失敗: " + (e.message || e.code));
     }
   }
+  // redirect 回來:把結果收下 (成功會走 onAuthStateChanged),失敗要讓人看到原因
+  try {
+    auth
+      .getRedirectResult()
+      .then(function () {
+        try {
+          sessionStorage.removeItem("auth_redirect_pending");
+        } catch (e) {}
+      })
+      .catch(function (e) {
+        try {
+          sessionStorage.removeItem("auth_redirect_pending");
+        } catch (e2) {}
+        if (e && e.code && e.code !== "auth/no-auth-event")
+          alert("登入失敗: " + (e.message || e.code) + "\n\n請再試一次;若一直失敗,換用 Chrome 或 Safari 開啟。");
+      });
+  } catch (e) {}
 
   async function signOutFn() {
     try {
@@ -244,6 +318,7 @@
     isReady: function () {
       return authReady;
     },
+    _loginMethod: loginMethod, // v577 回測用
     ready: readyPromise, // await Auth.ready → 拿到 user 或 null,但「確定了」
     _toggleMenu: function (el) {
       if (el && el.classList) el.classList.toggle("open");

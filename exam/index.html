@@ -997,6 +997,8 @@
         display: flex;
         align-items: center;
         gap: 0.6rem;
+        flex-wrap: wrap; /* v632: iPad (820 寬) 按鈕列放不下會撐出橫向捲軸 → 允許換行 */
+        justify-content: flex-end;
       }
       .btn-mode {
         white-space: nowrap; /* v584: 任何寬度都不在字中間折行 */
@@ -2435,6 +2437,40 @@
       .wb2-rowi .r .go { background: var(--purple); color: #fff; border-color: var(--purple); }
       .wb2-rowi .st { font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
       .wb2-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 0.35rem; vertical-align: middle; }
+      /* v632: 每題可收合展開 — 題目/圖/選項/正解/詳解/標記 全在裡面,不跳頁 */
+      .wb2-q { border-top: 1px solid #f1f5f9; }
+      .wb2-q:first-child { border-top: 0; }
+      .wb2-q > summary.wb2-rowi { list-style: none; border-top: 0; cursor: pointer; }
+      .wb2-q > summary::-webkit-details-marker { display: none; }
+      .wb2-q > summary .no::before { content: '▸'; display: inline-block; width: 0.9em; color: #94a3b8; font-size: 0.8rem; transition: transform 0.15s; }
+      .wb2-q[open] > summary .no::before { transform: rotate(90deg); }
+      .wb2-q[open] > summary.wb2-rowi { background: #faf5ff; }
+      .wb2-q[open] > summary .t { display: block; -webkit-line-clamp: unset; overflow: visible; white-space: normal; font-weight: 700; line-height: 1.6; }
+      .wb2-qbody { padding: 0.2rem 0.9rem 0.9rem 2.2rem; background: #faf5ff; border-top: 1px dashed #e9d5ff; }
+      .wb2-qbody:empty { display: none; }
+      .wb2-qimg { display: block; max-width: min(100%, 520px); max-height: 360px; border-radius: 10px; margin: 0.6rem 0; cursor: zoom-in; border: 1px solid #e2e8f0; background: #fff; }
+      .wb2-qbody .opts-display { margin: 0.5rem 0 0.4rem; }
+      .wb2-qbody .opt-row { background: #fff; }
+      .wb2-qbody .opt-row img { max-width: 100%; max-height: 220px; border-radius: 6px; cursor: zoom-in; }
+      .wb2-qans { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; align-items: center; font-size: 0.85rem; font-weight: 800; color: #15803d; margin: 0.35rem 0 0.5rem; }
+      .wb2-qans .last { color: #dc2626; }
+      .wb2-qans .none { color: #94a3b8; font-weight: 600; }
+      .wb2-qmarks { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; padding: 0.45rem 0.55rem; background: #fff; border: 1px dashed #d1d5db; border-radius: 8px; margin-bottom: 0.6rem; font-size: 0.75rem; color: #6b7280; }
+      .wb2-qmarks button { font: inherit; font-size: 0.78rem; font-weight: 700; border-radius: 7px; padding: 0.3rem 0.55rem; border: 1.5px solid var(--c, #d1d5db); background: #fff; color: #374151; cursor: pointer; }
+      .wb2-qmarks button.on { background: var(--c); color: #fff; border-color: var(--c); }
+      .wb2-qmarks .cnt { margin-left: auto; color: #9ca3af; font-size: 0.74rem; }
+      .wb2-qbody .gemini-expl, .wb2-qbody .nb-expl, .wb2-qbody .clinical-expl { background: #fff; }
+      .wb2-qbody .wb2-noexpl { color: #9ca3af; font-size: 0.85rem; text-align: center; padding: 0.6rem; }
+      /* v632: 昨日錯題 (從首頁搬進錯題本;沒有也顯示,讓人知道有這功能) */
+      .wb2-yday { display: flex; align-items: center; gap: 0.7rem; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 14px; padding: 0.6rem 0.9rem; margin-bottom: 0.9rem; }
+      .wb2-yday .ic { font-size: 1.4rem; line-height: 1; }
+      .wb2-yday .tx { flex: 1; min-width: 0; }
+      .wb2-yday .tt { font-weight: 900; color: #92400e; font-size: 0.92rem; }
+      .wb2-yday .sb { font-size: 0.78rem; color: #78350f; margin-top: 0.1rem; }
+      .wb2-yday .yd-go { font: inherit; font-weight: 800; font-size: 0.85rem; background: #d97706; color: #fff; border: 0; border-radius: 9px; padding: 0.5rem 0.95rem; cursor: pointer; white-space: nowrap; }
+      .wb2-yday.zero { background: #f8fafc; border-color: #e2e8f0; }
+      .wb2-yday.zero .tt { color: #64748b; }
+      .wb2-yday.zero .sb { color: #94a3b8; }
       .wb2-more-row { padding: 0.55rem 0.9rem; text-align: center; font-size: 0.82rem; color: var(--purple); border-top: 1px solid #f1f5f9; cursor: pointer; font-weight: 700; }
       .wb2-pager { display: flex; justify-content: center; gap: 0.4rem; margin: 0.8rem 0; font-size: 0.82rem; flex-wrap: wrap; }
       .wb2-pager button { font: inherit; font-size: 0.82rem; padding: 0.25rem 0.6rem; border: 1.5px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer; }
@@ -2456,6 +2492,10 @@
         .wb2-acc .bar { display: none; }
         .wb2-rowi { grid-template-columns: 1fr; }
         .wb2-rowi .r { justify-content: flex-end; }
+        .wb2-qbody { padding: 0.2rem 0.7rem 0.8rem 0.7rem; }
+        .wb2-qimg { max-height: 260px; }
+        .wb2-yday { flex-wrap: wrap; }
+        .wb2-yday .yd-go { width: 100%; }
         .wb2-sort { margin-left: 0; width: 100%; }
         .wb2-start .opts { gap: 0.5rem 0.8rem; }
         #screen-wrongbook { padding-bottom: 9.5rem; }
@@ -6073,8 +6113,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v631"></script>
-    <link rel="stylesheet" href="../skin.css?v=v631" />
+      <script src="../skin.js?v=v632"></script>
+    <link rel="stylesheet" href="../skin.css?v=v632" />
   </head>
   <body>
     <!-- HEADER -->
@@ -6753,7 +6793,7 @@
             "
           ></div>
         </div>
-        <button class="btn-exit" onclick="showHome()">← 返回</button>
+        <button class="btn-exit" id="btn-practice-exit" onclick="practiceBack()">← 返回</button>
       </div>
 
       <div class="question-area">
@@ -7512,6 +7552,7 @@
         </div>
       </div>
       <div class="wb2-summary" id="wb2-summary"></div>
+      <div class="wb2-yday" id="wb2-yday"></div>
       <div class="wb2-filters">
         <div class="wb2-lab">科目</div>
         <div class="wb-filters" id="wb-filters">
@@ -7545,7 +7586,7 @@
         </div>
       </div>
       <div class="wb2-search"><input type="search" id="wb2-search" placeholder="🔍 搜題目關鍵字、題號（例如 111-1-3）" oninput="setWBQuery(this.value)" /></div>
-      <div class="wb2-lab" style="margin: 0.2rem 0 0.4rem">考點（點開才看題目；平常只看這一層就夠）</div>
+      <div class="wb2-lab" style="margin: 0.2rem 0 0.4rem">考點（點考點展開題目列表；點題目展開詳解）</div>
       <div class="wb-list" id="wb-list"></div>
       <div class="wb2-pager" id="wb2-pager"></div>
       <input type="file" id="wb-import-file" accept=".json" style="display: none" onchange="handleWBImport(event)" />
@@ -11844,6 +11885,13 @@
         document.getElementById("btn-wrongbook").classList.remove("active");
         const nbBtn = document.getElementById("btn-notebook");
         if (nbBtn) nbBtn.classList.remove("active");
+        // v632: 從錯題本進來 → 返回鈕改「回錯題本」
+        const pxb = document.getElementById("btn-practice-exit");
+        if (pxb) pxb.textContent = typeof _fromWrongbook !== "undefined" && _fromWrongbook ? "← 回錯題本" : "← 返回";
+      }
+      function practiceBack() {
+        if (typeof _fromWrongbook !== "undefined" && _fromWrongbook) showWrongbook();
+        else showHome();
       }
 
       // v352:這個版本之前被下面 line 6058 那個同名函式覆寫了 → 刪掉，改用統一版(見下方 resumePractice)
@@ -28985,6 +29033,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       const WB_GROUPS_PER_PAGE = 10;
       const WB_ROWS_PER_CHUNK = 20;
       const wbOpen = new Set(); // 展開中的群組 key
+      const wbQOpen = new Set(); // v632: 展開中的題目 qid
       const wbShown = {}; // key → 目前顯示幾列
       let _fromWrongbook = false; // 這輪練習是不是從錯題本進來 (答對自動移出用)
       // ═══ v572: 全站「大家怎麼答」統計 — 目前只默默記錄,不顯示 (HUA: 會員還沒起來先不開放) ═══
@@ -29269,6 +29318,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             if (isWrong) st[qid].wrong++;
             else st[qid].everCorrect = true;
             st[qid].lastCorrect = !isWrong;
+            st[qid].lastAns = e.userAnswers[qid]; // v632
           });
         });
         return st;
@@ -29333,6 +29383,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             `<div class="s" onclick="document.getElementById('wb2-onlywrong').checked=true;wbSetOpt();showToast('已勾「只練還沒答對的」')"><div class="n" style="color:#ef4444">${notOK}</div><div class="l">還沒答對過</div></div>` +
             `<div class="s" onclick="setWBMark(document.querySelector('[data-wbm=learning]'),'learning')"><div class="n" style="color:#f59e0b">${learning}</div><div class="l">❓ 一知半解</div></div>` +
             `<div class="s"><div class="n" style="color:#22c55e">${week}</div><div class="l">這週新加</div></div>`;
+        _renderWbYday();
         const statsEl = document.getElementById("wb-stats");
         // 各科 / 各標記 數量 (小字)
         const bySubj = { all: allFlagged.length, ya3: 0, ya4: 0, ya5: 0, ya6: 0 };
@@ -29417,9 +29468,13 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
               else if (h && h.wrong) right = `<span class="st" style="color:#ef4444">錯 ${h.wrong}</span>`;
               else right = `<span class="st" style="color:#94a3b8">沒做過</span>`;
               const qidEsc = q.id.replace(/'/g, "");
-              html += `<div class="wb2-rowi"><span class="no">${q.year}-${q.session}-${q.number}</span>` +
-                `<span class="t" onclick="startFromWrongbook('${qidEsc}')" title="點題目直接練這題"><span class="wb2-dot" style="background:${DOT[st.status] || DOT.none}"></span>${esc(q.question)}</span>` +
-                `<span class="r">${right}<button class="go" type="button" onclick="startFromWrongbook('${qidEsc}')">練</button><button type="button" onclick="removeFromWB('${qidEsc}')">🚩 移出</button></span></div>`;
+              const qOpen = wbQOpen.has(q.id);
+              // v632: 一題一個 <details>,點題目就地展開圖/選項/正解/詳解/標記,不跳頁
+              html += `<details class="wb2-q" data-qid="${qidEsc}"${qOpen ? " open" : ""} ontoggle="wbQToggle(this)">` +
+                `<summary class="wb2-rowi"><span class="no">${q.year}-${q.session}-${q.number}</span>` +
+                `<span class="t" title="點一下展開題目與詳解"><span class="wb2-dot" style="background:${DOT[st.status] || DOT.none}"></span>${esc(q.question)}</span>` +
+                `<span class="r">${right}<button class="go" type="button" onclick="event.preventDefault();event.stopPropagation();startFromWrongbook('${qidEsc}')">練</button><button type="button" onclick="event.preventDefault();event.stopPropagation();removeFromWB('${qidEsc}')">🚩 移出</button></span></summary>` +
+                `<div class="wb2-qbody">${qOpen ? _wbQCardHtml(q, hist) : ""}</div></details>`;
             });
             if (items.length > shown) html += `<div class="wb2-more-row" onclick="wbMoreRows('${keyEsc}')">再看 ${Math.min(WB_ROWS_PER_CHUNK, items.length - shown)} 題 ▾（還有 ${items.length - shown} 題）</div>`;
             html += "</div>";
@@ -29441,9 +29496,102 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       function removeFromWB(id) {
         if (!qState[id]) return;
         qState[id].flagged = false;
+        wbQOpen.delete(id);
         persist(id);
         renderWrongbook();
         showToast("已從錯題本移除");
+      }
+      // ═══ v632: 錯題本每題就地展開 ═══
+      function wbQToggle(el) {
+        const qid = el && el.dataset && el.dataset.qid;
+        if (!qid) return;
+        if (el.open) {
+          wbQOpen.add(qid);
+          const body = el.querySelector(".wb2-qbody");
+          if (body && !body.innerHTML.trim()) {
+            const q = QS.find((x) => x.id === qid);
+            if (q) {
+              body.innerHTML = _wbQCardHtml(q, _wbHistoryStats());
+              try { applyOptMarks(q.id); } catch (e) {}
+            }
+          }
+        } else wbQOpen.delete(qid);
+      }
+      function _wbImgSrc(src) {
+        return /^https?:\/\//.test(src) ? src : "images/" + src;
+      }
+      function _wbQCardHtml(q, hist) {
+        const LETTERS = ["A", "B", "C", "D", "E"];
+        const h = (hist && hist[q.id]) || {};
+        const correctArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        const lastAns = h.lastAns;
+        const lastWrong = lastAns != null && !correctArr.includes(lastAns);
+        const imgHtml = q.image
+          ? `<img class="wb2-qimg" src="${escapeHtml(_wbImgSrc(q.image))}" alt="題目圖片" loading="lazy" onerror="this.style.display='none'">`
+          : "";
+        const optsHtml = (q.options || [])
+          .map((opt, i) => {
+            const t = (opt || "").replace(/^\([A-E]\)\s*/, "");
+            const isImg = /<img/i.test(t);
+            const isC = correctArr.includes(i);
+            const isL = lastWrong && i === lastAns;
+            const cls = "opt-row" + (isImg ? " opt-row-noMark" : "") + (isC ? " review-correct" : isL ? " review-wrong" : "");
+            const mk = isC ? `<strong class="review-marker"> ✓ 正解</strong>` : isL ? `<strong class="review-marker"> ✗ 上次選的</strong>` : "";
+            const click = isImg ? "" : ` onclick="cycleOptMark('${q.id}',${i}); applyOptMarks('${q.id}');"`;
+            const body = isImg ? t : escapeHtml(t); // 圖片點擊放大交給 v441 全域 lightbox (自己再掛 onclick 會開兩層)
+            return `<div class="${cls}" id="opt-row-${i}" data-idx="${i}" data-qid-scope="${q.id}"${click}><span class="opt-letter">(${LETTERS[i]})</span><span class="opt-text">${body}</span>${mk}</div>`;
+          })
+          .join("");
+        const corrL = correctArr.map((c) => LETTERS[c] || "?").join("/");
+        let ansHtml = `<span>✅ 正解 ${corrL}</span>`;
+        if (lastAns != null) ansHtml += lastWrong ? `<span class="last">✗ 上次選 ${LETTERS[lastAns] || "?"}</span>` : `<span>上次答對</span>`;
+        else ansHtml += `<span class="none">還沒做過</span>`;
+        if (h.done) ansHtml += `<span class="none">做過 ${h.done} 次${h.wrong ? `・錯 ${h.wrong} 次` : ""}</span>`;
+        const st = getS(q.id);
+        const cur = st.status || "none";
+        const mb = (val, emoji, label, color) =>
+          `<button type="button" class="${cur === val ? "on" : ""}" style="--c:${color}" onclick="wbMarkQ('${q.id}','${val}')">${emoji} ${label}</button>`;
+        const marks =
+          `<div class="wb2-qmarks"><span>標記:</span>` +
+          mb("understood", "🟢", "送分題", "#22c55e") +
+          mb("guessed", "🤔", "亂猜一通", "#a78bfa") +
+          mb("learning", "❓", "一知半解", "#eab308") +
+          mb("give_up", "❌", "不需要懂", "#ef4444") +
+          (cur !== "none" ? `<button type="button" style="--c:#d1d5db;border-style:dashed;color:#6b7280" onclick="wbMarkQ('${q.id}','none')">✕ 清除</button>` : "") +
+          `<span class="cnt">已寫過 ${st.count || 0} 次</span></div>`;
+        const expl = (st.expl_override ?? q.explanation) || "";
+        const src = (st.src_override ?? q.explanation_source) || "";
+        const hasAny = expl || q.explanation_notebooklm || q.clinical || q.explanation_pending;
+        const explHtml = hasAny
+          ? `<div>${clinicalExplBlock(q)}${geminiExplBlock(expl, src, q.id)}${nbExplBlock(q)}</div>`
+          : `<div class="wb2-noexpl">尚無詳解</div>`;
+        return imgHtml + `<div class="opts-display">${optsHtml}</div><div class="wb2-qans">${ansHtml}</div>` + marks + explHtml;
+      }
+      async function wbMarkQ(qid, status) {
+        if (!qState[qid]) qState[qid] = { status: "none", count: 0 };
+        qState[qid].status = status;
+        qState[qid].updatedAt = Date.now();
+        try { await persist(qid); } catch (e) {}
+        renderWrongbook();
+        showToast(status === "none" ? "已清除標記" : "已標記");
+      }
+      // ═══ v632: 昨日錯題 (原本只在首頁卡片、沒錯題就整張消失 → HUA 以為功能不見了) ═══
+      function _renderWbYday() {
+        const el = document.getElementById("wb2-yday");
+        if (!el) return;
+        let n = 0;
+        try { n = getYesterdayWrongQids().length; } catch (e) {}
+        if (n > 0) {
+          el.className = "wb2-yday";
+          el.innerHTML = `<span class="ic">📅</span><div class="tx"><div class="tt">昨日錯題 ${n} 題</div><div class="sb">昨天答錯的題目（不論有沒有 🚩），趁印象還在複習一遍</div></div><button type="button" class="yd-go" onclick="wbStartYesterday()">▶ 複習昨天錯的</button>`;
+        } else {
+          el.className = "wb2-yday zero";
+          el.innerHTML = `<span class="ic">📅</span><div class="tx"><div class="tt">昨日錯題</div><div class="sb">昨天沒有答錯的題目。有做題答錯的隔天，這裡會出現「複習昨天錯的」</div></div>`;
+        }
+      }
+      function wbStartYesterday() {
+        _fromWrongbook = true; // 返回鈕回錯題本
+        startYesterdayWrong();
       }
 
       function _wbStartWith(list, startIdx) {
@@ -29702,11 +29850,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../visitor-log.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v631"></script>
-    <script src="comment-system.js?v=v631"></script>
-    <script src="../auth.js?v=v631"></script>
+    <script src="../sync.js?v=v632"></script>
+    <script src="comment-system.js?v=v632"></script>
+    <script src="../auth.js?v=v632"></script>
     <script src="../migration.js"></script>
-    <script src="../subscription.js?v=v631"></script>
+    <script src="../subscription.js?v=v632"></script>
     <script src="../device-guard.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
@@ -30210,7 +30358,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v631" defer></script>
-    <script src="../update.js?v=v631" defer></script>
+      <script src="../tour.js?v=v632" defer></script>
+    <script src="../update.js?v=v632" defer></script>
 </body>
 </html>

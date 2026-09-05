@@ -568,3 +568,13 @@ html[data-skin="night"] body :is(.chip, .ts-chip, .bf-chip, .wb-chip, .how-opt, 
 html[data-skin="night"] body .btn-mark.active { outline: 2px solid #fff !important; outline-offset: 1px; filter: brightness(1.15); }
 html[data-skin="night"] body .nb-toc-item.active, html[data-skin="night"] body .ch-item.active, html[data-skin="night"] body .pub-item.active, html[data-skin="night"] body .topic-item.active { background-color: #3a3357 !important; color: #fff !important; border-left: 3px solid var(--sk-accent) !important; }
 html[data-skin="night"] body .plan.selected { border-color: var(--sk-accent) !important; box-shadow: 0 0 0 2px var(--sk-accent) !important; background-color: #2e2a3d !important; color: var(--sk-ink) !important; }
+
+/* v632 錯題本就地展開 + 昨日錯題 (夜讀) */
+html[data-skin="night"] body :is(.wb2-qbody, .wb2-q[open] > summary.wb2-rowi, .wb2-yday, .wb2-qmarks, .wb2-qbody .opt-row, .wb2-qbody .gemini-expl, .wb2-qbody .nb-expl, .wb2-qbody .clinical-expl) { background-color: #22242b !important; color: var(--sk-ink) !important; border-color: #44465a !important; }
+html[data-skin="night"] body .wb2-q[open] > summary.wb2-rowi { background-color: #2b2d36 !important; }
+html[data-skin="night"] body :is(.wb2-yday .tt, .wb2-yday .sb, .wb2-qans, .wb2-qmarks span) { color: var(--sk-ink) !important; }
+html[data-skin="night"] body .wb2-yday.zero :is(.tt, .sb) { color: #a0a0aa !important; }
+html[data-skin="night"] body .wb2-yday .yd-go { background: var(--sk-accent) !important; color: #17181d !important; }
+html[data-skin="night"] body .wb2-qmarks button:not(.on) { background-color: #2b2d36 !important; color: var(--sk-ink) !important; }
+html[data-skin="night"] body .wb2-qmarks button.on { color: #17181d !important; }
+html[data-skin="night"] body .wb2-qimg { background-color: #fff !important; }

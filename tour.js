@@ -117,9 +117,11 @@
         },
         {
           s: "#btn-resume",
-          t: "回到考題",
-          b: "不管你跑去筆記本、口訣與重點分享區還是關掉網頁，按這裡就回到上次寫到的那一題，接著寫。",
-        },        {
+          t: "↩ 回到考題（很重要）",
+          b: "寫到一半突然想翻筆記本或口訣區？直接去。回來按這顆，一秒跳回剛剛那份考卷的那一題，不會從頭來。關掉網頁、換手機換電腳也一樣接得上。（開始寫題後這顆才會出現）",
+          reveal: true, // v636: 還沒寫過題時這顆是藏的,教學會先把它露出來講,講完再藏回去
+        },
+        {
           s: "#btn-browse",
           t: "瀏覽：用關鍵字找題目",
           b: "想找某個關鍵字的所有題目？點「瀏覽」，打關鍵字或題號就把 11 年的題目全翻出來，還能照科目、標記篩。",
@@ -456,7 +458,9 @@
       if (q(s.s)) return true;
       // 在收合的 details 裡也算 (顯示那步時會先展開)
       var any = document.querySelector(s.s.split(",")[0].trim());
-      return !!(any && any.closest("details"));
+      if (any && any.closest("details")) return true;
+      // v636: 標了 reveal 的 (例如「回到考題」還沒出現) 或藏在手機收合頁首裡的分頁鈕 → 顯示那步時會先露出來
+      return !!(any && (s.reveal || any.closest(".header-right")));
     });
     if (!steps.length) return false;
     ensureEls();
@@ -497,9 +501,11 @@
     }
     active.i = i;
     var s = active.steps[i];
+    unreveal(); // v636: 上一步若有暫時露出的東西先收回
     var el = q(s.s);
     if (el && el.closest("details") && !el.closest("details").open) openDetails(s.s);
     if (!el && openDetails(s.s)) el = q(s.s);
+    if (!el) el = reveal(s);
     if (!el) {
       active.steps.splice(i, 1);
       if (!active.steps.length) return end(true);
@@ -580,8 +586,35 @@
     els.card.style.left = left + "px";
     els.card.style.top = top + "px";
   }
+  // v636: 暫時露出目標 — (1) reveal 步驤:目標被 JS 藏起來 (display:none) 就先顯示;(2) 手機收合頁首:把頁首展開 (nav-open)。下一步或結束時 unreveal() 還原
+  function reveal(s) {
+    var raw = document.querySelector(s.s.split(",")[0].trim());
+    if (!raw) return null;
+    var hdr = raw.closest(".header");
+    if (hdr && !hdr.classList.contains("nav-open")) {
+      hdr.classList.add("nav-open");
+      active.navOpened = hdr;
+    }
+    if (s.reveal && !visible(raw)) {
+      active.revealed = { el: raw, disp: raw.style.display };
+      raw.style.display = "inline-block";
+    }
+    return visible(raw) ? raw : null;
+  }
+  function unreveal() {
+    if (!active) return;
+    if (active.revealed) {
+      active.revealed.el.style.display = active.revealed.disp;
+      active.revealed = null;
+    }
+    if (active.navOpened) {
+      active.navOpened.classList.remove("nav-open");
+      active.navOpened = null;
+    }
+  }
   function end(mark) {
     if (!active) return;
+    unreveal();
     if (mark) markDone(active.id);
     if (active.openedPane) { active.openedPane.classList.remove("open"); active.openedPane.style.zIndex = ""; } // v613
     active = null;

@@ -578,3 +578,7 @@ html[data-skin="night"] body .wb2-yday .yd-go { background: var(--sk-accent) !im
 html[data-skin="night"] body .wb2-qmarks button:not(.on) { background-color: #2b2d36 !important; color: var(--sk-ink) !important; }
 html[data-skin="night"] body .wb2-qmarks button.on { color: #17181d !important; }
 html[data-skin="night"] body .wb2-qimg { background-color: #fff !important; }
+
+/* v636 錯誤率說明 (夜讀) */
+html[data-skin="night"] body .ts-errhelp-body { background-color: #22242b !important; color: var(--sk-ink) !important; border-color: #44465a !important; }
+html[data-skin="night"] body .ts-errhelp > summary { color: var(--sk-accent) !important; }

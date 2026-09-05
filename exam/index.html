@@ -1342,6 +1342,15 @@
         background: #e2e8f0;
         border-radius: 4px;
       }
+      /* v636: 錯誤率說明 */
+      .ts-errhelp { padding: 0.15rem 0.85rem 0.35rem; font-size: 0.74rem; border-bottom: 1px solid #f1f5f9; }
+      .ts-errhelp > summary { list-style: none; cursor: pointer; color: var(--purple-dark); font-weight: 700; padding: 0.25rem 0; user-select: none; }
+      .ts-errhelp > summary::-webkit-details-marker { display: none; }
+      .ts-errhelp > summary:hover { text-decoration: underline; }
+      .ts-errhelp-body { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 10px; padding: 0.55rem 0.75rem; margin: 0.2rem 0 0.3rem; color: #374151; line-height: 1.65; }
+      .ts-errhelp-body p { margin: 0 0 0.35rem; }
+      .ts-errhelp-body ul { margin: 0; padding-left: 1.15em; }
+      .ts-errhelp-body li { margin: 0.15rem 0; }
       .topic-sidebar-title {
         font-size: 0.75rem;
         font-weight: 700;
@@ -6132,8 +6141,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v635"></script>
-    <link rel="stylesheet" href="../skin.css?v=v635" />
+      <script src="../skin.js?v=v636"></script>
+    <link rel="stylesheet" href="../skin.css?v=v636" />
   </head>
   <body>
     <!-- HEADER -->
@@ -6439,7 +6448,19 @@
               ></div>
             </div>
           </details>
-          
+          <!-- v636: 錯誤率說明 (HUA: 網站上要說明怎麼算,旁邊有個小提示可以點開) -->
+          <details class="ts-errhelp" id="ts-errhelp">
+            <summary>❔ 錯誤率怎麼算？</summary>
+            <div class="ts-errhelp-body">
+              <p><b>錯誤率 ＝ 這個考點裡「現在還會錯」的題數 ÷ 你做過的題數</b></p>
+              <ul>
+                <li>每答一題就會記，<b>不用等交卷</b>；做幾題就離開也算。</li>
+                <li>每一題只看<b>最近一次</b>：上次錯、這次對，就不算錯了。練會了數字就會降。</li>
+                <li>只算上面年份篩選有勾的年份。還沒做過的考點顯示「—」。</li>
+                <li>顏色：<span style="color:#dc2626;font-weight:700">40% 以上紅</span>、<span style="color:#ea580c;font-weight:700">25～40% 橘</span>、<span style="color:#059669;font-weight:700">25% 以下綠</span>。紅的就是你的弱點，先補它。</li>
+              </ul>
+            </div>
+          </details>
           <div id="topic-list"></div>
           </div>
 
@@ -9918,20 +9939,36 @@
         renderTopicSidebar();
       }
       window.toggleWrongPct = toggleWrongPct;
-      function _calcWrongRateStats() {
+      // v636: 每題「最近一次」是對還是錯 — 試卷紀錄 (照時間) 疊上作答當下記的 qState.lc/la,取較新的那個
+      //       (舊版是「錯過一次就永遠算錯」,練會了數字也不動;而且只有交卷過的回合才算 — HUA 覺得不直覺)
+      function _latestResults() {
         const eh =
           typeof _readExamHistorySync === "function"
             ? _readExamHistorySync()
             : JSON.parse(localStorage.getItem(uKey("examHistory")) || "[]");
-        const doneQids = new Set();
-        const wrongQids = new Set();
-        (eh || []).forEach((e) => {
-          const ans = e.userAnswers || {};
-          Object.keys(ans).forEach((qid) => doneQids.add(qid));
-          (e.wrongs || []).forEach((w) => {
-            if (w && w.qid) wrongQids.add(w.qid);
+        const last = {}; // qid → { ok, ts }
+        const tsOf = (e) => e.ts || (e.date ? Date.parse(String(e.date).replace(" ", "T")) || 0 : 0);
+        (eh || [])
+          .slice()
+          .sort((a, b) => tsOf(a) - tsOf(b))
+          .forEach((e) => {
+            const ts = tsOf(e);
+            const wrongs = typeof _reconstructWrongs === "function" ? _reconstructWrongs(e) : e.wrongs || [];
+            const wrong = new Set((wrongs || []).map((w) => w && w.qid).filter(Boolean));
+            Object.keys(e.userAnswers || {}).forEach((qid) => {
+              if (!last[qid] || ts >= last[qid].ts) last[qid] = { ok: !wrong.has(qid), ts };
+            });
           });
+        Object.keys(qState || {}).forEach((qid) => {
+          const st = qState[qid];
+          if (st && st.la && st.lc != null && (!last[qid] || st.la >= last[qid].ts)) last[qid] = { ok: !!st.lc, ts: st.la };
         });
+        return last;
+      }
+      function _calcWrongRateStats() {
+        const last = _latestResults();
+        const doneQids = new Set(Object.keys(last));
+        const wrongQids = new Set(Object.keys(last).filter((qid) => !last[qid].ok));
         // 按 subject+cat 聚合(跟 sidebarYearSet 聯動)
         const stats = {}; // {subj: {cat: {done, wrong}}}
         QS.forEach((q) => {
@@ -10026,9 +10063,9 @@
                 const pct = Math.round((st.wrong / st.done) * 100);
                 const col =
                   pct >= 40 ? "#dc2626" : pct >= 25 ? "#ea580c" : "#059669";
-                wrongPctHtml = `<span class="ti-err" title="試卷內錯 ${st.wrong}/${st.done} 題" style="color:${col}">錯 ${pct}%</span>`;
+                wrongPctHtml = `<span class="ti-err" title="做過 ${st.done} 題,目前還會錯 ${st.wrong} 題（每題只看最近一次）" style="color:${col}">錯 ${pct}%</span>`;
               } else {
-                wrongPctHtml = `<span class="ti-err ti-na" title="還沒在試卷模式做過">—</span>`;
+                wrongPctHtml = `<span class="ti-err ti-na" title="這個考點還沒做過題">—</span>`;
               }
             }
             // v548: 做過幾題 (分類練習進度) 進度條
@@ -12774,6 +12811,9 @@
           trackDailyCount(q);
           // ── 紀錄本輪分數 + 使用者實際選的選項（題號總覽要用）──
           practiceResults[q.id] = isCorrect;
+          // v636: 每答一題就記「最近一次對/錯」(考點錯誤率用),不用等交卷;隨 qState 同步
+          qState[q.id].lc = isCorrect ? 1 : 0;
+          qState[q.id].la = Date.now();
           // v572: 默默記錄全站「第一次作答」統計 (還沒開放顯示)
           _qstatRecord(q, idx, isCorrect, "practice", {
             skipped: !!qgridSkipped[practiceIdx],
@@ -24045,7 +24085,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         });
         document.addEventListener("click", (e) => {
           const h = document.querySelector(".header");
-          if (h && h.classList.contains("nav-open") && !e.target.closest(".header")) toggleHeaderNav(false);
+          if (h && h.classList.contains("nav-open") && !e.target.closest(".header") && !(window.Tour && Tour._active && Tour._active())) toggleHeaderNav(false); // v636: 教學進行中 (按「下一步」) 不要把展開的頁首收掉
         });
         try {
           new MutationObserver(updateNavCur).observe(hr, { attributes: true, subtree: true, attributeFilter: ["class"] });
@@ -29902,11 +29942,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../visitor-log.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v635"></script>
-    <script src="comment-system.js?v=v635"></script>
-    <script src="../auth.js?v=v635"></script>
+    <script src="../sync.js?v=v636"></script>
+    <script src="comment-system.js?v=v636"></script>
+    <script src="../auth.js?v=v636"></script>
     <script src="../migration.js"></script>
-    <script src="../subscription.js?v=v635"></script>
+    <script src="../subscription.js?v=v636"></script>
     <script src="../device-guard.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
@@ -30410,7 +30450,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v635" defer></script>
-    <script src="../update.js?v=v635" defer></script>
+      <script src="../tour.js?v=v636" defer></script>
+    <script src="../update.js?v=v636" defer></script>
 </body>
 </html>

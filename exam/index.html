@@ -6115,8 +6115,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v633"></script>
-    <link rel="stylesheet" href="../skin.css?v=v633" />
+      <script src="../skin.js?v=v634"></script>
+    <link rel="stylesheet" href="../skin.css?v=v634" />
   </head>
   <body>
     <!-- HEADER -->
@@ -11915,15 +11915,12 @@
           el.classList.add("sel");
           homeSubjs = new Set([el.dataset.subj]);
         } else {
-          // v461:年份改複選 (toggle add/remove)
+          // v634: 年份改回單選 (HUA: 照試卷練就是選一份試卷,不該複選)。年份列只在「照試卷練」看得到。
+          //       (v461 曾改複選;點已選的那個維持選中,一定有一份試卷)
           const y = el.dataset.ys;
-          if (homeYears.has(y)) {
-            homeYears.delete(y);
-            el.classList.remove("sel");
-          } else {
-            homeYears.add(y);
-            el.classList.add("sel");
-          }
+          document.querySelectorAll("#chips-year .chip").forEach((c) => c.classList.remove("sel"));
+          el.classList.add("sel");
+          homeYears = new Set([y]);
         }
         updateMatchCount();
       }
@@ -29885,11 +29882,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../visitor-log.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v633"></script>
-    <script src="comment-system.js?v=v633"></script>
-    <script src="../auth.js?v=v633"></script>
+    <script src="../sync.js?v=v634"></script>
+    <script src="comment-system.js?v=v634"></script>
+    <script src="../auth.js?v=v634"></script>
     <script src="../migration.js"></script>
-    <script src="../subscription.js?v=v633"></script>
+    <script src="../subscription.js?v=v634"></script>
     <script src="../device-guard.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
@@ -30393,7 +30390,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v633" defer></script>
-    <script src="../update.js?v=v633" defer></script>
+      <script src="../tour.js?v=v634" defer></script>
+    <script src="../update.js?v=v634" defer></script>
 </body>
 </html>

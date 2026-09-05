@@ -480,7 +480,7 @@ html[data-skin] .hl .body b, html[data-skin] .hl summary::after { color: var(--s
 html[data-skin] .hl[open] summary { background: var(--sk-accent-soft); }
 
 /* v569: 答完後工具列在風格下也一致 */
-html[data-skin] .expl-actions > button, html[data-skin] .mark-row > button { border-radius: 999px !important; }
+html[data-skin] .expl-actions > button, html[data-skin] .mark-row button { border-radius: 999px !important; }
 
 
 /* ───────── v626: 夜讀 — 各頁硬編碼的白底/深字 一次蓋掉 (對比稽核 audit_night.js 找出來的) ───────── */
@@ -491,7 +491,7 @@ html[data-skin="night"] body :is(.back, .wb-chip, .wb2-lab, .wb2-start, .wb2-sta
   .nb-toc-item, .nb-toc-pane, .nb-content-pane, .nb-chapter, .nb-chapter-nav, .nb-nav-btn, .nb-chapter-sources, .nb-menu, .nb-tb-btn,
   .terms-box, .terms-wrap, .terms-agree, .status-card, .status-text, .plan, .bank-info, .bank-row, .form, .field input, .notes, .redeem-box,
   .home-how, .home-how label, .home-start, .filter-card, .stats-card, .topic-sidebar, .topic-item, .ts-subj-hdr, .chip, .ts-chip,
-  .result-banner, .expl-box, .gemini-expl, .nb-expl, .clinical-expl, .gemini-expl-content, .expl-actions > button, .mark-row > button,
+  .result-banner, .expl-box, .gemini-expl, .nb-expl, .clinical-expl, .gemini-expl-content, .expl-actions > button, .mark-row button,
   .ch-item, .ch-meta, .editor-card, .editor-status, .comment-pane, .search-row input, .ch-search-top, .info-banner, .user-tag, .mn-legend,
   .sim-card, .sim-opt, #similar-modal .sim-card, .qgrid, .qgrid-toggle, .option, .options .option, .ans-btn,
   .ai-key-input, #ai-settings-overlay .modal, .modal, .nb-editor-tiptap, .ProseMirror) {

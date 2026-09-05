@@ -1733,7 +1733,10 @@
         .result-area .mark-row .mark-label {
           display: none;
         }
-        .result-area .mark-row > .btn-mark {
+        .result-area .mark-row .mark-btns {
+          display: contents;
+        }
+        .result-area .mark-row .btn-mark {
           padding: 0.5rem 0.1rem;
           font-size: 0.76rem;
           border-radius: 10px;
@@ -1741,7 +1744,7 @@
           white-space: nowrap;
           letter-spacing: -0.01em;
         }
-        .result-area .mark-row > .btn-flag {
+        .result-area .mark-row .btn-flag {
           order: 5;
           grid-column: span 2;
           padding: 0.45rem 0.3rem;
@@ -1750,7 +1753,7 @@
           border-width: 1.5px;
           text-align: center;
         }
-        .result-area .mark-row > .btn-count {
+        .result-area .mark-row .btn-count {
           order: 6;
           grid-column: span 2;
           margin-left: 0;
@@ -2522,7 +2525,7 @@
         gap: 0.45rem;
         row-gap: 0.5rem;
       }
-      .mark-row > button {
+      .mark-row button {
         padding: 0.42rem 0.85rem;
         font-size: 0.82rem;
         border-radius: 999px;
@@ -2541,6 +2544,20 @@
         flex-wrap: wrap;
         align-items: center;
         margin-bottom: 0.8rem;
+      }
+      /* v635: 「已寫過 N 次」不再 margin-left:auto 推到最右 — 寬度不夠時它會自己一個掉到第二行靠右,看起來很亂 (HUA)。
+         改成跟其他鈕一樣順著排,放得下就接在「不需要懂」後面,放不下就跟著換行、貼在最後一顆鈕旁邊。 */
+      .mark-btns {
+        display: contents;
+      }
+      /* v635: 「標記：」小字拿掉 (手機早就沒顯示) — 桌機卡片寬 648px,加上它會多 44px 放不下,「已寫過 N 次」就會掉到第二行 */
+      .mark-row .mark-label {
+        display: none;
+      }
+      .mark-row > .btn-count {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        margin-left: 0;
       }
       .mark-label {
         font-size: 0.78rem;
@@ -6115,8 +6132,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v634"></script>
-    <link rel="stylesheet" href="../skin.css?v=v634" />
+      <script src="../skin.js?v=v635"></script>
+    <link rel="stylesheet" href="../skin.css?v=v635" />
   </head>
   <body>
     <!-- HEADER -->
@@ -6893,6 +6910,8 @@
         </button>
         </div>
         <div class="mark-row">
+          <!-- v635: 標記鈕包一層 .mark-btns,「已寫過 N 次」固定在右邊同一列,不會自己掉到第二行 -->
+          <span class="mark-btns">
           <button
             class="btn-flag"
             id="mk-flag"
@@ -6930,6 +6949,7 @@
           >
             ❌ 不需要懂
           </button>
+          </span>
           <button class="btn-count" id="mk-count" onclick="incCountPractice()">
             已寫過 0 次
           </button>
@@ -29882,11 +29902,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../visitor-log.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v634"></script>
-    <script src="comment-system.js?v=v634"></script>
-    <script src="../auth.js?v=v634"></script>
+    <script src="../sync.js?v=v635"></script>
+    <script src="comment-system.js?v=v635"></script>
+    <script src="../auth.js?v=v635"></script>
     <script src="../migration.js"></script>
-    <script src="../subscription.js?v=v634"></script>
+    <script src="../subscription.js?v=v635"></script>
     <script src="../device-guard.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
@@ -30390,7 +30410,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v634" defer></script>
-    <script src="../update.js?v=v634" defer></script>
+      <script src="../tour.js?v=v635" defer></script>
+    <script src="../update.js?v=v635" defer></script>
 </body>
 </html>

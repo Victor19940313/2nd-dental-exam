@@ -2448,6 +2448,8 @@
       .wb2-q[open] > summary .t { display: block; -webkit-line-clamp: unset; overflow: visible; white-space: normal; font-weight: 700; line-height: 1.6; }
       .wb2-qbody { padding: 0.2rem 0.9rem 0.9rem 2.2rem; background: #faf5ff; border-top: 1px dashed #e9d5ff; }
       .wb2-qbody:empty { display: none; }
+      .wb2-q-hl > summary.wb2-rowi { animation: wbqhl 1.6s ease-out; }
+      @keyframes wbqhl { 0%, 35% { background: #e9d5ff; box-shadow: inset 4px 0 0 var(--purple); } 100% { background: #faf5ff; box-shadow: none; } }
       .wb2-qimg { display: block; max-width: min(100%, 520px); max-height: 360px; border-radius: 10px; margin: 0.6rem 0; cursor: zoom-in; border: 1px solid #e2e8f0; background: #fff; }
       .wb2-qbody .opts-display { margin: 0.5rem 0 0.4rem; }
       .wb2-qbody .opt-row { background: #fff; }
@@ -6113,8 +6115,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v632"></script>
-    <link rel="stylesheet" href="../skin.css?v=v632" />
+      <script src="../skin.js?v=v633"></script>
+    <link rel="stylesheet" href="../skin.css?v=v633" />
   </head>
   <body>
     <!-- HEADER -->
@@ -11890,8 +11892,14 @@
         if (pxb) pxb.textContent = typeof _fromWrongbook !== "undefined" && _fromWrongbook ? "← 回錯題本" : "← 返回";
       }
       function practiceBack() {
-        if (typeof _fromWrongbook !== "undefined" && _fromWrongbook) showWrongbook();
-        else showHome();
+        if (typeof _fromWrongbook !== "undefined" && _fromWrongbook) {
+          // v633: 回錯題本要回到剛剛那題 (目前練到的那題),不是最上面
+          try {
+            const cq = practiceList && practiceList[practiceIdx];
+            _wbReturnQid = cq ? cq.id : null;
+          } catch (e) {}
+          showWrongbook();
+        } else showHome();
       }
 
       // v352:這個版本之前被下面 line 6058 那個同名函式覆寫了 → 刪掉，改用統一版(見下方 resumePractice)
@@ -29034,6 +29042,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       const WB_ROWS_PER_CHUNK = 20;
       const wbOpen = new Set(); // 展開中的群組 key
       const wbQOpen = new Set(); // v632: 展開中的題目 qid
+      let _wbReturnQid = null; // v633: 從練習回錯題本時要捲到哪一題
       const wbShown = {}; // key → 目前顯示幾列
       let _fromWrongbook = false; // 這輪練習是不是從錯題本進來 (答對自動移出用)
       // ═══ v572: 全站「大家怎麼答」統計 — 目前只默默記錄,不顯示 (HUA: 會員還沒起來先不開放) ═══
@@ -29427,6 +29436,19 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           return a.year - b.year || a.session - b.session || a.number - b.number;
         };
 
+        // v633: 要回到的那題 → 翻到它的考點那一頁、展開考點與題目、列要畫到它
+        if (_wbReturnQid) {
+          const rq = QS.find((x) => x.id === _wbReturnQid);
+          const rkey = rq ? rq.subject + "||" + (getS(rq.id).topic || rq.topic || "未分類") : null;
+          const gi = rkey ? garr.findIndex((g) => g.key === rkey) : -1;
+          if (gi >= 0) {
+            wbPage = Math.floor(gi / WB_GROUPS_PER_PAGE) + 1;
+            wbOpen.add(rkey);
+            wbQOpen.add(rq.id);
+            const ri = garr[gi].items.slice().sort(rowSort).findIndex((x) => x.id === rq.id);
+            if (ri >= (wbShown[rkey] || WB_ROWS_PER_CHUNK)) wbShown[rkey] = ri + 1;
+          } else _wbReturnQid = null;
+        }
         statsEl.textContent = `共 ${allFlagged.length} 題 · ${Object.keys(groups).length} 個考點` + (list.length !== allFlagged.length ? ` · 篩選後 ${list.length} 題` : "");
 
         if (!list.length) {
@@ -29482,6 +29504,19 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           html += "</details>";
         });
         listEl.innerHTML = html;
+        if (_wbReturnQid) {
+          const rid = _wbReturnQid;
+          _wbReturnQid = null;
+          setTimeout(() => {
+            const d = listEl.querySelector(`details.wb2-q[data-qid="${rid}"]`);
+            if (!d) return;
+            d.open = true;
+            const y = d.getBoundingClientRect().top + window.scrollY - 110;
+            window.scrollTo({ top: Math.max(0, y), behavior: "instant" });
+            d.classList.add("wb2-q-hl");
+            setTimeout(() => d.classList.remove("wb2-q-hl"), 1800);
+          }, 80);
+        }
 
         const pg = document.getElementById("wb2-pager");
         if (pages > 1) {
@@ -29850,11 +29885,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../visitor-log.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v632"></script>
-    <script src="comment-system.js?v=v632"></script>
-    <script src="../auth.js?v=v632"></script>
+    <script src="../sync.js?v=v633"></script>
+    <script src="comment-system.js?v=v633"></script>
+    <script src="../auth.js?v=v633"></script>
     <script src="../migration.js"></script>
-    <script src="../subscription.js?v=v632"></script>
+    <script src="../subscription.js?v=v633"></script>
     <script src="../device-guard.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
@@ -30358,7 +30393,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v632" defer></script>
-    <script src="../update.js?v=v632" defer></script>
+      <script src="../tour.js?v=v633" defer></script>
+    <script src="../update.js?v=v633" defer></script>
 </body>
 </html>

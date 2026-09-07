@@ -6141,8 +6141,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v638"></script>
-    <link rel="stylesheet" href="../skin.css?v=v638" />
+      <script src="../skin.js?v=v639"></script>
+    <link rel="stylesheet" href="../skin.css?v=v639" />
   </head>
   <body>
     <!-- HEADER -->
@@ -8330,18 +8330,12 @@
               font-size: 0.85rem;
             "
           >
-            <!-- v638: 清單依 2026-09-07 實測 (ListModels + 各打一發) 更新;免費額度是「每個模型」分開算 -->
-            <option value="gemini-2.5-flash">
-              gemini-2.5-flash（預設｜省 token、額度大、品質穩）
+            <!-- v639: 2.5 系列對 2026-09 之後新申請的 key 已下架 (404 "no longer available to new users"),整批拿掉;預設改 3.5-flash-lite (新舊 key 都能用、免費每把 key 每天約 500 次) -->
+            <option value="gemini-3.5-flash-lite">
+              gemini-3.5-flash-lite（預設｜省 token、免費額度大（每把 key 每天約 500 次）、品質穩）
             </option>
             <option value="gemini-3.5-flash">
-              gemini-3.5-flash（最聰明｜免費額度每把 key 每天只有 20 次，用完自動改走 2.5-flash）
-            </option>
-            <option value="gemini-3.5-flash-lite">
-              gemini-3.5-flash-lite（新｜比 2.5-lite 聰明、一樣省 token｜免費額度不確定，撞到會自動換）
-            </option>
-            <option value="gemini-2.5-flash-lite">
-              gemini-2.5-flash-lite（最省、額度最高｜品質略低，適合大量整理）
+              gemini-3.5-flash（最聰明｜免費額度每把 key 每天只有 20 次，用完自動改走 3.5-flash-lite）
             </option>
             <option value="gemini-3.8-flash">
               gemini-3.8-flash（最新一代 flash｜免費額度不確定，撞到會自動換）
@@ -17250,7 +17244,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           return;
         }
         const sel = document.getElementById("ai-model-select");
-        const model = sel ? sel.value : "gemini-2.5-flash";
+        const model = sel ? sel.value : "gemini-3.5-flash-lite";
         if (btn) {
           btn.disabled = true;
           btn.textContent = "🔄 測試中…";
@@ -17366,7 +17360,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                 /UNAVAILABLE|high demand|overloaded/i.test(errTxt)
               ) {
                 diag =
-                  "🟡 503 忙線 → Google 端高負載，等幾分鐘再試 / 換 gemini-2.5-flash-lite";
+                  "🟡 503 忙線 → Google 端高負載，等幾分鐘再試 / 換 gemini-3.5-flash-lite";
               } else if (
                 res.status === 429 ||
                 /quota|exceed|rate.*limit/i.test(errTxt)
@@ -17672,6 +17666,20 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                   model = fallbackModel;
                 }
                 continue;
+              }
+              // v639: 404 = 這個模型對這把 key 不存在/已下架 (2.5 系列對新 key 回 "no longer available to new users")
+              //       → 是模型的問題不是 key 的問題,換 key 沒用,立刻改用備用模型
+              if (/^Gemini 404|NOT_FOUND|no longer available|not found for API version/i.test(msg)) {
+                cumStats.other++;
+                cumStats.keySwitches++;
+                tried.push(kMask + ":🔴404模型");
+                console.warn("[Gemini 404 模型不可用]", model, kMask, msg.slice(0, 160));
+                if (fallbackModel && model !== fallbackModel) {
+                  if (typeof showToast === "function" && !opts.quiet) showToast("⚠️ " + model + " 對這把 key 不提供,改用 " + fallbackModel + "…", 3000);
+                  model = fallbackModel;
+                  continue;
+                }
+                throw err;
               }
               cumStats.other++;
               tried.push(kMask + ":❌" + msg.slice(0, 40));
@@ -18786,19 +18794,20 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         );
       }
       // v638: 使用者能選的模型 (跟 AI 設定的下拉一致);存過已下架的 (2.5-pro / 3-flash / 2.0-exp / 1.5…) 一律回預設,不然每次都 404
-      const GEMINI_MODELS_OK = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite", "gemini-3.8-flash"];
+      // v639: 2.5-flash / 2.5-flash-lite 也拿掉 — 2026-09 之後新申請的 key 打 2.5 系列一律 404 "no longer available to new users",
+      //       舊 key 雖然還能打但免費額度也只剩每天 20 次,沒有留的價值;預設改 3.5-flash-lite (新舊 key 都能用,每天約 500 次)
+      const GEMINI_MODELS_OK = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"];
       function _normGeminiModel(m) {
-        return GEMINI_MODELS_OK.includes(m) ? m : "gemini-2.5-flash";
+        return GEMINI_MODELS_OK.includes(m) ? m : "gemini-3.5-flash-lite";
       }
       function _addQFallbackModel() {
         const cur = _normGeminiModel(
           localStorage.getItem(uKey("gemini_model")) ||
             localStorage.getItem("gemini_model"),
         );
-        // 3.5-flash 忙 → 2.5-flash;2.5-flash 忙 → 2.5-flash-lite;lite 忙 → 2.5-flash
-        if (/3\.5/.test(cur)) return "gemini-2.5-flash";
-        if (/lite/.test(cur)) return "gemini-2.5-flash";
-        return "gemini-2.5-flash-lite";
+        // lite 忙/額度用完 → 3.1-flash-lite (獨立額度、新舊 key 都有);3.5-flash / 3.8-flash 忙 → 3.5-flash-lite
+        if (/lite/.test(cur)) return "gemini-3.1-flash-lite";
+        return "gemini-3.5-flash-lite";
       }
 
       async function addQToNotebook(q, opts) {
@@ -29937,11 +29946,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../visitor-log.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v638"></script>
-    <script src="comment-system.js?v=v638"></script>
-    <script src="../auth.js?v=v638"></script>
+    <script src="../sync.js?v=v639"></script>
+    <script src="comment-system.js?v=v639"></script>
+    <script src="../auth.js?v=v639"></script>
     <script src="../migration.js"></script>
-    <script src="../subscription.js?v=v638"></script>
+    <script src="../subscription.js?v=v639"></script>
     <script src="../device-guard.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
@@ -30445,7 +30454,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v638" defer></script>
-    <script src="../update.js?v=v638" defer></script>
+      <script src="../tour.js?v=v639" defer></script>
+    <script src="../update.js?v=v639" defer></script>
 </body>
 </html>

@@ -8330,32 +8330,21 @@
               font-size: 0.85rem;
             "
           >
+            <!-- v638: 清單依 2026-09-07 實測 (ListModels + 各打一發) 更新;免費額度是「每個模型」分開算 -->
             <option value="gemini-2.5-flash">
               gemini-2.5-flash（預設｜省 token、額度大、品質穩）
             </option>
             <option value="gemini-3.5-flash">
               gemini-3.5-flash（最聰明｜免費額度每把 key 每天只有 20 次，用完自動改走 2.5-flash）
             </option>
+            <option value="gemini-3.5-flash-lite">
+              gemini-3.5-flash-lite（新｜比 2.5-lite 聰明、一樣省 token｜免費額度不確定，撞到會自動換）
+            </option>
             <option value="gemini-2.5-flash-lite">
               gemini-2.5-flash-lite（最省、額度最高｜品質略低，適合大量整理）
             </option>
-            <option value="gemini-3-flash">
-              gemini-3-flash（聰明｜額度小）
-            </option>
-            <option value="gemini-3-pro-preview">
-              gemini-3-pro-preview（最強推理｜額度很小、慢）
-            </option>
-            <option value="gemini-2.5-pro">
-              gemini-2.5-pro（聰明｜額度小、慢）
-            </option>
-            <option value="gemini-2.5-pro">
-              gemini-2.5-pro（聰明｜每天 100 次）
-            </option>
-            <option value="gemini-2.0-flash-exp">
-              gemini-2.0-flash-exp（實驗版｜每天 250 次）
-            </option>
-            <option value="gemini-1.5-flash">
-              gemini-1.5-flash（舊版備用｜每天 50 次）
+            <option value="gemini-3.8-flash">
+              gemini-3.8-flash（最新一代 flash｜免費額度不確定，撞到會自動換）
             </option>
           </select>
           <button
@@ -17556,9 +17545,10 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         // 允許 caller 指定 model(跑詳解時鎖死 3.5-flash);否則用使用者 AI 設定
         const model0 =
           opts.model ||
-          localStorage.getItem(uKey("gemini_model")) ||
-          localStorage.getItem("gemini_model") ||
-          "gemini-2.5-flash";
+          _normGeminiModel(
+            localStorage.getItem(uKey("gemini_model")) ||
+              localStorage.getItem("gemini_model"),
+          );
         let model = model0;
         // v590: 第一輪全撞 503 / 太慢 → 第二輪改用備用模型 (caller 給 opts.fallbackModel),不再用同一個忙線的模型硬等
         const fallbackModel = opts.fallbackModel && opts.fallbackModel !== model0 ? opts.fallbackModel : null;
@@ -18795,11 +18785,16 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           (why ? "\n> 💡 " + why : "") + "\n"
         );
       }
+      // v638: 使用者能選的模型 (跟 AI 設定的下拉一致);存過已下架的 (2.5-pro / 3-flash / 2.0-exp / 1.5…) 一律回預設,不然每次都 404
+      const GEMINI_MODELS_OK = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash-lite", "gemini-3.8-flash"];
+      function _normGeminiModel(m) {
+        return GEMINI_MODELS_OK.includes(m) ? m : "gemini-2.5-flash";
+      }
       function _addQFallbackModel() {
-        const cur =
+        const cur = _normGeminiModel(
           localStorage.getItem(uKey("gemini_model")) ||
-          localStorage.getItem("gemini_model") ||
-          "gemini-2.5-flash";
+            localStorage.getItem("gemini_model"),
+        );
         // 3.5-flash 忙 → 2.5-flash;2.5-flash 忙 → 2.5-flash-lite;lite 忙 → 2.5-flash
         if (/3\.5/.test(cur)) return "gemini-2.5-flash";
         if (/lite/.test(cur)) return "gemini-2.5-flash";
@@ -26238,10 +26233,10 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         renderGeminiKeyInputs(getGeminiKeys());
         const sel = document.getElementById("ai-model-select");
         if (sel)
-          sel.value =
+          sel.value = _normGeminiModel(
             localStorage.getItem(uKey("gemini_model")) ||
-            localStorage.getItem("gemini_model") ||
-            "gemini-2.5-flash";
+              localStorage.getItem("gemini_model"),
+          );
         const ghInp = document.getElementById("gh-token-input");
         if (ghInp) ghInp.value = getGithubToken();
         const ghRepo = document.getElementById("gh-repo-input");
@@ -26567,7 +26562,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           .filter(Boolean);
         setGeminiKeys(keys);
         const sel = document.getElementById("ai-model-select");
-        if (sel) localStorage.setItem(uKey("gemini_model"), sel.value);
+        if (sel) localStorage.setItem(uKey("gemini_model"), _normGeminiModel(sel.value));
         const ghInp = document.getElementById("gh-token-input");
         if (ghInp) setGithubToken(ghInp.value.trim());
         const ghRepo = document.getElementById("gh-repo-input");

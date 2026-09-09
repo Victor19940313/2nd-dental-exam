@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>許願 / Bug 回報 - 牙醫國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v648"></script>
-    <script src="skin.js?v=v648"></script>
+    <script src="version.js?v=v649"></script>
+    <script src="skin.js?v=v649"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -203,12 +203,12 @@
         margin-top: 2rem;
       }
     </style>
-      <link rel="stylesheet" href="skin.css?v=v648" />
+      <link rel="stylesheet" href="skin.css?v=v649" />
   </head>
   <body>
     <div class="wrap">
       <div class="top">
-        <a href="index.html" class="back">← 回首頁</a>
+        <a href="index.html" class="back">← <span data-site="homeLabel">牙醫主頁</span></a>
         <span id="ver-tag" style="font-size: 0.75rem; color: #9ca3af"></span>
       </div>
 
@@ -223,7 +223,7 @@
         <a
           href="index.html"
           style="color: #78350f; font-weight: 700; text-decoration: underline"
-          >回首頁登入</a
+          >回主頁登入</a
         >
       </div>
 
@@ -270,7 +270,7 @@
             >訂單編號 <span id="ok-id"></span
           ></small>
         </p>
-        <a href="index.html" class="btn2">回首頁</a>
+        <a href="index.html" class="btn2"><span data-site="homeLabel">牙醫主頁</span></a>
       </div>
 
       <p class="foot">
@@ -281,7 +281,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v648"></script>
+    <script src="auth.js?v=v649"></script>
     <script>
       document.getElementById("v").textContent = (
         window.APP_VERSION || ""
@@ -376,6 +376,6 @@
           }
         });
     </script>
-      <script src="tour.js?v=v648" defer></script>
+      <script src="tour.js?v=v649" defer></script>
 </body>
 </html>

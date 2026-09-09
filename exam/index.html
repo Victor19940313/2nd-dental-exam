@@ -6141,8 +6141,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v639"></script>
-    <link rel="stylesheet" href="../skin.css?v=v639" />
+      <script src="../skin.js?v=v640"></script>
+    <link rel="stylesheet" href="../skin.css?v=v640" />
   </head>
   <body>
     <!-- HEADER -->
@@ -6724,7 +6724,7 @@
         </div>
         <div class="how-toggles">
           <label class="timer-toggle-row" id="tog-shuffle"><input type="checkbox" id="home-shuffle" /> 🔀 隨機順序</label>
-          <label class="timer-toggle-row"><input type="checkbox" id="timer-enable" /> ⏱ 計時 60 分鐘</label>
+          <label class="timer-toggle-row"><input type="checkbox" id="timer-enable" /> ⏱ 計時 <span id="timer-min">60</span> 分鐘</label>
           <label class="timer-toggle-row" id="tog-scroll"><input type="checkbox" id="home-scroll" /> 📃 整頁捲動（不用一題一題按）</label>
         </div>
       </div>
@@ -9215,6 +9215,14 @@
 
       // Home filter state
       let homeSubjs = new Set(["ya3"]);
+      // v640: 每種國考考試時間不同 (牙醫 60、醫師一/二階 120) — 共用版由 site.json 的 examMinutes 給,沒給就 60
+      const EXAM_MINUTES = (window.SITE && Number(window.SITE.examMinutes)) || 60;
+      document.addEventListener("DOMContentLoaded", () => {
+        const e = document.getElementById("timer-min");
+        if (e) e.textContent = EXAM_MINUTES;
+        const d = document.getElementById("exam-timer");
+        if (d && /60:00/.test(d.textContent)) d.textContent = "⏱ " + EXAM_MINUTES + ":00";
+      });
       let homeYears = new Set(["111-1"]);
       // v461:homeStatus 改成 Set 支援複選(空 Set = 全部)
       let homeStatus = new Set();
@@ -10206,7 +10214,7 @@
           const [subj, cat] = activeKey.split("|");
           const ok = startCatPractice(subj, cat);
           const t = document.getElementById("timer-enable");
-          if (ok === true && t && t.checked) startTimer(3600);
+          if (ok === true && t && t.checked) startTimer(EXAM_MINUTES * 60);
           return;
         }
         if (_homeHow() === "exam") {
@@ -12383,7 +12391,7 @@
         document.getElementById("btn-skip").style.display = "";
         updatePracticeScoreUI();
         loadPracticeQ();
-        if (document.getElementById("timer-enable").checked) startTimer(3600);
+        if (document.getElementById("timer-enable").checked) startTimer(EXAM_MINUTES * 60);
       }
 
       function loadPracticeQ() {
@@ -12968,7 +12976,7 @@
           // 時間到不再自動交卷 — 改成繼續計算「超時時間」，給使用者一次提示後沉默繼續
           if (timerSeconds === 0 && !_timerNotifiedTimeUp) {
             _timerNotifiedTimeUp = true;
-            showToast("⏱ 60 分鐘到! 計時改為記錄超時時間，你可以繼續作答");
+            showToast("⏱ " + EXAM_MINUTES + " 分鐘到! 計時改為記錄超時時間，你可以繼續作答");
           }
         }, 1000);
       }
@@ -13027,7 +13035,7 @@
           const er = document.getElementById("screen-exam-results");
           if (er) er.style.display = "none";
           window.scrollTo(0, 0);
-          if (useTimer) startTimer(3600);
+          if (useTimer) startTimer(EXAM_MINUTES * 60);
           // v422:整頁捲動模式也存 lastPos,從口訣與重點分享區回得來
           try {
             saveScrollExamLastPos();
@@ -13047,7 +13055,7 @@
         const submitBtn = document.getElementById("btn-submit-exam");
         if (submitBtn) submitBtn.style.display = "";
         loadPracticeQ();
-        if (useTimer) startTimer(3600);
+        if (useTimer) startTimer(EXAM_MINUTES * 60);
       }
 
       function earlySubmitExam() {
@@ -29946,11 +29954,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="../visitor-log.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v639"></script>
-    <script src="comment-system.js?v=v639"></script>
-    <script src="../auth.js?v=v639"></script>
+    <script src="../sync.js?v=v640"></script>
+    <script src="comment-system.js?v=v640"></script>
+    <script src="../auth.js?v=v640"></script>
     <script src="../migration.js"></script>
-    <script src="../subscription.js?v=v639"></script>
+    <script src="../subscription.js?v=v640"></script>
     <script src="../device-guard.js"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
@@ -30454,7 +30462,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v639" defer></script>
-    <script src="../update.js?v=v639" defer></script>
+      <script src="../tour.js?v=v640" defer></script>
+    <script src="../update.js?v=v640" defer></script>
 </body>
 </html>

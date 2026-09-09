@@ -152,20 +152,49 @@
   }
 
   // v560: 首頁 hero 插圖 (只有首頁有 #hero-art),每種風格一張,SVG 直接畫，不載外部圖
-  var TOOTH =
-    '<svg viewBox="0 0 120 120"><path d="M32 18c14-10 42-10 56 0 14 10 12 34 4 56-4 12-8 34-16 34s-8-22-16-22-8 22-16 22-12-22-16-34C20 52 18 28 32 18z" fill="FILL" stroke="STROKE" stroke-width="3.5" stroke-linejoin="round"/><circle cx="46" cy="52" r="3.5" fill="STROKE"/><circle cx="74" cy="52" r="3.5" fill="STROKE"/><path d="M52 64q8 7 16 0" fill="none" stroke="STROKE" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="62" r="5" fill="CHEEK" opacity=".9"/><circle cx="82" cy="62" r="5" fill="CHEEK" opacity=".9"/></svg>';
-  var ART = {
-    kawaii: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#4a3b4b").replace(/CHEEK/g, "#ffb3c6"),
-    toon: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#1c63b8").replace(/CHEEK/g, "#ffc63a"),
-    clinic: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#1b7fc4").replace(/CHEEK/g, "#bfe3f2"),
-    stationery: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#a67c6d").replace(/CHEEK/g, "#f3c9b8"),
-    watercolor: TOOTH.replace(/FILL/g, "#fff").replace(/STROKE/g, "#c48a9b").replace(/CHEEK/g, "#f9c5d1"),
-    notebook: "<svg viewBox=\"0 0 120 120\"><g transform=\"rotate(6 60 60)\"><rect x=\"18\" y=\"22\" width=\"84\" height=\"80\" fill=\"#fff3a3\"/><rect x=\"40\" y=\"12\" width=\"40\" height=\"16\" fill=\"rgba(200,220,240,.8)\" transform=\"rotate(-6 60 20)\"/><text x=\"60\" y=\"56\" text-anchor=\"middle\" font-family=\"LXGW WenKai TC, Noto Sans TC, sans-serif\" font-size=\"17\" fill=\"#5b4a00\">今天也要</text><text x=\"60\" y=\"82\" text-anchor=\"middle\" font-family=\"LXGW WenKai TC, Noto Sans TC, sans-serif\" font-size=\"17\" fill=\"#5b4a00\">念一點！</text></g></svg>",
+  // v641: 改成「每個國考站一張」— 牙醫=牙齒、護理師=護士帽、醫師=聽診器。
+  //   站別由 site-config.js 的 window.SITE.heroArt 指定 (tooth / nurseCap / stethoscope),沒有就用牙齒。
+  //   全部是自己畫的 SVG (無外部檔、無授權問題),FILL/STROKE/CHEEK 會依風格換色。
+  var SHAPES = {
+    tooth:
+      '<svg viewBox="0 0 120 120"><path d="M32 18c14-10 42-10 56 0 14 10 12 34 4 56-4 12-8 34-16 34s-8-22-16-22-8 22-16 22-12-22-16-34C20 52 18 28 32 18z" fill="FILL" stroke="STROKE" stroke-width="3.5" stroke-linejoin="round"/><circle cx="46" cy="52" r="3.5" fill="STROKE"/><circle cx="74" cy="52" r="3.5" fill="STROKE"/><path d="M52 64q8 7 16 0" fill="none" stroke="STROKE" stroke-width="3" stroke-linecap="round"/><circle cx="38" cy="62" r="5" fill="CHEEK" opacity=".9"/><circle cx="82" cy="62" r="5" fill="CHEEK" opacity=".9"/></svg>',
+    nurseCap:
+      '<svg viewBox="0 0 120 120"><path d="M27 88 L35 31 Q60 21 85 31 L93 88 Q60 95 27 88 Z" fill="FILL" stroke="STROKE" stroke-width="3.5" stroke-linejoin="round"/><path d="M56.5 33 H63.5 V40.5 H71 V47.5 H63.5 V55 H56.5 V47.5 H49 V40.5 H56.5 Z" fill="#e2565f"/><circle cx="49" cy="68" r="3.5" fill="STROKE"/><circle cx="71" cy="68" r="3.5" fill="STROKE"/><path d="M54 77q6 6 12 0" fill="none" stroke="STROKE" stroke-width="3" stroke-linecap="round"/><circle cx="39" cy="75" r="5" fill="CHEEK" opacity=".9"/><circle cx="81" cy="75" r="5" fill="CHEEK" opacity=".9"/></svg>',
+    stethoscope:
+      '<svg viewBox="0 0 120 120"><path d="M26 26 C22 54 30 68 44 70" fill="none" stroke="STROKE" stroke-width="6.5" stroke-linecap="round"/><path d="M58 26 C62 54 54 68 44 70" fill="none" stroke="STROKE" stroke-width="6.5" stroke-linecap="round"/><path d="M44 70 C44 86 56 94 68 90" fill="none" stroke="STROKE" stroke-width="6.5" stroke-linecap="round"/><circle cx="26" cy="23" r="5.5" fill="STROKE"/><circle cx="58" cy="23" r="5.5" fill="STROKE"/><circle cx="80" cy="84" r="25" fill="FILL" stroke="STROKE" stroke-width="3.5"/><circle cx="72" cy="80" r="3.4" fill="STROKE"/><circle cx="88" cy="80" r="3.4" fill="STROKE"/><path d="M74 90q6 6 12 0" fill="none" stroke="STROKE" stroke-width="3" stroke-linecap="round"/><circle cx="65" cy="88" r="4.6" fill="CHEEK" opacity=".9"/><circle cx="95" cy="88" r="4.6" fill="CHEEK" opacity=".9"/></svg>',
   };
+  // 每種風格的配色 (底色 / 線條 / 腮紅)
+  var PALETTE = {
+    kawaii: ["#fff", "#4a3b4b", "#ffb3c6"],
+    toon: ["#fff", "#1c63b8", "#ffc63a"],
+    clinic: ["#fff", "#1b7fc4", "#bfe3f2"],
+    stationery: ["#fff", "#a67c6d", "#f3c9b8"],
+    watercolor: ["#fff", "#c48a9b", "#f9c5d1"],
+  };
+  // 手帳風不畫吉祥物,畫一張便條紙
+  var NOTE_ART =
+    "<svg viewBox=\"0 0 120 120\"><g transform=\"rotate(6 60 60)\"><rect x=\"18\" y=\"22\" width=\"84\" height=\"80\" fill=\"#fff3a3\"/><rect x=\"40\" y=\"12\" width=\"40\" height=\"16\" fill=\"rgba(200,220,240,.8)\" transform=\"rotate(-6 60 20)\"/><text x=\"60\" y=\"56\" text-anchor=\"middle\" font-family=\"LXGW WenKai TC, Noto Sans TC, sans-serif\" font-size=\"17\" fill=\"#5b4a00\">今天也要</text><text x=\"60\" y=\"82\" text-anchor=\"middle\" font-family=\"LXGW WenKai TC, Noto Sans TC, sans-serif\" font-size=\"17\" fill=\"#5b4a00\">念一點！</text></g></svg>";
+  function siteShape() {
+    try {
+      var k = window.SITE && window.SITE.heroArt;
+      if (k && SHAPES[k]) return SHAPES[k];
+    } catch (e) {}
+    return SHAPES.tooth;
+  }
   function ensureArt(id) {
     var el = document.getElementById("hero-art");
     if (!el) return;
-    el.innerHTML = ART[id] || "";
+    if (id === "notebook") {
+      el.innerHTML = NOTE_ART;
+      return;
+    }
+    var p = PALETTE[id];
+    el.innerHTML = p
+      ? siteShape()
+          .replace(/FILL/g, p[0])
+          .replace(/STROKE/g, p[1])
+          .replace(/CHEEK/g, p[2])
+      : "";
   }
 
   function apply(id, save) {

@@ -9,8 +9,8 @@
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@600;700&display=swap"
       rel="stylesheet"
     />
-    <script src="version.js?v=v650"></script>
-    <script src="skin.js?v=v650"></script>
+    <script src="version.js?v=v651"></script>
+    <script src="skin.js?v=v651"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -239,6 +239,10 @@
       }
       .box.fav h3 {
         color: #5b21b6;
+      }
+      /* v651: 標題「國考平均 80 分。」不拆行,寬度不夠就整句換到下一行 */
+      h1 .nb {
+        white-space: nowrap;
       }
       .favs {
         display: grid;
@@ -477,17 +481,26 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="skin.css?v=v650" />
+    <link rel="stylesheet" href="skin.css?v=v651" />
   </head>
   <body>
     <div class="wrap">
       <div class="top">
-        <a href="index.html" class="back">← <span data-site="homeLabel">牙醫主頁</span></a>
-        <a href="https://ezpass-exam.com/preview.html" class="back" style="margin-left: 0.4rem">🖼 看實際畫面</a>
+        <a href="index.html" class="back"
+          >← <span data-site="homeLabel">牙醫主頁</span></a
+        >
+        <a
+          href="https://ezpass-exam.com/preview.html"
+          class="back"
+          style="margin-left: 0.4rem"
+          >🖼 網站重要功能預覽</a
+        >
         <span class="ver" id="ver"></span>
       </div>
 
-      <h1>一個考生、一個半月、<br />國考平均 80 分。</h1>
+      <h1>
+        一個牙醫系考生、一個半月、<span class="nb">國考平均 80 分。</span>
+      </h1>
       <p class="lead">這個網站，就是作者自己走過一次國考留下來的工具。</p>
 
       <div class="stats">
@@ -526,7 +539,10 @@
             >沒有這樣的地方，我就自己做一個。
           </p>
           <p>
-            也因為備考的時間都很零碎，我特別把它做成<b>手機、平板都能用</b>。出門吃飯、通勤、甚至在醫院工作的空檔，拿出手機就能寫幾題、複習一下，進度會自動同步回電腦，<b class="k">無時無刻都能練習和複習</b>。
+            也因為備考的時間都很零碎，我特別把它做成<b>手機、平板都能用</b>。出門吃飯、通勤、甚至在醫院工作的空檔，拿出手機就能寫幾題、複習一下，進度會自動同步回電腦，<b
+              class="k"
+              >無時無刻都能練習和複習</b
+            >。
           </p>
           <p>
             考完之後我沒有把它關掉。我知道後面還有很多人，正在走我剛走過的那條路，時間一樣少、資料一樣散、一樣會在半夜懷疑自己。如果這個網站能讓你<b>少繞一點路、多一點踏實</b>，那它就值得繼續存在。
@@ -549,15 +565,30 @@
                   帳號申請，跟親朋好友借幾把來用；我自己用
                   <b>5 把</b> 就非常夠用。
                 </li>
-                <li>順手把 <b>GitHub 圖床</b> 也設定好（一樣照筆記本的入門指引）。現在的 AI 沒辦法自己抓圖，抓到的圖也常常不準，醫學和牙科的圖更需要精準；圖床設好之後，編輯筆記或口訣重點時，<b>截圖直接 Ctrl+V 就貼進去</b>，課本、講義、X 光片想貼什麼就貼什麼。</li>
+                <li>
+                  順手把
+                  <b>GitHub 圖床</b> 也設定好（一樣照筆記本的入門指引）。現在的
+                  AI
+                  沒辦法自己抓圖，抓到的圖也常常不準，醫學和牙科的圖更需要精準；圖床設好之後，編輯筆記或口訣重點時，<b
+                    >截圖直接 Ctrl+V 就貼進去</b
+                  >，課本、講義、X 光片想貼什麼就貼什麼。
+                </li>
               </ol>
             </div>
             <div class="box fav">
-              <h3>💜 我用得最多、也最推薦的四個功能</h3>
+              <h3>💜 我用得最多、也最推薦的五個功能</h3>
               <div class="favs">
                 <div class="fav-i">
                   <span class="ic">📒</span>
                   <div>生成筆記<small>不會的題目按一下，共筆等級</small></div>
+                </div>
+                <div class="fav-i">
+                  <span class="ic">🏷️</span>
+                  <div>
+                    標記考題<small
+                      >一知半解、亂猜的先標起來，之後只練標記題</small
+                    >
+                  </div>
                 </div>
                 <div class="fav-i">
                   <span class="ic">🎯</span>
@@ -656,7 +687,9 @@
             <div class="body">
               <ul>
                 <li>
-                  設定好 Gemini API 之後，<b class="k">每一題都能做出共筆等級的筆記</b>；再設好 GitHub 圖床，就能把課本圖、X 光片截圖直接貼進筆記。
+                  設定好 Gemini API 之後，<b class="k"
+                    >每一題都能做出共筆等級的筆記</b
+                  >；再設好 GitHub 圖床，就能把課本圖、X 光片截圖直接貼進筆記。
                 </li>
                 <li><b>類似題會自動串進同一篇</b>，越做越完整。</li>
                 <li>
@@ -733,7 +766,14 @@
             <div class="feat">
               <span class="ic">📸</span>
               <div>
-                <b>截圖直接貼進筆記和口訣（GitHub 圖床）</b><span>AI 抓不到準確的醫學圖，所以圖自己貼最可靠：電腦截圖後直接 Ctrl+V（Windows 按 Win+Shift+S；Mac 按 Cmd+Ctrl+Shift+4），圖會自動存到你自己的 GitHub 圖床，永久免費。要先照筆記本的入門指引設定好 GitHub token。</span>
+                <b>截圖直接貼進筆記和口訣（GitHub 圖床）</b
+                ><span
+                  >AI 抓不到準確的醫學圖，所以圖自己貼最可靠：電腦截圖後直接
+                  Ctrl+V（Windows 按 Win+Shift+S；Mac 按
+                  Cmd+Ctrl+Shift+4），圖會自動存到你自己的 GitHub
+                  圖床，永久免費。要先照筆記本的入門指引設定好 GitHub
+                  token。</span
+                >
               </div>
             </div>
             <div class="feat">

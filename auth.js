@@ -22,7 +22,12 @@
   if (!firebase.apps.length) {
     firebase.initializeApp({
       apiKey: "AIzaSyACFnTGWEuhUp0htnMWe8i7XbHiAWjgoAc",
-      authDomain: "ezpass-dental.com", // v580: 登入頁走自己網域 (Cloudflare Worker 代理 /__/auth/*),iOS Safari 才不會擋,
+      // v580: 登入頁走自己網域 (Cloudflare Worker 代理 /__/auth/*),iOS Safari 才不會擋;
+      // v652: 入口網站 ezpass-exam.com 跟牙醫站同一個專案,同樣走自己網域 (Worker 也代理了)
+      authDomain:
+        location.hostname === "ezpass-exam.com"
+          ? "ezpass-exam.com"
+          : "ezpass-dental.com",
       databaseURL:
         "https://dental-exam-sync-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "dental-exam-sync",

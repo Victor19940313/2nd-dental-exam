@@ -11621,9 +11621,12 @@
           return `<strong class="${cls}">${c}</strong>`;
         });
         // Option letters (A)-(E)
+        // 只在行首或標點/空白之後才當成「選項標記」。前面接中文字的 (A) 是句中指稱
+        // (例如「錯，圖(A)為正方形…」),包起來會被 formatOptBlock 換成 <br>【A】,
+        // 詳解就會斷成 AADD (2026-09-09 護理師 nr5-105-2-11 實際踩到)。
         text = text.replace(
-          /\(([A-E])\)/g,
-          '<span class="expl-opt">($1)</span>',
+          /(^|[\s。，、；：！？（）「」【】…·.,;:!?()[\]-])\(([A-E])\)/gm,
+          '$1<span class="expl-opt">($2)</span>',
         );
         // Keyword coloring for 正確/錯誤
         text = text.replace(/(不?正確|錯誤|有誤)/g, (m) =>

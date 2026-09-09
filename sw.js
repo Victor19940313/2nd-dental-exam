@@ -1,22 +1,22 @@
-// v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js?v=v643')
+// v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js?v=v644')
 //   原因:瀏覽器檢查 SW 更新時,importScripts 的檔案會走 HTTP 快取 (Cloudflare 給 4 小時),
 //   拿到舊的 version.js 就會把「舊版」當成新版裝進來 → 使用者按更新 → 又檢查到新版 → 無限「立即更新」
-const APP_VERSION = "v643";
+const APP_VERSION = "v644";
 self.APP_VERSION = APP_VERSION;
 const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-persist-isClassPractice-through-reload';
 const PRECACHE = [
   './',
   './index.html',
   './mnemonics.html',
-  './themes.css?v=v643',
-  './skin.css?v=v643',
-  './skin.js?v=v643',
-  './update.js?v=v643',
-  './tour.js?v=v643',
-  './topics.js?v=v643',
-  './subscription.js?v=v643',
-  './auth.js?v=v643',
-  './version.js?v=v643',
+  './themes.css?v=v644',
+  './skin.css?v=v644',
+  './skin.js?v=v644',
+  './update.js?v=v644',
+  './tour.js?v=v644',
+  './topics.js?v=v644',
+  './subscription.js?v=v644',
+  './auth.js?v=v644',
+  './version.js?v=v644',
   './ya3/index.html',
   './ya3/ya3-data.js',
   './ya4/index.html',
@@ -31,7 +31,7 @@ const PRECACHE = [
   './ya4/tw4-data.js',
   './ya5/tw5-data.js',
   './ya6/tw6-data.js',
-  './sync.js?v=v643',
+  './sync.js?v=v644',
   './exam/index.html',
   // './exam/questions-data.js' ← v554: 不 precache,由頁面第一次 fetch 放進快取 (避免 install + 頁面同時各抓 41 MB)
   './exam/compare.html',

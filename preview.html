@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>網站內容預覽 — ezpass 國考互動筆記</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="version.js?v=v644"></script>
+    <script src="skin.js?v=v644"></script>
+    <link rel="stylesheet" href="skin.css?v=v644" />
+    <style>
+      /* v644: 公開的「網站內容預覽」— 不用登入就能看到裡面長什麼樣 (綠界審核員不想登入 Google;新客人也想先看再買) */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          "Noto Sans TC",
+          -apple-system,
+          "Microsoft JhengHei",
+          sans-serif;
+        background: #f8f7f0;
+        color: #1f2937;
+        line-height: 1.7;
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 1.2rem 1.2rem 3rem;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .back {
+        color: #6b7280;
+        text-decoration: none;
+        font-weight: 700;
+        background: #fff;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 999px;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.88rem;
+      }
+      .cta {
+        color: #fff;
+        background: #7c3aed;
+        text-decoration: none;
+        font-weight: 800;
+        border-radius: 999px;
+        padding: 0.45rem 1.1rem;
+        font-size: 0.9rem;
+        box-shadow: 0 3px 0 #5b21b6;
+      }
+      h1 {
+        font-size: 1.55rem;
+        margin: 0.4rem 0 0.2rem;
+        font-weight: 900;
+      }
+      .lead {
+        color: #6b7280;
+        margin: 0 0 1.4rem;
+        font-size: 0.95rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.1rem;
+      }
+      .shot {
+        background: #fff;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      }
+      .shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafafa;
+      }
+      .shot .cap {
+        padding: 0.8rem 1rem 0.95rem;
+      }
+      .shot .cap b {
+        display: block;
+        font-size: 0.98rem;
+        color: #1f2937;
+        margin-bottom: 0.15rem;
+      }
+      .shot .cap span {
+        font-size: 0.85rem;
+        color: #6b7280;
+      }
+      .shot.wide {
+        grid-column: 1 / -1;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 2rem 0 0.7rem;
+        font-weight: 900;
+      }
+      .videos {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      .video {
+        background: #fff;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .video .frame {
+        position: relative;
+        padding-top: 56.25%;
+        background: #111;
+      }
+      .video iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .video .cap {
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .video .cap small {
+        display: block;
+        font-weight: 400;
+        color: #6b7280;
+        font-size: 0.8rem;
+      }
+      .videos-pending {
+        background: #fffbeb;
+        border: 1.5px dashed #fbbf24;
+        border-radius: 12px;
+        padding: 0.9rem 1.1rem;
+        color: #92400e;
+        font-size: 0.9rem;
+      }
+      .bottom {
+        text-align: center;
+        margin-top: 2.2rem;
+      }
+      .bottom .cta {
+        font-size: 1rem;
+        padding: 0.7rem 1.5rem;
+      }
+      .bottom p {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-top: 0.6rem;
+      }
+      footer {
+        margin-top: 2.5rem;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 0.78rem;
+        line-height: 1.7;
+      }
+      footer a {
+        color: inherit;
+      }
+      @media (max-width: 640px) {
+        .grid,
+        .videos {
+          grid-template-columns: 1fr;
+        }
+        h1 {
+          font-size: 1.3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <a href="index.html" class="back">← 回首頁</a>
+        <a href="subscribe.html" class="cta">看方案與價格</a>
+      </div>
+
+      <h1>網站內容預覽</h1>
+      <p class="lead">
+        不用登入，先看看裡面長什麼樣。以下都是實際畫面截圖，登入後看到的就是這些。
+      </p>
+
+      <div class="grid">
+        <div class="shot wide">
+          <img
+            src="preview-shots/01_topic_home.jpg"
+            alt="照考點練：每個考點做過幾題、錯誤率多少"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>照考點練：挑一個考點，把歷年同一個觀念的題目一次寫熟</b>
+            <span
+              >七千多題全部分門別類。每個考點顯示做過幾題、錯誤率多少，紅色就是你的弱點。</span
+            >
+          </div>
+        </div>
+        <div class="shot">
+          <img
+            src="preview-shots/02_question.jpg"
+            alt="作答畫面"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>作答畫面</b>
+            <span
+              >手機、平板、電腦都能寫。選項可以劃線、螢光筆，像在紙本上做記號。</span
+            >
+          </div>
+        </div>
+        <div class="shot">
+          <img
+            src="preview-shots/03_explanation.jpg"
+            alt="答完立刻看詳解"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>答完立刻看詳解</b>
+            <span
+              >每一題都有 AI
+              詳解：出題者想考什麼、核心理論、為何選這個、其他選項錯在哪。</span
+            >
+          </div>
+        </div>
+        <div class="shot">
+          <img
+            src="preview-shots/04_similar.jpg"
+            alt="找十題最像的"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>找十題最像的</b>
+            <span>按一下就列出歷年考過最相似的十題，同一個觀念連著練。</span>
+          </div>
+        </div>
+        <div class="shot">
+          <img
+            src="preview-shots/05_wrongbook.jpg"
+            alt="錯題本"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>錯題本</b>
+            <span
+              >自己收進來的題目集中在這，點一下就展開題目、圖片、選項和詳解，考前掃一遍。</span
+            >
+          </div>
+        </div>
+        <div class="shot wide">
+          <img
+            src="preview-shots/06_notebook.jpg"
+            alt="AI 幫你整理的筆記本"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>筆記本：題目按一下「加入筆記」，AI 幫你整理成章節</b>
+            <span
+              >相似考點自動併在同一章，越練筆記越完整。可以自己改、加圖、加螢光筆。</span
+            >
+          </div>
+        </div>
+        <div class="shot">
+          <img
+            src="preview-shots/07_mnemonics.jpg"
+            alt="口訣與重點分享區"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>口訣與重點分享區</b>
+            <span>大家分享的口訣和重點整理，依科目和章節排好。</span>
+          </div>
+        </div>
+        <div class="shot">
+          <img
+            src="preview-shots/08_night.jpg"
+            alt="夜讀暗色風格"
+            loading="lazy"
+          />
+          <div class="cap">
+            <b>七種閱讀風格</b>
+            <span
+              >可愛風、診所清爽、韓系文具、水彩、手帳、動畫風，還有看久不累的夜讀暗色。</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <h2>導覽影片</h2>
+      <div id="videos" class="videos" hidden></div>
+      <div id="videos-pending" class="videos-pending">
+        影片整理中，很快放上來。
+      </div>
+
+      <div class="bottom">
+        <a href="subscribe.html" class="cta">看方案與價格 →</a>
+        <p>第一次登入有 7 天免費試用，全部功能都能用，不用付款。</p>
+      </div>
+
+      <footer>
+        客服信箱：<a href="mailto:ezpassdental@gmail.com"
+          >ezpassdental@gmail.com</a
+        ><br />
+        © 2026 ezpass 國考互動筆記 · 版權所有翻印必究
+      </footer>
+    </div>
+
+    <script>
+      // 導覽影片:YouTube 影片 ID 填進 VIDEOS 就會顯示 (v644 先留空,等 HUA 上傳)
+      // 例: { id: "dQw4w9WgXcQ", title: "練習本", sub: "照考點練・錯誤率・十題類似題・錯題本" }
+      var VIDEOS = [];
+      (function () {
+        var box = document.getElementById("videos");
+        var pend = document.getElementById("videos-pending");
+        if (!VIDEOS.length) return;
+        box.innerHTML = VIDEOS.map(function (v) {
+          return (
+            '<div class="video"><div class="frame"><iframe src="https://www.youtube-nocookie.com/embed/' +
+            v.id +
+            '" title="' +
+            v.title +
+            '" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>' +
+            '<div class="cap">' +
+            v.title +
+            "<small>" +
+            (v.sub || "") +
+            "</small></div></div>"
+          );
+        }).join("");
+        box.hidden = false;
+        pend.hidden = true;
+      })();
+    </script>
+  </body>
+</html>

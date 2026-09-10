@@ -4887,6 +4887,120 @@
       details.nb-toc-subj:not([open]) > summary .nb-fold-arrow {
         transform: rotate(-90deg);
       }
+      /* ═══ v660-mobile:手機 / 平板操作性 ═══ */
+      /* A. 章節收合:整列變高、右邊放一個會轉的小箭頭 (HUA: 收合的地方很難按) */
+      details.nb-toc-subj > summary,
+      details.nb-toc-group > summary,
+      details.nb-toc-subgroup > summary {
+        position: relative;
+        padding-right: 1.6rem !important;
+      }
+      details.nb-toc-subj > summary::after,
+      details.nb-toc-group > summary::after,
+      details.nb-toc-subgroup > summary::after {
+        content: "▾";
+        position: absolute;
+        right: 0.35rem;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 0.9rem;
+        line-height: 1;
+        opacity: 0.55;
+        transition: transform 0.18s;
+        pointer-events: none;
+      }
+      details.nb-toc-subj:not([open]) > summary::after,
+      details.nb-toc-group:not([open]) > summary::after,
+      details.nb-toc-subgroup:not([open]) > summary::after {
+        transform: translateY(-50%) rotate(-90deg);
+      }
+      /* C. 筆記本表格比畫面寬 → 讓它自己可以左右滑,不要被切掉 */
+      .nb-chapter-content table,
+      .nb-table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      /* B. 手指操作的裝置:按鈕加大到好按 (滑鼠不受影響) */
+      @media (pointer: coarse) {
+        .btn-mode,
+        .nav-toggle,
+        .wb-chip,
+        .bf-chip,
+        .chip,
+        .btn-mark,
+        .btn-flag,
+        .mark-row button,
+        .nb-nav-btn,
+        .nb-toc-item,
+        details.nb-toc-subj > summary,
+        details.nb-toc-group > summary,
+        details.nb-toc-subgroup > summary {
+          min-height: 40px;
+          display: flex;
+          align-items: center;
+        }
+        .btn-mode,
+        .nav-toggle,
+        .wb-chip,
+        .bf-chip,
+        .chip {
+          font-size: 0.86rem;
+        }
+        details.nb-toc-subgroup > summary,
+        details.nb-toc-group > summary,
+        details.nb-toc-subj > summary {
+          font-size: 0.84rem !important;
+        }
+      }
+      /* D. 手機作答:詳解很長,底部固定一顆「下一題」,看完不用往回捲 */
+      #mob-next {
+        display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 900;
+        padding: 0.5rem 0.7rem calc(0.5rem + env(safe-area-inset-bottom));
+        background: linear-gradient(
+          to top,
+          var(--bg, #f8f7f0) 72%,
+          rgba(248, 247, 240, 0)
+        );
+        gap: 0.5rem;
+        pointer-events: none;
+      }
+      #mob-next button {
+        pointer-events: auto;
+        border: 0;
+        border-radius: 999px;
+        font-family: inherit;
+        font-weight: 800;
+        font-size: 1rem;
+        padding: 0.8rem 1rem;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+      }
+      #mob-next .mn-next {
+        flex: 1;
+        background: var(--purple, #7c3aed);
+        color: #fff;
+      }
+      #mob-next .mn-top {
+        background: #fff;
+        color: var(--purple, #7c3aed);
+        border: 1.5px solid var(--purple, #7c3aed);
+        padding: 0.8rem 0.9rem;
+      }
+      @media (max-width: 900px) {
+        body.mob-answered #mob-next {
+          display: flex;
+        }
+        body.mob-answered #screen-practice {
+          padding-bottom: 4.5rem;
+        }
+      }
       .nb-toc-num {
         color: #9ca3af;
         font-weight: 700;
@@ -6141,8 +6255,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v659"></script>
-    <link rel="stylesheet" href="../skin.css?v=v659" />
+      <script src="../skin.js?v=v660"></script>
+    <link rel="stylesheet" href="../skin.css?v=v660" />
   </head>
   <body>
     <!-- HEADER -->
@@ -9032,6 +9146,16 @@
 
     <!-- SETTINGS MODAL -->
 
+    <!-- v660-mobile:手機答完題之後,底部固定「下一題」(詳解很長,不用往回捲) -->
+
+    <div id="mob-next">
+
+      <button type="button" class="mn-top" onclick="document.getElementById('screen-practice').scrollIntoView({behavior:'smooth',block:'start'})" title="回到題目">↑ 題目</button>
+
+      <button type="button" class="mn-next" onclick="nextQ()">下一題 →</button>
+
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <!-- v657: 題庫切成一科一檔 (萬人審計 #1)。重產一科詳解時,使用者只重抓那一科 (約 3 MB),
@@ -9049,7 +9173,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v659"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v660"><\/script>');
       })();
     </script>
     <script>
@@ -11872,6 +11996,7 @@
         } catch (e) {}
       }
       function showHome() {
+        try { document.body.classList.remove("mob-answered"); } catch (e) {}
         closeAllOverlays();
         // v509: 移除 boot 時注入的 !important hide (避免 showHome 被蓋)
         const _boot = document.getElementById("boot-hide-screens");
@@ -12716,6 +12841,8 @@
       async function answerQ(idx) {
         // 試卷模式答題後仍可改答案，直到「下一題」/「交卷」為止
         if (answered && !examMode) return;
+        // v660-mobile: 答完就把底部固定的「下一題」秀出來 (手機詳解很長,不用往回捲)
+        try { document.body.classList.add("mob-answered"); } catch (e) {}
         const q = practiceList[practiceIdx];
 
         // ── Exam mode: 記錄答案 + 顯示「你選的」+ 露出標記/加筆記 UI(不告訴對錯) ──
@@ -12911,14 +13038,17 @@
       }
 
       function nextQ() {
+        try { document.body.classList.remove("mob-answered"); } catch (e) {}
         practiceIdx++;
         loadPracticeQ();
       }
       function skipQ() {
+        try { document.body.classList.remove("mob-answered"); } catch (e) {}
         practiceIdx++;
         loadPracticeQ();
       }
       function prevQ() {
+        try { document.body.classList.remove("mob-answered"); } catch (e) {}
         if (practiceIdx > 0) {
           practiceIdx--;
           loadPracticeQ();
@@ -29989,14 +30119,14 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v659"></script>
+    <script src="../visitor-log.js?v=v660"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v659"></script>
-    <script src="comment-system.js?v=v659"></script>
-    <script src="../auth.js?v=v659"></script>
-    <script src="../migration.js?v=v659"></script>
-    <script src="../subscription.js?v=v659"></script>
-    <script src="../device-guard.js?v=v659"></script>
+    <script src="../sync.js?v=v660"></script>
+    <script src="comment-system.js?v=v660"></script>
+    <script src="../auth.js?v=v660"></script>
+    <script src="../migration.js?v=v660"></script>
+    <script src="../subscription.js?v=v660"></script>
+    <script src="../device-guard.js?v=v660"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -30499,7 +30629,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v659" defer></script>
-    <script src="../update.js?v=v659" defer></script>
+      <script src="../tour.js?v=v660" defer></script>
+    <script src="../update.js?v=v660" defer></script>
 </body>
 </html>

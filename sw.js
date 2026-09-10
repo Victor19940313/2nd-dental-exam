@@ -1,22 +1,22 @@
-// v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js?v=v670')
+// v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js?v=v671')
 //   原因:瀏覽器檢查 SW 更新時,importScripts 的檔案會走 HTTP 快取 (Cloudflare 給 4 小時),
 //   拿到舊的 version.js 就會把「舊版」當成新版裝進來 → 使用者按更新 → 又檢查到新版 → 無限「立即更新」
-const APP_VERSION = "v670";
+const APP_VERSION = "v671";
 self.APP_VERSION = APP_VERSION;
 const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-persist-isClassPractice-through-reload';
 const PRECACHE = [
   './',
   './index.html',
   './mnemonics.html',
-  './themes.css?v=v670',
-  './skin.css?v=v670',
-  './skin.js?v=v670',
-  './update.js?v=v670',
-  './tour.js?v=v670',
-  './topics.js?v=v670',
-  './subscription.js?v=v670',
-  './auth.js?v=v670',
-  './version.js?v=v670',
+  './themes.css?v=v671',
+  './skin.css?v=v671',
+  './skin.js?v=v671',
+  './update.js?v=v671',
+  './tour.js?v=v671',
+  './topics.js?v=v671',
+  './subscription.js?v=v671',
+  './auth.js?v=v671',
+  './version.js?v=v671',
   './ya3/index.html',
   './ya3/ya3-data.js',
   './ya4/index.html',
@@ -31,7 +31,7 @@ const PRECACHE = [
   './ya4/tw4-data.js',
   './ya5/tw5-data.js',
   './ya6/tw6-data.js',
-  './sync.js?v=v670',
+  './sync.js?v=v671',
   './exam/index.html',
   // './exam/questions-data.js' ← v554: 不 precache,由頁面第一次 fetch 放進快取 (避免 install + 頁面同時各抓 41 MB)
   './exam/compare.html',
@@ -70,7 +70,8 @@ self.addEventListener('message', e => {
 // v657: 題庫切成一科一檔 (q-ya3.js …)。版本換了就把「每一個」題庫檔從舊快取搬過來,
 //   之後 fetch 各自用 ETag 背景確認 → 只有真的改過的那一科會重抓。
 function isQuestionBank(url) {
-  return /\/q-[a-z0-9]+\.js(\?|$)/.test(url) || url.includes('questions-data.js');
+  // v671:詳解另外切成 e-*.js,跟題目檔一樣「版本換了就從舊快取搬過來」,不要整包重抓
+  return /\/[qe]-[a-z0-9]+\.js(\?|$)/.test(url) || url.includes('questions-data.js');
 }
 async function carryOverQuestionBank() {
   try {

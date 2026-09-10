@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>許願 / Bug 回報 - 牙醫國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v671"></script>
-    <script src="skin.js?v=v671"></script>
+    <script src="version.js?v=v672"></script>
+    <script src="skin.js?v=v672"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -150,8 +150,12 @@
       .submit-btn:hover {
         filter: brightness(1.08);
       }
+      /* v672:原本用 opacity .5,配上某些風格的淺色主題色會變成「白字淺底」看不清楚。
+         改成灰底深字,任何風格下都讀得到。 */
       .submit-btn:disabled {
-        opacity: 0.5;
+        background: #e5e7eb;
+        color: #4b5563;
+        opacity: 1;
         cursor: not-allowed;
       }
 
@@ -203,7 +207,7 @@
         margin-top: 2rem;
       }
     </style>
-      <link rel="stylesheet" href="skin.css?v=v671" />
+      <link rel="stylesheet" href="skin.css?v=v672" />
   </head>
   <body>
     <div class="wrap">
@@ -281,7 +285,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v671"></script>
+    <script src="auth.js?v=v672"></script>
     <script>
       document.getElementById("v").textContent = (
         window.APP_VERSION || ""
@@ -376,6 +380,6 @@
           }
         });
     </script>
-      <script src="tour.js?v=v671" defer></script>
+      <script src="tour.js?v=v672" defer></script>
 </body>
 </html>

@@ -2291,6 +2291,62 @@
         margin: 0 0 0.5em 0;
         line-height: 1.7;
       }
+      /* ═══ v661-sim:十題類似題視窗 (手機也好滑、關閉鍵不會被頁首擋住) ═══ */
+      .sim-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        /* 頁首 sticky 是 11000,一定要比它高,不然「選單」那一行會蓋住關閉鍵 */
+        z-index: 12600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+      }
+      .sim-modal .sim-box {
+        background: #f8fafc;
+        border-radius: 14px;
+        max-width: 680px;
+        width: 100%;
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+      .sim-modal .sim-scroll {
+        padding: 0.75rem;
+        overflow-y: auto;
+        flex: 1;
+        /* 滑到底不要把底下的頁面一起帶著滑 */
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+      }
+      /* 視窗打開時鎖住背景,手指才不會滑到後面的題目 */
+      html.sim-open,
+      body.sim-open {
+        overflow: hidden;
+      }
+      @media (max-width: 760px) {
+        .sim-modal {
+          padding: 0;
+        }
+        .sim-modal .sim-box {
+          max-height: 100%;
+          height: 100%;
+          border-radius: 0;
+        }
+        .sim-modal .sim-head {
+          border-radius: 0 !important;
+          padding-top: calc(0.9rem + env(safe-area-inset-top)) !important;
+        }
+        .sim-modal .sim-head .sim-x {
+          width: 40px !important;
+          height: 40px !important;
+        }
+        .sim-modal .sim-scroll {
+          padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        }
+      }
       .cross-links,
       .similar-qs {
         margin-top: 0.6em;
@@ -6255,8 +6311,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v660"></script>
-    <link rel="stylesheet" href="../skin.css?v=v660" />
+      <script src="../skin.js?v=v661"></script>
+    <link rel="stylesheet" href="../skin.css?v=v661" />
   </head>
   <body>
     <!-- HEADER -->
@@ -9173,7 +9229,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v660"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v661"><\/script>');
       })();
     </script>
     <script>
@@ -10746,23 +10802,36 @@
         if (existing) existing.remove();
         const wrap = document.createElement("div");
         wrap.id = "similar-modal";
-        wrap.style.cssText =
-          "position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:.5rem";
+        wrap.className = "sim-modal";
         wrap.onclick = (e) => {
-          if (e.target === wrap) wrap.remove();
+          if (e.target === wrap) closeSimilarModal();
         };
         wrap.innerHTML = `
-                      <div style="background:#f8fafc;border-radius:14px;max-width:680px;width:100%;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-                        <div style="padding:.9rem 1.1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border-radius:14px 14px 0 0">
+                      <div class="sim-box">
+                        <div class="sim-head" style="padding:.9rem 1.1rem;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#0d9488,#14b8a6);color:white;border-radius:14px 14px 0 0">
                           <div>
                             <div style="font-size:1rem;font-weight:700">🔗 相似題 (${sims.length})</div>
                             <div style="font-size:.72rem;opacity:.85;margin-top:.15rem">來自 ${srcQ.meta || qid}・${srcQ.topic || ""}</div>
                           </div>
-                          <button type="button" onclick="document.getElementById('similar-modal').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;font-weight:700">✕</button>
+                          <button type="button" class="sim-x" onclick="closeSimilarModal()" style="background:rgba(255,255,255,.2);border:none;color:white;width:34px;height:34px;border-radius:50%;font-size:1.1rem;cursor:pointer;font-weight:700">✕</button>
                         </div>
-                        <div style="padding:.75rem;overflow-y:auto;flex:1">${items}</div>
+                        <div class="sim-scroll">${items}</div>
                       </div>`;
         document.body.appendChild(wrap);
+        document.documentElement.classList.add("sim-open");
+        document.body.classList.add("sim-open");
+        document.addEventListener("keydown", _simEsc);
+      }
+      // v661:關閉相似題視窗 (要一起解除背景鎖定)
+      function closeSimilarModal() {
+        const m = document.getElementById("similar-modal");
+        if (m) m.remove();
+        document.documentElement.classList.remove("sim-open");
+        document.body.classList.remove("sim-open");
+        document.removeEventListener("keydown", _simEsc);
+      }
+      function _simEsc(e) {
+        if (e.key === "Escape") closeSimilarModal();
       }
       function _simPickOpt(btn, oi, ansIdx) {
         const card = btn.closest(".sim-card");
@@ -10795,7 +10864,7 @@
         const wrap = document.createElement("div");
         wrap.id = "sim-lightbox";
         wrap.style.cssText =
-          "position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10001;display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out";
+          "position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:12900;display:flex;align-items:center;justify-content:center;padding:1rem;cursor:zoom-out";
         wrap.onclick = () => wrap.remove();
         wrap.innerHTML = `<img src="${src}" style="max-width:96vw;max-height:92vh;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5)">`;
         document.body.appendChild(wrap);
@@ -30119,14 +30188,14 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v660"></script>
+    <script src="../visitor-log.js?v=v661"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v660"></script>
-    <script src="comment-system.js?v=v660"></script>
-    <script src="../auth.js?v=v660"></script>
-    <script src="../migration.js?v=v660"></script>
-    <script src="../subscription.js?v=v660"></script>
-    <script src="../device-guard.js?v=v660"></script>
+    <script src="../sync.js?v=v661"></script>
+    <script src="comment-system.js?v=v661"></script>
+    <script src="../auth.js?v=v661"></script>
+    <script src="../migration.js?v=v661"></script>
+    <script src="../subscription.js?v=v661"></script>
+    <script src="../device-guard.js?v=v661"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -30629,7 +30698,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v660" defer></script>
-    <script src="../update.js?v=v660" defer></script>
+      <script src="../tour.js?v=v661" defer></script>
+    <script src="../update.js?v=v661" defer></script>
 </body>
 </html>

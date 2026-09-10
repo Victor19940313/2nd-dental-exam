@@ -1,22 +1,22 @@
-// v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js?v=v656')
+// v609: 版本號直接寫死在這裡 (deploy.sh 會從 version.js 同步),不再 importScripts('./version.js?v=v657')
 //   原因:瀏覽器檢查 SW 更新時,importScripts 的檔案會走 HTTP 快取 (Cloudflare 給 4 小時),
 //   拿到舊的 version.js 就會把「舊版」當成新版裝進來 → 使用者按更新 → 又檢查到新版 → 無限「立即更新」
-const APP_VERSION = "v656";
+const APP_VERSION = "v657";
 self.APP_VERSION = APP_VERSION;
 const CACHE_NAME = 'dental-all-' + self.APP_VERSION + '-persist-isClassPractice-through-reload';
 const PRECACHE = [
   './',
   './index.html',
   './mnemonics.html',
-  './themes.css?v=v656',
-  './skin.css?v=v656',
-  './skin.js?v=v656',
-  './update.js?v=v656',
-  './tour.js?v=v656',
-  './topics.js?v=v656',
-  './subscription.js?v=v656',
-  './auth.js?v=v656',
-  './version.js?v=v656',
+  './themes.css?v=v657',
+  './skin.css?v=v657',
+  './skin.js?v=v657',
+  './update.js?v=v657',
+  './tour.js?v=v657',
+  './topics.js?v=v657',
+  './subscription.js?v=v657',
+  './auth.js?v=v657',
+  './version.js?v=v657',
   './ya3/index.html',
   './ya3/ya3-data.js',
   './ya4/index.html',
@@ -31,7 +31,7 @@ const PRECACHE = [
   './ya4/tw4-data.js',
   './ya5/tw5-data.js',
   './ya6/tw6-data.js',
-  './sync.js?v=v656',
+  './sync.js?v=v657',
   './exam/index.html',
   // './exam/questions-data.js' ← v554: 不 precache,由頁面第一次 fetch 放進快取 (避免 install + 頁面同時各抓 41 MB)
   './exam/compare.html',
@@ -67,20 +67,23 @@ self.addEventListener('message', e => {
   if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
+// v657: 題庫切成一科一檔 (q-ya3.js …)。版本換了就把「每一個」題庫檔從舊快取搬過來,
+//   之後 fetch 各自用 ETag 背景確認 → 只有真的改過的那一科會重抓。
+function isQuestionBank(url) {
+  return /\/q-[a-z0-9]+\.js(\?|$)/.test(url) || url.includes('questions-data.js');
+}
 async function carryOverQuestionBank() {
-  // v554: 版本換了,題庫通常沒變 → 從舊快取搬過來,不重抓 41 MB (fetch 時會用 ETag 背景確認)
   try {
     const keys = await caches.keys();
     const newCache = await caches.open(CACHE_NAME);
-    const already = (await newCache.keys()).some(r => r.url.includes('questions-data.js'));
-    if (already) return;
+    const have = new Set((await newCache.keys()).filter(r => isQuestionBank(r.url)).map(r => r.url));
     for (const k of keys) {
       if (k === CACHE_NAME) continue;
       const old = await caches.open(k);
-      const reqs = (await old.keys()).filter(r => r.url.includes('questions-data.js'));
-      for (const r of reqs) {
+      for (const r of (await old.keys()).filter(x => isQuestionBank(x.url))) {
+        if (have.has(r.url)) continue;
         const res = await old.match(r);
-        if (res) { await newCache.put(r, res); return; }
+        if (res) { await newCache.put(r, res); have.add(r.url); }
       }
     }
   } catch (err) { console.warn('SW carryOver fail', err); }
@@ -101,7 +104,6 @@ self.addEventListener('activate', e => {
 
 // Data files that update frequently → network first, fall back to cache
 const NETWORK_FIRST = [
-  'questions-data.js',
   'ya3-data.js',
   'prostho-data.js',
   'os-data.js',
@@ -141,7 +143,7 @@ self.addEventListener('fetch', e => {
 
   // v553: 41 MB 題庫改 cache-first — 有快取就直接回,不再每次開頁重抓 (萬人審計 #1)
   //        新版本 = 新 CACHE_NAME,install 時會重新 precache,所以更新還是會拿到
-  if (e.request.url.includes('questions-data.js')) {
+  if (isQuestionBank(e.request.url)) {
     e.respondWith(
       caches.match(e.request).then(cached => {
         if (cached) {

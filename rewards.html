@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>我的獎勵 - 牙醫國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v685"></script>
-    <script src="skin.js?v=v685"></script>
+    <script src="version.js?v=v686"></script>
+    <script src="skin.js?v=v686"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -256,7 +256,7 @@
         margin-top: 2rem;
       }
     </style>
-      <link rel="stylesheet" href="skin.css?v=v685" />
+      <link rel="stylesheet" href="skin.css?v=v686" />
   </head>
   <body>
     <div class="wrap">
@@ -407,7 +407,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v685"></script>
+    <script src="auth.js?v=v686"></script>
     <script>
       document.getElementById("v").textContent = (
         window.APP_VERSION || ""
@@ -690,7 +690,7 @@
             const actionBtns =
               r.used || expired
                 ? ""
-                : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" onclick="useCode('${r.code}')">✨ 續命 ${r.gift_days} 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製(可送人)</button>`;
+                : `<button class="copy-btn" style="background:#16a34a;margin-right:.35rem" data-code="${r.code}" data-days="${r.gift_days}" onclick="useCode('${r.code}')">✨ 續命 ${r.gift_days} 天</button><button class="copy-btn" onclick="copyCode('${r.code}')">複製(可送人)</button>`;
             const preview =
               r.used || expired
                 ? ""
@@ -722,60 +722,39 @@
       window.useCode = async (code) => {
         const user = window.Auth && window.Auth.getUser();
         if (!user) return alert("請先 Google 登入");
-        const now = Date.now();
-        // 先讀 code 檢查有效期 (v544: 順便留著當 transaction 的基底)
-        let cdBase = null;
-        try {
-          const cSnap = await firebase
-            .database()
-            .ref("redeem_codes/" + code)
-            .once("value");
-          cdBase = cSnap.val();
-          if (cdBase && cdBase.expires_ts && now > cdBase.expires_ts)
-            return alert("❌ 此序號已過期 (產出後 90 天內須使用)");
-        } catch (e) {}
-        const days = (cdBase && cdBase.gift_days) || 30; // v573: 序號幾天就加幾天
-        const startFrom =
-          window._currentExpires && window._currentExpires > now
-            ? window._currentExpires
-            : now;
-        const newExpires = startFrom + days * 86400_000;
+        // 2026-09-12:兌換整個交給 Worker 做。
+        //   以前網頁端自己「標記序號已用 → 寫訂閱」,但資料庫規則不准使用者自己寫
+        //   subscription (擋得對,不然誰都能給自己開會員) → 第二步必定失敗,
+        //   卡在「序號已經燒掉、天數還沒加」。HUA 中過兩次 (兩組序號都已還原)。
+        //   現在由伺服器一手做完,寫訂閱失敗會自動把序號還回去。
+        const row = document.querySelector('[data-code="' + code + '"]');
+        const days = (row && Number(row.getAttribute("data-days"))) || 30;
         if (
           !confirm(
-            `確定使用序號 ${code} 續命?\n\n目前訂閱到期: ${fmtDate(window._currentExpires)}\n續命後到期: ${fmtDate(newExpires)}\n(等於 +${days} 天，原本剩下的天數不會被吃掉)`,
+            "確定使用序號 " + code + " 續命?\n\n會在目前到期日往後加 " + days +
+              " 天,原本剩下的天數不會被吃掉。",
           )
         )
           return;
         try {
-          const db = firebase.database();
-          const ref = db.ref("redeem_codes/" + code);
-          const tx = await ref.transaction((cur) => {
-            // v544: Firebase transaction 第一次常給 null (不是不存在) → 用剛讀到的當基底
-            if (cur === null && cdBase) cur = Object.assign({}, cdBase);
-            if (!cur || cur.used) return; // 真的沒有 / 已用 → abort
-            cur.used = true;
-            cur.used_by = user.uid;
-            cur.used_by_email = user.email || "";
-            cur.used_ts = now;
-            return cur;
-          });
-          if (!tx.committed) throw new Error("序號無效或已被搶先");
-          await db.ref("users/" + user.uid + "/subscription").set({
-            plan: cdBase && cdBase.type ? "redeem-" + cdBase.type : "monthly",
-            gift_days: days,
-            started_at: now,
-            expires_at: newExpires,
-            activated_by: "redeem-selfuse",
-            payment_ref: "序號 " + code,
-            redeem_code: code,
-            prev_expires_at:
-              window._currentExpires && window._currentExpires > now
-                ? window._currentExpires
-                : null,
-          });
-          // v576: 付費會員索引 (獎勵「有效讚」用)
-          db.ref("users/__stats/paid/" + user.uid).set(newExpires).catch(() => {});
-          alert(`✅ 續命成功 (+${days} 天)!\n訂閱到期: ${fmtDate(newExpires)}`);
+          const idToken = await firebase.auth().currentUser.getIdToken();
+          const r = await fetch(
+            "https://island-watch.seat-watch.workers.dev/api/redeem",
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                site: (window.SITE && window.SITE.id) || "dental",
+                idToken,
+                code,
+              }),
+            },
+          );
+          const j = await r.json().catch(() => ({}));
+          if (!j.ok) throw new Error(j.error || "開通失敗");
+          alert(
+            "✅ 續命成功 (+" + j.days + " 天)!\n訂閱到期: " + fmtDate(j.expires_at),
+          );
           loadRewards();
         } catch (e) {
           alert("❌ 失敗: " + e.message);
@@ -787,6 +766,6 @@
         window.Auth.onChange(loadRewards);
       }
     </script>
-      <script src="tour.js?v=v685" defer></script>
+      <script src="tour.js?v=v686" defer></script>
 </body>
 </html>

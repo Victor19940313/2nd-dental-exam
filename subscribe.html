@@ -9,8 +9,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>訂閱方案 - 牙醫國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v685"></script>
-    <script src="site-config.js?v=v685" onerror="this.remove()"></script>
+    <script src="version.js?v=v686"></script>
+    <script src="site-config.js?v=v686" onerror="this.remove()"></script>
     <script>
       // v651: 訂閱集中化 — 牙醫以外的站,付款 / 序號都在入口網站做 (同一個帳號),這頁只做轉址
       // v652: 付款 / 序號一律在入口網站做 (一份訂閱通全站),各站訂閱頁只做轉址
@@ -18,7 +18,7 @@
           "https://ezpass-exam.com/subscribe.html" + location.search,
         );
     </script>
-    <script src="skin.js?v=v685"></script>
+    <script src="skin.js?v=v686"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -272,7 +272,10 @@
       .field input {
         width: 100%;
         padding: 0.6rem 0.8rem;
-        border: 1.5px solid #e5e7eb;
+        /* 2026-09-12 HUA:「看不出來是可以讓人填資料的地方」。
+           原本的 #e5e7eb 跟白底對比只有 1.2,等於沒有框。 */
+        border: 1.5px solid #9ca3af;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
         border-radius: 8px;
         font-size: 0.95rem;
         font-family: inherit;
@@ -664,7 +667,7 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="skin.css?v=v685" />
+    <link rel="stylesheet" href="skin.css?v=v686" />
   </head>
   <body>
     <div class="wrap">
@@ -1184,8 +1187,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v685"></script>
-    <script src="subscription.js?v=v685"></script>
+    <script src="auth.js?v=v686"></script>
+    <script src="subscription.js?v=v686"></script>
 
     <script>
       let selectedPlan = null;
@@ -1644,55 +1647,30 @@
         btn.disabled = true;
         btn.textContent = "兌換中...";
         try {
-          const db = firebase.database();
-          const ref = db.ref("redeem_codes/" + code);
-          const snap = await ref.once("value");
-          const data = snap.val();
-          if (!data) throw new Error("查無此序號");
-          if (data.used) throw new Error("序號已被使用");
-          if (data.expires_ts && Date.now() > data.expires_ts)
-            throw new Error("序號已過期 (產出後 90 天內須使用)");
-          const days = data.gift_days || 30;
-          const now = Date.now();
-          // v573: 還在會員期內就從原到期日往後加,不吃掉剩下的天數 (跟獎勵頁「續命」一致)
-          let base = now;
-          try {
-            const curSub = (
-              await db.ref("users/" + user.uid + "/subscription").once("value")
-            ).val();
-            if (curSub && curSub.expires_at && curSub.expires_at > now)
-              base = curSub.expires_at;
-          } catch (e) {}
-          const expires = base + days * 86400_000;
-          // 用 transaction 防競爭 (兩人同時兌換)
-          const tx = await ref.transaction((cur) => {
-            // v544: Firebase transaction 第一次回呼常給 null (本地無快取),不是「不存在」
-            //       → 用剛 once() 讀到的 data 當基底繼續;若 server 其實已被用,SDK 會帶真值 retry 再擋
-            if (cur === null) cur = Object.assign({}, data);
-            if (!cur || cur.used) return; // 真的沒有 / 已用 → abort
-            cur.used = true;
-            cur.used_by = user.uid;
-            cur.used_by_email = user.email || "";
-            cur.used_ts = now;
-            return cur;
-          });
-          if (!tx.committed) throw new Error("兌換失敗 (可能被別人搶先)");
-          // 寫 subscription (直接覆蓋，和 Telegram 一鍵開通一致)
-          await db.ref("users/" + user.uid + "/subscription").set({
-            plan: "redeem-" + (data.type || "code"),
-            gift_days: days,
-            started_at: now,
-            expires_at: expires,
-            prev_expires_at: base !== now ? base : null,
-            activated_by: "redeem-" + (data.type || "code"),
-            payment_ref: "序號 " + code,
-            redeem_code: code,
-          });
-          // v576: 付費會員索引 (獎勵「有效讚」用)
-          db.ref("users/__stats/paid/" + user.uid)
-            .set(expires)
-            .catch(() => {});
-          msgEl.innerHTML = `✅ 兌換成功! 開通 ${days} 天，到期 ${new Date(expires).toISOString().slice(0, 10)}`;
+          // 2026-09-12:兌換改由伺服器代勞 (跟獎勵頁同一支)。
+          //   網頁端不可以自己寫 subscription —— 資料庫規則擋著 (擋得對,
+          //   不然誰都能給自己開會員)。以前的寫法會在「序號已標記用掉、
+          //   訂閱還沒寫成功」的中間失敗 → 序號燒掉、天數沒加。
+          const idToken = await firebase.auth().currentUser.getIdToken();
+          const r = await fetch(
+            "https://island-watch.seat-watch.workers.dev/api/redeem",
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                site: (window.SITE && window.SITE.id) || "dental",
+                idToken,
+                code,
+              }),
+            },
+          );
+          const j = await r.json().catch(() => ({}));
+          if (!j.ok) throw new Error(j.error || "兌換失敗");
+          msgEl.innerHTML =
+            "✅ 兌換成功! 開通 " +
+            j.days +
+            " 天，到期 " +
+            new Date(j.expires_at).toISOString().slice(0, 10);
           msgEl.style.color = "#16a34a";
           btn.textContent = "已兌換";
           document.getElementById("redeem-input").disabled = true;
@@ -1721,6 +1699,6 @@
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-    <script src="tour.js?v=v685" defer></script>
+    <script src="tour.js?v=v686" defer></script>
   </body>
 </html>

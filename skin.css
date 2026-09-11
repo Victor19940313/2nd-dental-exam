@@ -806,3 +806,83 @@ html[data-skin="night"] body :is(#screen-practice, #screen-scroll-exam, #screen-
   border-color: #96504f !important;
   color: #f8dcdc !important;
 }
+
+/* ───────── v686: 訂閱頁 — 夜讀選中的方案卡整個看不到字 ─────────
+   HUA 回報 (截圖):夜讀模式下選到的方案,「月費」很淡、價格**整個不見**、「/月」也看不清楚。
+
+   原因有兩層:
+   1. v626 那條「選中的東西一律塗主色」的規則 (清單裡有 #screen-home 等 ID → ID 等級),
+      壓過下面專門為方案卡寫的深色規則 → 卡片變成淺紫色的主色底。
+   2. 卡片裡的字又各自被夜讀的文字規則改成亮色:
+      .plan .name / .per → 亮灰 (淺底上看不清)
+      .plan .price      → **主色**,跟卡片底色同一個顏色 → 價格直接消失
+   再加上原始的 .plan.selected 用的是 `background:` 簡寫 (含漸層圖),
+   只蓋 background-color 是蓋不掉的,漸層會畫在上面。
+
+   修法:選中的方案卡在夜讀一律走「深底 + 亮字」,跟夜讀其他地方一致。 */
+html[data-skin="night"] body :is(#choose, .plans, body) .plan.selected {
+  background-color: #2e2a3d !important;
+  background-image: none !important;
+  border-color: var(--sk-accent) !important;
+  box-shadow: 0 0 0 2px var(--sk-accent) !important;
+  color: var(--sk-ink) !important;
+}
+html[data-skin="night"] body :is(#choose, .plans, body) .plan.selected .name {
+  color: #f4f2ee !important;
+}
+html[data-skin="night"] body :is(#choose, .plans, body) .plan.selected .price {
+  color: #cbb8ff !important; /* 不能用主色:主色就是卡片底色,會看不見 */
+}
+html[data-skin="night"] body :is(#choose, .plans, body) .plan.selected .price .unit,
+html[data-skin="night"] body :is(#choose, .plans, body) .plan.selected .per {
+  color: #b9b5ad !important;
+}
+html[data-skin="night"] body :is(#choose, .plans, body) .plan.selected .save {
+  color: #6ee7a8 !important;
+}
+
+/* ───────── v686: 輸入框看不出來是可以填字的 ─────────
+   HUA 回報:動畫風的「推薦人 email」那一格看不出是輸入框。
+   量過 8 種風格:框線跟旁邊底色的對比只有 1.1~1.5 (動畫/韓系奶油/診所/經典/夜讀),
+   等於沒有框。改成用比較深的線 + 一點內凹陰影,讓它一眼看得出是可以點進去打字的。 */
+html[data-skin] input[type="text"],
+html[data-skin] input[type="email"],
+html[data-skin] input[type="password"],
+html[data-skin] input[type="number"],
+html[data-skin] textarea,
+html[data-skin] .search-box,
+html[data-skin] .comment-input {
+  border-color: var(--sk-input-line, var(--sk-ink2, #9a948c)) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+html[data-skin="night"] input[type="text"],
+html[data-skin="night"] input[type="email"],
+html[data-skin="night"] input[type="password"],
+html[data-skin="night"] input[type="number"],
+html[data-skin="night"] textarea,
+html[data-skin="night"] .search-box,
+html[data-skin="night"] .comment-input {
+  border-color: #6b6f82 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+html[data-skin] input::placeholder,
+html[data-skin] textarea::placeholder {
+  color: var(--sk-ink2, #8a857d);
+  opacity: 0.85;
+}
+
+/* v686 補: 夜讀的輸入框框線被 v626 那條 (清單裡有 ID → ID 等級) 壓掉了,
+   用同樣的 ID 等級寫回來,不然夜讀還是看不出哪裡可以打字。 */
+html[data-skin="night"] body :is(#screen-notebook, #screen-practice, .field, .form, body)
+  :is(input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea, .search-box, .comment-input) {
+  border-color: #7a7f95 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+/* v686 補: 淺色風格的價格用主色寫,水彩/可愛/動畫的主色太淺 → 大字對比不足。
+   改用「實心主色」(每個風格都調過,保證看得清楚)。 */
+html[data-skin] .plan .price {
+  color: var(--sk-accent-solid, var(--sk-accent)) !important;
+}
+html[data-skin] .plan .per {
+  color: var(--sk-ink2, #6b7280) !important;
+}

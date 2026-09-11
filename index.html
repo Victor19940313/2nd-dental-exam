@@ -7,7 +7,7 @@
       content="noindex, nofollow, noarchive, nosnippet, noimageindex"
     />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>牙醫國考互動筆記</title>
+    <title>牙醫二階國考互動筆記</title>
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#f8f7f0" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -336,12 +336,23 @@
       }
 
       /* ── User bar ── */
+      /* v687: 標題不要在詞中間斷行 (「醫師一階國考互 / 動筆記」)。
+         keep-all = 中文字之間不隨便斷；真的塞不下才用 anywhere 保命。
+         換行點由 <wbr> 指定，落在「互動筆記」前面。 */
+      h1 {
+        word-break: keep-all;
+        overflow-wrap: anywhere;
+      }
       .user-bar {
         width: 100%;
         max-width: 560px; /* v558: 跟 .grid 同寬，右邊才對齊 */
         display: flex;
         align-items: center;
         justify-content: space-between;
+        /* v687: 有「✨終身會員」徽章時左邊會變長，把右邊三顆鈕擠到字中間斷行。
+           擠不下就整組掉到第二行，不要讓按鈕自己斷字。 */
+        flex-wrap: wrap;
+        row-gap: 0.45rem;
         margin-bottom: 1.2rem;
         background: var(--bg-card);
         border: 1.5px solid var(--border);
@@ -353,6 +364,30 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        min-width: 0; /* v687: 讓名字可以縮，不要把按鈕擠爆 */
+        flex: 1 1 auto;
+      }
+      .user-bar-btns {
+        display: inline-flex;
+        gap: 0.4rem;
+        flex: 0 0 auto;
+        margin-left: auto;
+      }
+      /* v687: 手機寬度塞不下「名字 + 會員徽章 + 三顆鈕」。
+         與其讓鈕擠到斷字,不如整組移到第二行、三顆等寬排滿,看起來像工具列。 */
+      @media (max-width: 540px) {
+        .user-bar-btns {
+          flex: 1 1 100%;
+          margin-left: 0;
+        }
+        .user-bar-btns > * {
+          flex: 1 1 0;
+          text-align: center;
+        }
+      }
+      #sub-badge {
+        flex: 0 0 auto;
+        white-space: nowrap;
       }
       .user-avatar {
         width: 28px;
@@ -369,8 +404,12 @@
         font-size: 0.88rem;
         font-weight: 700;
         color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .user-switch {
+        white-space: nowrap; /* v687: 「🏠 首頁」不可以斷成兩行 */
         background: none;
         border: 1.5px solid var(--border);
         border-radius: 8px;
@@ -497,7 +536,7 @@
         color: var(--text);
       }
     </style>
-    <link rel="stylesheet" href="skin.css?v=v686" />
+    <link rel="stylesheet" href="skin.css?v=v687" />
   </head>
   <body>
     <!-- User selection overlay (v507: 只留 Google 登入，移除訪客模式) -->
@@ -597,7 +636,7 @@
           <span class="user-name" id="ub-name"></span>
           <span id="sub-badge" style="margin-left: 0.5rem"></span>
         </div>
-        <span style="display: inline-flex; gap: 0.4rem">
+        <span class="user-bar-btns">
           <a
             class="user-switch"
             href="https://ezpass-exam.com/"
@@ -627,7 +666,7 @@
       <div class="hero">
         <div class="hero-text">
           <span class="hero-eyebrow">EZPASS DENTAL</span>
-          <h1>牙醫國考互動筆記</h1>
+          <h1>牙醫二階國考<wbr />互動筆記</h1>
           <p class="sub">選擇科目，開始複習</p>
           <a class="hero-cta" href="features.html">✨ 第一次使用看這邊！</a>
         </div>
@@ -755,18 +794,18 @@
     </div>
     <!-- /main-content -->
 
-    <script src="version.js?v=v686"></script>
-    <script src="skin.js?v=v686"></script>
+    <script src="version.js?v=v687"></script>
+    <script src="skin.js?v=v687"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="sync.js?v=v686"></script>
-    <script src="visitor-log.js?v=v686"></script>
-    <script src="auth.js?v=v686"></script>
-    <script src="keysync.js?v=v686"></script>
-    <script src="migration.js?v=v686"></script>
-    <script src="subscription.js?v=v686"></script>
-    <script src="device-guard.js?v=v686"></script>
+    <script src="sync.js?v=v687"></script>
+    <script src="visitor-log.js?v=v687"></script>
+    <script src="auth.js?v=v687"></script>
+    <script src="keysync.js?v=v687"></script>
+    <script src="migration.js?v=v687"></script>
+    <script src="subscription.js?v=v687"></script>
+    <script src="device-guard.js?v=v687"></script>
     <script>
       // ════════════════════════════════════════════
       //  User Management
@@ -1152,8 +1191,8 @@
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-    <script src="tour.js?v=v686" defer></script>
-    <script src="update.js?v=v686" defer></script>
-    <script src="update.js?v=v686" defer></script>
+    <script src="tour.js?v=v687" defer></script>
+    <script src="update.js?v=v687" defer></script>
+    <script src="update.js?v=v687" defer></script>
   </body>
 </html>

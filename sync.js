@@ -55,11 +55,22 @@
     );
   }
 
+  // ── 一棵樹:同一個帳號,每一科各自的學習資料 ─────────────────
+  //  樹幹 (共用,不加科目):帳號、訂閱、口訣分享區、獎勵、風格、裝置
+  //  樹枝 (每科各自):作答紀錄、錯題本、筆記本 ← 就是這裡
+  //
+  //  牙醫站是第一個站,它的資料一直放在 users/<帳號> 底下,
+  //  為了不動到現有付費使用者的資料,**牙醫維持原路徑** (dataPath 空白),
+  //  之後加入的科目才放到 users/<帳號>/x/<科目> 底下。
+  function _subPath() {
+    var p = (window.SITE && window.SITE.dataPath) || "";
+    return p ? "/" + p : "";
+  }
   function userRef() {
-    return _db.ref("users/" + _userId);
+    return _db.ref("users/" + _userId + _subPath());
   }
   function userDataRef() {
-    return _db.ref("users/" + _userId + "/data");
+    return _db.ref("users/" + _userId + _subPath() + "/data");
   }
 
   function isSyncKey(key) {

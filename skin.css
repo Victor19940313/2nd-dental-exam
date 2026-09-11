@@ -778,3 +778,31 @@ html[data-skin] body :is(.btn.primary, .go-login, .submit-btn, .btn-primary, .pr
   border-color: var(--sk-accent-solid) !important;
   color: #fff !important;
 }
+
+/* ───────── v683: 夜讀 — 選項列的「螢光筆 / 劃掉 / 答對答錯」顏色被吃掉 ─────────
+   HUA 回報:夜讀寫考題時畫螢光筆完全看不到效果。
+   原因是 v626 那條夜讀底色規則的 :is() 清單裡混了 #similar-modal / #ai-settings-overlay,
+   CSS 的 :is() 會取清單裡「最重」的那一個算權重 → 整條變成 ID 等級,
+   壓過 skin.css 第 302/303 行與第 549/550 行所有 .opt-row.xxx 的規則。
+   (同一個坑第三次:只要 :is() 裡出現 # 就會發生,見 bug_log「:is() 權重」)
+   這裡用同樣的 ID 等級把四種痕跡寫回來。順序:對錯色排在痕跡之後 → 答案揭曉後綠/紅優先。 */
+html[data-skin="night"] body :is(#screen-practice, #screen-scroll-exam, #screen-browse, #screen-wrongbook, #screen-exam-results, body) .opt-row.mark-strike {
+  color: #ff8f8f !important;
+  text-decoration: line-through !important;
+  text-decoration-thickness: 1.5px !important;
+}
+html[data-skin="night"] body :is(#screen-practice, #screen-scroll-exam, #screen-browse, #screen-wrongbook, #screen-exam-results, body) .opt-row.mark-highlight {
+  background-color: #e6c94f !important;
+  border-color: #c9a227 !important;
+  color: #17181d !important;
+}
+html[data-skin="night"] body :is(#screen-practice, #screen-scroll-exam, #screen-browse, #screen-wrongbook, #screen-exam-results, body) .opt-row.review-correct {
+  background-color: #1f3b2a !important;
+  border-color: #46855e !important;
+  color: #d9f2e2 !important;
+}
+html[data-skin="night"] body :is(#screen-practice, #screen-scroll-exam, #screen-browse, #screen-wrongbook, #screen-exam-results, body) .opt-row.review-wrong {
+  background-color: #3d2626 !important;
+  border-color: #96504f !important;
+  color: #f8dcdc !important;
+}

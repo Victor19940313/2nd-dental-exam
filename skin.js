@@ -1,3 +1,14 @@
+// v683 (一棵樹): 站台可能放在網域根目錄 (牙醫站),也可能放在子路徑
+//   (例如 ezpass-exam.com/nursing)。程式裡凡是要指向「本站的某一頁」,
+//   都要用 siteRoot() 開頭,不能寫死 "/xxx.html" —— 寫死的話搬到子路徑就會連到別站。
+//   skin.js 是每一頁最早載入的共用檔,所以放在這裡。
+(function () {
+  window.siteRoot = function () {
+    var b = (window.SITE && window.SITE.base) || "/";
+    return b.charAt(b.length - 1) === "/" ? b : b + "/";
+  };
+})();
+
 // v603: 遠端清除 — 上一次載入 sync.js 發現 users/{uid}/_meta/wipe_ts 比本機新,會設 {uid}__wipe_pending 再重新載入;
 //       這裡在任何程式讀資料之前 (skin.js 是最早載入的共用檔) 同步把該 uid 的本機資料再清一次,避免舊副本復活。
 (function earlyWipe() {

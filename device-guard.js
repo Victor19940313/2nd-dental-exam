@@ -136,7 +136,7 @@
         <h2>已達 3 台裝置上限</h2>
         <p>妳的訂閱最多可在 3 台裝置使用，目前這台被暫時擋下。<br>
         請去<b>裝置管理</b>踢掉一台舊裝置，再重新整理這頁即可解鎖。</p>
-        <a href="/devices.html" class="dbo-btn">前往裝置管理</a>
+        <a href="${siteRoot()}devices.html" class="dbo-btn">前往裝置管理</a>
         <p class="dbo-sub">當前裝置: <b>${detectLabel()}</b></p>
       </div>
     `;

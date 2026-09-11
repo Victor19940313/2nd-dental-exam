@@ -536,20 +536,10 @@
       >
         首次登入自動搬舊資料 · 免費 7 天體驗
       </p>
-      <!-- v642: 沒登入也要能看到賣什麼 (綠界收款審核退件:販售網址需登入才可查看) -->
-      <p style="text-align: center; margin-top: 0.9rem; font-size: 0.86rem">
-        <a
-          href="subscribe.html"
-          style="color: #7c3aed; font-weight: 800; text-decoration: underline"
-          >📋 查看服務說明與訂閱方案（不用登入）</a
-        >
-        <br />
-        <a
-          href="https://ezpass-exam.com/preview.html"
-          style="color: #7c3aed; font-weight: 800; text-decoration: underline"
-          >🖼 網站重要功能預覽（不用登入）</a
-        >
-      </p>
+      <!-- v683: HUA 要求拿掉這兩條底線連結 (視覺上很跳)。
+           原本存在的理由是 v642 綠界審核「販售網址需不用登入就看得到」——
+           這個需求現在由入口網站 ezpass-exam.com 的「方案與價格」滿足 (公開、不用登入)。
+           若綠界之後重新審核 ezpass-dental.com,要記得補一個公開入口回來。 -->
       <!-- v639: 支援的瀏覽器 (HUA: 朋友登入出現 Google 400,多半是從 LINE/IG/FB 內建瀏覽器點進來) -->
       <p
         class="browser-note"
@@ -647,7 +637,13 @@
       <div class="countdown" id="countdown">
         <div class="days" id="days">--</div>
         <div class="label">距下次國考</div>
-        <div style="font-size: 0.68rem; color: var(--sk-ink2, #6b7280); margin-top: 0.3rem">
+        <div
+          style="
+            font-size: 0.68rem;
+            color: var(--sk-ink2, #6b7280);
+            margin-top: 0.3rem;
+          "
+        >
           ※ 粗估 (2027 年 2 月中) · 精確日期以考選部公告為準
         </div>
       </div>

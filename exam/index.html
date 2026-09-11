@@ -9620,6 +9620,11 @@
       let browseQ = "";
       // v680:詳解裡埋了看不見的指紋字元 (防抄襲用,見 watermark_expl.js)。
       //       搜尋前一律先把它們拿掉,不然「牙髓」中間夾一個零寬字元就會搜不到。
+      // 一棵樹:筆記本備份也要分科目 (見 sync.js 的說明)
+      function _nbRoot(uid) {
+        var p = (window.SITE && window.SITE.dataPath) || "";
+        return "users/" + uid + (p ? "/" + p : "") + "/notebook_backups";
+      }
       function _nz(s) {
         return String(s == null ? "" : s).replace(/[​‌‍⁠﻿]/g, "");
       }
@@ -12009,11 +12014,30 @@
         );
         return s;
       }
+      const NL_ = String.fromCharCode(10);
       function formatExpl(text) {
         if (!text) return "";
         // v349:詳解渲染時自動把大陸用語/簡體字換成台灣用語(連 GitHub 上舊詳解也會被修正顯示)
         text = applyTwTermsToText(text);
         text = _stripLatex(text);
+        // ── 先把「Markdown 表格」與「### 標題」抽走 ──
+        //   有一小部分詳解(2026-09-11 實測 93 題)是用「### 標題 + 表格」寫的,
+        //   下面那些拆句子/拆清單的處理會把表格切成一行一行,畫面上就露出 | 符號。
+        //   先換成佔位符,等 HTML 組好再換回來,中間的處理就碰不到它。
+        const _mdHold = [];
+        const _hold = (type, raw) => {
+          _mdHold.push({ type: type, raw: raw });
+          return "@@MDHOLD" + (_mdHold.length - 1) + "@@";
+        };
+        // 表格:連續的 | 開頭列,而且第二列是分隔線
+        text = text.replace(
+          /^\|[^\n]*\|[ \t]*\n\|[\s\-—–－:|]+\|[ \t]*\n(?:\|[^\n]*\|[ \t]*(?:\n|$))+/gm,
+          (block) => NL_ + _hold("table", block) + NL_,
+        );
+        // ## / ### / #### 標題
+        text = text.replace(/^#{2,4}[ \t]+(.+?)[ \t]*$/gm, (_m, t) =>
+          _hold("h", t),
+        );
         text = _splitInlineOptions(text);
         // 移除「孤立的 dash / bullet 行」(整行只有 dash/bullet 的清掉)
         text = text.replace(/^[ \t]*[-–—*•·][ \t]*$/gm, "");
@@ -12219,6 +12243,23 @@
           /([。；！」）\)：])\s*(\d+)\.\s\s*/g,
           '$1</p><p class="expl-li">$2. ',
         );
+        // ── 把佔位符換回渲染好的表格 / 標題 ──
+        if (_mdHold.length) {
+          const esc = (x) =>
+            x
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;");
+          out = out.replace(
+            /<p[^>]*>\s*@@MDHOLD(\d+)@@\s*<\/p>|@@MDHOLD(\d+)@@/g,
+            (_m, a, b) => {
+              const h = _mdHold[Number(a != null ? a : b)];
+              if (!h) return "";
+              if (h.type === "table") return renderMDTables(esc(h.raw));
+              return '<p><span class="expl-section">' + esc(h.raw) + "</span></p>";
+            },
+          );
+        }
         out += "</div>";
         return out;
       }
@@ -21843,7 +21884,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           if (!payload || payload === "{}")
             throw new Error("筆記是空的，不備份");
           const db = firebase.database();
-          await db.ref(`users/${uid}/notebook_backups`).push({
+          await db.ref(_nbRoot(uid)).push({
             ts: Date.now(),
             label: label || "備份",
             payload: payload,
@@ -21851,7 +21892,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           });
           // 修剪舊備份
           const snap = await db
-            .ref(`users/${uid}/notebook_backups`)
+            .ref(_nbRoot(uid))
             .once("value");
           const all = [];
           snap.forEach((c) => {
@@ -21860,7 +21901,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           all.sort((a, b) => b.ts - a.ts);
           if (all.length > NB_BACKUP_KEEP) {
             for (const x of all.slice(NB_BACKUP_KEEP)) {
-              await db.ref(`users/${uid}/notebook_backups/${x.key}`).remove();
+              await db.ref(_nbRoot(uid) + "/" + x.key).remove();
             }
           }
           console.log(
@@ -21880,7 +21921,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         if (!uid) return [];
         const snap = await firebase
           .database()
-          .ref(`users/${uid}/notebook_backups`)
+          .ref(_nbRoot(uid))
           .once("value");
         const arr = [];
         snap.forEach((c) => {

@@ -186,7 +186,7 @@
     }
     if (s.reason === "trial") {
       const cls = s.days_left <= 2 ? "sub-b-warn" : "sub-b-trial";
-      el.innerHTML = `<span class="sub-b ${cls}" title="試用中，還剩 ${s.days_left} 天"><span>試用</span><b>剩 ${s.days_left} 天</b><a href="/subscribe.html" class="sub-b-btn">訂閱</a></span>`;
+      el.innerHTML = `<span class="sub-b ${cls}" title="試用中，還剩 ${s.days_left} 天"><span>試用</span><b>剩 ${s.days_left} 天</b><a href="${siteRoot()}subscribe.html" class="sub-b-btn">訂閱</a></span>`;
     } else if (s.reason === "paid") {
       const cls = s.days_left <= 5 ? "sub-b-warn" : "sub-b-paid";
       const planName =
@@ -197,9 +197,9 @@
           ? `<span class="sub-b sub-b-paid" title="終身會員"><span>✨終身會員</span></span>`
           : `<span class="sub-b ${cls}" title="會員剩 ${s.days_left} 天"><span>✨會員</span><b>剩 ${s.days_left} 天</b></span>`;
     } else if (s.reason === "trial_expired") {
-      el.innerHTML = `<span class="sub-b sub-b-expired"><span>試用結束</span><a href="/subscribe.html" class="sub-b-btn">訂閱解鎖</a></span>`;
+      el.innerHTML = `<span class="sub-b sub-b-expired"><span>試用結束</span><a href="${siteRoot()}subscribe.html" class="sub-b-btn">訂閱解鎖</a></span>`;
     } else if (s.reason === "subscription_expired") {
-      el.innerHTML = `<span class="sub-b sub-b-expired"><span>已過期</span><a href="/subscribe.html" class="sub-b-btn">續訂</a></span>`;
+      el.innerHTML = `<span class="sub-b sub-b-expired"><span>已過期</span><a href="${siteRoot()}subscribe.html" class="sub-b-btn">續訂</a></span>`;
     }
   }
 

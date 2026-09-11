@@ -7,6 +7,20 @@
   var BOT_PATTERNS =
     /bot|crawler|spider|scraper|GPTBot|ChatGPT|Claude|anthropic|Perplexity|Bytespider|CCBot|Amazonbot|SemrushBot|AhrefsBot|MJ12bot|DotBot|Diffbot|python-requests|python-urllib|libwww-perl|curl\/|wget\/|Java\/|Go-http|okhttp\/|node-fetch|axios\/|Headless|PhantomJS|Selenium|puppeteer|playwright/i;
 
+  // 2026-09-11 HUA:「這些可疑爬蟲是什麼? 是你的測試嗎? 那不要顯示在上面啊」
+  //   —— 是。我用 puppeteer 開真瀏覽器驗線上,每跑一次就寫一筆訪客紀錄進去,
+  //   把她的統計洗掉了。自動化瀏覽器 (webdriver / Headless) 一律不記錄,
+  //   真實使用者不會有這兩個特徵。爬蟲偵測本來就抓得到它們,現在直接連記都不記。
+  try {
+    if (
+      navigator.webdriver === true ||
+      /HeadlessChrome|puppeteer|playwright|Selenium|PhantomJS/i.test(
+        navigator.userAgent || "",
+      )
+    )
+      return;
+  } catch (e) {}
+
   try {
     var db = firebase.database();
     var ua = navigator.userAgent || "";

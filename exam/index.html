@@ -6429,8 +6429,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v677"></script>
-    <link rel="stylesheet" href="../skin.css?v=v677" />
+      <script src="../skin.js?v=v681"></script>
+    <link rel="stylesheet" href="../skin.css?v=v681" />
   </head>
   <body>
     <!-- HEADER -->
@@ -9359,7 +9359,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v677"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v681"><\/script>');
       })();
     </script>
     <script>
@@ -9618,6 +9618,11 @@
       let bfStatus = "all";
       let bfSubjs = new Set(["ya3", "ya4", "ya5", "ya6"]);
       let browseQ = "";
+      // v680:詳解裡埋了看不見的指紋字元 (防抄襲用,見 watermark_expl.js)。
+      //       搜尋前一律先把它們拿掉,不然「牙髓」中間夾一個零寬字元就會搜不到。
+      function _nz(s) {
+        return String(s == null ? "" : s).replace(/[​‌‍⁠﻿]/g, "");
+      }
 
       // Home filter state
       let homeSubjs = new Set(["ya3"]);
@@ -15523,7 +15528,7 @@ ${sBtn("learning", "❓", "一知半解", "#eab308")}
                 .join(" ")
                 .toLowerCase();
             }
-            if (!hay.includes(_q)) return false;
+            if (!_nz(hay).includes(_q)) return false;
           }
           return true;
         });
@@ -22248,9 +22253,9 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             const filtered = q
               ? all.filter(
                   (c) =>
-                    (c.name || "").toLowerCase().includes(q) ||
-                    (c.subtopic || "").toLowerCase().includes(q) ||
-                    (c.content || "").toLowerCase().includes(q),
+                    _nz(c.name).toLowerCase().includes(q) ||
+                    _nz(c.subtopic).toLowerCase().includes(q) ||
+                    _nz(c.content).toLowerCase().includes(q),
                 )
               : all;
             const selCnt = _mergeChState.manualSelected.size;
@@ -28906,7 +28911,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             SMAP[c._mainSubj] || "",
             SMAP[c.subject] || "",
           ];
-          const lowered = fields.join("\n").toLowerCase();
+          const lowered = _nz(fields.join("\n")).toLowerCase();
           if (!lowered.includes(q)) return;
           // 抽出 content 裡的關鍵字片段（最多 3 段，前後各 50 字當上下文）
           const snippets = [];
@@ -28929,7 +28934,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           matches.push({
             chapter: c,
             snippets: snippets,
-            nameMatch: (c.name || "").toLowerCase().includes(q),
+            nameMatch: _nz(c.name).toLowerCase().includes(q),
           });
         });
 
@@ -29983,7 +29988,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           if (wbQuery) {
             const hay = (q.id + " " + (q.question || "") + " " + (q.topic || "")).toLowerCase();
             const alt = q.year + "-" + q.session + "-" + q.number;
-            if (!hay.includes(wbQuery) && !alt.includes(wbQuery)) return false;
+            if (!_nz(hay).includes(wbQuery) && !alt.includes(wbQuery)) return false;
           }
           return true;
         });
@@ -30521,15 +30526,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v677"></script>
+    <script src="../visitor-log.js?v=v681"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v677"></script>
-    <script src="comment-system.js?v=v677"></script>
-    <script src="../auth.js?v=v677"></script>
-    <script src="../keysync.js?v=v677"></script>
-    <script src="../migration.js?v=v677"></script>
-    <script src="../subscription.js?v=v677"></script>
-    <script src="../device-guard.js?v=v677"></script>
+    <script src="../sync.js?v=v681"></script>
+    <script src="comment-system.js?v=v681"></script>
+    <script src="../auth.js?v=v681"></script>
+    <script src="../keysync.js?v=v681"></script>
+    <script src="../migration.js?v=v681"></script>
+    <script src="../subscription.js?v=v681"></script>
+    <script src="../device-guard.js?v=v681"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31032,7 +31037,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v677" defer></script>
-    <script src="../update.js?v=v677" defer></script>
+      <script src="../tour.js?v=v681" defer></script>
+    <script src="../update.js?v=v681" defer></script>
 </body>
 </html>

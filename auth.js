@@ -123,6 +123,7 @@
     // v540: 身份校正搬到這裡 (每頁都載 auth.js) — 不管從哪頁進 (書籤直開練習本、手機捷徑),
     //   dental_cur_user 都必須 = Google uid。v534 只放在首頁，直開練習本會用舊暱稱寫 Firebase (hua_hsu 復活)
     if (currentUser) applyIdentity(currentUser);
+    watchRemoteSignOut(currentUser); // v684: 全站登出的監聽跟著帳號走
     renderWidget();
     changeCallbacks.forEach(function (cb) {
       try {
@@ -508,10 +509,15 @@
 
   async function signOutFn() {
     // v598: 登出後回首頁 (HUA: 用到一半按登出,頁面不會跳轉)
-    const depth = (location.pathname.match(/\//g) || []).length - 1;
-    const base = depth > 0 ? "../".repeat(depth) : "./";
-    const onHome = /^\/(index\.html)?$/.test(location.pathname); // 只有根目錄首頁才算 (v599 修:原本 /exam/index.html 也被當首頁)
+    // v684: 一站式之後每個國考是主網域底下的一個路徑 (/nursing/、/dental1/…),
+    //   原本用「路徑有幾層斜線」往上爬會爬過頭,跑到入口網站去。改用本樹枝的根。
+    const base =
+      typeof window.siteRoot === "function" ? window.siteRoot() : "/";
+    const onHome = location.pathname.replace(/index\.html$/, "") === base;
     try {
+      // v684: 全站登出 — 先在資料庫蓋一個「登出時間戳」,其他分頁/其他裝置/
+      //   牙醫站 (不同網域但同一個資料庫) 收到就會跟著登出。
+      await stampSignOut();
       await auth.signOut();
       // v532: 清 nickname/curUser 避免下次登入其他帳號時被舊值污染
       try {
@@ -522,8 +528,57 @@
     } catch (e) {
       console.warn("[Auth] signOut failed:", e.message);
     }
-    if (!onHome) location.href = base + "index.html";
+    if (!onHome) location.href = base;
     else location.reload();
+  }
+
+  // ── v684: 全站登出 ────────────────────────────────────────────────
+  // HUA 2026-09-11:「一個地方登出,全部地方都登出」。
+  // 同一個網域底下的樹枝本來就共用登入狀態 (瀏覽器同源),自動生效;
+  // 真正的缺口是**另一個網域的牙醫站**和**別的裝置**。
+  // 做法:登出時在 users/<uid>/security/signedOutAt 蓋一個伺服器時間戳,
+  //   所有在線的分頁都盯著這個節點,看到時間戳變了就自己登出。
+  //   這個節點在 users/<uid> 底下、不在各科的資料夾裡,所以是全站共用的。
+  //   成本:一個只有一個數字的小節點,幾乎不佔流量。
+  var _soRef = null;
+  var _soSeen = null; // 掛上監聽當下看到的值;之後只要「變得不一樣」就登出
+  function stampSignOut() {
+    try {
+      if (!currentUser) return Promise.resolve();
+      return db
+        .ref("users/" + currentUser.uid + "/security/signedOutAt")
+        .set(firebase.database.ServerValue.TIMESTAMP)
+        .catch(function () {});
+    } catch (e) {
+      return Promise.resolve();
+    }
+  }
+  function watchRemoteSignOut(user) {
+    try {
+      if (_soRef) {
+        _soRef.off();
+        _soRef = null;
+        _soSeen = null;
+      }
+      if (!user) return;
+      _soRef = db.ref("users/" + user.uid + "/security/signedOutAt");
+      _soRef.on("value", function (snap) {
+        var v = snap.val();
+        if (_soSeen === null) {
+          _soSeen = v; // 第一次讀到的是「上次登出」的舊值,不算
+          return;
+        }
+        if (v === _soSeen) return;
+        _soSeen = v;
+        // 別的地方按了登出 → 這裡也跟著登出 (不要再蓋一次時間戳,不然會互相彈)
+        try {
+          localStorage.removeItem("dental_cur_user");
+          localStorage.removeItem("migrated_nickname");
+          localStorage.removeItem("migrated_google_uid");
+        } catch (e) {}
+        auth.signOut().catch(function () {});
+      });
+    } catch (e) {}
   }
 
   function renderWidget() {

@@ -850,8 +850,33 @@
     function _localTs() {
       return parseInt(localStorage.getItem(_userId + "__ts") || "0") || 0;
     }
+    // ═══ v693:沒在看的裝置不要一直拉資料 ═══
+    //   實測:HUA 一整天讀書,一天觸發 102 次同步 —— 但大部分時候另一台是
+    //   放在旁邊沒在看的。沒人看的畫面即時更新沒有任何意義,卻要付流量的錢。
+    //   改成:分頁在背景就先記著「雲端有新的」,等使用者真的切回來再拉一次。
+    //   中間雲端改了幾十次都只算一次,因為拉的時候本來就是拉最新的。
+    var _pendingPull = "";
+    function _flushPendingPull() {
+      if (!_pendingPull) return;
+      var why = _pendingPull;
+      _pendingPull = "";
+      _pullFull(why);
+    }
+    function _pageVisible() {
+      try {
+        return typeof document === "undefined" || document.visibilityState !== "hidden";
+      } catch (e) {
+        return true;
+      }
+    }
+
     function _pullFull(reason) {
       if (_syncing) return;
+      if (!_pageVisible()) {
+        // 沒在看 → 先記著,切回來再拉 (不要更新本機時間戳,不然就永遠不拉了)
+        _pendingPull = reason;
+        return;
+      }
       // v691:一樣只抓會用到的 key (原本是 userRef().once("value") 整包抓)
       _readChanged()
         .then(function (obj) {
@@ -869,6 +894,21 @@
           console.warn("[Sync] 拉資料失敗", e && e.message);
         });
     }
+    try {
+      if (typeof document !== "undefined" && document.addEventListener) {
+        document.addEventListener("visibilitychange", _flushPendingPull);
+        _listeners.push(function () {
+          document.removeEventListener("visibilitychange", _flushPendingPull);
+        });
+      }
+      if (typeof window !== "undefined" && window.addEventListener) {
+        window.addEventListener("focus", _flushPendingPull);
+        _listeners.push(function () {
+          window.removeEventListener("focus", _flushPendingPull);
+        });
+      }
+    } catch (e) {}
+
     var unsubTs = userRef()
       .child("_ts")
       .on("value", function (snap) {

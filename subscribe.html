@@ -9,8 +9,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>訂閱方案 - 牙醫二階國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v694"></script>
-    <script src="site-config.js?v=v694" onerror="this.remove()"></script>
+    <script src="version.js?v=v695"></script>
+    <script src="site-config.js?v=v695" onerror="this.remove()"></script>
     <script>
       // v651: 訂閱集中化 — 牙醫以外的站,付款 / 序號都在入口網站做 (同一個帳號),這頁只做轉址
       // v652: 付款 / 序號一律在入口網站做 (一份訂閱通全站),各站訂閱頁只做轉址
@@ -18,7 +18,7 @@
           "https://ezpass-exam.com/subscribe.html" + location.search,
         );
     </script>
-    <script src="skin.js?v=v694"></script>
+    <script src="skin.js?v=v695"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -668,7 +668,7 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="skin.css?v=v694" />
+    <link rel="stylesheet" href="skin.css?v=v695" />
   </head>
   <body>
     <div class="wrap">
@@ -822,17 +822,6 @@
           </button>
         </div>
         <div class="ec-or">— 或是用下面的方式 —</div>
-      </div>
-      <div class="lp-box" id="lp-box">
-        <h3>💚 LINE Pay 付款 (付完立刻開通)</h3>
-        <p>
-          按下去會跳到 LINE Pay,付款成功會<b>自動開通</b>,不用填對帳資料。
-          要先勾選下方的服務條款。
-        </p>
-        <button class="lp-btn" id="lp-btn" onclick="payLinepay()">
-          用 LINE Pay 付 <span id="lp-amount">$400</span>
-        </button>
-        <div class="lp-or">— 或是用下面的匯款 —</div>
       </div>
       <div class="bank-info" id="bank-info">
         <h3>💳 匯款資訊</h3>
@@ -1184,8 +1173,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v694"></script>
-    <script src="subscription.js?v=v694"></script>
+    <script src="auth.js?v=v695"></script>
+    <script src="subscription.js?v=v695"></script>
 
     <script>
       let selectedPlan = null;
@@ -1232,14 +1221,7 @@
       // v611: LINE Pay — Worker 說有開才顯示;付完 LINE Pay 導回 ?linepay=ok|fail|cancel
       const LP_WORKER = "https://island-watch.seat-watch.workers.dev";
       let lpEnabled = false;
-      fetch(LP_WORKER + "/linepay/status")
-        .then((r) => r.json())
-        .then((j) => {
-          lpEnabled = !!(j && j.enabled);
-          if (lpEnabled && selectedPlan)
-            document.getElementById("lp-box").classList.add("show");
-        })
-        .catch(() => {});
+      // 2026-09-12 HUA:「line pay拿掉」→ 不再詢問、也不再顯示
       function lpSync() {
         const box = document.getElementById("lp-box");
         if (!box) return;
@@ -1696,6 +1678,6 @@
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-    <script src="tour.js?v=v694" defer></script>
+    <script src="tour.js?v=v695" defer></script>
   </body>
 </html>

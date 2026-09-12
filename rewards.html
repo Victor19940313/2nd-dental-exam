@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>我的獎勵 - 牙醫二階國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v688"></script>
-    <script src="skin.js?v=v688"></script>
+    <script src="version.js?v=v689"></script>
+    <script src="skin.js?v=v689"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -256,7 +256,7 @@
         margin-top: 2rem;
       }
     </style>
-      <link rel="stylesheet" href="skin.css?v=v688" />
+      <link rel="stylesheet" href="skin.css?v=v689" />
   </head>
   <body>
     <div class="wrap">
@@ -298,13 +298,17 @@
             天」<b>直接啟用</b>序號，亦可將序號<b>轉贈他人</b>。
           </li>
           <li>
+            推薦人須<b>本人曾經付費訂閱過</b>，才能自行啟用推薦序號（訂閱已到期者仍可）。
+            尚未訂閱過者，序號會保留在本頁，日後訂閱即可使用，亦可直接<b>轉贈他人</b>。
+          </li>
+          <li>
             推薦次數<b>不設上限</b>:每成功推薦一位新朋友付費訂閱，即獲得一張序號。
           </li>
           <li>
             序號<b>只能用一次</b>，兌換之後那一組就自動失效。您可以<b>自己啟用</b>，也可以<b>轉贈他人</b>，但二擇一;惟每個帳號<b>僅能於首次付費訂閱時產生一次</b>。
           </li>
           <li>
-            推薦人 email 須為<b>已使用 Google 登入</b>之帳號，且不得為本人。
+            推薦人 email 須為<b>已使用 Google 登入</b>之帳號（不限 gmail，任何可用 Google 登入的信箱皆可），且不得為本人。
           </li>
           <li>序號效期為<b>產出後 90 天</b>,逾期自動失效。</li>
         </ul>
@@ -407,7 +411,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v688"></script>
+    <script src="auth.js?v=v689"></script>
     <script>
       document.getElementById("v").textContent = (
         window.APP_VERSION || ""
@@ -766,6 +770,6 @@
         window.Auth.onChange(loadRewards);
       }
     </script>
-      <script src="tour.js?v=v688" defer></script>
+      <script src="tour.js?v=v689" defer></script>
 </body>
 </html>

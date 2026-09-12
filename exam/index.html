@@ -5616,6 +5616,71 @@
         opacity: 0.4;
         cursor: not-allowed;
       }
+      /* v689: 編輯器內建教學 (HUA:「筆記的編輯裡面應該要有教學, 也要再教他們一次善用截圖」) */
+      .nb-help-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        font-size: 0.78rem;
+        padding: 0.4rem 0.7rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+      }
+      .nb-help-bar .nb-help-btn {
+        margin-left: auto;
+        background: #fff;
+        border: 1.5px solid currentColor;
+        border-radius: 999px;
+        padding: 0.18rem 0.7rem;
+        font-weight: 800;
+        font-size: 0.76rem;
+        cursor: pointer;
+        color: inherit;
+        white-space: nowrap;
+      }
+      .nb-help-panel {
+        border: 1.5px solid #d8c4ef;
+        background: #faf7ff;
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.6rem;
+        font-size: 0.82rem;
+        line-height: 1.75;
+        color: #3f3350;
+      }
+      .nb-help-panel h4 {
+        margin: 0.9rem 0 0.25rem;
+        font-size: 0.85rem;
+        color: #6b21a8;
+      }
+      .nb-help-panel h4:first-child {
+        margin-top: 0;
+      }
+      .nb-help-panel ul {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+      .nb-help-panel kbd {
+        background: #fff;
+        border: 1.5px solid #d8c4ef;
+        border-bottom-width: 2.5px;
+        border-radius: 5px;
+        padding: 0 0.35rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #5d4694;
+        white-space: nowrap;
+      }
+      .nb-help-panel .nb-help-warn {
+        background: #fffbeb;
+        border: 1.5px solid #fbbf24;
+        color: #92400e;
+        border-radius: 8px;
+        padding: 0.5rem 0.7rem;
+        margin-top: 0.7rem;
+      }
       .nb-editor-textarea {
         width: 100%;
         min-height: 55vh;
@@ -6429,8 +6494,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v688"></script>
-    <link rel="stylesheet" href="../skin.css?v=v688" />
+      <script src="../skin.js?v=v689"></script>
+    <link rel="stylesheet" href="../skin.css?v=v689" />
   </head>
   <body>
     <!-- HEADER -->
@@ -9359,7 +9424,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v688"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v689"><\/script>');
       })();
     </script>
     <script>
@@ -24103,6 +24168,91 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         localStorage.setItem("nb_editor_mode", mode);
         renderNotebook();
       }
+      // v689: 編輯器內建教學。HUA:「筆記的編輯裡面應該要有教學,也要再教他們一次善用截圖」
+      //   第一次進編輯器自動打開,關過一次之後就記住 (localStorage),不再煩人。
+      function _nbHelpOpen() {
+        try {
+          const v = localStorage.getItem("nb_help_open");
+          return v === null ? true : v === "1"; // 沒紀錄 = 第一次 → 打開
+        } catch (e) {
+          return true;
+        }
+      }
+      function toggleNbHelp() {
+        const open = !_nbHelpOpen();
+        try {
+          localStorage.setItem("nb_help_open", open ? "1" : "0");
+        } catch (e) {}
+        const panel = document.getElementById("nb-help-panel");
+        const btn = document.getElementById("nb-help-btn");
+        if (panel) panel.style.display = open ? "" : "none";
+        if (btn) btn.textContent = open ? "收起教學" : "📖 怎麼用";
+      }
+      // 是手機/平板嗎 — 截圖的教法完全不同,不要兩套都塞給使用者
+      function _nbIsTouch() {
+        return (
+          /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+          (navigator.maxTouchPoints || 0) > 1
+        );
+      }
+      function _nbHelpPanel(hasGH) {
+        const touch = _nbIsTouch();
+        const mac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent);
+        const mod = mac ? "⌘" : "Ctrl";
+        const shot = touch
+          ? `<li><b>手機 / 平板</b>:先截圖 → 打開相簿 → <b>長按圖片 → 拷貝</b> → 回到這裡 <b>長按輸入區 → 貼上</b></li>
+             <li>也可以直接按上面的 <b>📎 選圖</b>,從相簿挑,或當場拍照</li>`
+          : `<li><b>Windows</b>:按 <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> 框出要的範圍,框完直接在這裡 <kbd>Ctrl</kbd>+<kbd>V</kbd> 貼上</li>
+             <li><b>Mac</b>:按 <kbd>Shift</kbd>+<kbd>⌘</kbd>+<kbd>4</kbd> 框範圍,再 <kbd>⌘</kbd>+<kbd>V</kbd> 貼上</li>
+             <li>電腦裡的圖片檔,也可以直接<b>拖</b>進這個編輯區</li>`;
+        return `<div class="nb-help-panel" id="nb-help-panel" style="${_nbHelpOpen() ? "" : "display:none"}">
+          <h4>📸 把截圖放進筆記(最好用的功能)</h4>
+          <ul>
+            ${shot}
+            <li><b>貼好之後先「點一下」那張圖</b>,上面那排「🖼 圖片大小」才會有作用 —— 小 / 中 / 大 / 全寬,或用 −10% / +10% 微調。沒點圖就按是不會動的。</li>
+            <li>課本拍一頁、老師投影片拍一張、自己手寫的重點拍起來,都比重打一次快很多。</li>
+          </ul>
+          <h4>✍️ 最常用的三個</h4>
+          <ul>
+            <li><b>重點</b>:黃底粗字,考前掃一眼就看得到</li>
+            <li><b>🖍 螢光</b>:六個顏色。建議自己固定意思,例如 黃=一定要背、粉=常搞混、藍=老師特別強調</li>
+            <li><b>概念</b>:把名詞圈起來,之後在別的章節搜尋這個名詞就找得到</li>
+          </ul>
+          ${
+            touch
+              ? `<h4>💾 別忘了</h4><ul><li>寫完記得按右上角的 <b>💾</b> 存檔</li></ul>`
+              : `<h4>⌨️ 快捷鍵</h4>
+          <ul>
+            <li><kbd>${mod}</kbd>+<kbd>B</kbd> 重點 · <kbd>${mod}</kbd>+<kbd>I</kbd> 強調 · <kbd>${mod}</kbd>+<kbd>U</kbd> 底線 · <kbd>${mod}</kbd>+<kbd>Z</kbd> 復原</li>
+            <li>寫完記得按右上角的 <b>💾</b> 存檔</li>
+          </ul>`
+          }
+          <h4>✨ TipTap 版 vs 📝 Markdown 版</h4>
+          <ul>
+            <li><b>TipTap 版</b>:所見即所得,像 Word 一樣,按按鈕就好 —— 不確定要用哪個就用這個</li>
+            <li><b>Markdown 版</b>:自己打符號(<code>**粗體**</code>),習慣的人打字比較快</li>
+            <li>兩邊隨時可以切換,內容不會不見</li>
+          </ul>
+          ${
+            hasGH
+              ? ""
+              : `<div class="nb-help-warn"><b>⚠️ 你還沒設定 GitHub 圖床,所以現在貼圖會失敗。</b><br>
+                 截圖要存在你自己的 GitHub(不佔手機容量、換裝置也看得到)。
+                 到<b>練習本設定</b>裡的「📷 GitHub 圖床(給筆記貼圖用)」照著做一次就好,之後都不用再弄。</div>`
+          }
+        </div>`;
+      }
+      function _nbHelpBar(hasGH) {
+        const tip = hasGH
+          ? "✅ 可以 Ctrl+V 貼圖、拖檔、或按 📎 選圖"
+          : "⚠️ 沒設定 GitHub 圖床 — 貼圖會無法用";
+        const color = hasGH ? "#0369a1" : "#92400e";
+        const bg = hasGH ? "#f0f9ff" : "#fffbeb";
+        return `<div class="nb-help-bar" style="background:${bg};color:${color}">
+            <span>${tip}</span>
+            <button class="nb-help-btn" id="nb-help-btn" onclick="toggleNbHelp()">${_nbHelpOpen() ? "收起教學" : "📖 怎麼用"}</button>
+          </div>${_nbHelpPanel(hasGH)}`;
+      }
       function _editorModePill() {
         const mode = getEditorMode();
         return `<div class="nb-editor-mode-pill">
@@ -24121,11 +24271,6 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       }
       function renderMarkdownEditorView(ch) {
         const hasGH = !!getGithubToken() && !!getGithubRepo();
-        const tip = hasGH
-          ? "✅ 可以 Ctrl+V 貼圖、拖檔、或按 📎 選圖"
-          : "⚠️ 沒設定 GitHub 圖床 — 貼圖會無法用";
-        const tipColor = hasGH ? "#0369a1" : "#92400e";
-        const tipBg = hasGH ? "#f0f9ff" : "#fffbeb";
         // 切回 markdown 模式時若有 tiptap 暫存草稿則用它
         const content =
           ch._tiptapDraft != null ? ch._tiptapDraft : ch.content || "";
@@ -24150,7 +24295,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                         <button onclick="toggleSplitPreview()" title="${splitPreviewOff ? "顯示即時預覽" : "收起即時預覽"}">${splitPreviewOff ? "👁 顯示預覽" : "🚫 收起預覽"}</button>
                         <input type="file" id="ch-file-input" accept="image/*" style="display:none" onchange="handleFileInputChange(event)" />
                       </div>
-                      <div style="background:${tipBg};color:${tipColor};font-size:.78rem;padding:.4rem .7rem;border-radius:6px;margin-bottom:.5rem;line-height:1.5">${tip}</div>
+                      ${_nbHelpBar(hasGH)}
                       <div class="nb-editor-split ${splitPreviewOff ? "no-preview" : ""}">
                         <textarea id="ch-editor" class="nb-editor-textarea" spellcheck="false">${escapeHtml(content)}</textarea>
                         <div id="ch-editor-preview" class="nb-chapter-content nb-editor-preview-live">${renderMarkdown(content)}</div>
@@ -24159,11 +24304,6 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       }
       function renderTipTapEditorView(ch) {
         const hasGH = !!getGithubToken() && !!getGithubRepo();
-        const tip = hasGH
-          ? "✅ 可以 Ctrl+V 貼圖、拖檔、或按 📎 選圖"
-          : "⚠️ 沒設定 GitHub 圖床 — 貼圖會無法用";
-        const tipColor = hasGH ? "#0369a1" : "#92400e";
-        const tipBg = hasGH ? "#f0f9ff" : "#fffbeb";
         return `<div class="nb-editor-wrap">
                       ${_editorModePill()}
                       <div class="nb-editor-toolbar">
@@ -24252,7 +24392,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                         <button onclick="NotebookTipTap.cmd.quote()" title="引用框">＂ 框</button>
                         <input type="file" id="ch-file-input" accept="image/*" style="display:none" onchange="handleFileInputChange(event)" />
                       </div>
-                      <div style="background:${tipBg};color:${tipColor};font-size:.78rem;padding:.4rem .7rem;border-radius:6px;margin-bottom:.5rem;line-height:1.5">${tip}</div>
+                      ${_nbHelpBar(hasGH)}
                       <div class="nb-img-toolbar">
                         <span style="font-weight:700;color:#6b21a8;margin-right:.3rem">🖼 圖片大小:</span>
                         <button onclick="NotebookTipTap.cmd.setImgWidth('30%')">小</button>
@@ -30567,15 +30707,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v688"></script>
+    <script src="../visitor-log.js?v=v689"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v688"></script>
-    <script src="comment-system.js?v=v688"></script>
-    <script src="../auth.js?v=v688"></script>
-    <script src="../keysync.js?v=v688"></script>
-    <script src="../migration.js?v=v688"></script>
-    <script src="../subscription.js?v=v688"></script>
-    <script src="../device-guard.js?v=v688"></script>
+    <script src="../sync.js?v=v689"></script>
+    <script src="comment-system.js?v=v689"></script>
+    <script src="../auth.js?v=v689"></script>
+    <script src="../keysync.js?v=v689"></script>
+    <script src="../migration.js?v=v689"></script>
+    <script src="../subscription.js?v=v689"></script>
+    <script src="../device-guard.js?v=v689"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31078,7 +31218,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v688" defer></script>
-    <script src="../update.js?v=v688" defer></script>
+      <script src="../tour.js?v=v689" defer></script>
+    <script src="../update.js?v=v689" defer></script>
 </body>
 </html>

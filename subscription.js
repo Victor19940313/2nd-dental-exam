@@ -49,6 +49,51 @@
     return Date.now() + _srvOffset;
   }
 
+  // v696: 一天只查一次 — HUA:「很常出現檢查訂閱狀態,看起來會很反感,
+  //   登入後每天凌晨 12 點確認一次就好」。以台灣時間 (UTC+8) 的日期當單位,
+  //   同一天內再開網站/換頁一律吃本機快取,不連線也不閃「確認訂閱狀態中」。
+  //   只有「放行中 (試用/訂閱) 且到期時刻還沒到」才吃快取:
+  //   被鎖的人每次都重查,這樣在別的裝置付完錢回來就立刻解鎖。
+  const TW_OFF = 8 * 3600_000;
+  function twDayKey(ms) {
+    const d = new Date(ms + TW_OFF);
+    return (
+      d.getUTCFullYear() + "-" + (d.getUTCMonth() + 1) + "-" + d.getUTCDate()
+    );
+  }
+  function nextTwMidnight(ms) {
+    const d = new Date(ms + TW_OFF);
+    d.setUTCHours(24, 0, 0, 0);
+    return d.getTime() - TW_OFF;
+  }
+  // 今天已經確認過就重建狀態物件 (不連線);不能用就回 null → 照舊連線查
+  function todayCache(uid) {
+    try {
+      const raw = localStorage.getItem(STATUS_CACHE_KEY);
+      if (!raw) return null;
+      const c = JSON.parse(raw);
+      if (!c || !c.uid || c.uid !== uid) return null;
+      if (c.reason !== "paid" && c.reason !== "trial") return null;
+      if (!c.until) return null; // 沒到期時刻 (剛註冊還沒寫 trial_started_at) → 重查
+      if (c.day !== twDayKey(Date.now())) return null; // 跨過凌晨 12 點 → 重查
+      const now = serverNow();
+      if (now >= c.until) return null; // 已到期 → 重查 (可能剛續訂)
+      const s = {
+        ok: true,
+        reason: c.reason,
+        days_left: Math.ceil((c.until - now) / 86400_000),
+        user: window.Auth ? window.Auth.getUser() : null,
+        _cached: true,
+      };
+      if (c.plan) s.plan = c.plan;
+      if (c.reason === "paid") s.expires_at = c.until;
+      else s.trial_end = c.until;
+      return s;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // v553: 只讀 profile + subscription 兩個小欄位 (萬人審計 #4: 以前整個 users/{uid} 幾 MB 抓下來只為看到期日)
   // v651: 訂閱集中化 — 牙醫以外的站,訂閱紀錄不在自己的 Firebase,
   //   拿自己的 ID token 去問中間層 (Worker 用 email 到牙醫 DB / KV 找),回傳形狀跟下面 Firebase 讀到的一樣。
@@ -130,7 +175,7 @@
     return { ok: true, reason: "trial", days_left: TRIAL_DAYS, user };
   }
 
-  async function getStatus(cb) {
+  async function getStatus(cb, force) {
     const user = window.Auth ? window.Auth.getUser() : null;
     if (!user) {
       const s = { ok: false, reason: "not_logged_in" };
@@ -141,6 +186,15 @@
       if (cb) cb(s);
       return s;
     }
+    // v696: 今天已經確認過而且還在有效期內 → 直接用快取,不連線
+    if (!force) {
+      const hit = todayCache(user.uid);
+      if (hit) {
+        cachedStatus = hit;
+        if (cb) cb(hit);
+        return hit;
+      }
+    }
     try {
       const data = await loadUserData(user.uid, user);
       const s = computeStatus(user, data);
@@ -148,12 +202,15 @@
       // v538: 記住這個 uid 的狀態，下次進站 0 秒先套用 (過期的人不會有空窗可以點進去)
       try {
         // v573: 連到期時刻一起記,樂觀放行時也要看它,離線/斷網不會多用到一分鐘
+        // v696: 多記「哪一天查的」+ 方案,同一天內就不再連線
         localStorage.setItem(
           STATUS_CACHE_KEY,
           JSON.stringify({
             uid: user.uid,
             reason: s.reason,
             ts: Date.now(),
+            day: twDayKey(Date.now()),
+            plan: s.plan || "",
             until: s.expires_at || s.trial_end || 0,
           }),
         );
@@ -164,7 +221,7 @@
       const s = { ok: false, reason: "error", err: e.message };
       // v573: 查不到 (斷網/Firebase 掛) → 若手上只有樂觀放行,30 秒後再查一次,不能一直放行
       if (!cachedStatus || cachedStatus._optimistic) {
-        setTimeout(refreshAndRender, 30000);
+        setTimeout(() => refreshAndRender(true), 30000);
       }
       if (cb) cb(s);
       return s;
@@ -393,8 +450,8 @@
     if (t) t.classList.remove("show");
   }
 
-  async function refreshAndRender() {
-    await getStatus();
+  async function refreshAndRender(force) {
+    await getStatus(null, force);
     renderBadge();
     applyBodyClass();
     renderBlockOverlay();
@@ -405,6 +462,21 @@
       } catch (e) {}
     });
     scheduleExpiry();
+    scheduleMidnight();
+  }
+
+  // v696: 網頁一直開著也要跨日重查一次 (台灣時間凌晨 12 點過 5 秒)
+  let _midTimer = null;
+  function scheduleMidnight() {
+    if (_midTimer) clearTimeout(_midTimer);
+    const ms = nextTwMidnight(Date.now()) - Date.now() + 5000;
+    _midTimer = setTimeout(
+      () => {
+        _midTimer = null;
+        refreshAndRender(true);
+      },
+      Math.max(ms, 1000),
+    );
   }
 
   // v558: 頁面一直開著，到期那一刻自動重查一次並蓋鎖 (HUA: 剩兩天的人一直在考試頁)
@@ -455,7 +527,10 @@
     canSee: canSee,
     isLocked: isLocked,
     renderBadge: renderBadge,
-    refresh: refreshAndRender,
+    // v696: 外面叫 refresh() 都是「剛付完錢/剛兌換完」,一律強制連線重查,不吃當日快取
+    refresh: function () {
+      return refreshAndRender(true);
+    },
     onChange: function (cb) {
       if (typeof cb === "function") changeCbs.push(cb);
     },
@@ -489,7 +564,10 @@
       }
       // v555: 最近 3 天內確認過是會員/試用中 → 先放行 (不蓋「確認中」、點卡片不等),
       //       Firebase 真值回來若已過期,refreshAndRender 會再蓋鎖。HUA: 「不要一直頻繁出現確認訂閱狀態」
-      const FRESH_MS = 3 * 86400_000;
+      // v696: 有記到期時刻的話,快取本身就被到期時刻卡死 (下面那段會擋),
+      //   不必再用 3 天硬上限 → 拉到 30 天,久沒開的人回來也不會先閃「確認訂閱狀態中」。
+      //   沒到期時刻的 (剛註冊) 才維持 3 天。
+      const FRESH_MS = c.until ? 30 * 86400_000 : 3 * 86400_000;
       // v573: 快取裡的到期時刻已過 → 不放行,直接先鎖 (等 Firebase 真值,已續訂會解鎖)
       if (c.until && Date.now() >= c.until) {
         cachedStatus = {

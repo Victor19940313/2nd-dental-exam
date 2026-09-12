@@ -461,30 +461,60 @@
       });
   }
 
-  /** Read from both paths, pick whichever has data */
-  function readRemote() {
-    return userRef()
-      .once("value")
-      .then(function (snap) {
-        var root = snap.val() || {};
-        var result = {};
-        // Try new path first (root level)
-        SYNC_KEYS.forEach(function (sk) {
-          if (root[sk] !== undefined && root[sk] !== null) {
-            result[sk] = root[sk];
-          } else if (
-            root.data &&
-            root.data[sk] !== undefined &&
-            root.data[sk] !== null
-          ) {
-            // Fall back to old data/ path
-            result[sk] = root.data[sk];
-          }
+  /**
+   * v691:只抓「真的會用到」的那幾個 key,不要把整包 users/<uid> 抓下來。
+   *
+   * 2026-09-12 的帳單爆掉就是這裡:一個帳號在 users/<uid> 底下長這樣 ——
+   *   notebook_backups 4.76 MB  ← 抓下來**完全沒用到**,直接丟掉
+   *   data             2.02 MB  ← 舊路徑的重複副本,也幾乎沒用到
+   *   notebook         1.04 MB  ← 只有這些才是真的要的
+   *   examHistory      0.59 MB
+   *   其他             0.44 MB
+   * 整包 8.85 MB,其中 6.8 MB (77%) 是白抓的。而「雲端比較新就整包抓」一天會被
+   * 觸發幾十次 (兩台裝置同時開著,答一題就觸發一次) → 一天白白下載好幾百 MB。
+   *
+   * 改成一個 key 一個 key 拿。Firebase 的 SDK 走同一條 websocket,20 個小請求
+   * 不會比 1 個大請求慢,但下載量從 8.85 MB 掉到約 2 MB。
+   *
+   * 舊路徑 data/ 的相容不能拿掉 —— 還沒搬家的老帳號 (例如 shirley) 全靠它。
+   * 但只補「根目錄真的沒有」的那幾個 key,一樣一個一個拿,不整包抓。
+   */
+  function _readKeys() {
+    var jobs = [
+      userRef().child("_ts").once("value"),
+      userRef().child("_meta").once("value"),
+    ];
+    SYNC_KEYS.forEach(function (sk) {
+      jobs.push(userRef().child(sk).once("value"));
+    });
+    return Promise.all(jobs).then(function (snaps) {
+      var result = {};
+      result._ts = snaps[0].val() || 0;
+      result._meta = snaps[1].val() || null; // v602: 讓 syncOnLoad 看得到 wipe_ts
+      var missing = [];
+      SYNC_KEYS.forEach(function (sk, i) {
+        var v = snaps[i + 2].val();
+        if (v !== undefined && v !== null) result[sk] = v;
+        else missing.push(sk);
+      });
+      if (!missing.length) return result;
+      return Promise.all(
+        missing.map(function (sk) {
+          return userRef().child("data").child(sk).once("value");
+        }),
+      ).then(function (ds) {
+        missing.forEach(function (sk, i) {
+          var v = ds[i].val();
+          if (v !== undefined && v !== null) result[sk] = v;
         });
-        result._ts = root._ts || 0;
-        result._meta = root._meta || null; // v602: 讓 syncOnLoad 看得到 wipe_ts
         return result;
       });
+    });
+  }
+
+  /** Read from both paths, pick whichever has data */
+  function readRemote() {
+    return _readKeys();
   }
 
   /** On startup: compare timestamps, newer wins */
@@ -716,11 +746,18 @@
     }
     function _pullFull(reason) {
       if (_syncing) return;
-      userRef()
-        .once("value")
-        .then(function (snap) {
+      // v691:一樣只抓會用到的 key (原本是 userRef().once("value") 整包抓)
+      _readKeys()
+        .then(function (obj) {
+          // 遠端根本沒東西 (只有 _ts / _meta 兩個殼) → 當成沒資料,跟以前 snap.val()
+          // 回 null 的行為一致,不要把本機的 __ts 誤設成現在時間
+          if (!obj._ts && Object.keys(obj).length <= 2) return;
           console.log("[Sync] 拉回雲端資料 (" + reason + ")");
-          handleUpdate(snap);
+          handleUpdate({
+            val: function () {
+              return obj;
+            },
+          });
         })
         .catch(function (e) {
           console.warn("[Sync] 拉資料失敗", e && e.message);

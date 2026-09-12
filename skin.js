@@ -114,6 +114,7 @@
       em: "🎨",
       fonts: "Noto+Serif+TC:wght@600;900",
     },
+    { id: "aqua", name: "薄荷水彩", em: "🌿", fonts: "" },
   ];
   var byId = {};
   SKINS.forEach(function (s) {

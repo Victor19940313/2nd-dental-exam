@@ -6494,8 +6494,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v693"></script>
-    <link rel="stylesheet" href="../skin.css?v=v693" />
+      <script src="../skin.js?v=v694"></script>
+    <link rel="stylesheet" href="../skin.css?v=v694" />
   </head>
   <body>
     <!-- HEADER -->
@@ -8610,26 +8610,22 @@
         <div
           style="
             margin-top: 0.7rem;
-            background: #fff1f2;
-            border: 1.5px solid #fda4af;
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
             border-radius: 8px;
             padding: 0.7rem 0.85rem;
             font-size: 0.8rem;
             line-height: 1.8;
-            color: #7f1d1d;
+            color: #334155;
           "
         >
-          <b style="font-size: 0.86rem">🔑 下面這兩把鑰匙只給你自己用，不要傳給任何人</b><br />
-          ・<b>Gemini key</b>：被別人拿去會吃掉你的免費額度，用超過還可能<b>跟你收錢</b>，
-          而且對方拿它做了什麼都算在你頭上。<br />
-          ・<b>GitHub token</b>：等於你 GitHub 帳號的鑰匙 ——
-          別人拿到可以<b>改掉或刪掉</b>你 repo 裡的東西，包含你筆記裡的所有圖片。<br />
-          ・要截圖、錄影、或請別人幫你看畫面之前，記得先確認下面的
-          「顯示輸入內容」沒有打勾，或把這一區遮起來。<br />
-          ・<b>不小心給出去也不用慌</b>：到 Google AI Studio / GitHub
-          把那一把刪掉、重新申請一把貼回來就好，舊的會立刻失效。<br />
-          <span style="color: #9f1239"
-            >（這兩把只存在你自己的帳號裡，ezpass 的管理者也看不到。）</span
+          <b style="font-size: 0.86rem">🔑 小提醒：這兩把鑰匙留給自己用就好</b><br />
+          就像家裡的鑰匙，給別人就會被拿去用你的額度，所以貼上去之後不用再給任何人。<br />
+          ・要截圖或請別人幫你看畫面時，先確認下面的「顯示輸入內容」沒有打勾。<br />
+          ・<b>不小心被看到也很好處理</b>：回 Google AI Studio / GitHub
+          把舊的刪掉、重新申請一把貼回來，舊的就立刻失效了。<br />
+          <span style="color: #64748b"
+            >（只存在你自己的帳號裡，連 ezpass 的管理者都看不到。）</span
           >
         </div>
 
@@ -9452,7 +9448,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v693"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v694"><\/script>');
       })();
     </script>
     <script>
@@ -26851,10 +26847,10 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                             <li>貼到下面這個欄位</li>
                           </ol>
                         </div>
-                        <div style="background:#fff1f2;border:1.5px solid #fda4af;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0;font-size:.82rem;line-height:1.75;color:#7f1d1d">
-                          <b>🔑 這把 key 只給你自己用，不要傳給任何人。</b><br />
-                          被別人拿去會吃掉你的免費額度,用超過還可能跟你收錢。
-                          不小心給出去的話,到 Google AI Studio 把那一把刪掉、重新申請一把就好。
+                        <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0;font-size:.82rem;line-height:1.75;color:#334155">
+                          <b>🔑 小提醒:這把 key 留給自己用就好</b><br />
+                          就像家裡的鑰匙,給別人就會被拿去用你的額度。
+                          不小心被看到也很好處理,到 Google AI Studio 把舊的刪掉、重新申請一把貼回來就好。
                         </div>
                         <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:.3rem;color:#374151">把 key 貼這裡</label>
                         <input type="password" id="ob-gemini-key" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-form-type="other" value="${escapeHtml(cur)}" placeholder="AIzaSy..." style="width:100%;padding:.6rem .8rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.88rem" />
@@ -26886,10 +26882,10 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
                             <li>底部按 <strong>Generate token</strong> → 複製出來</li>
                           </ol>
                         </div>
-                        <div style="background:#fff1f2;border:1.5px solid #fda4af;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0;font-size:.82rem;line-height:1.75;color:#7f1d1d">
-                          <b>🔑 這把 token 只給你自己用,不要傳給任何人。</b><br />
-                          它等於你 GitHub 帳號的鑰匙,別人拿到可以改掉或刪掉你 repo 裡的東西
-                          (包含你筆記裡的所有圖片)。不小心給出去的話,到 GitHub 把那一把撤銷、重新申請一把就好。
+                        <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0;font-size:.82rem;line-height:1.75;color:#334155">
+                          <b>🔑 小提醒:這把 token 留給自己用就好</b><br />
+                          它是你 GitHub 帳號的鑰匙,貼上去之後不用再給任何人。
+                          不小心被看到也很好處理,到 GitHub 把舊的撤銷、重新申請一把貼回來就好。
                         </div>
                         <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:.3rem;color:#374151">GitHub Personal Access Token</label>
                         <input type="password" id="ob-gh-token" value="${escapeHtml(curT)}" placeholder="github_pat_..." style="width:100%;padding:.6rem .8rem;border:1.5px solid #d1d5db;border-radius:8px;font-family:monospace;font-size:.88rem" />
@@ -30745,15 +30741,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v693"></script>
+    <script src="../visitor-log.js?v=v694"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v693"></script>
-    <script src="comment-system.js?v=v693"></script>
-    <script src="../auth.js?v=v693"></script>
-    <script src="../keysync.js?v=v693"></script>
-    <script src="../migration.js?v=v693"></script>
-    <script src="../subscription.js?v=v693"></script>
-    <script src="../device-guard.js?v=v693"></script>
+    <script src="../sync.js?v=v694"></script>
+    <script src="comment-system.js?v=v694"></script>
+    <script src="../auth.js?v=v694"></script>
+    <script src="../keysync.js?v=v694"></script>
+    <script src="../migration.js?v=v694"></script>
+    <script src="../subscription.js?v=v694"></script>
+    <script src="../device-guard.js?v=v694"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31256,7 +31252,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v693" defer></script>
-    <script src="../update.js?v=v693" defer></script>
+      <script src="../tour.js?v=v694" defer></script>
+    <script src="../update.js?v=v694" defer></script>
 </body>
 </html>

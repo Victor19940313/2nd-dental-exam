@@ -9,8 +9,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>訂閱方案 - 牙醫二階國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v693"></script>
-    <script src="site-config.js?v=v693" onerror="this.remove()"></script>
+    <script src="version.js?v=v694"></script>
+    <script src="site-config.js?v=v694" onerror="this.remove()"></script>
     <script>
       // v651: 訂閱集中化 — 牙醫以外的站,付款 / 序號都在入口網站做 (同一個帳號),這頁只做轉址
       // v652: 付款 / 序號一律在入口網站做 (一份訂閱通全站),各站訂閱頁只做轉址
@@ -18,7 +18,7 @@
           "https://ezpass-exam.com/subscribe.html" + location.search,
         );
     </script>
-    <script src="skin.js?v=v693"></script>
+    <script src="skin.js?v=v694"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -73,43 +73,44 @@
       }
 
       /* Status card (if already subscribed / trial) */
+      /* 2026-09-12 HUA:「會員狀態應該跟首頁一樣小小的放在旁邊就好」
+         → 跟首頁的 .sub-pill 同一個長相:小藥丸,不佔一整排。 */
       .status-card {
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 1rem 1.3rem;
-        margin-bottom: 1.5rem;
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 0.8rem;
+        gap: 0.35rem;
+        font-size: 0.8rem;
+        font-weight: 800;
+        line-height: 1.5;
+        border-radius: 999px;
+        padding: 0.35rem 0.8rem;
+        margin-bottom: 1.1rem;
+        border: 0;
+        background: var(--sk-accent-soft, #ede9fe);
+        color: var(--sk-accent-d, #5b21b6);
       }
       .status-card.trial {
-        border-color: #93c5fd;
-        background: #eff6ff;
+        background: #dbeafe;
+        color: #1e40af;
       }
       .status-card.paid {
-        border-color: #fbbf24;
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        background: #fef3c7;
+        color: #92400e;
       }
       .status-card.expired {
-        border-color: #fca5a5;
-        background: #fef2f2;
+        background: #fee2e2;
+        color: #991b1b;
       }
       .status-icon {
-        font-size: 1.6rem;
-      }
-      .status-text {
-        flex: 1;
+        font-size: 0.95rem;
       }
       .status-text b {
-        display: block;
-        font-size: 1rem;
-        margin-bottom: 0.1rem;
-        color: #1f2937;
+        font-weight: 800;
+        color: inherit;
       }
+      /* 藥丸裡塞不下副標,藏起來 */
       .status-text .sm {
-        font-size: 0.82rem;
-        color: #6b7280;
+        display: none;
       }
 
       /* Plans */
@@ -667,7 +668,7 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="skin.css?v=v693" />
+    <link rel="stylesheet" href="skin.css?v=v694" />
   </head>
   <body>
     <div class="wrap">
@@ -797,7 +798,7 @@
       </div>
 
       <div id="not-logged" class="not-logged">
-        <h3>🔑 要訂閱請先用 Google 帳號登入</h3>
+        <h3>🔑 要訂閱請先登入</h3>
         <p>
           上面的方案與價格不用登入就看得到。登入只是為了把訂閱綁在你的帳號上，讓資料跨裝置同步。
         </p>
@@ -899,8 +900,7 @@
             <h4>二、帳號與登入</h4>
             <ol>
               <li>
-                本服務以 Google 帳號登入，所有訂閱、練習紀錄與獎勵均綁定於該
-                Google 帳號，無法轉移至其他帳號。
+                本服務以 Google 帳號或 Email 登入（任何信箱都可以），所有訂閱、練習紀錄與獎勵均綁定於您登入所用的帳號，無法轉移至其他帳號。
               </li>
               <li>
                 您應妥善保管帳號，因帳號遭他人使用所生之一切結果由您自行承擔。
@@ -1124,8 +1124,7 @@
             本服務為線上服務，沒有實體商品，不需要寄送。
             使用信用卡付款完成後系統會自動開通，通常一分鐘內生效； ATM
             與超商繳費在收到款項後自動開通；
-            銀行匯款需人工核對，我們會在一個工作天內開通。 開通後直接用原本的
-            Google 帳號登入網站即可使用。
+            銀行匯款需人工核對，我們會在一個工作天內開通。 開通後直接用您原本的帳號登入網站即可使用。
           </dd>
 
           <dt>免費試用</dt>
@@ -1150,20 +1149,18 @@
             客服信箱：<a href="mailto:ezpassdental@gmail.com"
               >ezpassdental@gmail.com</a
             >
-            （服務時間為週一至週五，我們會在一至兩個工作天內回覆）<br />
             也可以直接在網站上<a href="feedback.html">回報問題或許願</a>。
           </dd>
 
           <dt>隱私權</dt>
           <dd>
-            登入時我們只會取得你 Google
-            帳號的電子郵件與顯示名稱，用於識別身分與跨裝置同步你的作答紀錄與筆記。
+            登入時我們只會取得你的電子郵件與顯示名稱，用於識別身分與跨裝置同步你的作答紀錄與筆記。
             我們不會將你的資料提供給第三方，也不會用於行銷。
           </dd>
 
           <dt>其他提醒</dt>
           <dd>
-            訂閱綁定你的 Google 帳號，換裝置登入同一個帳號即可繼續使用。<br />
+            訂閱綁定你登入時使用的帳號（Google 帳號或 Email 皆可），換裝置登入同一個帳號即可繼續使用。<br />
             使用銀行匯款時，請正確填寫帳號末五碼與匯款人姓名，填錯會延遲對帳。
           </dd>
         </dl>
@@ -1187,8 +1184,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v693"></script>
-    <script src="subscription.js?v=v693"></script>
+    <script src="auth.js?v=v694"></script>
+    <script src="subscription.js?v=v694"></script>
 
     <script>
       let selectedPlan = null;
@@ -1699,6 +1696,6 @@
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-    <script src="tour.js?v=v693" defer></script>
+    <script src="tour.js?v=v694" defer></script>
   </body>
 </html>

@@ -76,6 +76,33 @@
         payload.trial_started_at = now; // 首次登入自動起算 7 天試用
       }
       await ref.update(payload);
+      // v693:登入當下就把自己那一格後台索引補上。
+      //   以前只靠排程每 15 分鐘補一次,新使用者剛登入完在後台看不到
+      //   (HUA:「剛剛 wen84224 有登入,後台卻沒顯示」)。
+      //   只寫「自己就知道」的欄位 —— 訂閱狀態**故意不寫**,那一格只有伺服器能動,
+      //   不然有人改自己的索引就能騙後台說自己是會員。
+      //   規則:users/__admin_index/$uid 只有本人寫得到。
+      try {
+        var ixRef = db.ref("users/__admin_index/" + user.uid);
+        var ixSnap = await ixRef.once("value");
+        var ixNow = ixSnap.val() || {};
+        var ixPatch = {
+          e: payload.email,
+          n: payload.name,
+          ll: now,
+          c: existing.trial_started_at || existing.created_ts || payload.trial_started_at || now,
+        };
+        // 第一次才補這幾個預設值,不要蓋掉排程算好的數字
+        if (!ixSnap.exists()) {
+          ixPatch.dev = 0;
+          ixPatch.pin = 0;
+          ixPatch.ts = 0;
+          ixPatch.x = {};
+        }
+        await ixRef.update(ixPatch);
+      } catch (e) {
+        console.warn("[Auth] 後台索引補寫失敗:", e && e.message);
+      }
       // v553: email → uid 索引 (萬人審計 #6: Worker 找推薦人以前要掃全部使用者)
       //   key = email 小寫,'.' 換 ',',其他 Firebase 不准的字換 '_'
       if (user.email) {

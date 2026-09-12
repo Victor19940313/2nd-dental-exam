@@ -287,6 +287,64 @@
   // v667: 推完之後把本機的「已同步到哪個時間」對齊雲端寫進去的值。
   //   沒對齊的話,下次開網頁會誤判「雲端比較新」→ 把整包資料重新下載一次。
   //   全新裝置 (還沒同步過,cur = 0) 不標記,免得永遠拉不到雲端既有的資料。
+  // ═══ v692:每個項目各自記時間戳 ═══
+  //   v691 已經改成「只抓 SYNC_KEYS」,但還是「只要雲端比較新就把 19 個 key 全抓」。
+  //   實際上使用者一次通常只改一樣東西 —— 答一題只有錯題本變,筆記和考試紀錄沒變,
+  //   卻要跟著下載 1.6 MB。
+  //   所以推上去的時候,順便在 _kts/<key> 記下「這個 key 是什麼時候改的」;
+  //   對面裝置先讀 _kts (19 個數字,幾百個位元組),比對之後**只抓真的變過的那幾個**。
+  //
+  //   相容性三道保險 (缺一不可,不然會漏資料):
+  //     a. 雲端沒有 _kts (老帳號)            → 全抓
+  //     b. 這台裝置沒有本機時間戳 (第一次同步) → 全抓
+  //     c. 雲端 _ts 比較新、卻挑不出任何變動的 key
+  //        (例如還在用舊版快取的裝置寫的,它只更新 _ts 不更新 _kts) → 全抓
+  function _localKts() {
+    try {
+      var v = JSON.parse(localStorage.getItem(_userId + "__kts") || "{}");
+      return v && typeof v === "object" ? v : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function _bumpLocalKts(keys, ts) {
+    if (!_userId || !ts || !keys || !keys.length) return;
+    try {
+      var m = _localKts();
+      keys.forEach(function (sk) {
+        m[sk] = ts;
+      });
+      localStorage.setItem(_userId + "__kts", JSON.stringify(m));
+    } catch (e) {}
+  }
+  /** 推上去之前:把這次推的每個 key 各自蓋一個時間戳 */
+  function _stampKts(payload) {
+    if (!payload || !payload._ts) return payload;
+    var ks = [];
+    Object.keys(payload).forEach(function (k) {
+      if (k.indexOf("_") === 0 || k.indexOf("/") >= 0) return;
+      if (SYNC_KEYS.indexOf(k) < 0) return;
+      payload["_kts/" + k] = payload._ts;
+      ks.push(k);
+    });
+    _bumpLocalKts(ks, payload._ts);
+    return payload;
+  }
+  /** 拉回來之後:把本機的每個 key 時間戳對齊雲端 */
+  function _adoptKts(remote) {
+    if (!remote || !_userId) return;
+    var rk = remote._kts || {};
+    var base = remote._ts || Date.now();
+    var m = _localKts();
+    SYNC_KEYS.forEach(function (sk) {
+      if (remote[sk] === undefined || remote[sk] === null) return;
+      m[sk] = rk[sk] || base;
+    });
+    try {
+      localStorage.setItem(_userId + "__kts", JSON.stringify(m));
+    } catch (e) {}
+  }
+
   function _stampLocalTs(ts) {
     try {
       if (!ts || !_userId) return;
@@ -428,7 +486,7 @@
           delete oldPayload.notebook;
           _stampLocalTs(payload._ts); // 送出前就記,頁面被關掉也不會漏
           return Promise.all([
-            userRef().update(payload),
+            userRef().update(_stampKts(payload)),
             userDataRef().update(oldPayload),
           ]);
         }
@@ -441,7 +499,7 @@
               _recordNbMax(merged); // 更新本機歷史最大值
               _stampLocalTs(payload._ts);
               return Promise.all([
-                userRef().update(payload),
+                userRef().update(_stampKts(payload)),
                 userDataRef().update(oldPayload),
               ]);
             },
@@ -449,7 +507,7 @@
         }
         _stampLocalTs(payload._ts);
         return Promise.all([
-          userRef().update(payload),
+          userRef().update(_stampKts(payload)),
           userDataRef().update(oldPayload),
         ]);
       })
@@ -479,12 +537,13 @@
    * 舊路徑 data/ 的相容不能拿掉 —— 還沒搬家的老帳號 (例如 shirley) 全靠它。
    * 但只補「根目錄真的沒有」的那幾個 key,一樣一個一個拿,不整包抓。
    */
-  function _readKeys() {
+  function _readKeys(only) {
+    var want = only || SYNC_KEYS;
     var jobs = [
       userRef().child("_ts").once("value"),
       userRef().child("_meta").once("value"),
     ];
-    SYNC_KEYS.forEach(function (sk) {
+    want.forEach(function (sk) {
       jobs.push(userRef().child(sk).once("value"));
     });
     return Promise.all(jobs).then(function (snaps) {
@@ -492,7 +551,7 @@
       result._ts = snaps[0].val() || 0;
       result._meta = snaps[1].val() || null; // v602: 讓 syncOnLoad 看得到 wipe_ts
       var missing = [];
-      SYNC_KEYS.forEach(function (sk, i) {
+      want.forEach(function (sk, i) {
         var v = snaps[i + 2].val();
         if (v !== undefined && v !== null) result[sk] = v;
         else missing.push(sk);
@@ -512,7 +571,52 @@
     });
   }
 
-  /** Read from both paths, pick whichever has data */
+  /** v692:先看 _kts,只抓真的變過的那幾個 key (相容性保險見上面說明) */
+  function _readChanged() {
+    return Promise.all([
+      userRef().child("_ts").once("value"),
+      userRef().child("_kts").once("value"),
+    ]).then(function (r) {
+      var remoteTs = r[0].val() || 0;
+      var remoteKts = r[1].val();
+      var localTs = parseInt(localStorage.getItem(_userId + "__ts") || "0") || 0;
+      var local = _localKts();
+      // (a) 老帳號沒有 _kts  (b) 這台第一次同步 → 兩種都全抓
+      if (!remoteKts || typeof remoteKts !== "object" || !Object.keys(local).length)
+        return _readKeys().then(function (res) {
+          res._kts = remoteKts && typeof remoteKts === "object" ? remoteKts : null;
+          return res;
+        });
+      var changed = SYNC_KEYS.filter(function (sk) {
+        var rk = remoteKts[sk] || 0;
+        // 雲端沒記這個 key 的時間戳 → 只有「本機也從來沒拉過」才需要抓
+        return rk ? rk > (local[sk] || 0) : !(sk in local);
+      });
+      // (c) 最重要的一道:_ts 與 _kts/<key> 是同一次 update 寫的、值一模一樣,
+      //     所以「最新的 _kts」正常情況下會等於 _ts。
+      //     如果 _ts 比所有 _kts 都新 → 表示**有人寫了東西卻沒更新 _kts**
+      //     (還在用舊版快取的裝置),這時候挑不出是哪個 key 變的 → 一定要全抓。
+      //     ⚠️ 不可以只寫「changed 是空的才全抓」:舊版裝置改的剛好是某個
+      //        local 有記、remote _kts 沒更新的 key 時,changed 會是別的 key、
+      //        不是空的,保險就不會啟動,那個 key 就永遠不會更新。(測試 [9] 抓到的)
+      var newestKts = 0;
+      Object.keys(remoteKts).forEach(function (k) {
+        var v = Number(remoteKts[k]) || 0;
+        if (v > newestKts) newestKts = v;
+      });
+      if ((remoteTs > localTs && !changed.length) || remoteTs > newestKts)
+        return _readKeys().then(function (res) {
+          res._kts = remoteKts;
+          return res;
+        });
+      return _readKeys(changed).then(function (res) {
+        res._kts = remoteKts;
+        return res;
+      });
+    });
+  }
+
+  /** Read from both paths, pick whichever has data (強制拉回時用:一定全抓) */
   function readRemote() {
     return _readKeys();
   }
@@ -590,7 +694,7 @@
           // 本機已經是最新 → 只回一份很小的資料,下面會走「推本機上去」那條
           return { _ts: remoteTs, _meta: meta, _light: true };
         }
-        return readRemote();
+        return _readChanged(); // v692:只抓變動過的 key
       })
       .then(function (remote) {
         // v601: 先看有沒有遠端清除標記
@@ -648,6 +752,7 @@
               }
             }
           });
+          _adoptKts(remote); // v692:本機每個 key 的時間戳對齊雲端
           localStorage.setItem(_userId + "__ts", String(remoteTs));
           // v395:PULL 結束後也排程一次 push — 保證本機獨有的紀錄(bridge 合併後存在)會推回雲端
           //       不能直接 push(_syncing 還是 true),用 setTimeout 等 syncOnLoad 完成
@@ -732,6 +837,7 @@
           }
         }
       });
+      _adoptKts(source); // v692:本機每個 key 的時間戳對齊雲端 (這條路的變數叫 source)
       localStorage.setItem(_userId + "__ts", String(remoteTs));
       _syncing = false;
     }
@@ -747,7 +853,7 @@
     function _pullFull(reason) {
       if (_syncing) return;
       // v691:一樣只抓會用到的 key (原本是 userRef().once("value") 整包抓)
-      _readKeys()
+      _readChanged()
         .then(function (obj) {
           // 遠端根本沒東西 (只有 _ts / _meta 兩個殼) → 當成沒資料,跟以前 snap.val()
           // 回 null 的行為一致,不要把本機的 __ts 誤設成現在時間
@@ -862,7 +968,10 @@
     update._ts = ts;
     _syncing = true;
     _stampLocalTs(ts);
-    return Promise.all([userRef().update(update), userDataRef().update(oldUpdate)])
+    return Promise.all([
+      userRef().update(_stampKts(update)),
+      userDataRef().update(oldUpdate),
+    ])
       .catch(function (err) {
         console.error("[Sync] 批次上傳失敗:", err);
         // 失敗的 key 放回去,下次再試

@@ -2017,12 +2017,16 @@
         margin: 0 auto;
       }
 
+      /* v704: 練習畫面上方的「目前分類」提示 (照分類練 / 點考點標籤進來時才顯示) */
+      .prac-topic { flex: 0 0 100%; margin-top: -0.1rem; }
+      .prac-topic-pill { display: inline-block; max-width: 100%; box-sizing: border-box; font-size: 0.78rem; font-weight: 700; color: var(--sk-accent-d, #4c1d95); background: var(--sk-soft, #f3f0ff); border: 1px solid var(--sk-accent, #ddd6fe); border-radius: 999px; padding: 0.15rem 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .practice-progress {
         background: white;
         padding: 0.6rem 1rem;
         display: flex;
         align-items: center;
         gap: 0.8rem;
+        flex-wrap: wrap; /* v704: 第二行放「目前分類」 */
         border-bottom: 1px solid #e2e8f0;
         position: sticky;
         top: 52px;
@@ -6494,8 +6498,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v703"></script>
-    <link rel="stylesheet" href="../skin.css?v=v703" />
+      <script src="../skin.js?v=v704"></script>
+    <link rel="stylesheet" href="../skin.css?v=v704" />
   </head>
   <body>
     <!-- HEADER -->
@@ -7190,6 +7194,8 @@
           ></div>
         </div>
         <button class="btn-exit" id="btn-practice-exit" onclick="practiceBack()">← 返回</button>
+        <!-- v704 HUA:照分類練時,題目畫面上方要看得到「目前是照哪一個分類在作答」 -->
+        <div id="prac-topic" class="prac-topic" hidden><span class="prac-topic-pill"></span></div>
       </div>
 
       <div class="question-area">
@@ -9448,7 +9454,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v703"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v704"><\/script>');
       })();
     </script>
     <script>
@@ -10208,7 +10214,10 @@
         // First try exact match with topic value (new Gemini-classified topics)
         const t = topic.trim();
         // Check if topic itself is already a clean category name
-        if (t.length <= 12 && !t.includes(",") && !t.includes("、")) return t;
+        // v704: 拿掉「≤12 字」的限制 —— 2026-09-13 考點重新分類/拆併後很多名稱是 13~16 字 (「口腔病理-齲齒牙髓與牙周病變」),
+        //       以前超過 12 字會掉進下面牙醫舊版的關鍵字表,含「牙周」「牙髓」的會被歸到別的分類、更長的變「其他」。
+        //       只要不是舊式逗號串起來的多主題,名稱本身就是分類。
+        if (!t.includes(",") && !t.includes("、")) return t;
         // Fallback: keyword match for old-style topics
         for (const { cat, kw } of TOPIC_CATS_DEFS) {
           if (kw.some((k) => topic.includes(k))) return cat;
@@ -12999,6 +13008,25 @@
           `<span class="badge badge-${q.subject}">${SMAP[q.subject] || q.subject}</span>` +
           `<span class="badge badge-meta">${q.meta || ""}</span>` +
           _qNotebookBadge(q.id);
+        // v704: 這一輪題目如果都屬於同一個分類 (照分類練 / 點考點標籤) → 上方顯示「目前分類」;混科隨機練就不顯示
+        try {
+          const _pt = document.getElementById("prac-topic");
+          if (_pt) {
+            let _label = "";
+            const _topics = new Set(practiceList.map((x) => x.topic || ""));
+            if (_topics.size === 1 && practiceList[0].topic) _label = practiceList[0].topic;
+            else if (typeof getTopicCat === "function") {
+              const _cats = new Set(practiceList.map((x) => getTopicCat(x.topic)));
+              if (_cats.size === 1 && [..._cats][0]) _label = [..._cats][0];
+            }
+            // 跟「開始練習」前那一行一樣,前面加科目 (牙一 · 口腔解剖-神經支配)
+            const _subjs = new Set(practiceList.map((x) => x.subject));
+            const _sb = document.querySelector("#pq-badges .badge");
+            if (_label && _subjs.size === 1 && _sb && _sb.textContent.trim()) _label = _sb.textContent.trim() + " · " + _label;
+            _pt.hidden = !_label;
+            if (_label) _pt.querySelector(".prac-topic-pill").textContent = "🏷 目前分類:" + _label;
+          }
+        } catch (e) {}
         _updateAddNotebookBtn(q.id);
 
         // Question
@@ -30806,15 +30834,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v703"></script>
+    <script src="../visitor-log.js?v=v704"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v703"></script>
-    <script src="comment-system.js?v=v703"></script>
-    <script src="../auth.js?v=v703"></script>
-    <script src="../keysync.js?v=v703"></script>
-    <script src="../migration.js?v=v703"></script>
-    <script src="../subscription.js?v=v703"></script>
-    <script src="../device-guard.js?v=v703"></script>
+    <script src="../sync.js?v=v704"></script>
+    <script src="comment-system.js?v=v704"></script>
+    <script src="../auth.js?v=v704"></script>
+    <script src="../keysync.js?v=v704"></script>
+    <script src="../migration.js?v=v704"></script>
+    <script src="../subscription.js?v=v704"></script>
+    <script src="../device-guard.js?v=v704"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31317,7 +31345,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v703" defer></script>
-    <script src="../update.js?v=v703" defer></script>
+      <script src="../tour.js?v=v704" defer></script>
+    <script src="../update.js?v=v704" defer></script>
 </body>
 </html>

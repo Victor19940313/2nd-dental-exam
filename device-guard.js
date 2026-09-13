@@ -18,6 +18,9 @@
 //   DeviceGuard.onChange(cb)           → status 變更 callback
 
 (function () {
+  // 2026-09-13 HUA:「3 個裝置限制好像沒那麼必要了,用的人就不多,先隱藏」
+  //   ENABLED=false → 不註冊裝置、不心跳、不擋人 (也省掉每次登入讀 devices 的流量);程式和資料都留著,要開回來改這一行。
+  const ENABLED = false;
   if (typeof firebase === "undefined" || !firebase.database) return;
 
   const MAX = 3;
@@ -65,6 +68,11 @@
   }
 
   async function registerAndCheck() {
+    if (!ENABLED) {
+      currentStatus = { ok: true, disabled: true, devices: [], current: null, max: MAX };
+      applyBodyClass();
+      return currentStatus;
+    }
     const user = window.Auth ? window.Auth.getUser() : null;
     if (!user || !user.uid) {
       currentStatus = { ok: true, no_user: true, max: MAX };
@@ -154,6 +162,7 @@
 
   window.DeviceGuard = {
     MAX,
+    ENABLED,
     getDeviceId,
     detectLabel,
     registerAndCheck,

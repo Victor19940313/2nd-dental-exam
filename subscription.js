@@ -290,18 +290,36 @@
     "/feedback.html",
     "/devices.html",
   ];
+  // v704: 站台根目錄 —— subscription.js 永遠放在站台根目錄,所以從它自己的 src 就知道根在哪
+  //       (牙醫二階是 "/",分站是 "/dental1/"、"/nursing/"…)。
+  //       HUA 2026-09-13:「每次去某一個主頁都會出現確認訂閱狀態中」→ 一站式 (2026-09-11) 把各站搬到子路徑後,
+  //       下面的白名單還在比「/」「/subscribe.html」這種根目錄寫法,分站的主頁、訂閱頁、獎勵頁全被當成鎖定頁:
+  //       主頁每次載入先蓋「確認中」,過期的人在分站連訂閱頁都進不去。
+  const SITE_ROOT = (function () {
+    try {
+      const src = document.currentScript && document.currentScript.src;
+      if (src) return new URL(src, location.href).pathname.replace(/[^/]*$/, "") || "/";
+    } catch (e) {}
+    return "/";
+  })();
+  function _sitePath() {
+    let p = location.pathname;
+    if (SITE_ROOT !== "/" && p.indexOf(SITE_ROOT) === 0) p = "/" + p.slice(SITE_ROOT.length);
+    return p.replace(/\/+$/, "") || "/";
+  }
   function isUnlockedPage() {
     // v542: 只做「完全相等」比對。v537 用 endsWith("/index.html") 會把 /exam/index.html、
     //       /ya3/index.html 全部誤判成首頁而不鎖 → 全鎖從沒在練習本/筆記生效過。
     //       白名單只有根目錄那幾頁，子目錄的 index.html 一律要鎖。
-    const p = location.pathname.replace(/\/+$/, "") || "/";
+    // v704: 先把站台根目錄去掉再比 (分站在子路徑)。
+    const p = _sitePath();
     return UNLOCKED_PAGES.some((u) => p === u || p === u.replace(/\/$/, ""));
   }
 
   // v568: 這些頁沒登入也要擋 (口訣與重點分享區的分享連結只有試用/會員能開) — HUA 指定
   const REQUIRE_LOGIN_PAGES = ["/mnemonics.html"];
   function requiresLogin() {
-    const p = location.pathname.replace(/\/+$/, "") || "/";
+    const p = _sitePath();
     return REQUIRE_LOGIN_PAGES.some((u) => p === u || p.endsWith(u));
   }
   function renderBlockOverlay() {
@@ -342,8 +360,16 @@
       el = document.createElement("div");
       el.id = id;
       el.dataset.mode = "loading";
+      // v703 HUA:「不是說一天只確認一次,為什麼換頁還常跳出來?」
+      //   確認通常 1 秒內就好,但一出現就整頁蓋一張「確認訂閱狀態中」很煩。
+      //   改成:前 1.2 秒只默默擋住 (透明,不給點),1.2 秒還沒回來才把卡片顯示出來;過期的人一樣點不進去。
+      el.className = "sbo-quiet";
       el.innerHTML = `<div class="sbo-card" style="max-width:320px"><div class="sbo-emoji">⏳</div><p style="margin:0">確認訂閱狀態中…</p></div>`;
       document.body.appendChild(el);
+      setTimeout(function () {
+        var cur = document.getElementById(id);
+        if (cur === el && el.dataset.mode === "loading") el.classList.remove("sbo-quiet");
+      }, 1200);
       return;
     }
     const locked = isLocked();
@@ -435,6 +461,7 @@
       });
   }
 
+  let _toastTimer = null;
   function showWaitToast() {
     let t = document.getElementById("sub-wait-toast");
     if (!t) {
@@ -443,9 +470,12 @@
       t.textContent = "⏳ 確認訂閱狀態中…";
       document.body.appendChild(t);
     }
-    t.classList.add("show");
+    // v703: 狀態通常 1 秒內就回來 → 延遲 0.8 秒才顯示,回得快就完全不閃
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function () { t.classList.add("show"); }, 800);
   }
   function hideWaitToast() {
+    clearTimeout(_toastTimer);
     const t = document.getElementById("sub-wait-toast");
     if (t) t.classList.remove("show");
   }
@@ -539,6 +569,8 @@
     _cache: function () {
       return cachedStatus;
     },
+    _isUnlockedPage: isUnlockedPage, // v704 回測用
+    _siteRoot: SITE_ROOT,
   };
 
   // v538: 樂觀鎖 — DOM ready 就先讀上次快取，過期的人 0 秒先鎖住,
@@ -665,6 +697,8 @@ body.sub-locked details.expl-block > div::after {
   background: rgba(30, 20, 10, .78); backdrop-filter: blur(6px);
   display: flex; align-items: center; justify-content: center; padding: 1rem;
 }
+#sub-block-overlay.sbo-quiet { background: transparent; backdrop-filter: none; }
+#sub-block-overlay.sbo-quiet .sbo-card { display: none; }
 #sub-block-overlay .sbo-card {
   background: #fff; border-radius: 14px; padding: 2rem 1.5rem; max-width: 440px;
   text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.4);

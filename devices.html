@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>裝置管理 - 牙醫二階國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v702"></script>
-    <script src="skin.js?v=v702"></script>
+    <script src="version.js?v=v703"></script>
+    <script src="skin.js?v=v703"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -177,7 +177,7 @@
         padding: 2rem;
       }
     </style>
-      <link rel="stylesheet" href="skin.css?v=v702" />
+      <link rel="stylesheet" href="skin.css?v=v703" />
   </head>
   <body>
     <div class="wrap">
@@ -186,14 +186,14 @@
         <span style="font-size: 0.75rem; color: #9ca3af" id="ver"></span>
       </div>
       <h1>🖥️ 裝置管理</h1>
-      <p class="sub-title">妳的訂閱最多可在 <b>3 台裝置</b>使用</p>
+      <p class="sub-title">目前<b>沒有裝置數量限制</b>，這裡只是列出登入過的裝置</p>
 
       <div id="need-login" style="display: none">
         請先<a href="index.html">回<span data-site="homeLabel">牙醫主頁</span></a>用 Google 登入才能管理裝置
       </div>
 
       <div id="over-warn" class="warn" style="display: none">
-        ⚠️ <b>已達 3 台裝置上限</b>,超過的裝置會被暫時擋下。<br />
+        ⚠️ <b>已達裝置上限</b>,超過的裝置會被暫時擋下。<br />
         請踢掉一台舊裝置，再回原本那台重新整理就會解鎖。
       </div>
 
@@ -213,8 +213,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v702"></script>
-    <script src="device-guard.js?v=v702"></script>
+    <script src="auth.js?v=v703"></script>
+    <script src="device-guard.js?v=v703"></script>
     <script>
       document.getElementById("v").textContent = (
         window.APP_VERSION || ""
@@ -351,6 +351,6 @@
         window.Auth.onChange(boot);
       }
     </script>
-      <script src="tour.js?v=v702" defer></script>
+      <script src="tour.js?v=v703" defer></script>
 </body>
 </html>

@@ -16859,6 +16859,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           }
           // 一進來就掃，把被「AI 雙重編碼」搞壞的章節自動還原（換行從 `\n` 字串改回真換行）
           migrateBrokenChapters();
+          repairEmptyChapters(); // v697: 空章節用題目本身補回來 (背景做,不擋開站)
           // 自動清掉「上傳中」殘留（如果還在這代表前次上傳失敗或被中斷）
           let cleaned = false;
           notebook.chapters.forEach((ch) => {
@@ -19403,6 +19404,61 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
         const idx = content.indexOf(m[0]);
         return content.slice(0, idx).trimEnd() + block + "\n" + content.slice(idx + 1);
       }
+      // v697: 「退回 new_chapter」有三條路 (AI 給空 content / append 沒 delta / 違規 skip),
+      //       以前只有第一條真的會補內容,後兩條把 content 清空後就沒人再補
+      //       → 存進去一個只有名字的空章節「XXX (待整理)」(HUA 用新帳號做一題就中)。
+      //       現在三條路最後都走這裡:內容太薄一律用題目本身補。
+      function _fillThinNewChapter(dec, q) {
+        if (!dec || dec.action !== "new_chapter") return false;
+        if ((dec.content || "").trim().length >= 80) return false;
+        console.warn("[addQToNotebook] new_chapter 內容太薄, 用題目本身當 fallback", q && q.id);
+        if (!dec.chapter_name)
+          dec.chapter_name = (q.topic || q.meta || "未命名章節") + " (待整理)";
+        const LETTERS = "ABCDE";
+        const ansIdx = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+        const optText = (q.options || [])
+          .map((o, i) => "(" + LETTERS[i] + ") " + String(o).replace(/^\([A-E]\)\s*/, ""))
+          .join("\n");
+        const correctOpt = (q.options || [])[ansIdx] || "";
+        dec.content =
+          "## " + dec.chapter_name +
+          "\n" + "\n" + "**題目**: " + (q.question || "") +
+          "\n" + "\n" + optText +
+          "\n" + "\n" + "**答案**: " + correctOpt +
+          "\n" + "\n" + "**詳解**:" + "\n" + (q.explanation || "(無詳解)") +
+          "\n" + "\n" + "> ⚠️ 此章節由 AI fallback 生成，請手動補充重點";
+        return true;
+      }
+      // v697: 開站時把以前存進去的空章節 (只有名字、掛著題目、內容空) 用題目本身補回來
+      async function repairEmptyChapters() {
+        try {
+          if (!notebook || !notebook.chapters) return 0;
+          const empties = notebook.chapters.filter(
+            (c) => !(c.content || "").trim() && c.qids && c.qids.length,
+          );
+          if (!empties.length) return 0;
+          let fixed = 0;
+          for (const ch of empties) {
+            const q = (window.QUESTIONS || []).find((x) => x.id === ch.qids[0]);
+            if (!q) continue;
+            try { await ensureExpl(q); } catch (e) {}
+            const dec = { action: "new_chapter", chapter_name: ch.name, content: "" };
+            _fillThinNewChapter(dec, q);
+            ch.content = dec.content;
+            ch.updatedAt = Date.now();
+            fixed++;
+          }
+          if (fixed) {
+            await saveNotebook();
+            renderNotebookIfVisible();
+            showToast("🩹 補好了 " + fixed + " 個空的章節");
+          }
+          return fixed;
+        } catch (e) {
+          console.warn("[repairEmptyChapters]", e);
+          return 0;
+        }
+      }
       function _compactQNote(q) {
         const LETTERS = "ABCDE";
         const ansIdx = Array.isArray(q.answer) ? q.answer[0] : q.answer;
@@ -19552,33 +19608,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           // v376/v392: AI 給空白 content 才退回 new_chapter,避免「亂選 append 但又啥都沒加」
           //            v392:append 用 delta_markdown 時,content 本來就會留空 → 只檢查 new_chapter
           //            append + 沒 delta + 沒 content → 退回 new_chapter (跟舊行為一致)
-          if (dec && dec.action === "new_chapter") {
-            const contentLen = (dec.content || "").trim().length;
-            if (contentLen < 80) {
-              console.warn(
-                "[addQToNotebook] AI 給空白 new_chapter content (len=" +
-                  contentLen +
-                  "), 用題目本身當 fallback",
-              );
-              if (!dec.chapter_name)
-                dec.chapter_name =
-                  (q.topic || q.meta || "未命名章節") + " (待整理)";
-              const optText = (q.options || []).join("\n");
-              const correctOpt = (q.options || [])[q.answer] || "";
-              dec.content =
-                "## " +
-                dec.chapter_name +
-                "\n\n**題目**: " +
-                (q.question || "") +
-                "\n\n" +
-                optText +
-                "\n\n**答案**: " +
-                correctOpt +
-                "\n\n**詳解**:\n" +
-                (q.explanation || "(無詳解)") +
-                "\n\n> ⚠️ 此章節由 AI fallback 生成，請手動補充重點";
-            }
-          }
+          // v697: 空 content 的 new_chapter 改由下面 _fillThinNewChapter 統一補 (三條退回路都會經過)
           if (dec && dec.action === "append") {
             const hasDelta = !!(
               dec.delta_markdown &&
@@ -19614,6 +19644,8 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             dec.reasoning =
               (dec.reasoning || "") + " [系統:禁用 skip,強制改 new_chapter]";
           }
+          // v697: 三條「退回 new_chapter」的路走完後,內容太薄一律用題目本身補,不再存出空章節
+          _fillThinNewChapter(dec, q);
           // v392:append 走「外科手術合併」(用 delta_markdown)
           //       AI 只寫新增的幾行，程式碼負責插進對的位置 + 自動去重 + 跳過第 2 階段
           //       省 token + 不會重複內容

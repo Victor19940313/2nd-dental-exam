@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>裝置管理 - 牙醫二階國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v705"></script>
-    <script src="skin.js?v=v705"></script>
+    <script src="version.js?v=v706"></script>
+    <script src="skin.js?v=v706"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -177,7 +177,7 @@
         padding: 2rem;
       }
     </style>
-      <link rel="stylesheet" href="skin.css?v=v705" />
+      <link rel="stylesheet" href="skin.css?v=v706" />
   </head>
   <body>
     <div class="wrap">
@@ -190,11 +190,6 @@
 
       <div id="need-login" style="display: none">
         請先<a href="index.html">回<span data-site="homeLabel">牙醫主頁</span></a>用 Google 登入才能管理裝置
-      </div>
-
-      <div id="over-warn" class="warn" style="display: none">
-        ⚠️ <b>已達裝置上限</b>,超過的裝置會被暫時擋下。<br />
-        請踢掉一台舊裝置，再回原本那台重新整理就會解鎖。
       </div>
 
       <div class="hint">
@@ -213,8 +208,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v705"></script>
-    <script src="device-guard.js?v=v705"></script>
+    <script src="auth.js?v=v706"></script>
+    <script src="device-guard.js?v=v706"></script>
     <script>
       document.getElementById("v").textContent = (
         window.APP_VERSION || ""
@@ -265,10 +260,7 @@
             '<div style="text-align:center;color:#9ca3af;padding:2rem">沒有裝置紀錄</div>';
           return;
         }
-        document.getElementById("over-warn").style.display =
-          status.devices.length > status.max ? "block" : "none";
-
-        const MAX = status.max || 3;
+        const MAX = Infinity; // 2026-09-13 起沒有裝置數量限制 (v703 隱藏、v706 拿掉超額字樣)
         list.innerHTML = status.devices
           .map((d, i) => {
             const isCurrent = d._id === status.current;
@@ -282,7 +274,7 @@
               ? '<span class="dev-tag cur">✅ 當前這台</span>'
               : isActive
                 ? '<span class="dev-tag act">使用中</span>'
-                : '<span class="dev-tag old">已超額 (被擋)</span>';
+                : '<span class="dev-tag old">閒置</span>';
             const actionBtn = isCurrent
               ? '<span class="cur-btn">✅ 使用中</span>'
               : `<button class="kick-btn" onclick="kickDevice('${d._id}','${(d.label || "").replace(/'/g, "")}')">✕ 踢掉</button>`;
@@ -322,7 +314,7 @@
           !confirm(
             "確定要踢掉這台裝置嗎?\n\n" +
               label +
-              "\n\n下次那台再開就要重新使用一個裝置額度。",
+              "\n\n下次那台再開會重新登記成新的一台。",
           )
         )
           return;
@@ -351,6 +343,6 @@
         window.Auth.onChange(boot);
       }
     </script>
-      <script src="tour.js?v=v705" defer></script>
+      <script src="tour.js?v=v706" defer></script>
 </body>
 </html>

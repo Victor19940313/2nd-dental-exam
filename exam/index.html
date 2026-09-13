@@ -6494,8 +6494,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v696"></script>
-    <link rel="stylesheet" href="../skin.css?v=v696" />
+      <script src="../skin.js?v=v697"></script>
+    <link rel="stylesheet" href="../skin.css?v=v697" />
   </head>
   <body>
     <!-- HEADER -->
@@ -9448,7 +9448,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v696"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v697"><\/script>');
       })();
     </script>
     <script>
@@ -19432,7 +19432,11 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       // v697: 開站時把以前存進去的空章節 (只有名字、掛著題目、內容空) 用題目本身補回來
       async function repairEmptyChapters() {
         try {
+          // 流量保險:loadNotebook 一頁會被叫很多次,修復每次開頁最多做一次;題庫還沒載好就先不算做過
+          if (window._repairEmptyDone) return 0;
+          if (!window.QUESTIONS || !window.QUESTIONS.length) return 0;
           if (!notebook || !notebook.chapters) return 0;
+          window._repairEmptyDone = true;
           const empties = notebook.chapters.filter(
             (c) => !(c.content || "").trim() && c.qids && c.qids.length,
           );
@@ -30773,15 +30777,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v696"></script>
+    <script src="../visitor-log.js?v=v697"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v696"></script>
-    <script src="comment-system.js?v=v696"></script>
-    <script src="../auth.js?v=v696"></script>
-    <script src="../keysync.js?v=v696"></script>
-    <script src="../migration.js?v=v696"></script>
-    <script src="../subscription.js?v=v696"></script>
-    <script src="../device-guard.js?v=v696"></script>
+    <script src="../sync.js?v=v697"></script>
+    <script src="comment-system.js?v=v697"></script>
+    <script src="../auth.js?v=v697"></script>
+    <script src="../keysync.js?v=v697"></script>
+    <script src="../migration.js?v=v697"></script>
+    <script src="../subscription.js?v=v697"></script>
+    <script src="../device-guard.js?v=v697"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31284,7 +31288,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v696" defer></script>
-    <script src="../update.js?v=v696" defer></script>
+      <script src="../tour.js?v=v697" defer></script>
+    <script src="../update.js?v=v697" defer></script>
 </body>
 </html>

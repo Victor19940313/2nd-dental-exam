@@ -6494,8 +6494,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v697"></script>
-    <link rel="stylesheet" href="../skin.css?v=v697" />
+      <script src="../skin.js?v=v698"></script>
+    <link rel="stylesheet" href="../skin.css?v=v698" />
   </head>
   <body>
     <!-- HEADER -->
@@ -9448,7 +9448,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v697"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v698"><\/script>');
       })();
     </script>
     <script>
@@ -22015,45 +22015,72 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             payload: payload,
             count: (notebook.chapters || []).length,
           });
-          // 修剪舊備份
-          const snap = await db
-            .ref(_nbRoot(uid))
-            .once("value");
-          const all = [];
-          snap.forEach((c) => {
-            all.push({ key: c.key, ts: c.val().ts || 0 });
-          });
-          all.sort((a, b) => b.ts - a.ts);
-          if (all.length > NB_BACKUP_KEEP) {
-            for (const x of all.slice(NB_BACKUP_KEEP)) {
-              await db.ref(_nbRoot(uid) + "/" + x.key).remove();
-            }
+          // 修剪舊備份 — v698: 只拿「鍵名」(shallow),不把 5 份完整筆記全部下載回來
+          //   以前這裡 once("value") 整個節點 → 一次備份 = 下載 5 倍筆記 (每份可能好幾 MB),
+          //   而且是 Firebase 收費的下載流量。push id 本身就是時間順序,排鍵名就知道誰最舊。
+          let keys = [];
+          try {
+            keys = await _nbBackupKeys(uid);
+          } catch (e) {
+            console.warn("[backup] 拿不到備份清單,這次先不修剪:", e && e.message);
+          }
+          const drop = _nbBackupsToDrop(keys, NB_BACKUP_KEEP);
+          for (const k of drop) {
+            await db.ref(_nbRoot(uid) + "/" + k).remove();
           }
           console.log(
             "[backup] saved:",
             label,
-            all.length,
+            keys.length,
             "/",
             NB_BACKUP_KEEP,
+            "刪掉",
+            drop.length,
           );
         } catch (e) {
           console.warn("[backupNotebookToCloud]", e);
           throw e;
         }
       }
+      // v698: 列表只需要時間/標籤/題數,不要把每份 payload (整本筆記) 都抓下來
       async function listNotebookBackups() {
         const uid = DentalSync.getUserId();
         if (!uid) return [];
-        const snap = await firebase
-          .database()
-          .ref(_nbRoot(uid))
-          .once("value");
-        const arr = [];
-        snap.forEach((c) => {
-          arr.push({ key: c.key, ...c.val() });
-        });
+        const keys = (await _nbBackupKeys(uid)).slice(-8).reverse(); // 最新的在前,最多列 8 份
+        const db = firebase.database();
+        const arr = await Promise.all(
+          keys.map(async (key) => {
+            const base = _nbRoot(uid) + "/" + key + "/";
+            const [ts, label, count] = await Promise.all(
+              ["ts", "label", "count"].map((f) =>
+                db.ref(base + f).once("value").then((x) => x.val()),
+              ),
+            );
+            return { key, ts: ts || 0, label: label || "備份", count };
+          }),
+        );
         arr.sort((a, b) => (b.ts || 0) - (a.ts || 0));
         return arr;
+      }
+      // v698: 備份鍵名 (shallow) — 用登入者自己的 token 走 REST,規則跟 SDK 一樣是本人才能讀
+      async function _nbBackupKeys(uid) {
+        const user = window.Auth && window.Auth.getUser && window.Auth.getUser();
+        if (!user || !user.getIdToken) throw new Error("未登入");
+        const token = await user.getIdToken();
+        const base =
+          (firebase.app().options && firebase.app().options.databaseURL) || "";
+        if (!base) throw new Error("沒有資料庫網址");
+        const r = await fetch(
+          base + "/" + _nbRoot(uid) + ".json?shallow=true&auth=" + encodeURIComponent(token),
+        );
+        if (!r.ok) throw new Error("shallow " + r.status);
+        const j = await r.json();
+        return Object.keys(j || {}).sort(); // push id 依時間排序 (舊 → 新)
+      }
+      // 純函式,給回測用:鍵名 (舊→新) + 要保留幾份 → 該刪掉的鍵名
+      function _nbBackupsToDrop(keysOldToNew, keep) {
+        const ks = (keysOldToNew || []).slice().sort();
+        return ks.length > keep ? ks.slice(0, ks.length - keep) : [];
       }
       async function restoreNotebookBackup(key) {
         const uid = DentalSync.getUserId();
@@ -27556,7 +27583,9 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
           //         · 跨域 + 多層 fallback
           //      改成 './expl-patches.json'(GitHub Pages 已 serve 同一個 repo,直接吃)
           //      → 跟 NotebookLM 詳解一樣，誰開都看得到，沒有額外設定
-          const url = "./expl-patches.json?_=" + Date.now();
+          // v698: 拿掉 ?_=時間 —— 以前每開一次練習本就硬抓一次 (牙醫站這檔 12 MB),
+          //   使用者手機流量白燒。固定網址讓瀏覽器問伺服器「有沒有變」,沒變回 304 幾乎零流量。
+          const url = "./expl-patches.json";
           const r = await fetch(url);
           if (!r.ok) return 0;
           const remote = await r.json();
@@ -30777,15 +30806,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v697"></script>
+    <script src="../visitor-log.js?v=v698"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v697"></script>
-    <script src="comment-system.js?v=v697"></script>
-    <script src="../auth.js?v=v697"></script>
-    <script src="../keysync.js?v=v697"></script>
-    <script src="../migration.js?v=v697"></script>
-    <script src="../subscription.js?v=v697"></script>
-    <script src="../device-guard.js?v=v697"></script>
+    <script src="../sync.js?v=v698"></script>
+    <script src="comment-system.js?v=v698"></script>
+    <script src="../auth.js?v=v698"></script>
+    <script src="../keysync.js?v=v698"></script>
+    <script src="../migration.js?v=v698"></script>
+    <script src="../subscription.js?v=v698"></script>
+    <script src="../device-guard.js?v=v698"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31288,7 +31317,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v697" defer></script>
-    <script src="../update.js?v=v697" defer></script>
+      <script src="../tour.js?v=v698" defer></script>
+    <script src="../update.js?v=v698" defer></script>
 </body>
 </html>

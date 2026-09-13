@@ -6494,8 +6494,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v699"></script>
-    <link rel="stylesheet" href="../skin.css?v=v699" />
+      <script src="../skin.js?v=v700"></script>
+    <link rel="stylesheet" href="../skin.css?v=v700" />
   </head>
   <body>
     <!-- HEADER -->
@@ -9448,7 +9448,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v699"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v700"><\/script>');
       })();
     </script>
     <script>
@@ -15609,18 +15609,8 @@ ${sBtn("learning", "❓", "一知半解", "#eab308")}
           : "✗ 答錯，正確是 " + correctArr.map((i) => "ABCDE"[i]).join("/");
         const optList = card.querySelector(".q-opt-list");
         if (optList) optList.insertAdjacentElement("afterend", feedback);
-        // 自動展開詳解區
-        const slot = card.querySelector(".expl-slot");
-        if (slot && slot.getAttribute("data-rendered") === "0") {
-          const st = getS(qid);
-          const expl = st.expl_override ?? q.explanation ?? "";
-          const src = st.src_override ?? q.explanation_source ?? "";
-          slot.innerHTML =
-            clinicalExplBlock(q) +
-            geminiExplBlock(expl, src, qid) +
-            nbExplBlock(q);
-          slot.setAttribute("data-rendered", "1");
-        }
+        // 自動展開詳解區 (v700: 先確定詳解檔載好)
+        _browseFillExpl(card, q);
       }
 
       // v391:瀏覽用的分類篩選(取代舊 db 的 dbTopicFilter)
@@ -15691,6 +15681,7 @@ ${sBtn("learning", "❓", "一知半解", "#eab308")}
             ? `<div id="browse-load-more" style="text-align:center;padding:1rem;color:#7c3aed;font-weight:700;cursor:pointer" onclick="_browseLoadMore()">▼ 載入更多(剩 ${_browseFiltered.length - _browseShowN} 題)</div>`
             : "");
         _installBrowseAutoLoad();
+        if (typeof preloadExplFor === "function") preloadExplFor(_browseFiltered.slice(0, _browseShowN)); // v700
       }
 
       function _browseLoadMore() {
@@ -15733,6 +15724,25 @@ ${sBtn("learning", "❓", "一知半解", "#eab308")}
       }
 
       // v391:卡片點開才 render 詳解(formatExpl 很重，延後到打開才跑)
+      // v700: 詳解自 v671 起放在 e-*.js 另外載;瀏覽卡片打開時要先確定那一科的詳解檔載好再畫,
+      //       不然 e-*.js 還沒回來就畫,會把有詳解的題目誤顯示成「尚無詳解」(HUA 在牙一瀏覽時看到)。
+      function _browseFillExpl(card, q) {
+        const slot = card.querySelector(".expl-slot");
+        if (!slot || slot.getAttribute("data-rendered") !== "0") return;
+        const fill = () => {
+          const st = getS(q.id);
+          const expl = st.expl_override ?? q.explanation ?? "";
+          const src = st.src_override ?? q.explanation_source ?? "";
+          const hasAny = !!(expl || q.explanation_notebooklm || q.clinical || q.explanation_pending);
+          slot.innerHTML = hasAny
+            ? clinicalExplBlock(q) + geminiExplBlock(expl, src, q.id) + nbExplBlock(q)
+            : '<p class="no-expl">尚無詳解</p>';
+          slot.setAttribute("data-rendered", "1");
+        };
+        const code = _explCode(q);
+        if (code && !window.EXPL_LOADED[code] && typeof ensureExpl === "function") ensureExpl(q).then(fill, fill);
+        else fill();
+      }
       function browseToggleCard(id) {
         const card = document.getElementById("bc-" + id);
         if (!card) return;
@@ -15740,21 +15750,8 @@ ${sBtn("learning", "❓", "一知半解", "#eab308")}
         if (card.classList.contains("open")) {
           // v402:答題模式 + 還沒揭曉 → 不要 render 詳解(會洩漏答案),等使用者選答案才 render
           if (bfQuizMode && card.dataset.revealed !== "1") return;
-          const slot = card.querySelector(".expl-slot");
-          if (slot && slot.getAttribute("data-rendered") === "0") {
-            const q =
-              typeof QS !== "undefined" ? QS.find((x) => x.id === id) : null;
-            if (q) {
-              const st = getS(id);
-              const expl = st.expl_override ?? q.explanation ?? "";
-              const src = st.src_override ?? q.explanation_source ?? "";
-              slot.innerHTML =
-                clinicalExplBlock(q) +
-                geminiExplBlock(expl, src, id) +
-                nbExplBlock(q);
-              slot.setAttribute("data-rendered", "1");
-            }
-          }
+          const q = typeof QS !== "undefined" ? QS.find((x) => x.id === id) : null;
+          if (q) _browseFillExpl(card, q); // v700
         }
       }
 
@@ -15808,7 +15805,10 @@ ${sBtn("learning", "❓", "一知半解", "#eab308")}
           q.clinical ||
           q.explanation_pending
         );
-        const explSlot = hasAnyExpl
+        // v700: 那一科的詳解檔 (e-*.js) 還沒載回來 → 不能斷定「尚無詳解」,先放槽,打開時再確定
+        const _ec = _explCode(q);
+        const explPending = !hasAnyExpl && _ec && !window.EXPL_LOADED[_ec] && !!(window.QUESTIONS_PARTS || {})[_ec];
+        const explSlot = hasAnyExpl || explPending
           ? `<div class="expl-slot" data-rendered="0"><div style="color:#9ca3af;font-size:.8rem;padding:.4rem 0">📖 詳解載入中…</div></div>`
           : `<p class="no-expl">尚無詳解</p>`;
 
@@ -30806,15 +30806,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v699"></script>
+    <script src="../visitor-log.js?v=v700"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v699"></script>
-    <script src="comment-system.js?v=v699"></script>
-    <script src="../auth.js?v=v699"></script>
-    <script src="../keysync.js?v=v699"></script>
-    <script src="../migration.js?v=v699"></script>
-    <script src="../subscription.js?v=v699"></script>
-    <script src="../device-guard.js?v=v699"></script>
+    <script src="../sync.js?v=v700"></script>
+    <script src="comment-system.js?v=v700"></script>
+    <script src="../auth.js?v=v700"></script>
+    <script src="../keysync.js?v=v700"></script>
+    <script src="../migration.js?v=v700"></script>
+    <script src="../subscription.js?v=v700"></script>
+    <script src="../device-guard.js?v=v700"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31317,7 +31317,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v699" defer></script>
-    <script src="../update.js?v=v699" defer></script>
+      <script src="../tour.js?v=v700" defer></script>
+    <script src="../update.js?v=v700" defer></script>
 </body>
 </html>

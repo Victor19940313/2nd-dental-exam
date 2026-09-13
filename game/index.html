@@ -256,12 +256,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:#2a7ab5;color:#fff;height:
 }
 </style>
     <!-- v537: 訂閱全鎖 (過期蓋 overlay),auth.js 會自己 init Firebase -->
-    <script src="../version.js?v=v698"></script>
+    <script src="../version.js?v=v699"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../auth.js?v=v698"></script>
-    <script src="../subscription.js?v=v698"></script>
+    <script src="../auth.js?v=v699"></script>
+    <script src="../subscription.js?v=v699"></script>
 </head>
 <body>
 
@@ -312,7 +312,29 @@ body{font-family:'Noto Sans TC',sans-serif;background:#2a7ab5;color:#fff;height:
 <script src="../ya4/rad-data.js"></script>
 <script src="../ya5/prostho-data.js"></script>
 <script src="../ya6/ya6-data.js"></script>
-<script src="../exam/questions-data.js"></script>
+<!-- 2026-09-13:整包 questions-data.js (40 MB) 已不再上線,改吃練習本同一套切好的題目/詳解檔 -->
+<script src="../exam/q-ya3.js"></script>
+<script src="../exam/q-ya4.js"></script>
+<script src="../exam/q-ya5.js"></script>
+<script src="../exam/q-ya6.js"></script>
+<script src="../exam/e-ya3.js?v=v699"></script>
+<script src="../exam/e-ya4.js?v=v699"></script>
+<script src="../exam/e-ya5.js?v=v699"></script>
+<script src="../exam/e-ya6.js?v=v699"></script>
+<script>
+  (function () {
+    var parts = window.QUESTIONS_PARTS || {}, ex = window.EXPL_PARTS || {}, all = [];
+    Object.keys(parts).forEach(function (code) {
+      var m = ex[code] || {};
+      (parts[code] || []).forEach(function (q) {
+        var e = m[q.id];
+        if (e) Object.keys(e).forEach(function (k) { if (q[k] == null) q[k] = e[k]; });
+        all.push(q);
+      });
+    });
+    window.QUESTIONS = all;
+  })();
+</script>
 
 <script>
 /* ===== ISLANDS ===== */

@@ -6498,8 +6498,8 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-tc-webfont@1.1.0/style.css"
     />
-      <script src="../skin.js?v=v709"></script>
-    <link rel="stylesheet" href="../skin.css?v=v709" />
+      <script src="../skin.js?v=v710"></script>
+    <link rel="stylesheet" href="../skin.css?v=v710" />
   </head>
   <body>
     <!-- HEADER -->
@@ -8178,7 +8178,7 @@
         class="modal"
         style="max-width: 580px; max-height: 90vh; overflow-y: auto"
       >
-        <h3>⚙️ AI / 圖床 設定</h3>
+        <h3>⚙️ 筆記設定</h3>
 
         <details
           open
@@ -8593,97 +8593,61 @@
           </p>
         </details>
 
-        <p
-          style="
-            font-size: 0.82rem;
-            color: var(--gray);
-            margin: 0.8rem 0 0.5rem;
-            line-height: 1.55;
-          "
-        >
-          這些設定<strong>會跟著你的使用者帳號自動同步到雲端</strong>。<br />
-          <span style="color: #0369a1; font-weight: 700"
-            >電腦上設定一次 → 手機上同個 user 自動拿到</span
-          >，不用重設。<br />
-          <span style="color: #92400e; font-size: 0.78rem"
-            >⚠️ 不同 user 之間不共用 — 朋友來用你的網站，他要自己貼自己的
-            key（避免被吃額度）</span
-          >
-        </p>
-
-        <!-- v690: HUA「筆記裡面的設定要提醒 key 不要給別人」。
-             刻意寫成靜態 HTML 而不是 JS 產生的 —— 安全提醒不可以因為 JS 出錯就消失。 -->
-        <div
-          style="
-            margin-top: 0.7rem;
-            background: #f8fafc;
-            border: 1.5px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 0.7rem 0.85rem;
-            font-size: 0.8rem;
-            line-height: 1.8;
-            color: #334155;
-          "
-        >
-          <b style="font-size: 0.86rem">🔑 小提醒：這兩把鑰匙留給自己用就好</b><br />
-          就像家裡的鑰匙，給別人就會被拿去用你的額度，所以貼上去之後不用再給任何人。<br />
-          ・要截圖或請別人幫你看畫面時，先確認下面的「顯示輸入內容」沒有打勾。<br />
-          ・<b>不小心被看到也很好處理</b>：回 Google AI Studio / GitHub
-          把舊的刪掉、重新申請一把貼回來，舊的就立刻失效了。<br />
-          <span style="color: #64748b"
-            >（只存在你自己的帳號裡，連 ezpass 的管理者都看不到。）</span
-          >
+        <style>
+          /* v710: 筆記設定改成「照 3 步走」(HUA 2026-09-14 選方案 B) */
+          .nbs-progress { display: flex; gap: 0.4rem; flex-wrap: wrap; font-size: 0.78rem; color: #6b7280; margin: 0.5rem 0 0.2rem; }
+          .nbs-progress span { background: #f3f4f6; border-radius: 999px; padding: 0.15rem 0.6rem; }
+          .nbs-progress span.done { background: #dcfce7; color: #166534; font-weight: 700; }
+          .nbs-step { position: relative; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 0.75rem 0.9rem 0.8rem; margin-top: 0.8rem; background: #fff; }
+          .nbs-step.done { border-color: #a7f3d0; background: #f0fdf4; }
+          .nbs-step h4 { margin: 0 0 0.3rem; font-size: 0.95rem; color: #374151; }
+          .nbs-step ol { margin: 0.3rem 0 0 1.2rem; padding: 0; font-size: 0.84rem; line-height: 1.7; }
+          .nbs-num { position: absolute; left: -0.55rem; top: -0.55rem; width: 1.65rem; height: 1.65rem; border-radius: 50%; background: #7c3aed; color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 0.82rem; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+          .nbs-step.done .nbs-num { background: #16a34a; }
+          .nbs-step.done .nbs-num::after { content: "✓"; }
+          .nbs-step.done .nbs-num span { display: none; }
+          .nbs-small { font-size: 0.78rem; color: #6b7280; margin: 0.4rem 0 0; line-height: 1.6; }
+          .nbs-adv { margin-top: 1rem; border: 1.5px solid #e5e7eb; background: #f9fafb; border-radius: 10px; padding: 0.6rem 0.85rem; }
+          .nbs-adv > summary { cursor: pointer; font-weight: 700; color: #6b7280; font-size: 0.86rem; }
+        </style>
+        <div class="nbs-progress" id="nbs-progress">
+          <span data-step="1">① 拿鑰匙</span><span data-step="2">② 貼進來測試</span><span data-step="3">③ 回去做題</span>
         </div>
 
-        <details
-          open
-          style="
-            margin-top: 0.8rem;
-            border: 1.5px solid #e9d5ff;
-            border-radius: 8px;
-            padding: 0.6rem 0.8rem;
-            background: #faf5ff;
-          "
-        >
-          <summary
+        <div class="nbs-step" data-step="1">
+          <div class="nbs-num"><span>1</span></div>
+          <h4>拿一把免費 AI 鑰匙（不用綁卡）</h4>
+          <ol>
+            <li>點 <a href="https://aistudio.google.com/apikey" target="_blank" style="color: #7c3aed; font-weight: 700">Google AI Studio</a>，用任何 Google 帳號登入</li>
+            <li>按藍色「+ Create API key」→「Create API key in new project」</li>
+            <li>複製那串 AIzaSy 開頭的字</li>
+          </ol>
+          <p class="nbs-small">設定綁在你的帳號上，換手機、換科目都不用重設；朋友來用要貼他自己的鑰匙，不同帳號各用各的額度。</p>
+        </div>
+
+        <div class="nbs-step" data-step="2">
+          <div class="nbs-num"><span>2</span></div>
+          <h4>貼進來，按一下測試</h4>
+          <!-- v690: HUA「筆記裡面的設定要提醒 key 不要給別人」。
+               刻意寫成靜態 HTML 而不是 JS 產生的 —— 安全提醒不可以因為 JS 出錯就消失。
+               v710: 縮成三行放在輸入框正上方 (測試 check_key_warning 要求提醒在輸入欄位之前)。 -->
+          <div
             style="
-              cursor: pointer;
-              font-weight: 800;
-              color: #6b21a8;
-              font-size: 0.9rem;
-            "
-          >
-            🤖 Gemini API（給 AI 整理筆記用）
-          </summary>
-          <p
-            style="
+              margin: 0.3rem 0 0.5rem;
+              background: #f8fafc;
+              border: 1.5px solid #cbd5e1;
+              border-radius: 8px;
+              padding: 0.5rem 0.75rem;
               font-size: 0.78rem;
-              color: #6b7280;
-              margin-top: 0.4rem;
-              line-height: 1.5;
+              line-height: 1.7;
+              color: #334155;
             "
           >
-            沒申請過 →
-            <a
-              href="https://aistudio.google.com/apikey"
-              target="_blank"
-              style="color: #7c3aed"
-              >點這裡免費申請</a
-            >（5 分鐘、不用綁卡、有免費額度）
-          </p>
-          <label
-            style="
-              display: block;
-              font-size: 0.78rem;
-              font-weight: 700;
-              margin: 0.4rem 0 0.2rem;
-            "
-          >
-            Gemini API Keys
-            <span style="font-weight: 400; color: #6b7280; font-size: 0.72rem"
-              >（可貼多把不同 Google 帳號的 key，撞額度會自動換）</span
-            >
-          </label>
+            <b>🔑 小提醒：這把鑰匙留給自己用就好</b>——就像家裡的鑰匙，給別人就會被拿去用你的額度。<br />
+            ・要截圖或請別人幫你看畫面時，先確認下面的「顯示輸入內容」沒有打勾。<br />
+            ・<b>不小心被看到也很好處理</b>：回 Google AI Studio / GitHub 把舊的刪掉、重新申請一把貼回來，舊的就立刻失效了。
+            <span style="color: #64748b">（只存在你自己的帳號裡，連 ezpass 的管理者都看不到。）</span>
+          </div>
           <div
             id="ai-keys-list"
             style="display: flex; flex-direction: column; gap: 0.35rem"
@@ -8703,8 +8667,40 @@
               cursor: pointer;
             "
           >
-            + 新增一把 key
+            + 再貼一把（不同 Google 帳號的鑰匙，撞額度會自動換）
           </button>
+          <button
+            type="button"
+            onclick="testGeminiConnection()"
+            id="btn-test-gemini"
+            style="
+              margin-top: 0.55rem;
+              background: #ecfeff;
+              color: #0369a1;
+              border: 1.5px solid #7dd3fc;
+              border-radius: 8px;
+              padding: 0.45rem 0.85rem;
+              font-size: 0.82rem;
+              font-weight: 700;
+              cursor: pointer;
+            "
+          >
+            🧪 測試連線
+          </button>
+          <div
+            id="gemini-test-result"
+            style="margin-top: 0.5rem; font-size: 0.78rem; line-height: 1.6"
+          ></div>
+        </div>
+
+        <div class="nbs-step" data-step="3">
+          <div class="nbs-num"><span>3</span></div>
+          <h4>回到考題，答完按「📒 加入筆記」</h4>
+          <p class="nbs-small" style="margin-top: 0">AI 會把那題的重點整理進你的筆記本；之後做題按「📖 偷看筆記」隨時翻。</p>
+        </div>
+
+        <details class="nbs-adv" id="nbs-adv">
+          <summary>進階：筆記貼圖（GitHub 圖床）、換模型</summary>
           <label
             style="
               display: block;
@@ -8736,31 +8732,7 @@
               gemini-3.8-flash（最新一代 flash｜免費額度不確定，撞到會自動換）
             </option>
           </select>
-          <button
-            type="button"
-            onclick="testGeminiConnection()"
-            id="btn-test-gemini"
-            style="
-              margin-top: 0.55rem;
-              background: #ecfeff;
-              color: #0369a1;
-              border: 1.5px solid #7dd3fc;
-              border-radius: 8px;
-              padding: 0.45rem 0.85rem;
-              font-size: 0.82rem;
-              font-weight: 700;
-              cursor: pointer;
-            "
-          >
-            🧪 測試連線(看 key/model 能不能用)
-          </button>
-          <div
-            id="gemini-test-result"
-            style="margin-top: 0.5rem; font-size: 0.78rem; line-height: 1.6"
-          ></div>
-        </details>
-
-        <details
+          <details
           style="
             margin-top: 0.6rem;
             border: 1.5px solid #bae6fd;
@@ -8777,7 +8749,7 @@
               font-size: 0.9rem;
             "
           >
-            📷 GitHub 圖床（給筆記貼圖用）
+            📷 筆記貼圖（GitHub 圖床）
           </summary>
           <p
             style="
@@ -8918,6 +8890,10 @@
             }
           };
         </script>
+        </details>
+        <p class="nbs-small" style="text-align: center; margin-top: 0.7rem">
+          📖 想看完整入門指引？<a href="#" onclick="closeAISettings(); showOnboarding(); return false;" style="color: #0369a1; font-weight: 700">點這裡</a>
+        </p>
 
         <label
           style="
@@ -9454,7 +9430,7 @@
         } catch (e) {}
         if (!codes || !codes.length) codes = ["ya3", "ya4", "ya5", "ya6"];
         for (var i = 0; i < codes.length; i++)
-          document.write('<script src="q-' + codes[i] + '.js?v=v709"><\/script>');
+          document.write('<script src="q-' + codes[i] + '.js?v=v710"><\/script>');
       })();
     </script>
     <script>
@@ -27136,8 +27112,20 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
             showToast("請手動 Ctrl+C 複製");
           });
       }
+      // v710: 三張步驟卡做到哪一步打勾:有鑰匙 = ①② 完成;筆記本已有章節 = ③ 完成
+      function _refreshSetupSteps() {
+        let hasKey = false, hasNote = false;
+        try { hasKey = getGeminiKeys().length > 0; } catch (e) {}
+        try { hasNote = !!(notebook && Array.isArray(notebook.chapters) && notebook.chapters.length > 0); } catch (e) {}
+        document.querySelectorAll("#ai-settings-overlay .nbs-step, #nbs-progress span").forEach((el) => {
+          const n = el.dataset.step;
+          el.classList.toggle("done", n === "3" ? hasNote : hasKey);
+        });
+      }
+      window._refreshSetupSteps = _refreshSetupSteps;
       function openAISettings() {
         renderGeminiKeyInputs(getGeminiKeys());
+        _refreshSetupSteps();
         const sel = document.getElementById("ai-model-select");
         if (sel)
           sel.value = _normGeminiModel(
@@ -30856,15 +30844,15 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-    <script src="../visitor-log.js?v=v709"></script>
+    <script src="../visitor-log.js?v=v710"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="../sync.js?v=v709"></script>
-    <script src="comment-system.js?v=v709"></script>
-    <script src="../auth.js?v=v709"></script>
-    <script src="../keysync.js?v=v709"></script>
-    <script src="../migration.js?v=v709"></script>
-    <script src="../subscription.js?v=v709"></script>
-    <script src="../device-guard.js?v=v709"></script>
+    <script src="../sync.js?v=v710"></script>
+    <script src="comment-system.js?v=v710"></script>
+    <script src="../auth.js?v=v710"></script>
+    <script src="../keysync.js?v=v710"></script>
+    <script src="../migration.js?v=v710"></script>
+    <script src="../subscription.js?v=v710"></script>
+    <script src="../device-guard.js?v=v710"></script>
     <script>
       if (typeof DentalSync !== "undefined") {
         // v413:等 loadState 從 IDB hydrate 完才 init sync,不然 sync 拉 remote 寫進 qState 後會被 loadState 用 IDB 舊版蓋掉
@@ -31367,7 +31355,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-      <script src="../tour.js?v=v709" defer></script>
-    <script src="../update.js?v=v709" defer></script>
+      <script src="../tour.js?v=v710" defer></script>
+    <script src="../update.js?v=v710" defer></script>
 </body>
 </html>

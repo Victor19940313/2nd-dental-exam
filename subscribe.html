@@ -9,8 +9,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>訂閱方案 - 牙醫二階國考互動筆記</title>
     <link rel="icon" href="icons/icon-192.png" />
-    <script src="version.js?v=v708"></script>
-    <script src="site-config.js?v=v708" onerror="this.remove()"></script>
+    <script src="version.js?v=v709"></script>
+    <script src="site-config.js?v=v709" onerror="this.remove()"></script>
     <script>
       // v651: 訂閱集中化 — 牙醫以外的站,付款 / 序號都在入口網站做 (同一個帳號),這頁只做轉址
       // v652: 付款 / 序號一律在入口網站做 (一份訂閱通全站),各站訂閱頁只做轉址
@@ -18,7 +18,7 @@
           "https://ezpass-exam.com/subscribe.html" + location.search,
         );
     </script>
-    <script src="skin.js?v=v708"></script>
+    <script src="skin.js?v=v709"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -668,7 +668,7 @@
         }
       }
     </style>
-    <link rel="stylesheet" href="skin.css?v=v708" />
+    <link rel="stylesheet" href="skin.css?v=v709" />
   </head>
   <body>
     <div class="wrap">
@@ -681,6 +681,8 @@
 
       <h1>訂閱方案</h1>
       <p class="sub-title">ezpass 國考互動筆記 · 一次訂閱，開放的科目都能用</p>
+      <div id="status-card"></div>
+
 
       <!-- v642: 公開的服務說明 (不用登入就看得到) -->
       <section class="pub-box">
@@ -723,7 +725,6 @@
         </p>
       </section>
 
-      <div id="status-card"></div>
 
       <div
         id="redeem-box"
@@ -777,23 +778,23 @@
       </div>
 
       <div class="plans" id="plans">
-        <div class="plan" data-plan="monthly" data-amount="400">
+        <div class="plan" data-plan="monthly" data-amount="300">
           <div class="name">月費</div>
-          <div class="price">$400<span class="unit"> / 月</span></div>
+          <div class="price">$300<span class="unit"> / 月</span></div>
           <div class="save"></div>
           <div class="per">短期衝刺</div>
         </div>
-        <div class="plan recommend" data-plan="quarterly" data-amount="1000">
+        <div class="plan recommend" data-plan="quarterly" data-amount="800">
           <div class="name">季費</div>
-          <div class="price">$1000<span class="unit"> / 3 月</span></div>
-          <div class="save">省 $200 (17% off)</div>
-          <div class="per">$333 / 月</div>
+          <div class="price">$800<span class="unit"> / 3 月</span></div>
+          <div class="save">省 $100 (11% off)</div>
+          <div class="per">$267 / 月</div>
         </div>
-        <div class="plan" data-plan="semi" data-amount="1500">
+        <div class="plan" data-plan="semi" data-amount="1200">
           <div class="name">半年</div>
-          <div class="price">$1500<span class="unit"> / 6 月</span></div>
-          <div class="save">省 $900 (38% off)</div>
-          <div class="per">$250 / 月</div>
+          <div class="price">$1200<span class="unit"> / 6 月</span></div>
+          <div class="save">省 $600 (33% off)</div>
+          <div class="per">$200 / 月</div>
         </div>
       </div>
 
@@ -838,7 +839,7 @@
         </div>
         <div class="bank-row">
           <span class="k">金額</span>
-          <span class="v big" id="show-amount">$400</span>
+          <span class="v big" id="show-amount">$300</span>
         </div>
       </div>
 
@@ -1170,8 +1171,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="auth.js?v=v708"></script>
-    <script src="subscription.js?v=v708"></script>
+    <script src="auth.js?v=v709"></script>
+    <script src="subscription.js?v=v709"></script>
 
     <script>
       let selectedPlan = null;
@@ -1675,6 +1676,6 @@
       © 2026 ezpass 牙醫二階國考互動筆記 · <strong>版權所有翻印必究</strong> ·
       未經授權禁止轉載、複製、爬取內容
     </footer>
-    <script src="tour.js?v=v708" defer></script>
+    <script src="tour.js?v=v709" defer></script>
   </body>
 </html>

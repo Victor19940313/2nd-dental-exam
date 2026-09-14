@@ -87,11 +87,18 @@
         bot_reason: reasons.join(","),
         uid: uid,
       };
-      // Push 拿到 key, 之後補 IP
+      // v711: 以前是「先 push 一筆、之後再補 ip 欄位」—— 但資料庫規則是「每筆只能新增、不能改」
+      //   (traffic_log/$id .write = !data.exists()),第二次寫 ip 一定被拒 → 9/9 規則上線後一筆都沒有 IP。
+      //   改成:先拿 IP (最多等 1.5 秒,拿不到就算了),然後**一次**把整筆 (含 ip) 寫進去。
       var ref = db.ref("traffic_log").push();
-      ref.set(payload).catch(function () {});
-      // 抓 IP (async, 不阻塞):先問同網域的 Cloudflare trace,失敗再用 ipify
-      fetch("/cdn-cgi/trace", { cache: "no-store" })
+      var written = false;
+      function writeOnce(ip) {
+        if (written) return;
+        written = true;
+        if (ip) payload.ip = String(ip).slice(0, 60);
+        ref.set(payload).catch(function () {});
+      }
+      var ipPromise = fetch("/cdn-cgi/trace", { cache: "no-store" })
         .then(function (r) {
           if (!r.ok) throw new Error("trace " + r.status);
           return r.text();
@@ -111,15 +118,17 @@
             .then(function (d) {
               return d && d.ip;
             });
-        })
+        });
+      ipPromise
         .then(function (ip) {
-          if (ip)
-            ref
-              .child("ip")
-              .set(String(ip).slice(0, 60))
-              .catch(function () {});
+          writeOnce(ip);
         })
-        .catch(function () {});
+        .catch(function () {
+          writeOnce(null);
+        });
+      setTimeout(function () {
+        writeOnce(null);
+      }, 1500);
     } catch (e) {
       // 不能影響網站, 完全 swallow
     }

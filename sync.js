@@ -625,7 +625,8 @@
   // v601: 遠端清除 — 後台在 users/{uid}/_meta/wipe_ts 放一個時間,本機若還沒依這個時間清過,
   //       就把這個 uid 的本機資料 (localStorage + IDB) 全部清掉再重新載入,避免舊副本被推回雲端。
   //       用途:HUA 兩個帳號互相污染後,把 B 帳號清乾淨。
-  var IDB_NAME = "dental_notebooks_v1";
+  // v716:同網域樹枝各自一個 IndexedDB (localStorage 那邊由 site.js 加站名前綴;牙醫二階 dataPath 空、維持原名)
+  var IDB_NAME = window.__nbIdbName || "dental_notebooks_v1"; // 樹枝站由 site.js 給分站名稱
   var IDB_STORE = "notebooks";
   function wipeLocalForUser(uid) {
     var keys = SYNC_KEYS.slice();

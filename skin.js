@@ -47,7 +47,7 @@
     localStorage.setItem(uid + "__wiped", pend);
     window._syncWipePending = pend;
     try {
-      var req = indexedDB.open("dental_notebooks_v1", 1);
+      var req = indexedDB.open(window.__nbIdbName || "dental_notebooks_v1", 1);
       req.onupgradeneeded = function (e) {
         var db = e.target.result;
         if (!db.objectStoreNames.contains("notebooks"))

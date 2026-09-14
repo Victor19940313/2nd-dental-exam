@@ -20874,16 +20874,38 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
               }
               continue;
             }
+            // v708: 分隔線寫在第三行以後 (表頭跟分隔線中間夾了幾列資料) —— 整張表會被當純文字。
+            //   往上找這一疊連續的 row;上面沒有別的分隔線 (= 這疊還沒有表) 才把分隔線搬到第一列後面。
+            //   上面已經有分隔線的話,這疊可能是「前一張表的資料列 + 新表的表頭」,分不清就不動。
+            let start = out.length - 1;
+            while (start > 0 && isRow(out[start - 1])) start--;
+            if (out.length - start >= 2 && !(start > 0 && isSep(out[start - 1]))) {
+              const cols = out[start].trim().replace(/^\||\|$/g, "").split("|").length;
+              out.splice(start + 1, 0, "|" + "---|".repeat(Math.max(cols, 1)));
+              continue;
+            }
           }
           out.push(l);
         }
         return out.join("\n");
       }
+      // v708: 標題開頭的 emoji 壞掉 (�� 或落單的半個 surrogate) 就把它拿掉,不要在畫面上秀亂碼
+      function _stripBrokenHeadingEmoji(md) {
+        if (!md) return md;
+        return md.replace(
+          // (不用 lookbehind:舊 iPhone Safari 不支援,整個 script 會爆。開頭的低位 surrogate 一定是落單的)
+          /^(#{1,6}[ \t]+)(?:�|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|[\uDC00-\uDFFF])+[ \t]*/gm,
+          "$1",
+        );
+      }
+      window._fixOrphanTableSep = _fixOrphanTableSep;
+      window._stripBrokenHeadingEmoji = _stripBrokenHeadingEmoji;
       function _normalizeDeltaMd(md) {
         let t = _collapseSpaces(_fixLiteralNewlines(md || ""));
         t = t.replace(/^\s*#\s+/gm, "### ").replace(/^\s*##\s+(?!#)/gm, "### "); // delta 不准有 # / ## 主標題
         t = t.replace(/^\s*#{5,}\s+/gm, "#### ");
         t = _fixOrphanTableSep(t);
+        t = _stripBrokenHeadingEmoji(t);
         return t;
       }
       window._normalizeDeltaMd = _normalizeDeltaMd;
@@ -25534,7 +25556,7 @@ ${markBtn("learning", "❓", "一知半解", "#fef9c3", "#eab308")}
 
       function renderMarkdown(md) {
         // v617: 舊資料修補 — 以前存進去的字面 \n 跟沒表頭的表格,渲染時順手修 (不改存檔)
-        if (typeof _fixLiteralNewlines === "function") md = _fixOrphanTableSep(_collapseSpaces(_fixLiteralNewlines(md || "")));
+        if (typeof _fixLiteralNewlines === "function") md = _stripBrokenHeadingEmoji(_fixOrphanTableSep(_collapseSpaces(_fixLiteralNewlines(md || ""))));
         if (!md) return '<p style="color:#9ca3af">（章節內容是空的）</p>';
         // 清掉 LaTeX 標記(網站不支援數學渲染，只轉成 Unicode 顯示)
         md = _stripLatex(md);

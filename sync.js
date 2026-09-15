@@ -66,6 +66,29 @@
     var p = (window.SITE && window.SITE.dataPath) || "";
     return p ? "/" + p : "";
   }
+  // 後台索引的「這一科做題數」:daily_log 的日期鍵是 toISOString 的 UTC 日期,今天也用同一種算
+  function _writeIndexDaily(payload, ts) {
+    try {
+      var o = typeof payload === "string" ? JSON.parse(payload) : payload || {};
+      var tk = new Date().toISOString().slice(0, 10);
+      var done = 0;
+      var today = 0;
+      Object.keys(o || {}).forEach(function (k) {
+        var v = o[k];
+        var n =
+          typeof v === "number"
+            ? v
+            : Number((v && (v.count != null ? v.count : v.done)) || 0) || 0;
+        done += n;
+        if (k === tk) today = n;
+      });
+      var site = (window.SITE && window.SITE.dataPath && window.SITE.id) || "dental";
+      _db
+        .ref("users/__admin_index/" + _userId + "/x/" + site)
+        .update({ ts: ts, done: done, today: today, td: tk })
+        .catch(function () {});
+    } catch (e) {}
+  }
   function userRef() {
     return _db.ref("users/" + _userId + _subPath());
   }
@@ -1192,6 +1215,10 @@
       _syncing = true;
       // v667: 送出前就把本機時間戳對齊 (以前完全沒更新 → 下次開網頁又把整包重抓一次)
       _stampLocalTs(ts);
+      // 2026-09-15 HUA:「各個用戶的累積做題後台有真的如實寫進去嗎?」
+      //   後台索引以前只算牙醫二階;樹枝的做題數由這裡順手寫進自己那一格 (users/__admin_index/<uid>/x/<站>)。
+      //   規則:那一格只有本人寫得到。Worker 不用去讀每一科 (單次 50 個請求會爆)。
+      if (sk === "daily_log") _writeIndexDaily(payload, ts);
       return Promise.all([
         userRef().update(update),
         userDataRef().update(oldUpdate),
